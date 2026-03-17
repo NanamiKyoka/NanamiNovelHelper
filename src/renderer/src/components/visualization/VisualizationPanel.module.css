@@ -1,0 +1,107 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+
+.header h5 {
+  margin-bottom: 4px;
+}
+
+.content {
+  flex: 1;
+}
+
+.toolCard {
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.toolCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.toolCardDisabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.toolCardDisabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.cardContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toolIcon {
+  font-size: 24px;
+  color: var(--ant-color-primary);
+}
+
+.cardText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardDesc {
+  font-size: 12px;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--ant-color-primary);
+  color: #fff;
+  border-radius: 4px;
+}
+
+.badgeAvailable {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #52c41a;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.footer {
+  padding: 24px 0;
+}
+
+/* 工具容器样式 */
+.toolContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolHeader {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ant-color-border);
+}
+
+.toolContent {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

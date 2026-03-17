@@ -1,0 +1,7 @@
+export { default as ActivityBar } from './ActivityBar'
+export { default as Sidebar } from './Sidebar'
+export { default as MainContent } from './MainContent'
+export { default as MenuBar } from './MenuBar'
+export { default as StatusBar } from './StatusBar'
+export { default as TitleBar } from './TitleBar'
+export { default as DraggableBadgeContainer } from './DraggableBadgeContainer'

@@ -1,0 +1,182 @@
+.fileTree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--ant-color-border);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+}
+
+.searchIcon {
+  color: var(--ant-color-text-secondary);
+}
+
+.toolbarActions {
+  flex-shrink: 0;
+}
+
+.toolbarActions :global(.ant-btn) {
+  color: var(--ant-color-text-secondary);
+}
+
+.toolbarActions :global(.ant-btn):hover {
+  color: var(--ant-color-text);
+  background: var(--ant-color-bg-text-hover);
+}
+
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.treeNode {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.treeNode:hover {
+  background-color: var(--ant-color-bg-text-hover);
+}
+
+.treeNode.selected {
+  background-color: var(--ant-color-primary-bg);
+}
+
+:global(body.dark) .treeNode.selected {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  font-size: 10px;
+  color: var(--ant-color-text-secondary);
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.arrow:hover {
+  color: var(--ant-color-text);
+}
+
+.arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.arrow.hidden {
+  visibility: hidden;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  font-size: 14px;
+  color: var(--ant-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--ant-color-text);
+}
+
+.editInput {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0 4px;
+  border: 1px solid var(--ant-color-primary);
+  border-radius: 2px;
+  font-size: 13px;
+  background: var(--ant-color-bg-container);
+  color: var(--ant-color-text);
+  outline: none;
+}
+
+.editInput:focus {
+  border-color: var(--ant-color-primary);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.children {
+  /* 子节点容器 */
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+}
+
+.emptyContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.emptyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 180px;
+}
+
+/* 拖拽样式 */
+.dragOver {
+  background-color: var(--ant-color-primary-bg);
+}
+
+.dragOverTop {
+  box-shadow: inset 0 2px 0 var(--ant-color-primary);
+}
+
+.dragOverBottom {
+  box-shadow: inset 0 -2px 0 var(--ant-color-primary);
+}
+
+/* 剪切项样式 */
+.cut {
+  opacity: 0.5;
+}
+
+/* 选中项的左侧指示条 */
+.treeNode.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--ant-color-primary);
+}

@@ -1,0 +1,327 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color);
+}
+
+.loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* 顶部工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 !important;
+  font-size: 18px !important;
+}
+
+.stats {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.toolbarCenter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg-color);
+  border-radius: 6px;
+}
+
+.zoomLevel {
+  min-width: 50px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 内容区域 */
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 32px;
+}
+
+.emptyNodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  color: var(--text-tertiary);
+}
+
+/* 时间线样式 */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.timelineItem {
+  display: flex;
+  gap: 20px;
+  cursor: default;
+}
+
+.timelineItem.selected {
+  background: var(--hover-bg);
+  border-radius: 12px;
+  margin: -8px;
+  padding: 8px;
+}
+
+.timelineItem.dropTarget {
+  border-top: 3px dashed var(--primary-color);
+  margin-top: -1.5px;
+}
+
+.timelineLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.timelineDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 3px solid var(--bg-color);
+  box-shadow: 0 0 0 3px var(--border-color);
+  cursor: grab;
+}
+
+.timelineItem:hover .timelineDot {
+  box-shadow: 0 0 0 4px var(--primary-color);
+}
+
+.timelineConnector {
+  flex: 1;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--border-color) 0%, var(--border-color) 100%);
+  min-height: 60px;
+}
+
+.timelineContent {
+  flex: 1;
+  padding-bottom: 24px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 16px;
+}
+
+.timelineItem:hover .timelineContent {
+  border-color: var(--primary-color);
+}
+
+.nodeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.nodeTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dragHandle {
+  color: var(--text-tertiary);
+  cursor: grab;
+  font-size: 16px;
+}
+
+.dragHandle:hover {
+  color: var(--text-secondary);
+}
+
+.nodeTitle {
+  font-size: 18px;
+}
+
+.nodeActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.timelineItem:hover .nodeActions {
+  opacity: 1;
+}
+
+.checkIcon {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.nodeTime {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.nodeDescription {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+
+.nodeCharacters {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.characterList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nodeChapter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.addNodeButton {
+  padding-left: 52px;
+  padding-bottom: 16px;
+}
+
+/* 模态框样式 */
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formLabel {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.colorPicker {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.colorOption {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.colorOption:hover {
+  transform: scale(1.15);
+}
+
+.colorSelected {
+  border-color: var(--bg-color);
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* 暗色模式适配 */
+:global(.dark) .timelineConnector {
+  background: linear-gradient(to bottom, #434343 0%, #434343 100%);
+}
+
+:global(.dark) .timelineContent:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

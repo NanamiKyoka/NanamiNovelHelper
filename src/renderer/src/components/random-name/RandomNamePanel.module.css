@@ -1,0 +1,205 @@
+/* Popover 容器 */
+.popover {
+  padding-top: 0 !important;
+}
+
+.popover :global(.ant-popover-inner) {
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.popover :global(.ant-popover-inner-content) {
+  padding: 0;
+}
+
+/* 主面板布局 */
+.panel {
+  display: flex;
+  width: 560px;
+  height: 400px;
+  background: var(--ant-color-bg-container, #fff);
+}
+
+.configColumn {
+  width: 240px;
+  border-right: 1px solid var(--ant-color-border, #f0f0f0);
+  overflow-y: auto;
+}
+
+.namesColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 配置面板 */
+.configPanel {
+  padding: 12px;
+}
+
+.configSection {
+  margin-bottom: 12px;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary, #666);
+  margin-bottom: 6px;
+}
+
+/* 类型选择标签页 */
+.panel :global(.ant-tabs) {
+  margin-bottom: -8px;
+}
+
+.panel :global(.ant-tabs-nav) {
+  margin-bottom: 8px !important;
+}
+
+.panel :global(.ant-tabs-tab) {
+  padding: 4px 8px !important;
+}
+
+.tabLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.typeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.typeGrid :global(.ant-btn) {
+  font-size: 12px;
+}
+
+/* 姓氏输入 */
+.surnameInput {
+  display: flex;
+  gap: 8px;
+}
+
+.surnameInput :global(.ant-input) {
+  flex: 1;
+}
+
+.surnameInput :global(.ant-btn) {
+  flex-shrink: 0;
+}
+
+/* Radio Group */
+.configSection :global(.ant-radio-group) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.configSection :global(.ant-radio-button-wrapper) {
+  font-size: 12px;
+  padding: 0 8px;
+  height: 24px;
+  line-height: 22px;
+}
+
+/* 生成按钮 */
+.generateBtn {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ant-color-border, #f0f0f0);
+}
+
+/* 名字面板 */
+.namesPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.namesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ant-color-border, #f0f0f0);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ant-color-text, #333);
+}
+
+.count {
+  color: var(--ant-color-text-secondary, #666);
+  font-weight: normal;
+}
+
+/* 名字网格 */
+.namesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+}
+
+.nameItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--ant-color-fill-quaternary, #fafafa);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.nameItem:hover {
+  background: var(--ant-color-primary-bg, #e6f4ff);
+  color: var(--ant-color-primary, #1890ff);
+}
+
+.copyIcon {
+  opacity: 0;
+  font-size: 11px;
+  transition: opacity 0.2s;
+}
+
+.nameItem:hover .copyIcon {
+  opacity: 1;
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--ant-color-text-tertiary, #999);
+  font-size: 13px;
+}
+
+/* 滚动条样式 */
+.configColumn::-webkit-scrollbar,
+.namesPanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.configColumn::-webkit-scrollbar-track,
+.namesPanel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.configColumn::-webkit-scrollbar-thumb,
+.namesPanel::-webkit-scrollbar-thumb {
+  background: var(--ant-color-border, #d9d9d9);
+  border-radius: 3px;
+}
+
+.configColumn::-webkit-scrollbar-thumb:hover,
+.namesPanel::-webkit-scrollbar-thumb:hover {
+  background: var(--ant-color-text-tertiary, #bfbfbf);
+}

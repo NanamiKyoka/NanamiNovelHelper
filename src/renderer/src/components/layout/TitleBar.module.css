@@ -1,0 +1,62 @@
+.titleBar {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  background-color: #f3f3f3;
+  color: #333;
+  -webkit-app-region: drag;
+  user-select: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid #ddd;
+}
+
+/* 深色主题 */
+:global(body.dark) .titleBar {
+  background-color: #1e1e1e;
+  color: #cccccc;
+  border-bottom-color: #333;
+}
+
+.dragRegion {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: drag;
+}
+
+.windowControls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.controlButton {
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.controlButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 深色主题控制按钮悬停 */
+:global(body.dark) .controlButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.close:hover {
+  background-color: #e81123;
+}
+
+.close:hover svg {
+  color: #fff;
+}

@@ -1,0 +1,125 @@
+/* 全局样式重置 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji');
+  font-size: var(--font-size, 14px);
+  line-height: 1.5715;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 浅色主题 */
+body.light {
+  color: rgba(0, 0, 0, 0.85);
+  background-color: #f0f2f5;
+  
+  /* CSS 变量定义 - 浅色主题 */
+  --bg-color: #f0f2f5;
+  --bg-secondary: #fafafa;
+  --card-bg: #ffffff;
+  --border-color: #f0f0f0;
+  --text-primary: rgba(0, 0, 0, 0.85);
+  --text-secondary: rgba(0, 0, 0, 0.65);
+  --text-tertiary: rgba(0, 0, 0, 0.45);
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --primary-color: #1890ff;
+}
+
+/* 深色主题 */
+body.dark {
+  color: rgba(255, 255, 255, 0.85);
+  background-color: #141414;
+  
+  /* CSS 变量定义 - 深色主题 */
+  --bg-color: #141414;
+  --bg-secondary: #1f1f1f;
+  --card-bg: #1f1f1f;
+  --border-color: #303030;
+  --text-primary: rgba(255, 255, 255, 0.85);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+  --hover-bg: rgba(255, 255, 255, 0.08);
+  --primary-color: #177ddc;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 浅色主题滚动条 */
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 深色主题滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 选中文本样式 */
+::selection {
+  background-color: var(--ant-color-primary, #1890ff);
+  color: #fff;
+}
+
+/* 链接样式 */
+a {
+  color: var(--ant-color-primary, #1890ff);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--ant-color-primary-hover, #40a9ff);
+}
+
+/* Ant Design 覆盖样式 */
+.ant-layout {
+  background: transparent;
+}
+
+/* 禁用文本选择的元素 */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 拖拽区域 */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}

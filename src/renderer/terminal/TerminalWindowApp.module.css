@@ -1,0 +1,207 @@
+/* 终端独立窗口应用 */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--ant-color-bg-container);
+  overflow: hidden;
+}
+
+/* 标题栏 */
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  -webkit-app-region: drag;
+}
+
+.titleBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.titleIcon {
+  color: var(--ant-color-primary);
+  font-size: 14px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ant-color-text);
+}
+
+.projectName {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.terminalSelector {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.select {
+  min-width: 150px;
+  max-width: 300px;
+  -webkit-app-region: no-drag;
+}
+
+.singleTerminalName {
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+}
+
+.select :global(.ant-select-selector) {
+  background: var(--ant-color-bg-container) !important;
+  border-color: var(--ant-color-border) !important;
+}
+
+.selectDropdown {
+  padding: 4px;
+}
+
+.selectOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.selectName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectCloseBtn {
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  font-size: 10px;
+  color: var(--ant-color-text-tertiary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.selectOption:hover .selectCloseBtn {
+  opacity: 1;
+}
+
+.selectCloseBtn:hover {
+  color: var(--ant-color-text);
+}
+
+.titleBarRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.titleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--ant-color-text-secondary);
+  border-radius: 4px;
+}
+
+.titleBtn:hover {
+  background: var(--ant-color-bg-text-hover);
+  color: var(--ant-color-text);
+}
+
+.windowControls {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.controlBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  color: var(--ant-color-text-secondary);
+  border-radius: 0;
+}
+
+.controlBtn:hover {
+  background: var(--ant-color-bg-text-hover);
+  color: var(--ant-color-text);
+}
+
+.closeBtn:hover {
+  background: #e81123 !important;
+  color: #fff !important;
+}
+
+/* 内容区 */
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.terminalWrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* 空状态 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  color: var(--ant-color-text-quaternary);
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--ant-color-text-tertiary);
+  margin-bottom: 16px;
+}
+
+/* 暗色主题优化 */
+:global(body.dark) .app {
+  background: #1e1e1e;
+}
+
+:global(body.dark) .titleBar {
+  background: #252526;
+  border-bottom-color: #3c3c3c;
+}
+
+:global(body.dark) .titleBtn:hover,
+:global(body.dark) .controlBtn:hover {
+  background: #3c3c3c;
+}
+
+:global(body.dark) .select :global(.ant-select-selector) {
+  background: #3c3c3c !important;
+  border-color: #3c3c3c !important;
+  color: #ccc !important;
+}

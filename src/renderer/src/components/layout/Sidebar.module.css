@@ -1,0 +1,46 @@
+.sidebar {
+  position: relative;
+  background: #f3f3f3;
+  border-right: 1px solid #e5e5e5;
+}
+
+/* 深色主题 */
+:global(body.dark) .sidebar {
+  background: #252526;
+  border-right-color: #3c3c3c;
+}
+
+.collapsed {
+  width: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.panelContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--ant-color-text-secondary);
+}
+
+.resizeHandle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.resizeHandle:hover {
+  background: var(--ant-color-primary, #1890ff);
+}

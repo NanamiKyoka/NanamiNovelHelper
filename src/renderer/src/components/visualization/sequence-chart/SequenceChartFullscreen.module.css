@@ -1,0 +1,386 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+}
+
+/* 顶部工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chartTitle {
+  margin: 0 !important;
+  font-size: 18px !important;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.zoomValue {
+  display: none;
+}
+
+/* 甘特图表格 */
+.ganttTable {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin: 16px;
+  background: var(--card-bg);
+}
+
+.tableBody {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧事件列表 */
+.tableLeft {
+  flex: 0 0 280px;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  transition: flex 0.3s ease;
+  overflow: hidden;
+}
+
+.tableLeft.collapsed {
+  flex: 0 0 0;
+  border-right: none;
+}
+
+.leftHeader {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.colIndex {
+  flex: 0 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border-color);
+}
+
+.colIntro {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.colProgress {
+  flex: 0 0 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--border-color);
+}
+
+.leftContent {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.eventRow {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.eventRow:hover {
+  background: var(--bg-hover);
+}
+
+.eventRow .colIndex {
+  font-weight: 500;
+}
+
+.introText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emptyEvents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* 切换按钮 */
+.toggleButton {
+  position: absolute;
+  left: 280px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 60px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: var(--text-secondary);
+  transition: left 0.3s ease;
+}
+
+.toggleButton:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
+}
+
+.tableLeft.collapsed + .toggleButton {
+  left: 0;
+}
+
+/* 右侧时间轴 */
+.tableRight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.rightHeader {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.timeCell {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  border-right: 1px solid var(--border-color-light);
+}
+
+.timeCell:nth-child(5n) {
+  border-right-color: var(--border-color);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.rightContent {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* 背景网格 */
+.gridBackground {
+  position: relative;
+  margin-top: 40px;
+}
+
+.gridRow {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.gridCell {
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid var(--border-color-light);
+}
+
+.gridCell:nth-child(5n) {
+  border-right-color: var(--border-color);
+}
+
+/* 事件条层 */
+.eventsLayer {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.eventBarContainer {
+  height: 40px;
+  position: relative;
+  pointer-events: auto;
+}
+
+.eventBar {
+  position: absolute;
+  top: 2px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: grab;
+  user-select: none;
+  opacity: 0.85;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: opacity 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.eventBar:hover {
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.eventBar.dragging {
+  opacity: 0.9;
+  cursor: grabbing;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.eventProgress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px 0 0 8px;
+}
+
+.eventLabel {
+  flex: 1;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  padding: 0 4px;
+}
+
+.eventLabel:active {
+  cursor: grabbing;
+}
+
+/* 拖拽调整手柄 */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.resizeHandleLeft {
+  left: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.resizeHandleRight {
+  right: 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.resizeHandle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.resizeHandle:active {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* 表单项 */
+.formItem {
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.formTip {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* 暗色模式适配 */
+:global(.dark) .eventBar {
+  opacity: 0.9;
+}
+
+:global(.dark) .eventBar:hover {
+  opacity: 1;
+}

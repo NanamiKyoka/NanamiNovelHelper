@@ -1,0 +1,122 @@
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mainLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.contentLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mainContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: margin-right 0.2s ease;
+}
+
+/* ============================================
+   右侧浮动触发按钮样式
+   ============================================ */
+
+.triggerBtn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background: var(--ant-color-bg-container, #fff);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+  font-size: 16px;
+  color: var(--ant-color-text-secondary, #666);
+}
+
+.triggerBtn:hover {
+  background: var(--ant-color-primary, #1890ff);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.triggerBtn.active {
+  background: var(--ant-color-primary, #1890ff);
+  color: #fff;
+}
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+  background: #f5222d;
+  border-radius: 9px;
+}
+
+/* ============================================
+   右侧面板
+   ============================================ */
+
+.rightSidebar {
+  position: fixed;
+  right: 64px;
+  top: 56px;
+  bottom: 24px;
+  width: 400px;
+  background: var(--ant-color-bg-container, #fff);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.rightSidebarHeader {
+  height: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ant-color-border, #f0f0f0);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ant-color-text, #333);
+}
+
+.rightSidebarBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

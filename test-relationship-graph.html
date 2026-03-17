@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>关系图测试 - G6</title>
+  <script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 300px;
+      background: #fff;
+      border-right: 1px solid #e8e8e8;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .toolbar {
+      padding: 12px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .canvas-container {
+      flex: 1;
+      background: #fafafa;
+      position: relative;
+    }
+    #graph-container {
+      width: 100%;
+      height: 100%;
+    }
+    h2 {
+      margin-bottom: 16px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .node-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .node-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .node-item:hover {
+      background: #e6f7ff;
+    }
+    .node-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+    }
+    .node-name {
+      font-size: 14px;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    button {
+      padding: 6px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    button:hover {
+      border-color: #1890ff;
+      color: #1890ff;
+    }
+    button.primary {
+      background: #1890ff;
+      border-color: #1890ff;
+      color: #fff;
+    }
+    button.primary:hover {
+      background: #40a9ff;
+      border-color: #40a9ff;
+    }
+    .zoom-info {
+      margin-left: auto;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>🧑‍🤝‍🧑 关系图测试</h2>
+      
+      <div class="section">
+        <div class="section-title">人物列表</div>
+        <div class="node-list" id="node-list">
+          <!-- 动态填充 -->
+        </div>
+      </div>
+      
+      <div class="section">
+        <div class="section-title">关系列表</div>
+        <div class="stats" id="edge-list">
+          <!-- 动态填充 -->
+        </div>
+      </div>
+      
+      <div class="section">
+        <div class="section-title">统计</div>
+        <div class="stats">
+          <span>人物: <strong id="node-count">0</strong></span>
+          <span>关系: <strong id="edge-count">0</strong></span>
+        </div>
+      </div>
+      
+      <div class="section">
+        <button class="primary" onclick="addTestNode()">添加测试人物</button>
+        <button onclick="addTestEdge()">添加测试关系</button>
+      </div>
+      
+      <div class="section">
+        <button onclick="resetGraph()">重置图形</button>
+        <button onclick="toggleTheme()">切换主题</button>
+      </div>
+    </div>
+    
+    <div class="main">
+      <div class="toolbar">
+        <button onclick="zoomIn()">放大</button>
+        <button onclick="zoomOut()">缩小</button>
+        <button onclick="fitView()">适应画布</button>
+        <span class="zoom-info">缩放: <span id="zoom-level">100%</span></span>
+      </div>
+      <div class="canvas-container">
+        <div id="graph-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 测试数据
+    const testData = {
+      nodes: [
+        { id: 'node-1', name: '张三', gender: 'male', color: '#1890ff', description: '主角' },
+        { id: 'node-2', name: '李四', gender: 'female', color: '#eb2f96', description: '女主角' },
+        { id: 'node-3', name: '王五', gender: 'male', color: '#52c41a', description: '配角' },
+      ],
+      edges: [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', label: '恋人', color: '#eb2f96' },
+        { id: 'edge-2', source: 'node-1', target: 'node-3', label: '好友', color: '#52c41a' },
+        { id: 'edge-3', source: 'node-2', target: 'node-3', label: '情敌', color: '#fa8c16' },
+      ]
+    };
+
+    let graph = null;
+    let isDarkMode = false;
+    let nodeIdCounter = 4;
+    let edgeIdCounter = 4;
+
+    // 初始化图形
+    function initGraph() {
+      const container = document.getElementById('graph-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      // 主题相关颜色
+      const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333';
+      const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666';
+      const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff';
+
+      graph = new G6.Graph({
+        container: 'graph-container',
+        width,
+        height,
+        autoFit: 'view',
+        padding: 20,
+        data: { nodes: [], edges: [] },
+        
+        // 节点配置
+        node: {
+          type: 'circle',
+          style: {
+            size: 40,
+            fill: '#1890ff',
+            stroke: '#1890ff',
+            lineWidth: 2,
+            cursor: 'pointer',
+            labelText: (d) => d.data?.label || '',
+            labelFill: nodeLabelColor,
+            labelFontSize: 12,
+            labelFontWeight: 'normal',
+            labelPlacement: 'bottom',
+            labelOffsetY: 8,
+          },
+          state: {
+            selected: {
+              lineWidth: 3,
+              shadowColor: '#1890ff',
+              shadowBlur: 10,
+            },
+            hover: {
+              lineWidth: 3,
+            },
+          },
+        },
+        
+        // 边配置
+        edge: {
+          type: 'quadratic',
+          style: {
+            stroke: '#999999',
+            lineWidth: 2,
+            endArrow: true,
+            cursor: 'pointer',
+            labelText: (d) => d.data?.label || '',
+            labelFill: edgeLabelColor,
+            labelFontSize: 10,
+            labelBackground: true,
+            labelBackgroundFill: labelBgColor,
+            labelBackgroundOpacity: 0.9,
+            labelBackgroundPadding: [2, 4, 2, 4],
+          },
+          state: {
+            selected: {
+              lineWidth: 3,
+            },
+            hover: {
+              lineWidth: 3,
+            },
+          },
+        },
+        
+        // 布局配置
+        layout: {
+          type: 'force',
+          preventOverlap: true,
+          nodeSize: 60,
+          linkDistance: 150,
+          nodeStrength: 600,
+          edgeStrength: 200,
+          gravity: 100,
+          animation: true,
+        },
+        
+        // 交互行为
+        behaviors: [
+          'drag-canvas',
+          'zoom-canvas',
+          'drag-element',
+        ],
+      });
+
+      // 绑定事件
+      graph.on('node:click', (evt) => {
+        console.log('Node clicked:', evt.target.id);
+      });
+
+      graph.on('node:dblclick', (evt) => {
+        const nodeId = evt.target.id;
+        const node = testData.nodes.find(n => n.id === nodeId);
+        if (node) {
+          alert(`编辑人物: ${node.name}\n描述: ${node.description || '无'}`);
+        }
+      });
+
+      // 渲染
+      graph.render().then(() => {
+        console.log('Graph rendered');
+        updateGraphData();
+      }).catch((err) => {
+        console.error('Render error:', err);
+      });
+
+      // 窗口大小变化
+      window.addEventListener('resize', () => {
+        if (graph && !graph.destroyed) {
+          graph.resize(container.clientWidth, container.clientHeight);
+        }
+      });
+    }
+
+    // 更新图形数据
+    function updateGraphData() {
+      if (!graph || graph.destroyed) return;
+
+      const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333';
+      const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666';
+      const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff';
+
+      // 转换节点数据 - G6 v5 格式
+      const nodes = testData.nodes.map((node) => ({
+        id: node.id,
+        data: {
+          label: node.name,
+        },
+        style: {
+          fill: node.color || '#1890ff',
+          stroke: node.color || '#1890ff',
+          labelFill: nodeLabelColor,
+        },
+      }));
+
+      // 转换边数据 - G6 v5 格式
+      const edges = testData.edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        data: {
+          label: edge.label || '',
+        },
+        style: {
+          stroke: edge.color || '#999999',
+          labelFill: edgeLabelColor,
+          labelBackgroundFill: labelBgColor,
+        },
+      }));
+
+      // 设置数据
+      graph.setData({ nodes, edges });
+      
+      // 渲染
+      graph.render().then(() => {
+        if (!graph.destroyed && nodes.length > 0) {
+          graph.fitView(40);
+          updateZoomLevel();
+        }
+      });
+
+      // 更新 UI
+      updateUI();
+    }
+
+    // 更新 UI
+    function updateUI() {
+      // 更新节点列表
+      const nodeList = document.getElementById('node-list');
+      nodeList.innerHTML = testData.nodes.map(node => `
+        <div class="node-item" onclick="selectNode('${node.id}')">
+          <div class="node-color" style="background-color: ${node.color}"></div>
+          <span class="node-name">${node.name}</span>
+        </div>
+      `).join('');
+
+      // 更新边列表
+      const edgeList = document.getElementById('edge-list');
+      edgeList.innerHTML = testData.edges.map(edge => {
+        const source = testData.nodes.find(n => n.id === edge.source);
+        const target = testData.nodes.find(n => n.id === edge.target);
+        return `<span>${source?.name || '?'} → ${target?.name || '?'} (${edge.label})</span>`;
+      }).join(' | ');
+
+      // 更新统计
+      document.getElementById('node-count').textContent = testData.nodes.length;
+      document.getElementById('edge-count').textContent = testData.edges.length;
+    }
+
+    // 选择节点
+    function selectNode(nodeId) {
+      if (graph && !graph.destroyed) {
+        graph.setElementState(nodeId, 'selected', true);
+        setTimeout(() => {
+          graph.setElementState(nodeId, 'selected', false);
+        }, 1000);
+      }
+    }
+
+    // 缩放控制
+    function zoomIn() {
+      if (graph && !graph.destroyed) {
+        const currentZoom = graph.getZoom();
+        const newZoom = Math.min(currentZoom * 1.2, 3);
+        graph.zoomTo(newZoom);
+        updateZoomLevel();
+      }
+    }
+
+    function zoomOut() {
+      if (graph && !graph.destroyed) {
+        const currentZoom = graph.getZoom();
+        const newZoom = Math.max(currentZoom / 1.2, 0.3);
+        graph.zoomTo(newZoom);
+        updateZoomLevel();
+      }
+    }
+
+    function fitView() {
+      if (graph && !graph.destroyed) {
+        graph.fitView(40);
+        updateZoomLevel();
+      }
+    }
+
+    function updateZoomLevel() {
+      if (graph && !graph.destroyed) {
+        document.getElementById('zoom-level').textContent = Math.round(graph.getZoom() * 100) + '%';
+      }
+    }
+
+    // 添加测试节点
+    function addTestNode() {
+      const colors = ['#1890ff', '#eb2f96', '#52c41a', '#fa8c16', '#722ed1', '#13c2c2'];
+      const names = ['小明', '小红', '小刚', '小美', '小强', '小芳'];
+      const newNode = {
+        id: `node-${nodeIdCounter++}`,
+        name: names[Math.floor(Math.random() * names.length)] + nodeIdCounter,
+        gender: Math.random() > 0.5 ? 'male' : 'female',
+        color: colors[Math.floor(Math.random() * colors.length)],
+        description: '测试人物'
+      };
+      testData.nodes.push(newNode);
+      updateGraphData();
+    }
+
+    // 添加测试边
+    function addTestEdge() {
+      if (testData.nodes.length < 2) {
+        alert('请先添加至少两个人物');
+        return;
+      }
+      const labels = ['朋友', '敌人', '恋人', '师徒', '同事'];
+      const colors = ['#52c41a', '#722ed1', '#eb2f96', '#fa8c16', '#1890ff'];
+      const randomIndex = Math.floor(Math.random() * testData.nodes.length);
+      let targetIndex = Math.floor(Math.random() * testData.nodes.length);
+      while (targetIndex === randomIndex) {
+        targetIndex = Math.floor(Math.random() * testData.nodes.length);
+      }
+      const newEdge = {
+        id: `edge-${edgeIdCounter++}`,
+        source: testData.nodes[randomIndex].id,
+        target: testData.nodes[targetIndex].id,
+        label: labels[Math.floor(Math.random() * labels.length)],
+        color: colors[Math.floor(Math.random() * colors.length)]
+      };
+      testData.edges.push(newEdge);
+      updateGraphData();
+    }
+
+    // 重置图形
+    function resetGraph() {
+      testData.nodes = [
+        { id: 'node-1', name: '张三', gender: 'male', color: '#1890ff', description: '主角' },
+        { id: 'node-2', name: '李四', gender: 'female', color: '#eb2f96', description: '女主角' },
+        { id: 'node-3', name: '王五', gender: 'male', color: '#52c41a', description: '配角' },
+      ];
+      testData.edges = [
+        { id: 'edge-1', source: 'node-1', target: 'node-2', label: '恋人', color: '#eb2f96' },
+        { id: 'edge-2', source: 'node-1', target: 'node-3', label: '好友', color: '#52c41a' },
+        { id: 'edge-3', source: 'node-2', target: 'node-3', label: '情敌', color: '#fa8c16' },
+      ];
+      nodeIdCounter = 4;
+      edgeIdCounter = 4;
+      updateGraphData();
+    }
+
+    // 切换主题
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.body.style.background = isDarkMode ? '#1f1f1f' : '#f5f5f5';
+      
+      if (graph && !graph.destroyed) {
+        graph.destroy();
+      }
+      initGraph();
+    }
+
+    // 初始化
+    window.onload = () => {
+      initGraph();
+    };
+  </script>
+</body>
+</html>

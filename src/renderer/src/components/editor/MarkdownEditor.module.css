@@ -1,0 +1,312 @@
+/* 编辑器包装器 */
+.editorWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  background: #ffffff;
+  position: relative;
+}
+
+[data-theme="dark"] .editorWrapper {
+  background: #1e1e1e;
+}
+
+/* 编辑器容器 */
+.editorContainer {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 48px;
+  --paragraph-spacing: 0.5em;
+}
+
+/* 编辑器内容 */
+.editorContent {
+  outline: none;
+  min-height: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  color: rgba(0, 0, 0, 0.85);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+[data-theme="dark"] .editorContent {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 占位符 */
+.editorContent p.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  height: 0;
+}
+
+[data-theme="dark"] .editorContent p.is-empty::before {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* 段落 */
+.editorContent p {
+  margin: 0 0 var(--paragraph-spacing) 0;
+}
+
+/* 标题 */
+.editorContent h1,
+.editorContent h2,
+.editorContent h3,
+.editorContent h4,
+.editorContent h5,
+.editorContent h6 {
+  margin: 1.5em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.editorContent h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 0.3em;
+}
+
+.editorContent h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 0.3em;
+}
+
+.editorContent h3 {
+  font-size: 1.25em;
+}
+
+.editorContent h4 {
+  font-size: 1em;
+}
+
+.editorContent h5 {
+  font-size: 0.875em;
+}
+
+.editorContent h6 {
+  font-size: 0.85em;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="dark"] .editorContent h1,
+[data-theme="dark"] .editorContent h2 {
+  border-bottom-color: #3c3c3c;
+}
+
+[data-theme="dark"] .editorContent h6 {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* 粗体、斜体、删除线 */
+.editorContent strong {
+  font-weight: 600;
+}
+
+.editorContent em {
+  font-style: italic;
+}
+
+.editorContent s {
+  text-decoration: line-through;
+}
+
+/* 行内代码 */
+.editorContent code {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+}
+
+[data-theme="dark"] .editorContent code {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 代码块 */
+.editorContent pre {
+  background: #282c34;
+  border-radius: 6px;
+  color: #abb2bf;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+  padding: 16px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.editorContent pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* 引用块 */
+.editorContent blockquote {
+  border-left: 4px solid #e8e8e8;
+  margin: 1em 0;
+  padding: 0.5em 0 0.5em 1em;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="dark"] .editorContent blockquote {
+  border-left-color: #3c3c3c;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* 列表 */
+.editorContent ul,
+.editorContent ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.editorContent li {
+  margin: 0.25em 0;
+}
+
+.editorContent ul {
+  list-style-type: disc;
+}
+
+.editorContent ol {
+  list-style-type: decimal;
+}
+
+/* 链接 */
+.editorContent a.editor-link {
+  color: #1890ff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.editorContent a.editor-link:hover {
+  text-decoration: underline;
+}
+
+[data-theme="dark"] .editorContent a.editor-link {
+  color: #40a9ff;
+}
+
+/* 图片 */
+.editorContent img.editor-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1em 0;
+}
+
+/* 高亮 */
+.editorContent mark {
+  background-color: #fef3cd;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+[data-theme="dark"] .editorContent mark {
+  background-color: #4d3800;
+}
+
+/* 水平分隔线 */
+.editorContent hr {
+  border: none;
+  border-top: 2px solid #e8e8e8;
+  margin: 2em 0;
+}
+
+[data-theme="dark"] .editorContent hr {
+  border-top-color: #3c3c3c;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .loading {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 滚动条 */
+.editorContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.editorContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editorContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.editorContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ProseMirror 特定样式 */
+.editorContent .ProseMirror-selectednode {
+  outline: 2px solid #1890ff;
+}
+
+[data-theme="dark"] .editorContent .ProseMirror-selectednode {
+  outline-color: #40a9ff;
+}
+
+/* 任务列表样式 */
+.editorContent ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.editorContent ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.editorContent ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.editorContent ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.editorContent ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--ant-color-text-secondary);
+}
+
+/* 删除线样式 */
+.editorContent s {
+  text-decoration: line-through;
+}
+
+/* 下划线样式 */
+.editorContent u {
+  text-decoration: underline;
+}

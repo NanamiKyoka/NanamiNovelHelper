@@ -1,0 +1,131 @@
+/* 编辑器面板 */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .emptyState {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 编辑器区域 */
+.editorArea {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+/* 编辑器包装器 */
+.editorWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+[data-theme="dark"] .editorWrapper {
+  background: #1e1e1e;
+}
+
+/* 编辑器容器 */
+.editorContainer {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 48px;
+}
+
+/* 编辑器内容 */
+.editorContent {
+  outline: none;
+  min-height: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  color: rgba(0, 0, 0, 0.85);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+[data-theme="dark"] .editorContent {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+/* 状态栏 */
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 24px;
+  font-size: 12px;
+  background: #f3f3f3;
+  border-top: 1px solid #e8e8e8;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .statusBar {
+  background: #252526;
+  border-top-color: #3c3c3c;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.statusLeft,
+.statusRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dirty {
+  color: #faad14;
+}
+
+[data-theme="dark"] .dirty {
+  color: #ffc53d;
+}
+
+/* 滚动条 */
+.editorContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.editorContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editorContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.editorContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

@@ -1,0 +1,137 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--ant-color-bg-container);
+  border-bottom: 1px solid var(--ant-color-border);
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.divider {
+  width: 1px;
+  height: 16px;
+  background: var(--ant-color-border);
+  margin: 0 4px;
+}
+
+.arrow {
+  font-size: 10px;
+  margin-left: 4px;
+  color: var(--ant-color-text-secondary);
+}
+
+.active {
+  background: var(--ant-color-primary-bg) !important;
+  color: var(--ant-color-primary) !important;
+}
+
+/* 任务列表样式 */
+.taskList {
+  list-style: none;
+  padding-left: 0;
+}
+
+.taskItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.taskCheckbox {
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.taskContent {
+  flex: 1;
+}
+
+.taskContent[data-checked="true"] {
+  text-decoration: line-through;
+  color: var(--ant-color-text-secondary);
+}
+
+/* 搜索面板样式 - VSCode风格右上角悬浮 */
+.searchPanel {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 100;
+  display: flex;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.searchToggle {
+  display: flex;
+  align-items: stretch;
+  border-right: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-layout);
+}
+
+.searchContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.searchRow,
+.replaceRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+}
+
+.searchRow {
+  background: var(--ant-color-bg-container);
+}
+
+.replaceRow {
+  background: var(--ant-color-bg-layout);
+  border-top: 1px solid var(--ant-color-border);
+}
+
+.searchResults {
+  min-width: 50px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* 弹性空间 */
+.spacer {
+  flex: 1;
+}
+
+/* 字体设置下拉菜单 */
+.fontDropdown :global(.ant-dropdown-menu) {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fontDropdown :global(.ant-dropdown-menu-item-group-title) {
+  padding: 8px 12px 4px;
+  color: var(--ant-color-primary);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.fontDropdown :global(.ant-dropdown-menu-item) {
+  min-width: 150px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.fontDropdown :global(.ant-dropdown-menu-item-divider) {
+  margin: 4px 0;
+}

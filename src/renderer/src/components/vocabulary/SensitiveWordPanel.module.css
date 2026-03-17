@@ -1,0 +1,16 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--ant-color-bg-container);
+  padding: 16px;
+}
+
+.toolbar {
+  margin-bottom: 16px;
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: auto;
+}

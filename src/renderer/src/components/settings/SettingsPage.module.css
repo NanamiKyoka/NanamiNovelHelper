@@ -1,0 +1,42 @@
+.container {
+  height: 100%;
+  background: var(--ant-color-bg-layout);
+}
+
+.sider {
+  background: var(--ant-color-bg-container) !important;
+  border-right: 1px solid var(--ant-color-border);
+}
+
+.header {
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--ant-color-border);
+}
+
+.menu {
+  border: none !important;
+}
+
+.content {
+  background: var(--ant-color-bg-layout);
+  overflow: auto;
+}
+
+.panel {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.panel h2 {
+  margin-bottom: 8px;
+}
+
+.description {
+  color: var(--ant-color-text-secondary);
+  margin-bottom: 24px;
+}

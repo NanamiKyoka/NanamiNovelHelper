@@ -1,0 +1,94 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  background: var(--ant-color-bg-container, #fff);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--ant-color-border, #f0f0f0);
+}
+
+.sectionTitle {
+  font-weight: 600;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+.sectionDescription {
+  color: var(--ant-color-text-secondary, #666);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.badgeList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badgeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-layout, #fafafa);
+  border-radius: 6px;
+  border: 1px solid var(--ant-color-border, #f0f0f0);
+}
+
+.badgeItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.badgeIcon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ant-color-primary-bg, #e6f7ff);
+  color: var(--ant-color-primary, #1890ff);
+  font-size: 16px;
+}
+
+.badgeInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.badgeName {
+  font-weight: 500;
+}
+
+.badgeDesc {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary, #666);
+}
+
+.divider {
+  height: 1px;
+  background: var(--ant-color-border, #f0f0f0);
+  margin: 8px 0;
+}
+
+.tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: var(--ant-color-info-bg, #e6f7ff);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary, #666);
+}
+
+.tipIcon {
+  color: var(--ant-color-info, #1890ff);
+  margin-top: 2px;
+}

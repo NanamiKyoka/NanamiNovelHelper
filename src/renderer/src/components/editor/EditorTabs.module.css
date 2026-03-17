@@ -1,0 +1,184 @@
+/* VSCode 风格标签页容器 */
+.tabsContainer {
+  display: flex;
+  width: 100%;
+  min-height: 35px;
+  background: #f3f3f3;
+  border-bottom: 1px solid #e8e8e8;
+  overflow-x: auto;
+  overflow-y: hidden;
+  user-select: none;
+}
+
+[data-theme="dark"] .tabsContainer {
+  background: #252526;
+  border-bottom-color: #3c3c3c;
+}
+
+/* 标签页包装器 */
+.tabsWrapper {
+  display: flex;
+  flex: 1;
+  gap: 0;
+}
+
+/* 单个标签页 */
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  min-width: 80px;
+  max-width: 200px;
+  height: 35px;
+  border-right: 1px solid #e8e8e8;
+  background: #f3f3f3;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: #e8e8e8;
+}
+
+.tab.active {
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid #ffffff;
+  margin-bottom: -1px;
+}
+
+/* 拖拽悬停效果 */
+.tab.dragOver {
+  background: #d4d4d4;
+  border-left: 2px solid #0078d4;
+}
+
+[data-theme="dark"] .tab {
+  background: #2d2d2d;
+  border-right-color: #3c3c3c;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme="dark"] .tab:hover {
+  background: #3c3c3c;
+}
+
+[data-theme="dark"] .tab.active {
+  background: #1e1e1e;
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom-color: #1e1e1e;
+}
+
+[data-theme="dark"] .tab.dragOver {
+  background: #3c3c3c;
+  border-left-color: #3794ff;
+}
+
+/* 固定图标 */
+.pinIcon {
+  font-size: 12px;
+  color: #0078d4;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .pinIcon {
+  color: #3794ff;
+}
+
+/* 文件图标 */
+.fileIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* 标签名 */
+.tabName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* 预览标签样式（斜体） */
+.tab.preview .tabName {
+  font-style: italic;
+}
+
+/* 修改指示器 */
+.dirtyIndicator {
+  color: #faad14;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .dirtyIndicator {
+  color: #ffc53d;
+}
+
+/* 关闭按钮 */
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.tab:hover .closeBtn,
+.tab.active .closeBtn {
+  opacity: 1;
+}
+
+.closeBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.closeBtn:active {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .closeBtn {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme="dark"] .closeBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="dark"] .closeBtn:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 滚动条样式 */
+.tabsContainer::-webkit-scrollbar {
+  height: 3px;
+}
+
+.tabsContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabsContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+}
+
+[data-theme="dark"] .tabsContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}

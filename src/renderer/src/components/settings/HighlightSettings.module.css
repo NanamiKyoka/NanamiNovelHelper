@@ -1,0 +1,65 @@
+.container {
+  max-width: 800px;
+}
+
+.card {
+  margin-bottom: 16px;
+}
+
+.card :global(.ant-card-head) {
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+}
+
+.card :global(.ant-card-body) {
+  padding: 16px 24px;
+}
+
+.section {
+  margin-bottom: 8px;
+}
+
+.section h4 {
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hint {
+  color: var(--text-color-secondary, #8c8c8c);
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+}
+
+.tagList :global(.ant-tag) {
+  margin: 0;
+}
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colorLabel {
+  min-width: 40px;
+  font-size: 14px;
+}
+
+.styleOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.styleOptions :global(.ant-form-item) {
+  margin-bottom: 0;
+  margin-right: 16px;
+}

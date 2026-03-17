@@ -1,0 +1,23 @@
+.container {
+  max-width: 600px;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--text-color, rgba(0, 0, 0, 0.85));
+}
+
+/* 滑块样式 */
+:global(.ant-slider) {
+  margin: 8px 0;
+}
+
+:global(.ant-slider-mark-text) {
+  font-size: 12px;
+}

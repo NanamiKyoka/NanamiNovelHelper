@@ -1,0 +1,61 @@
+.activityBar {
+  display: flex;
+  flex-direction: column;
+  width: 48px;
+  height: 100%;
+  background-color: #484848;
+  user-select: none;
+}
+
+/* 深色主题 */
+:global(body.dark) .activityBar {
+  background-color: #333333;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding-top: 4px;
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 4px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+}
+
+.item:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.item.active {
+  color: rgba(255, 255, 255, 1);
+}
+
+.item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--ant-color-primary, #1890ff);
+}
+
+.item svg {
+  font-size: 24px;
+}
