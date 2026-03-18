@@ -143,25 +143,7 @@ export interface RecentProject {
 }
 
 /**
- * 项目设置
- */
-export interface ProjectSettings {
-  /** 自动保存间隔（毫秒） */
-  autoSaveInterval: number
-  /** 默认文件类型 */
-  defaultFileType: FileType
-  /** 编辑器字体大小 */
-  editorFontSize: number
-  /** 编辑器字体族 */
-  editorFontFamily: string
-  /** 敏感词检测开关 */
-  sensitiveWordCheck: boolean
-  /** 词汇高亮开关 */
-  vocabularyHighlight: boolean
-}
-
-/**
- * 文件类型
+ * 文件类型（用于创建文件时的类型选择）
  */
 export type FileType = 'chapter' | 'character' | 'setting' | 'note' | 'outline'
 
@@ -214,3 +196,150 @@ export const IMAGES_DIR = 'images'
  * 加密密钥文件名
  */
 export const ENCRYPTED_KEYS_FILE = 'encrypted-keys.json'
+
+// ============================================
+// 项目初始化数据聚合类型
+// ============================================
+
+import type { VocabularyType, VocabularyEntry, SensitiveWord } from './vocabulary'
+import type { HighlightConfig } from './highlight'
+import type { ProjectSettings } from './settings'
+import type { FileNode } from './file'
+
+/**
+ * 关系图元数据（用于列表显示）
+ */
+export interface RelationshipGraphMeta {
+  id: string
+  name: string
+  description?: string
+  thumbnail?: string
+  linkedVocabularyTypes: string[]
+  customRelationTypes: Array<{
+    id: string
+    name: string
+    color: string
+    lineStyle: 'solid' | 'dashed' | 'dotted'
+    lineWidth: number
+    isBuiltIn: boolean
+    order: number
+  }>
+  nodeStyle: 'circle' | 'card'
+  nodeCount: number
+  edgeCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 时间线元数据
+ */
+export interface TimelineMeta {
+  id: string
+  name: string
+  description?: string
+  thumbnail?: string
+  branchInfo: {
+    type: 'main' | 'branch'
+    parentTimelineId?: string
+    branchFromNodeId?: string
+    mergeToTimelineId?: string
+    mergeToNodeId?: string
+    branchLabel?: string
+  }
+  nodeCount: number
+  tags?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 事序图元数据
+ */
+export interface SequenceChartMeta {
+  id: string
+  name: string
+  description?: string
+  thumbnail?: string
+  axisConfig: {
+    defaultFormat: 'cell' | 'datetime' | 'chapter'
+    cellWidth: number
+    initialCellCount: number
+    minCellCount: number
+    maxCellCount: number
+    autoExtend: boolean
+    timeLabels?: Array<{ position: number; label: string }>
+  }
+  customEventTypes: Array<{
+    id: string
+    name: string
+    color: string
+    icon?: string
+    isBuiltIn: boolean
+    order: number
+  }>
+  eventCount: number
+  tags?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 组织架构图元数据
+ */
+export interface OrganizationGraphMeta {
+  id: string
+  name: string
+  description?: string
+  thumbnail?: string
+  linkedVocabularyTypes: string[]
+  nodeStyle: 'simple' | 'card'
+  nodeCount: number
+  viewState?: {
+    zoom: number
+    centerX: number
+    centerY: number
+    expandedNodeIds?: string[]
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 文件树初始化数据
+ */
+export interface FileTreeInitData {
+  tree: FileNode[]
+  expandedFolders: string[]
+  showHiddenFiles: boolean
+  hiddenItems: string[]
+}
+
+/**
+ * 项目初始化数据（聚合接口返回）
+ * 一次性返回项目打开所需的所有数据，减少 IPC 调用次数
+ */
+export interface ProjectInitData {
+  /** 项目信息 */
+  project: Project
+  /** 项目设置 */
+  settings: ProjectSettings
+  /** 词汇类型列表 */
+  vocabularyTypes: VocabularyType[]
+  /** 词汇条目列表（所有类型） */
+  vocabularyEntries: VocabularyEntry[]
+  /** 敏感词列表 */
+  sensitiveWords: SensitiveWord[]
+  /** 高亮配置 */
+  highlightConfig: HighlightConfig
+  /** 关系图列表 */
+  relationshipGraphs: RelationshipGraphMeta[]
+  /** 时间线列表 */
+  timelines: TimelineMeta[]
+  /** 事序图列表 */
+  sequenceCharts: SequenceChartMeta[]
+  /** 组织架构图列表 */
+  organizationGraphs: OrganizationGraphMeta[]
+  /** 文件树初始化数据 */
+  fileTree: FileTreeInitData
+}

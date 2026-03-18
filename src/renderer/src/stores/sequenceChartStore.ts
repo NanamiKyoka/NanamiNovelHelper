@@ -108,6 +108,8 @@ interface SequenceChartState {
   getEventsByCellRange: (cellStart: number, cellEnd: number) => SequenceEvent[]
   getEventTypeById: (typeId: string) => SequenceEventType | undefined
   clearData: () => void
+  // 批量设置方法（用于聚合接口）
+  setCharts: (charts: SequenceChartMeta[]) => void
 }
 
 export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
@@ -833,5 +835,10 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
       hoveredEventId: null,
       editingEventId: null,
     })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setCharts: (charts: SequenceChartMeta[]) => {
+    set({ charts, isLoading: false, error: null })
   },
 }))

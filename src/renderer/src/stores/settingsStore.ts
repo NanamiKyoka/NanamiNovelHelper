@@ -58,6 +58,8 @@ interface SettingsState {
   restoreBackup: (filename: string) => Promise<boolean>
   deleteBackup: (filename: string) => Promise<boolean>
   exportBackup: (filename: string) => Promise<string | null>
+  // 批量设置方法（用于聚合接口）
+  setProjectSettings: (settings: ProjectSettings) => void
   importBackup: () => Promise<string | null>
   getResolvedThemeMode: () => 'light' | 'dark'
 }
@@ -167,6 +169,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   
   clearProjectSettings: () => {
     set({ projectSettings: null, hasProject: false })
+  },
+
+  // 批量设置项目设置（用于聚合接口）
+  setProjectSettings: (settings: ProjectSettings) => {
+    set({ projectSettings: settings, hasProject: true })
   },
   
   updateProjectSettings: async (updates) => {

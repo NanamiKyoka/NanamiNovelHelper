@@ -207,7 +207,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
         <div className={styles.headerLeft}>
           <TeamOutlined />
           <Title level={5} style={{ margin: 0 }}>
-            组织架构图
+            组织架构
           </Title>
           <Text type="secondary">({graphs.length})</Text>
         </div>

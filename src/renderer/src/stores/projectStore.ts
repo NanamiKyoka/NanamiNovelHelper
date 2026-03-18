@@ -26,6 +26,8 @@ interface ProjectState {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   clearError: () => void
+  // 批量设置方法（用于聚合接口）
+  setCurrentProject: (project: Project | null) => void
 }
 
 export const useProjectStore = create<ProjectState>()((set, get) => ({
@@ -179,5 +181,10 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 清除错误信息
   clearError: () => {
     set({ error: null })
+  },
+
+  // 批量设置当前项目（用于聚合接口）
+  setCurrentProject: (project: Project | null) => {
+    set({ currentProject: project, isLoading: false, error: null })
   }
 }))

@@ -20,6 +20,8 @@ interface SensitiveState {
   getWordById: (id: string) => SensitiveWord | undefined
   findWord: (id: string) => SensitiveWord | null
   checkText: (text: string) => Array<{ word: SensitiveWord; position: number }>
+  // 批量设置方法（用于聚合接口）
+  setWords: (words: SensitiveWord[]) => void
   clearData: () => void
 }
 
@@ -143,6 +145,16 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
     set({
       words: [],
       isLoaded: false,
+      error: null
+    })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setWords: (words: SensitiveWord[]) => {
+    set({
+      words,
+      isLoaded: true,
+      isLoading: false,
       error: null
     })
   }

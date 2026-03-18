@@ -79,6 +79,8 @@ interface TimelineState {
   getNodeById: (nodeId: string) => TimelineNode | undefined
   getNodesByTimeRange: (startTime: string, endTime: string) => TimelineNode[]
   clearData: () => void
+  // 批量设置方法（用于聚合接口）
+  setTimelines: (timelines: TimelineMeta[]) => void
 }
 
 export const useTimelineStore = create<TimelineState>((set, get) => ({
@@ -937,5 +939,10 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       historyIndex: -1,
       selectedNodeIds: [],
     })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setTimelines: (timelines: TimelineMeta[]) => {
+    set({ timelines, isLoading: false, error: null })
   },
 }))

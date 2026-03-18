@@ -131,4 +131,14 @@ export function registerProjectHandlers(): void {
       throw error
     }
   })
+
+  // 获取项目初始化数据（聚合接口）
+  ipcMain.handle('project:initData', async () => {
+    try {
+      return await projectService.getInitData()
+    } catch (error) {
+      console.error('Failed to get project init data:', error)
+      throw error
+    }
+  })
 }

@@ -45,6 +45,8 @@ interface VocabularyState {
   findEntry: (id: string) => VocabularyEntry | null
   findType: (id: string) => VocabularyType | null
   clearData: () => void
+  // 批量设置方法（用于聚合接口）
+  setData: (types: VocabularyType[], entries: VocabularyEntry[]) => void
 }
 
 const DEFAULT_SETTINGS: VocabularySettings = {
@@ -305,6 +307,18 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       settings: DEFAULT_SETTINGS,
       isLoaded: false,
       entriesLoaded: false,
+      error: null
+    })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setData: (types: VocabularyType[], entries: VocabularyEntry[]) => {
+    set({
+      types,
+      entries,
+      isLoaded: true,
+      entriesLoaded: true,
+      isLoading: false,
       error: null
     })
   }

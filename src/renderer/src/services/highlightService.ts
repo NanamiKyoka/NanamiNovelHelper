@@ -61,6 +61,8 @@ interface HighlightServiceState {
     caseSensitive: boolean
     color: string | null
   }
+  // 批量设置方法（用于聚合接口）
+  setConfig: (config: HighlightConfig) => void
 }
 
 /**
@@ -280,6 +282,17 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
       caseSensitive: entryOverride?.caseSensitive ?? (typeOverride?.caseSensitive ?? config.match.caseSensitive),
       color: entryOverride?.color ?? null
     }
+  },
+
+  // 批量设置配置（用于聚合接口）
+  setConfig: (config: HighlightConfig) => {
+    set({
+      config,
+      hoverCardConfig: config.hoverCard || DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
+      initialized: true,
+      loading: false,
+      error: null
+    })
   }
 }))
 

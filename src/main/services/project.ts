@@ -760,6 +760,74 @@ ${project.name}/
     
     return cjkCount + wordCount
   }
+
+  /**
+   * 获取项目初始化数据（聚合接口）
+   * 一次性返回项目打开所需的所有数据，减少 IPC 调用次数
+   */
+  async getInitData(): Promise<import('../types/project').ProjectInitData> {
+    if (!this.currentProject) {
+      throw new Error('没有打开的项目')
+    }
+
+    // 动态导入服务，避免循环依赖
+    const { vocabularyService } = await import('./vocabulary')
+    const { projectSettingsService } = await import('./projectSettings')
+    const { highlightService } = await import('./highlight')
+    const { relationshipService } = await import('./relationship')
+    const { timelineService } = await import('./timeline')
+    const { sequenceChartService } = await import('./sequence-chart')
+    const { organizationService } = await import('./organization')
+    const { fileService } = await import('./file')
+
+    // 并行获取所有数据
+    const [
+      settings,
+      vocabularyTypes,
+      vocabularyEntries,
+      sensitiveWords,
+      highlightConfig,
+      relationshipGraphs,
+      timelines,
+      sequenceCharts,
+      organizationGraphs
+    ] = await Promise.all([
+      Promise.resolve(projectSettingsService.getAll()),
+      Promise.resolve(vocabularyService.loadVocabularyTypes()),
+      Promise.resolve(vocabularyService.loadVocabularyEntries()),
+      Promise.resolve(vocabularyService.loadSensitiveWords()),
+      Promise.resolve(highlightService.loadConfig()),
+      Promise.resolve(relationshipService.getGraphList()),
+      Promise.resolve(timelineService.getTimelineList()),
+      Promise.resolve(sequenceChartService.getChartList()),
+      Promise.resolve(organizationService.getGraphList())
+    ])
+
+    // 获取文件树数据
+    const showHiddenFiles = projectSettingsService.getShowHiddenFiles()
+    const hiddenItems = projectSettingsService.getHiddenItems()
+    const expandedFolders = projectSettingsService.getExpandedFolders()
+    const tree = fileService.getFileTree(showHiddenFiles, { field: 'name', order: 'asc' }, hiddenItems)
+
+    return {
+      project: this.currentProject,
+      settings,
+      vocabularyTypes,
+      vocabularyEntries,
+      sensitiveWords,
+      highlightConfig,
+      relationshipGraphs,
+      timelines,
+      sequenceCharts,
+      organizationGraphs,
+      fileTree: {
+        tree,
+        expandedFolders,
+        showHiddenFiles,
+        hiddenItems
+      }
+    }
+  }
 }
 
 // 导出单例

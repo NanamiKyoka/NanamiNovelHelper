@@ -48,6 +48,8 @@ interface OrganizationState {
   getDescendants: (nodeId: string) => OrganizationNode[]
   getAncestors: (nodeId: string) => OrganizationNode[]
   clearData: () => void
+  // 批量设置方法（用于聚合接口）
+  setGraphs: (graphs: OrganizationGraphMeta[]) => void
 }
 
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
@@ -391,5 +393,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       isLoading: false,
       error: null,
     })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setGraphs: (graphs: OrganizationGraphMeta[]) => {
+    set({ graphs, isLoading: false, error: null })
   },
 }))

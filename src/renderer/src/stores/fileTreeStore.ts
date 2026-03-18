@@ -64,6 +64,8 @@ interface FileTreeState {
   findNode: (key: string) => FileNodeData | null
   getParentNode: (key: string) => FileNodeData | null
   getFlattenedNodes: () => FlattenedNode[]
+  // 批量设置方法（用于聚合接口）
+  setData: (roots: FileNodeData[], expandedFolders: string[], showHiddenFiles: boolean, hiddenItems: string[]) => void
 }
 
 /**
@@ -561,6 +563,24 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   getFlattenedNodes: () => {
     const { roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName } = get()
     return flattenTree(roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName)
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setData: (roots: FileNodeData[], expandedFolders: string[], showHiddenFiles: boolean, hiddenItems: string[]) => {
+    const expandedKeys = new Set(expandedFolders)
+    
+    // 如果没有保存的展开状态，默认展开根目录
+    if (expandedKeys.size === 0) {
+      const rootKeys = roots.filter(n => n.isDirectory).map(n => n.key)
+      rootKeys.forEach(k => expandedKeys.add(k))
+    }
+    
+    set({ 
+      roots, 
+      expandedKeys,
+      loading: false,
+      error: null
+    })
   }
 }))
 

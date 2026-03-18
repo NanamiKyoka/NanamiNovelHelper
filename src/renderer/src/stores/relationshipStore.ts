@@ -57,6 +57,8 @@ interface RelationshipState {
   getEdgeById: (edgeId: string) => RelationshipEdge | undefined
   getRelationTypeById: (typeId: string) => RelationType | undefined
   clearData: () => void
+  // 批量设置方法（用于聚合接口）
+  setGraphs: (graphs: RelationshipGraphMeta[]) => void
 }
 
 // 内置关系类型定义
@@ -514,5 +516,10 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
       isLoading: false,
       error: null,
     })
+  },
+
+  // 批量设置数据（用于聚合接口）
+  setGraphs: (graphs: RelationshipGraphMeta[]) => {
+    set({ graphs, isLoading: false, error: null })
   },
 }))
