@@ -36,6 +36,7 @@ import {
 import { Graph } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
+import { useUIStore } from '@stores/uiStore'
 import {
   BUILTIN_RELATION_TYPES,
   type RelationshipNode,
@@ -97,6 +98,15 @@ function RelationshipGraphFullscreen({
   } = useRelationshipStore()
 
   const { entries: vocabularyEntries, types: vocabularyTypes, loadEntries, loadTypes } = useVocabularyStore()
+  
+  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
+  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+
+  // 设置全屏模式，卸载时退出
+  useEffect(() => {
+    setFullscreenMode('relationship')
+    return () => exitFullscreen()
+  }, [setFullscreenMode, exitFullscreen])
 
   const graphRef = useRef<Graph | null>(null)
   const containerDomRef = useRef<HTMLDivElement | null>(null)

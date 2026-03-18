@@ -13,7 +13,6 @@ import {
   Space,
   Typography,
   Empty,
-  Spin,
   Tag,
   Tooltip,
   Dropdown,
@@ -40,10 +39,12 @@ import {
   HighlightOutlined
 } from '@ant-design/icons'
 import { useVocabularyStore } from '@stores/vocabularyStore'
+import { useUIStore } from '@stores/uiStore'
 import type { VocabularyType, VocabularyEntry, FieldDefinition } from '@types/vocabulary'
 import { getBuiltInVocabularyTypes, DEFAULT_COLORS } from '@types/vocabulary'
 import VocabularyPanel from './VocabularyPanel'
 import { HighlightSettings } from '@components/settings/HighlightSettings'
+import VocabularyTypeSettings from './VocabularyTypeSettings'
 import IconPicker, { getIconPreview, type IconValue } from './IconPicker'
 import { v4 as uuidv4 } from 'uuid'
 import styles from './VocabularyFullscreen.module.css'
@@ -90,10 +91,19 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     isLoaded
   } = useVocabularyStore()
   
+  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
+  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+  
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'entries' | 'highlight'>('entries')
+  const [activeTab, setActiveTab] = useState<'entries' | 'typeSettings' | 'highlight'>('entries')
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 设置全屏模式，卸载时退出
+  useEffect(() => {
+    setFullscreenMode('vocabulary')
+    return () => exitFullscreen()
+  }, [setFullscreenMode, exitFullscreen])
   
   // 类型编辑状态
   const [editingType, setEditingType] = useState<VocabularyType | null>(null)
@@ -298,6 +308,15 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       )
     },
     {
+      key: 'typeSettings',
+      label: (
+        <span>
+          <SettingOutlined />
+          类型设置
+        </span>
+      )
+    },
+    {
       key: 'highlight',
       label: (
         <span>
@@ -413,7 +432,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             <div className={styles.contentBody}>
               <Tabs
                 activeKey={activeTab}
-                onChange={(key) => setActiveTab(key as 'entries' | 'highlight')}
+                onChange={(key) => setActiveTab(key as 'entries' | 'typeSettings' | 'highlight')}
                 items={tabItems}
                 className={styles.tabs}
               />
@@ -425,6 +444,13 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     embedded 
                     currentTypeId={selectedTypeId || ''} 
                     onTypeChange={setSelectedTypeId}
+                  />
+                )}
+                {activeTab === 'typeSettings' && (
+                  <VocabularyTypeSettings 
+                    hideTypeList
+                    selectedTypeId={selectedTypeId}
+                    onSelectedTypeIdChange={setSelectedTypeId}
                   />
                 )}
                 {activeTab === 'highlight' && (

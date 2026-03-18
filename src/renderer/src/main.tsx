@@ -25,6 +25,13 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, resolvedMode])
 
+  // 设置标题栏高度 CSS 变量（用于全屏模式）
+  useEffect(() => {
+    const root = document.documentElement
+    const titlebarHeight = window.electron?.platform === 'darwin' ? '0px' : '32px'
+    root.style.setProperty('--titlebar-height', titlebarHeight)
+  }, [])
+
   const antdTheme = {
     algorithm: resolvedMode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
     cssVar: true,

@@ -32,73 +32,12 @@ function MenuBar(): JSX.Element {
 
   const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
   const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
+  const fullscreenMode = useUIStore((state) => state.fullscreenMode)
 
-  // 加载最近项目列表
+  // 加载最近项目列表 - hooks 必须在条件返回之前
   useEffect(() => {
     loadRecentProjects()
   }, [loadRecentProjects])
-
-  // 菜单配置
-  const menuConfig: MenuConfig[] = [
-    {
-      id: 'file',
-      label: '文件',
-      items: [
-        { id: 'newProject', label: '新建项目', shortcut: 'Ctrl+N' },
-        { id: 'openProject', label: '打开项目', shortcut: 'Ctrl+O' },
-        {
-          id: 'openRecent',
-          label: '打开最近',
-          children: recentProjects.length > 0
-            ? recentProjects.slice(0, 5).map(p => ({
-                id: `recent-${p.path}`,
-                label: p.name
-              }))
-            : [{ id: 'noRecent', label: '无最近项目', disabled: true }]
-        },
-        { id: 'separator1', label: '', separator: true },
-        { id: 'closeProject', label: '关闭项目', disabled: !currentProject },
-        { id: 'separator2', label: '', separator: true },
-        { id: 'projectSettings', label: '项目设置', disabled: !currentProject }
-      ]
-    },
-    {
-      id: 'edit',
-      label: '编辑',
-      items: [
-        { id: 'undo', label: '撤销', shortcut: 'Ctrl+Z' },
-        { id: 'redo', label: '重做', shortcut: 'Ctrl+Y' },
-        { id: 'separator1', label: '', separator: true },
-        { id: 'cut', label: '剪切', shortcut: 'Ctrl+X' },
-        { id: 'copy', label: '复制', shortcut: 'Ctrl+C' },
-        { id: 'paste', label: '粘贴', shortcut: 'Ctrl+V' },
-        { id: 'selectAll', label: '全选', shortcut: 'Ctrl+A' },
-        { id: 'separator2', label: '', separator: true },
-        { id: 'findReplace', label: '查找替换', shortcut: 'Ctrl+H' }
-      ]
-    },
-    {
-      id: 'view',
-      label: '视图',
-      items: [
-        { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' },
-        { id: 'toggleOutline', label: '大纲视图' },
-        { id: 'charCount', label: '字符统计' },
-        { id: 'separator1', label: '', separator: true },
-        { id: 'focusMode', label: '专注模式' }
-      ]
-    },
-    {
-      id: 'help',
-      label: '帮助',
-      items: [
-        { id: 'about', label: '关于' },
-        { id: 'docs', label: '查看文档' },
-        { id: 'separator1', label: '', separator: true },
-        { id: 'checkUpdate', label: '检查更新' }
-      ]
-    }
-  ]
 
   // 处理菜单点击
   const handleMenuClick = useCallback((menuId: string) => {
@@ -172,6 +111,73 @@ function MenuBar(): JSX.Element {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [activeMenu])
+
+  // 全屏编辑模式下隐藏菜单栏 - 在所有 hooks 之后判断
+  if (fullscreenMode) {
+    return <></>
+  }
+
+  // 菜单配置
+  const menuConfig: MenuConfig[] = [
+    {
+      id: 'file',
+      label: '文件',
+      items: [
+        { id: 'newProject', label: '新建项目', shortcut: 'Ctrl+N' },
+        { id: 'openProject', label: '打开项目', shortcut: 'Ctrl+O' },
+        {
+          id: 'openRecent',
+          label: '打开最近',
+          children: recentProjects.length > 0
+            ? recentProjects.slice(0, 5).map(p => ({
+                id: `recent-${p.path}`,
+                label: p.name
+              }))
+            : [{ id: 'noRecent', label: '无最近项目', disabled: true }]
+        },
+        { id: 'separator1', label: '', separator: true },
+        { id: 'closeProject', label: '关闭项目', disabled: !currentProject },
+        { id: 'separator2', label: '', separator: true },
+        { id: 'projectSettings', label: '项目设置', disabled: !currentProject }
+      ]
+    },
+    {
+      id: 'edit',
+      label: '编辑',
+      items: [
+        { id: 'undo', label: '撤销', shortcut: 'Ctrl+Z' },
+        { id: 'redo', label: '重做', shortcut: 'Ctrl+Y' },
+        { id: 'separator1', label: '', separator: true },
+        { id: 'cut', label: '剪切', shortcut: 'Ctrl+X' },
+        { id: 'copy', label: '复制', shortcut: 'Ctrl+C' },
+        { id: 'paste', label: '粘贴', shortcut: 'Ctrl+V' },
+        { id: 'selectAll', label: '全选', shortcut: 'Ctrl+A' },
+        { id: 'separator2', label: '', separator: true },
+        { id: 'findReplace', label: '查找替换', shortcut: 'Ctrl+H' }
+      ]
+    },
+    {
+      id: 'view',
+      label: '视图',
+      items: [
+        { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' },
+        { id: 'toggleOutline', label: '大纲视图' },
+        { id: 'charCount', label: '字符统计' },
+        { id: 'separator1', label: '', separator: true },
+        { id: 'focusMode', label: '专注模式' }
+      ]
+    },
+    {
+      id: 'help',
+      label: '帮助',
+      items: [
+        { id: 'about', label: '关于' },
+        { id: 'docs', label: '查看文档' },
+        { id: 'separator1', label: '', separator: true },
+        { id: 'checkUpdate', label: '检查更新' }
+      ]
+    }
+  ]
 
   // 渲染子菜单（用于"打开最近"等）
   const renderSubMenu = (items: MenuItem[], parentMenuId: string) => {

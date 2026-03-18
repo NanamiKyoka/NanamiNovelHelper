@@ -1,6 +1,13 @@
 /**
  * 项目设置服务
- * 管理项目级设置（存储在 .novelhelper/settings.json5）
+ *
+ * 存储位置：项目根目录/.novelhelper/settings.json5
+ * 存储格式：JSON5（支持注释和尾随逗号，便于用户手动编辑）
+ *
+ * 设计决策：
+ * 1. 防抖保存：延迟 500ms 写入，避免频繁 IO
+ * 2. 增量合并：支持部分更新，自动深度合并
+ * 3. 默认值继承：新设置项自动获得默认值，确保向后兼容
  */
 
 import * as fs from 'fs'
@@ -13,29 +20,25 @@ import {
   ProjectBackupSettings,
   BadgeVisibility,
   BadgeType,
+  SidebarBadgeVisibility,
   DEFAULT_PROJECT_SETTINGS,
-  DEFAULT_BADGE_ORDER
+  DEFAULT_BADGE_ORDER,
+  DEFAULT_SIDEBAR_BADGE_VISIBILITY,
+  DEFAULT_SIDEBAR_BADGE_ORDER
 } from '../types/settings'
 import { PROJECT_META_DIR, PROJECT_SETTINGS_FILE } from '../types/project'
 
-/**
- * 防抖保存计时器
- */
+/** 防抖计时器（模块级变量避免内存泄漏） */
 let saveTimer: NodeJS.Timeout | null = null
 
-/**
- * 项目设置服务
- */
 class ProjectSettingsService {
   private projectPath: string | null = null
   private settingsPath: string | null = null
   private settings: ProjectSettings = DEFAULT_PROJECT_SETTINGS
   private pendingChanges: Partial<ProjectSettings> = {}
-  private saveDelay: number = 500 // 默认防抖延迟
+  private saveDelay = 500
 
-  /**
-   * 初始化服务
-   */
+  /** 初始化服务，随项目打开调用 */
   init(projectPath: string): void {
     this.projectPath = projectPath
     this.settingsPath = path.join(projectPath, PROJECT_META_DIR, PROJECT_SETTINGS_FILE)
@@ -43,7 +46,7 @@ class ProjectSettingsService {
   }
 
   /**
-   * 加载项目设置
+   * 加载设置，自动填充缺失字段为默认值（向后兼容）
    */
   private loadSettings(): void {
     if (!this.settingsPath || !fs.existsSync(this.settingsPath)) {
@@ -61,6 +64,8 @@ class ProjectSettingsService {
         backup: { ...DEFAULT_PROJECT_SETTINGS.backup, ...saved.backup },
         badgeVisibility: { ...DEFAULT_PROJECT_SETTINGS.badgeVisibility, ...saved.badgeVisibility },
         badgeOrder: this.validateBadgeOrder(saved.badgeOrder),
+        sidebarBadgeVisibility: { ...DEFAULT_SIDEBAR_BADGE_VISIBILITY, ...saved.sidebarBadgeVisibility },
+        sidebarBadgeOrder: this.validateSidebarBadgeOrder(saved.sidebarBadgeOrder),
         showHiddenFiles: saved.showHiddenFiles ?? DEFAULT_PROJECT_SETTINGS.showHiddenFiles,
         expandedFolders: saved.expandedFolders ?? DEFAULT_PROJECT_SETTINGS.expandedFolders,
         hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
@@ -72,32 +77,35 @@ class ProjectSettingsService {
   }
 
   /**
-   * 验证并修复徽章顺序
+   * 验证徽章顺序：过滤无效类型 + 补充缺失徽章
+   * 确保旧配置不丢失，新徽章能自动出现
    */
   private validateBadgeOrder(order: unknown): BadgeType[] {
     if (!Array.isArray(order)) {
       return [...DEFAULT_BADGE_ORDER]
     }
-    // 过滤出有效的徽章类型
     const validOrder = order.filter((b): b is BadgeType => DEFAULT_BADGE_ORDER.includes(b))
-    // 添加缺失的徽章
     const missingBadges = DEFAULT_BADGE_ORDER.filter(b => !validOrder.includes(b))
     return [...validOrder, ...missingBadges]
   }
 
-  /**
-   * 保存项目设置（同步）
-   */
+  private validateSidebarBadgeOrder(order: unknown): string[] {
+    if (!Array.isArray(order)) {
+      return [...DEFAULT_SIDEBAR_BADGE_ORDER]
+    }
+    const validOrder = order.filter((b): b is string => DEFAULT_SIDEBAR_BADGE_ORDER.includes(b))
+    const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter(b => !validOrder.includes(b))
+    return [...validOrder, ...missingBadges]
+  }
+
   private saveSettingsSync(): void {
     if (!this.settingsPath) return
 
-    // 确保目录存在
     const dir = path.dirname(this.settingsPath)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
 
-    // 合并待保存的更改
     if (Object.keys(this.pendingChanges).length > 0) {
       this.settings = this.mergeSettings(this.settings, this.pendingChanges)
       this.pendingChanges = {}
@@ -107,7 +115,8 @@ class ProjectSettingsService {
   }
 
   /**
-   * 防抖保存
+   * 防抖保存：用户连续修改时只执行最后一次写入
+   * 500ms 是平衡 IO 性能和数据安全的折中值
    */
   private debouncedSave(): void {
     if (saveTimer) {
@@ -119,62 +128,35 @@ class ProjectSettingsService {
     }, this.saveDelay)
   }
 
-  /**
-   * 合并设置（深度合并）
-   */
+  /** 深度合并：只更新传入字段，保留其他属性 */
   private mergeSettings(target: ProjectSettings, source: Partial<ProjectSettings>): ProjectSettings {
     const result = { ...target }
     
-    if (source.editor) {
-      result.editor = { ...target.editor, ...source.editor }
-    }
-    if (source.highlight) {
-      result.highlight = { ...target.highlight, ...source.highlight }
-    }
-    if (source.backup) {
-      result.backup = { ...target.backup, ...source.backup }
-    }
-    if (source.autoCreateVocabularyFile !== undefined) {
-      result.autoCreateVocabularyFile = source.autoCreateVocabularyFile
-    }
-    if (source.badgeVisibility) {
-      result.badgeVisibility = { ...target.badgeVisibility, ...source.badgeVisibility }
-    }
-    if (source.badgeOrder) {
-      result.badgeOrder = source.badgeOrder
-    }
-    if (source.showHiddenFiles !== undefined) {
-      result.showHiddenFiles = source.showHiddenFiles
-    }
-    if (source.expandedFolders !== undefined) {
-      result.expandedFolders = source.expandedFolders
-    }
-    if (source.hiddenItems !== undefined) {
-      result.hiddenItems = source.hiddenItems
-    }
+    if (source.editor) result.editor = { ...target.editor, ...source.editor }
+    if (source.highlight) result.highlight = { ...target.highlight, ...source.highlight }
+    if (source.backup) result.backup = { ...target.backup, ...source.backup }
+    if (source.autoCreateVocabularyFile !== undefined) result.autoCreateVocabularyFile = source.autoCreateVocabularyFile
+    if (source.badgeVisibility) result.badgeVisibility = { ...target.badgeVisibility, ...source.badgeVisibility }
+    if (source.badgeOrder) result.badgeOrder = source.badgeOrder
+    if (source.sidebarBadgeVisibility) result.sidebarBadgeVisibility = { ...target.sidebarBadgeVisibility, ...source.sidebarBadgeVisibility }
+    if (source.sidebarBadgeOrder) result.sidebarBadgeOrder = source.sidebarBadgeOrder
+    if (source.showHiddenFiles !== undefined) result.showHiddenFiles = source.showHiddenFiles
+    if (source.expandedFolders !== undefined) result.expandedFolders = source.expandedFolders
+    if (source.hiddenItems !== undefined) result.hiddenItems = source.hiddenItems
     
     return result
   }
 
-  /**
-   * 获取所有设置
-   */
   getAll(): ProjectSettings {
     return { ...this.settings }
   }
 
-  /**
-   * 更新设置（带防抖）
-   */
   update(settings: Partial<ProjectSettings>): ProjectSettings {
     this.pendingChanges = { ...this.pendingChanges, ...settings }
     this.debouncedSave()
     return this.mergeSettings(this.settings, this.pendingChanges)
   }
 
-  /**
-   * 立即保存所有更改
-   */
   saveNow(): void {
     if (saveTimer) {
       clearTimeout(saveTimer)
@@ -183,9 +165,6 @@ class ProjectSettingsService {
     this.saveSettingsSync()
   }
 
-  /**
-   * 重置为默认设置
-   */
   reset(): ProjectSettings {
     this.settings = { ...DEFAULT_PROJECT_SETTINGS }
     this.pendingChanges = {}
@@ -193,174 +172,106 @@ class ProjectSettingsService {
     return this.settings
   }
 
-  // ============================================
   // 编辑器设置
-  // ============================================
-
-  /**
-   * 获取编辑器设置
-   */
   getEditorSettings(): ProjectEditorSettings {
     return { ...this.settings.editor }
   }
 
-  /**
-   * 更新编辑器设置
-   */
   updateEditorSettings(settings: Partial<ProjectEditorSettings>): ProjectEditorSettings {
     const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
     return this.update({ editor: { ...currentSettings.editor, ...settings } }).editor
   }
 
-  // ============================================
   // 高亮设置
-  // ============================================
-
-  /**
-   * 获取高亮设置
-   */
   getHighlightSettings(): ProjectHighlightSettings {
     return { ...this.settings.highlight }
   }
 
-  /**
-   * 更新高亮设置
-   */
   updateHighlightSettings(settings: Partial<ProjectHighlightSettings>): ProjectHighlightSettings {
     const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
     return this.update({ highlight: { ...currentSettings.highlight, ...settings } }).highlight
   }
 
-  // ============================================
   // 备份设置
-  // ============================================
-
-  /**
-   * 获取备份设置
-   */
   getBackupSettings(): ProjectBackupSettings {
     return { ...this.settings.backup }
   }
 
-  /**
-   * 更新备份设置
-   */
   updateBackupSettings(settings: Partial<ProjectBackupSettings>): ProjectBackupSettings {
     const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
     return this.update({ backup: { ...currentSettings.backup, ...settings } }).backup
   }
 
-  // ============================================
-  // 其他设置
-  // ============================================
-
-  /**
-   * 获取自动创建词汇文件设置
-   */
   getAutoCreateVocabularyFile(): boolean {
     return this.settings.autoCreateVocabularyFile
   }
 
-  /**
-   * 设置自动创建词汇文件
-   */
   setAutoCreateVocabularyFile(value: boolean): void {
     this.update({ autoCreateVocabularyFile: value })
   }
 
-  // ============================================
-  // 徽章可见性设置
-  // ============================================
-
-  /**
-   * 获取徽章可见性设置
-   */
+  // 徽章设置
   getBadgeVisibility(): BadgeVisibility {
     return { ...this.settings.badgeVisibility }
   }
 
-  /**
-   * 更新徽章可见性设置
-   */
   updateBadgeVisibility(settings: Partial<BadgeVisibility>): BadgeVisibility {
-    // 先获取合并后的最新设置（包含待保存的更改）
     const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
     return this.update({ badgeVisibility: { ...currentSettings.badgeVisibility, ...settings } }).badgeVisibility
   }
 
-  // ============================================
-  // 徽章顺序设置
-  // ============================================
-
-  /**
-   * 获取徽章顺序
-   */
   getBadgeOrder(): BadgeType[] {
     return [...this.settings.badgeOrder]
   }
 
-  /**
-   * 更新徽章顺序
-   */
   updateBadgeOrder(order: BadgeType[]): BadgeType[] {
     const validatedOrder = this.validateBadgeOrder(order)
     return this.update({ badgeOrder: validatedOrder }).badgeOrder
   }
 
-  // ============================================
-  // 显示隐藏文件设置
-  // ============================================
-
-  /**
-   * 获取显示隐藏文件设置
-   */
+  // 文件树设置
   getShowHiddenFiles(): boolean {
     return this.settings.showHiddenFiles
   }
 
-  /**
-   * 设置显示隐藏文件
-   */
   setShowHiddenFiles(value: boolean): void {
     this.update({ showHiddenFiles: value })
   }
 
-  // ============================================
-  // 文件树展开状态设置
-  // ============================================
-
-  /**
-   * 获取文件树展开的文件夹列表
-   */
   getExpandedFolders(): string[] {
     return [...this.settings.expandedFolders]
   }
 
-  /**
-   * 设置文件树展开的文件夹列表
-   */
   setExpandedFolders(folders: string[]): void {
     this.update({ expandedFolders: folders })
   }
 
-  // ============================================
-  // 隐藏项设置
-  // ============================================
-
-  /**
-   * 获取隐藏的文件/文件夹列表
-   */
   getHiddenItems(): string[] {
     return [...this.settings.hiddenItems]
   }
 
-  /**
-   * 设置隐藏的文件/文件夹列表
-   */
   setHiddenItems(items: string[]): void {
     this.update({ hiddenItems: items })
   }
+
+  // 左侧边栏徽章入口
+  getSidebarBadgeVisibility(): SidebarBadgeVisibility {
+    return { ...this.settings.sidebarBadgeVisibility }
+  }
+
+  updateSidebarBadgeVisibility(settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility {
+    const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
+    return this.update({ sidebarBadgeVisibility: { ...currentSettings.sidebarBadgeVisibility, ...settings } }).sidebarBadgeVisibility
+  }
+
+  getSidebarBadgeOrder(): string[] {
+    return [...this.settings.sidebarBadgeOrder]
+  }
+
+  setSidebarBadgeOrder(order: string[]): string[] {
+    const validatedOrder = this.validateSidebarBadgeOrder(order)
+    return this.update({ sidebarBadgeOrder: validatedOrder }).sidebarBadgeOrder
+  }
 }
 
-// 单例导出
 export const projectSettingsService = new ProjectSettingsService()

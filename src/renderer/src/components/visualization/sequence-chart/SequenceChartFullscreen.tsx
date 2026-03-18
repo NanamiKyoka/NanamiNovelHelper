@@ -28,6 +28,7 @@ import {
   EditOutlined,
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
+import { useUIStore } from '@stores/uiStore'
 import type { SequenceEvent } from '@types/sequence-chart'
 import styles from './SequenceChartFullscreen.module.css'
 
@@ -56,6 +57,15 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     updateAxisConfig,
     toggleLeftPanel,
   } = useSequenceChartStore()
+  
+  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
+  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+
+  // 设置全屏模式，卸载时退出
+  useEffect(() => {
+    setFullscreenMode('sequenceChart')
+    return () => exitFullscreen()
+  }, [setFullscreenMode, exitFullscreen])
 
   // 加载数据
   useEffect(() => {

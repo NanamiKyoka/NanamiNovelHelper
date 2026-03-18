@@ -1,61 +1,154 @@
-.activityBar {
+/**
+ * 左侧活动栏组件样式
+ */
+
+.container {
   display: flex;
   flex-direction: column;
   width: 48px;
   height: 100%;
-  background-color: #484848;
-  user-select: none;
+  background: #333333;
+  border-right: 1px solid #252526;
 }
 
-/* 深色主题 */
-:global(body.dark) .activityBar {
-  background-color: #333333;
+/* 浅色主题 */
+:global(body:not(.dark)) .container {
+  background: #f3f3f3;
+  border-right-color: #e5e5e5;
 }
 
-.top {
+/* 主要按钮区域 */
+.mainButtons {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  padding-top: 4px;
+  align-items: center;
+  padding: 4px 0;
 }
 
-.bottom {
+/* 全屏功能入口区域 */
+.sidebarBadgeButtons {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+}
+
+/* 设置按钮区域（底部） */
+.settingsButton {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding-bottom: 4px;
 }
 
-.item {
+.settingsButton .divider {
+  margin-bottom: 4px;
+}
+
+/* 分割线 */
+.divider {
+  width: 32px;
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.15);
+  align-self: center;
+}
+
+:global(body:not(.dark)) .divider {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* 活动按钮 */
+.button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 48px;
   height: 48px;
-  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
-  position: relative;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.15s ease;
+  user-select: none;
 }
 
-.item:hover {
-  color: rgba(255, 255, 255, 0.95);
-  background-color: rgba(255, 255, 255, 0.1);
+:global(body:not(.dark)) .button {
+  color: rgba(0, 0, 0, 0.6);
 }
 
-.item.active {
-  color: rgba(255, 255, 255, 1);
+.button:hover {
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.item.active::before {
+:global(body:not(.dark)) .button:hover {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+/* 活动状态 */
+.button.active {
+  color: #ffffff;
+}
+
+:global(body:not(.dark)) .button.active {
+  color: #1890ff;
+}
+
+/* 活动指示器（左侧竖条） */
+.button.active::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 2px;
-  background-color: var(--ant-color-primary, #1890ff);
+  background: #ffffff;
 }
 
-.item svg {
+:global(body:not(.dark)) .button.active::before {
+  background: #1890ff;
+}
+
+/* 按钮图标 */
+.icon {
   font-size: 24px;
+}
+
+/* ========================================
+   拖拽相关样式（参考 VSCode）
+   ======================================== */
+
+/* 可拖拽元素 */
+.button[draggable="true"] {
+  -webkit-user-drag: element;
+}
+
+.button[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* 拖拽时的视觉反馈 */
+.button.dragging {
+  opacity: 0.5;
+}
+
+/* 拖拽目标指示器 */
+.button.dragOverTop::after,
+.button.dragOverBottom::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: #1890ff;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.button.dragOverTop::after {
+  top: 0;
+}
+
+.button.dragOverBottom::after {
+  bottom: 0;
 }

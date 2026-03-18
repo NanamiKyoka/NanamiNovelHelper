@@ -4,32 +4,42 @@
 
 import { create } from 'zustand'
 
+/** 全屏编辑模式类型 */
+export type FullscreenMode = 
+  | 'vocabulary'
+  | 'sensitive'
+  | 'relationship'
+  | 'organization'
+  | 'timeline'
+  | 'sequenceChart'
+  | null
+
 interface UIState {
-  // 对话框状态
   createProjectModalOpen: boolean
   openProjectModalOpen: boolean
+  selectedText: string // 编辑器选中文字，用于词汇查询
+  fullscreenMode: FullscreenMode // 全屏模式时隐藏菜单栏
 
-  // 编辑器选中文字（用于词汇查询）
-  selectedText: string
-
-  // Actions
   openCreateProjectModal: () => void
   closeCreateProjectModal: () => void
   openOpenProjectModal: () => void
   closeOpenProjectModal: () => void
   setSelectedText: (text: string) => void
+  setFullscreenMode: (mode: FullscreenMode) => void
+  exitFullscreen: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  // 初始状态
   createProjectModalOpen: false,
   openProjectModalOpen: false,
   selectedText: '',
+  fullscreenMode: null,
 
-  // Actions
   openCreateProjectModal: () => set({ createProjectModalOpen: true }),
   closeCreateProjectModal: () => set({ createProjectModalOpen: false }),
   openOpenProjectModal: () => set({ openProjectModalOpen: true }),
   closeOpenProjectModal: () => set({ openProjectModalOpen: false }),
-  setSelectedText: (text: string) => set({ selectedText: text })
+  setSelectedText: (text: string) => set({ selectedText: text }),
+  setFullscreenMode: (mode: FullscreenMode) => set({ fullscreenMode: mode }),
+  exitFullscreen: () => set({ fullscreenMode: null })
 }))

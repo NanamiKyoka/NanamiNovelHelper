@@ -32,6 +32,7 @@ import {
   SettingOutlined
 } from '@ant-design/icons'
 import { useSensitiveStore } from '@stores/sensitiveStore'
+import { useUIStore } from '@stores/uiStore'
 import type { SensitiveWord } from '@types/sensitive'
 import { SENSITIVE_CATEGORIES, SEVERITY_LEVELS } from '@types/sensitive'
 import styles from './SensitiveWordFullscreen.module.css'
@@ -54,6 +55,9 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
     isLoaded
   } = useSensitiveStore()
   
+  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
+  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [activeTab, setActiveTab] = useState<'words' | 'settings'>('words')
   const [searchText, setSearchText] = useState('')
@@ -63,6 +67,12 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
   const [editingWord, setEditingWord] = useState<SensitiveWord | null>(null)
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+
+  // 设置全屏模式，卸载时退出
+  useEffect(() => {
+    setFullscreenMode('sensitive')
+    return () => exitFullscreen()
+  }, [setFullscreenMode, exitFullscreen])
 
   // 加载数据
   useEffect(() => {

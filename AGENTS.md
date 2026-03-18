@@ -15,6 +15,8 @@
 - 事序图（事件序列图表）
 - 随机起名工具
 - 项目备份与恢复
+- Git 版本控制集成
+- 内置终端
 
 ## 技术栈
 
@@ -24,9 +26,14 @@
 | 前端 | React 18 + TypeScript 5.7 |
 | 构建工具 | Vite 6 + electron-vite 3 |
 | 状态管理 | Zustand 5 |
+| 路由 | React Router 7 |
 | UI 组件库 | Ant Design 5 |
+| 图标 | @ant-design/icons |
 | 富文本编辑器 | TipTap 2 |
 | 图可视化 | AntV G6 5 |
+| 终端模拟 | xterm.js 6 |
+| Git 操作 | isomorphic-git |
+| 伪终端 | node-pty |
 | 虚拟滚动 | @tanstack/react-virtual |
 | 图片处理 | Sharp |
 | 样式 | CSS Modules |
@@ -41,6 +48,7 @@ NanamiNovelHelper/
 │   │   ├── index.ts               # 主进程入口
 │   │   ├── ipc/                   # IPC 处理器
 │   │   │   ├── file-handler.ts
+│   │   │   ├── git-handler.ts
 │   │   │   ├── highlight-handler.ts
 │   │   │   ├── image-handler.ts
 │   │   │   ├── organization-handler.ts
@@ -48,11 +56,13 @@ NanamiNovelHelper/
 │   │   │   ├── relationship-handler.ts
 │   │   │   ├── sequence-chart-handler.ts
 │   │   │   ├── settings-handler.ts
+│   │   │   ├── terminal-handler.ts
 │   │   │   ├── timeline-handler.ts
 │   │   │   └── vocabulary-handler.ts
 │   │   ├── services/              # 业务服务层
 │   │   │   ├── backup.ts
 │   │   │   ├── file.ts
+│   │   │   ├── git.ts
 │   │   │   ├── globalSettings.ts
 │   │   │   ├── highlight.ts
 │   │   │   ├── image.ts
@@ -61,10 +71,12 @@ NanamiNovelHelper/
 │   │   │   ├── projectSettings.ts
 │   │   │   ├── relationship.ts
 │   │   │   ├── sequence-chart.ts
+│   │   │   ├── terminal.ts
 │   │   │   ├── timeline.ts
 │   │   │   └── vocabulary.ts
-│   │   └── types/                 # 类型定义
+│   │   └── types/                 # 主进程类型定义
 │   │       ├── file.ts
+│   │       ├── git.ts
 │   │       ├── highlight.ts
 │   │       ├── index.ts
 │   │       ├── organization.ts
@@ -73,21 +85,22 @@ NanamiNovelHelper/
 │   │       ├── sensitive.ts
 │   │       ├── sequence-chart.ts
 │   │       ├── settings.ts
+│   │       ├── terminal.ts
 │   │       ├── timeline.ts
 │   │       └── vocabulary.ts
 │   ├── preload/                   # 预加载脚本
 │   │   ├── index.ts               # 暴露 API 给渲染进程
 │   │   └── index.d.ts             # 类型声明
 │   └── renderer/                  # 渲染进程（React 应用）
-│       ├── index.html
+│       ├── index.html             # 主窗口入口
+│       ├── terminal.html          # 终端窗口入口
+│       ├── main.tsx               # 主窗口 React 挂载点
+│       ├── terminal-main.tsx      # 终端窗口 React 挂载点
 │       └── src/
 │           ├── App.tsx            # 应用入口组件
-│           ├── main.tsx           # React 挂载点
 │           ├── components/        # UI 组件
 │           │   ├── editor/        # 编辑器组件
 │           │   │   ├── extensions/    # TipTap 扩展
-│           │   │   │   ├── taskList.ts
-│           │   │   │   └── vocabularyHighlight.ts
 │           │   │   ├── EditorContextMenu.tsx
 │           │   │   ├── EditorPanel.tsx
 │           │   │   ├── EditorTabs.tsx
@@ -96,37 +109,130 @@ NanamiNovelHelper/
 │           │   │   ├── MarkdownEditor.tsx
 │           │   │   └── SearchReplacePanel.tsx
 │           │   ├── file-tree/     # 文件树组件
+│           │   │   ├── FileTree.tsx
+│           │   │   └── index.ts
+│           │   ├── git/           # Git 组件
+│           │   │   ├── BranchManager.tsx
+│           │   │   ├── ChangesList.tsx
+│           │   │   ├── CommitHistory.tsx
+│           │   │   ├── DiffViewer.tsx
+│           │   │   ├── GitPanel.tsx
+│           │   │   └── index.ts
 │           │   ├── layout/        # 布局组件
+│           │   │   ├── ActivityBar.tsx
+│           │   │   ├── DraggableBadgeContainer.tsx
+│           │   │   ├── MainContent.tsx
+│           │   │   ├── MenuBar.tsx
+│           │   │   ├── Sidebar.tsx
+│           │   │   ├── StatusBar.tsx
+│           │   │   ├── TitleBar.tsx
+│           │   │   └── index.ts
 │           │   ├── project/       # 项目相关组件
+│           │   │   ├── CreateProjectModal.tsx
+│           │   │   ├── OpenProjectModal.tsx
+│           │   │   ├── WelcomePage.tsx
+│           │   │   └── index.ts
 │           │   ├── random-name/   # 随机起名组件
+│           │   │   ├── RandomNamePanel.tsx
+│           │   │   └── index.ts
 │           │   ├── search/        # 搜索组件
+│           │   │   ├── SearchPanel.tsx
+│           │   │   └── index.ts
 │           │   ├── settings/      # 设置组件
+│           │   │   ├── ApiSettings.tsx
+│           │   │   ├── AppearanceSettings.tsx
+│           │   │   ├── BackupSettings.tsx
+│           │   │   ├── DataManagementSettings.tsx
+│           │   │   ├── EditorSettings.tsx
+│           │   │   ├── HighlightSettings.tsx
+│           │   │   ├── LayoutSettings.tsx
+│           │   │   ├── SettingsPage.tsx
+│           │   │   ├── ShortcutsSettings.tsx
+│           │   │   └── index.ts
+│           │   ├── terminal/      # 终端组件
+│           │   │   ├── TerminalInstance.tsx
+│           │   │   ├── TerminalPanel.tsx
+│           │   │   └── index.ts
 │           │   ├── visualization/ # 可视化组件
+│           │   │   ├── VisualizationPanel.tsx
 │           │   │   ├── organization/   # 组织架构图
+│           │   │   │   ├── OrganizationGraphFullscreen.tsx
+│           │   │   │   ├── OrganizationGraphList.tsx
+│           │   │   │   ├── OrganizationGraphPreview.tsx
+│           │   │   │   ├── OrganizationPanel.tsx
+│           │   │   │   └── index.ts
 │           │   │   ├── relationship/   # 关系图
+│           │   │   │   ├── RelationshipGraphFullscreen.tsx
+│           │   │   │   ├── RelationshipGraphList.tsx
+│           │   │   │   ├── RelationshipGraphPreview.tsx
+│           │   │   │   ├── RelationshipPanel.tsx
+│           │   │   │   └── index.ts
 │           │   │   ├── sequence-chart/ # 事序图
-│           │   │   └── timeline/       # 时间线
+│           │   │   │   ├── SequenceChartFullscreen.tsx
+│           │   │   │   ├── SequenceChartList.tsx
+│           │   │   │   ├── SequenceChartPanel.tsx
+│           │   │   │   ├── SequenceChartPreview.tsx
+│           │   │   │   └── index.ts
+│           │   │   ├── timeline/       # 时间线
+│           │   │   │   ├── TimelineFullscreen.tsx
+│           │   │   │   ├── TimelineList.tsx
+│           │   │   │   ├── TimelinePanel.tsx
+│           │   │   │   ├── TimelinePreview.tsx
+│           │   │   │   └── index.ts
+│           │   │   └── index.ts
 │           │   └── vocabulary/    # 词汇管理组件
+│           │       ├── FieldDefinitionEditor.tsx
+│           │       ├── IconPicker.tsx
+│           │       ├── ImageUpload.tsx
+│           │       ├── SensitiveWordFullscreen.tsx
+│           │       ├── SensitiveWordPanel.tsx
+│           │       ├── TableConfigEditor.tsx
+│           │       ├── VocabularyFullscreen.tsx
+│           │       ├── VocabularyPanel.tsx
+│           │       ├── VocabularyTypeSettings.tsx
+│           │       └── index.ts
 │           ├── constants/         # 常量定义
+│           │   └── names.ts
 │           ├── stores/            # Zustand 状态管理
 │           │   ├── badgeConfigStore.ts
 │           │   ├── editorStore.ts
 │           │   ├── fileTreeStore.ts
+│           │   ├── gitStore.ts
+│           │   ├── index.ts
 │           │   ├── organizationStore.ts
 │           │   ├── projectStore.ts
 │           │   ├── relationshipStore.ts
 │           │   ├── sensitiveStore.ts
 │           │   ├── sequenceChartStore.ts
 │           │   ├── settingsStore.ts
+│           │   ├── terminalStore.ts
 │           │   ├── themeStore.ts
 │           │   ├── timelineStore.ts
 │           │   ├── uiStore.ts
 │           │   └── vocabularyStore.ts
 │           ├── services/          # 渲染进程服务
 │           │   ├── ahoCorasick.ts     # Aho-Corasick 算法实现
-│           │   └── highlightService.ts
+│           │   ├── highlightService.ts
+│           │   └── index.ts
 │           ├── styles/            # 全局样式
-│           ├── types/             # 类型定义
+│           │   └── global.css
+│           ├── types/             # 渲染进程类型定义
+│           │   ├── badge.ts
+│           │   ├── editor.ts
+│           │   ├── fileTree.ts
+│           │   ├── git.ts
+│           │   ├── highlight.ts
+│           │   ├── index.ts
+│           │   ├── organization.ts
+│           │   ├── project.ts
+│           │   ├── relationship.ts
+│           │   ├── sensitive.ts
+│           │   ├── sequence-chart.ts
+│           │   ├── settings.ts
+│           │   ├── theme.ts
+│           │   ├── timeline.ts
+│           │   ├── tiptap.d.ts
+│           │   └── vocabulary.ts
 │           └── utils/             # 工具函数
 │               └── randomName.ts
 ├── resources/                     # 应用资源（图标等）
@@ -144,7 +250,7 @@ NanamiNovelHelper/
 ### 主进程与渲染进程通信
 
 项目采用 Electron 推荐的上下文隔离模式：
-- **主进程**：负责文件系统操作、原生对话框、项目配置管理
+- **主进程**：负责文件系统操作、原生对话框、项目配置管理、Git 操作、终端进程管理
 - **预加载脚本**：通过 `contextBridge` 暴露安全的 API 给渲染进程
 - **渲染进程**：React 应用，通过 `window.electron` 调用主进程 API
 
@@ -156,19 +262,22 @@ NanamiNovelHelper/
 window.electron
   ├── window          // 窗口控制（最小化、最大化、关闭、全屏）
   ├── project         // 项目管理（创建、打开、关闭、最近项目）
-  ├── vocabulary      // 词汇管理（类型、条目、关联文件）
-  ├── sensitive       // 敏感词管理
-  ├── highlight       // 高亮配置
+  ├── vocabulary      // 词汇管理（类型、条目、关联文件、设置）
+  ├── sensitive       // 敏感词管理（增删改查、导入）
+  ├── highlight       // 高亮配置（加载、保存）
   ├── settings        // 设置管理
   │   ├── global      // 全局设置（主题、语言、窗口状态、API Key）
-  │   └── project     // 项目设置（编辑器、高亮、备份、徽章）
+  │   └── project     // 项目设置（编辑器、高亮、备份、徽章、侧边栏配置）
   ├── backup          // 备份管理（创建、恢复、导出、导入）
-  ├── relationship    // 关系图管理（图、节点、边、关系类型）
-  ├── timeline        // 时间线管理（时间线、节点、分支）
-  ├── sequenceChart   // 事序图管理（图表、事件、事件类型）
-  ├── organization    // 组织架构图管理（图、节点）
+  ├── relationship    // 关系图管理（图、节点、边、关系类型、缩略图、导入导出）
+  ├── timeline        // 时间线管理（时间线、节点、分支、缩略图、导入导出）
+  ├── sequenceChart   // 事序图管理（图表、事件、事件类型、缩略图、导入导出）
+  ├── organization    // 组织架构图管理（图、节点、缩略图、导入导出）
   ├── image           // 图片管理（上传、读取、删除）
-  ├── file            // 文件系统操作
+  ├── file            // 文件系统操作（读写、目录、文件树）
+  ├── terminal        // 终端管理（创建、写入、销毁、Shell 列表、数据监听）
+  ├── terminalWindow  // 终端窗口管理（独立窗口控制）
+  ├── git             // Git 版本控制（仓库管理、提交、分支、差异、合并）
   └── platform        // 平台信息（process.platform）
 ```
 
@@ -191,6 +300,8 @@ window.electron
 | `organizationStore` | 组织架构图状态 |
 | `badgeConfigStore` | 侧边栏徽章配置 |
 | `uiStore` | UI 状态（如选中文本） |
+| `gitStore` | Git 仓库状态、分支、提交历史 |
+| `terminalStore` | 终端实例状态 |
 
 ## 开发命令
 
@@ -203,6 +314,7 @@ npm run build
 
 # 预览构建结果
 npm run preview
+npm start          # 同 preview
 
 # 代码检查
 npm run lint
@@ -218,6 +330,7 @@ npm run typecheck
 npm run build:win      # Windows
 npm run build:mac      # macOS
 npm run build:linux    # Linux
+npm run build:unpack   # 构建但不打包（调试用）
 ```
 
 ## 开发约定
@@ -251,7 +364,7 @@ npm run build:linux    # Linux
 
 1. 组件文件命名：PascalCase（如 `EditorPanel.tsx`）
 2. 样式文件命名：与组件同名 + `.module.css`（如 `EditorPanel.module.css`）
-3. 导出方式：具名导出优先
+3. 导出方式：具名导出优先，通过 `index.ts` 统一导出
 4. 状态管理：优先使用 Zustand，复杂组件可使用 useState
 
 ### IPC 通信规范
@@ -284,6 +397,7 @@ npm run build:linux    # Linux
 - 支持自定义关系类型（颜色、线型、线宽）
 - 可与词汇库关联
 - 支持缩略图、导入导出
+- 提供列表视图、预览视图、全屏编辑视图
 
 ### 组织架构图 (Organization Graph)
 
@@ -294,6 +408,7 @@ npm run build:linux    # Linux
 - 可与词汇库关联
 - 支持缩略图、导入导出
 - 支持节点移动、视图状态保存
+- 提供获取祖先节点、后代节点等 API
 
 ### 时间线 (Timeline)
 
@@ -302,6 +417,8 @@ npm run build:linux    # Linux
 - 节点可关联角色、章节
 - 支持分支时间线（分支、合并）
 - 支持导出为 JSON 或 Markdown
+- 提供批量删除、批量移动节点功能
+- 支持缩略图生成
 
 ### 事序图 (Sequence Chart)
 
@@ -310,6 +427,7 @@ npm run build:linux    # Linux
 - 事件可设置进度、关联角色/地点/章节
 - 自定义事件类型
 - 时间轴自动扩展
+- 支持导出为 JSON 或 Markdown
 
 ### 随机起名 (Random Name)
 
@@ -322,10 +440,32 @@ npm run build:linux    # Linux
 - 备份列表管理
 - 导出/导入备份文件
 
+### Git 版本控制
+
+集成 Git 版本控制功能：
+- 支持系统 Git 和 isomorphic-git 两种模式
+- 可视化提交历史浏览
+- 变更文件列表查看
+- 分支管理（创建、切换、删除、重命名、合并）
+- Diff 差异查看器
+- 提交、暂存、回退、重置操作
+- 支持 reset（soft/mixed/hard）模式
+
+### 内置终端
+
+集成终端功能：
+- 基于 xterm.js 的终端模拟
+- 支持多种 Shell（自动检测系统 Shell）
+- 可在侧边栏或独立窗口中运行
+- 支持多终端实例
+- 终端数据实时同步
+- 支持终端大小调整、工作目录切换
+
 ## 环境要求
 
 - Node.js >= 20.0.0
 - 支持平台：Windows、macOS、Linux
+- Git（可选，用于版本控制功能）
 
 ## 注意事项
 
@@ -337,6 +477,10 @@ npm run build:linux    # Linux
 6. 关系图使用 AntV G6 5.x 版本，注意 API 与 4.x 的差异
 7. 图片处理使用 Sharp 库，需要原生依赖
 8. 组织架构图支持与词汇库关联，节点可关联词汇条目
+9. **Git 功能支持两种实现模式**：系统 Git（需要系统安装 Git）和 isomorphic-git（纯 JavaScript 实现）
+10. **终端功能使用 node-pty**，需要原生依赖编译
+11. **终端窗口为独立的 Electron 窗口**，有自己的入口文件 `terminal.html` 和 `terminal-main.tsx`
+12. **每个可视化模块都提供三种视图**：列表视图（List）、预览视图（Preview）、全屏编辑视图（Fullscreen）
 
 ## 参考资源
 

@@ -73,9 +73,20 @@ type CreateMode = 'template' | 'custom' | null
 
 interface VocabularyTypeSettingsProps {
   readOnly?: boolean
+  /** 隐藏左侧类型列表（用于外部控制选中类型时） */
+  hideTypeList?: boolean
+  /** 外部控制的选中类型ID */
+  selectedTypeId?: string | null
+  /** 选中类型变化回调 */
+  onSelectedTypeIdChange?: (typeId: string | null) => void
 }
 
-function VocabularyTypeSettings({ readOnly = false }: VocabularyTypeSettingsProps): JSX.Element {
+function VocabularyTypeSettings({ 
+  readOnly = false,
+  hideTypeList = false,
+  selectedTypeId: externalSelectedTypeId,
+  onSelectedTypeIdChange
+}: VocabularyTypeSettingsProps): JSX.Element {
   const { 
     types, 
     loadTypes, 
@@ -86,7 +97,17 @@ function VocabularyTypeSettings({ readOnly = false }: VocabularyTypeSettingsProp
     isLoaded 
   } = useVocabularyStore()
   
-  const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
+  const [internalSelectedTypeId, setInternalSelectedTypeId] = useState<string | null>(null)
+  
+  // 使用外部或内部的选中类型
+  const selectedTypeId = externalSelectedTypeId !== undefined ? externalSelectedTypeId : internalSelectedTypeId
+  const setSelectedTypeId = (id: string | null) => {
+    if (onSelectedTypeIdChange) {
+      onSelectedTypeIdChange(id)
+    } else {
+      setInternalSelectedTypeId(id)
+    }
+  }
   const [editingType, setEditingType] = useState<VocabularyType | null>(null)
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false)
   const [createMode, setCreateMode] = useState<CreateMode>(null)
@@ -294,6 +315,154 @@ function VocabularyTypeSettings({ readOnly = false }: VocabularyTypeSettingsProp
     }
   ]
 
+  // 右侧配置面板内容（抽取出来复用）
+  const configPanel = (
+    <div className={styles.typeConfigPanel}>
+      {!selectedType ? (
+        <div className={styles.emptyConfig}>
+          <Empty description="请从左侧选择一个类型进行配置" />
+        </div>
+      ) : (
+        <div className={styles.configContent}>
+          <div className={styles.configHeader}>
+            <div className={styles.configTitle}>
+              <div className={styles.typeIcon} style={{ backgroundColor: selectedType.color }}>
+                {getTypeIcon(selectedType)}
+              </div>
+              <span>{selectedType.name}</span>
+            </div>
+            <Space>
+              <Dropdown 
+                menu={{ items: createMenuItems }} 
+                trigger={['click']}
+                disabled={readOnly}
+              >
+                <Button size="small" icon={<PlusOutlined />} disabled={readOnly}>
+                  新建类型
+                </Button>
+              </Dropdown>
+              <Button 
+                size="small" 
+                onClick={() => handleEditType(selectedType)} 
+                disabled={readOnly}
+              >
+                编辑基本信息
+              </Button>
+            </Space>
+          </div>
+          
+          {/* 字段定义编辑器 */}
+          <div className={styles.configSection}>
+            <h3>字段定义</h3>
+            <FieldDefinitionEditor
+              fields={selectedType.fields}
+              vocabularyTypes={types}
+              onChange={handleFieldsChange}
+              readOnly={readOnly}
+            />
+          </div>
+
+          {/* 表格配置编辑器 */}
+          <div className={styles.configSection}>
+            <h3>表格列配置</h3>
+            <TableConfigEditor
+              fields={selectedType.fields}
+              config={selectedType.tableConfig}
+              onChange={handleTableConfigChange}
+              readOnly={readOnly}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  // 如果隐藏类型列表，只显示配置面板
+  if (hideTypeList) {
+    return (
+      <div className={styles.container} style={{ display: 'block' }}>
+        {configPanel}
+        
+        {/* 类型基本信息弹窗 */}
+        <Modal
+          title={editingType ? '编辑类型' : (createMode === 'template' ? '从模板创建' : '新建自定义类型')}
+          open={isTypeModalOpen}
+          onCancel={() => { 
+            setIsTypeModalOpen(false)
+            setCreateMode(null)
+            setSelectedTemplate(null)
+          }}
+          onOk={handleSaveType}
+          confirmLoading={loading}
+          okText="保存"
+          cancelText="取消"
+        >
+          {createMode === 'template' && selectedTemplate && (
+            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+              <div style={{ fontWeight: 500, marginBottom: 8 }}>
+                模板：{selectedTemplate.name}
+              </div>
+              <div style={{ fontSize: 12, color: '#666' }}>
+                将预设 {BUILTIN_FIELDS_MAP[selectedTemplate.id]?.length || 0} 个字段
+              </div>
+            </div>
+          )}
+          {createMode === 'custom' && (
+            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+              <div style={{ fontSize: 13, color: '#666' }}>
+                从空白开始创建，后续可在字段定义中添加字段
+              </div>
+            </div>
+          )}
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="name"
+              label="类型名称"
+              rules={[{ required: true, message: '请输入类型名称' }]}
+            >
+              <Input placeholder="如：角色、地点、组织" />
+            </Form.Item>
+            
+            <Form.Item label="图标">
+              <div 
+                className={styles.iconPreviewBox}
+                onClick={() => setIsIconPickerOpen(true)}
+              >
+                <div 
+                  className={styles.iconPreview} 
+                  style={{ backgroundColor: form.getFieldValue('color') || '#1890ff' }}
+                >
+                  {getIconPreview(selectedIcon?.value, <TagOutlined />)}
+                </div>
+                <span className={styles.iconHint}>点击选择图标</span>
+              </div>
+            </Form.Item>
+            
+            <Form.Item name="icon" hidden>
+              <Input />
+            </Form.Item>
+            
+            <Form.Item name="color" label="默认颜色">
+              <ColorPicker format="hex" />
+            </Form.Item>
+          </Form>
+        </Modal>
+        
+        {/* 图标选择器弹窗 */}
+        <IconPicker
+          open={isIconPickerOpen}
+          value={selectedIcon}
+          onChange={(iconValue) => {
+            setSelectedIcon(iconValue)
+            form.setFieldValue('icon', iconValue.value)
+            setIsIconPickerOpen(false)
+          }}
+          onCancel={() => setIsIconPickerOpen(false)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className={styles.container}>
       {/* 左侧类型列表 */}
@@ -376,53 +545,7 @@ function VocabularyTypeSettings({ readOnly = false }: VocabularyTypeSettingsProp
       </div>
 
       {/* 右侧配置面板 */}
-      <div className={styles.typeConfigPanel}>
-        {!selectedType ? (
-          <div className={styles.emptyConfig}>
-            <Empty description="请从左侧选择一个类型进行配置" />
-          </div>
-        ) : (
-          <div className={styles.configContent}>
-            <div className={styles.configHeader}>
-              <div className={styles.configTitle}>
-                <div className={styles.typeIcon} style={{ backgroundColor: selectedType.color }}>
-                  {TYPE_ICONS[selectedType.id] || <TagOutlined />}
-                </div>
-                <span>{selectedType.name}</span>
-              </div>
-              <Button 
-                size="small" 
-                onClick={() => handleEditType(selectedType)} 
-                disabled={readOnly}
-              >
-                编辑基本信息
-              </Button>
-            </div>
-            
-            {/* 字段定义编辑器 */}
-            <div className={styles.configSection}>
-              <h3>字段定义</h3>
-              <FieldDefinitionEditor
-                fields={selectedType.fields}
-                vocabularyTypes={types}
-                onChange={handleFieldsChange}
-                readOnly={readOnly}
-              />
-            </div>
-
-            {/* 表格配置编辑器 */}
-            <div className={styles.configSection}>
-              <h3>表格列配置</h3>
-              <TableConfigEditor
-                fields={selectedType.fields}
-                config={selectedType.tableConfig}
-                onChange={handleTableConfigChange}
-                readOnly={readOnly}
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      {configPanel}
 
       {/* 类型基本信息弹窗 */}
       <Modal

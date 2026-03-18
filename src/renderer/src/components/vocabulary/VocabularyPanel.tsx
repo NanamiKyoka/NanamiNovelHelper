@@ -599,14 +599,27 @@ function VocabularyPanel({
           rowKey="id"
           size="small"
           scroll={{ x: 'max-content' }}
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, align: 'center' }}
           locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
         />
       </div>
 
       {/* 编辑抽屉 */}
       <Drawer
-        title={editingEntry ? `编辑${currentTypeDefinition?.name || '词汇'}` : `新建${currentTypeDefinition?.name || '词汇'}`}
+        title={
+          <Space>
+            <span>{editingEntry ? `编辑${currentTypeDefinition?.name || '词汇'}` : `新建${currentTypeDefinition?.name || '词汇'}`}</span>
+            <Button 
+              type="link" 
+              size="small"
+              icon={<SettingOutlined />}
+              onClick={() => setTypeSettingsOpen(true)}
+              style={{ marginLeft: 8 }}
+            >
+              管理字段
+            </Button>
+          </Space>
+        }
         placement="right"
         width={480}
         open={drawerOpen}

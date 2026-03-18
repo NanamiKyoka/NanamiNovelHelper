@@ -282,6 +282,15 @@ interface BadgeVisibility {
   terminal: boolean
 }
 
+interface SidebarBadgeVisibility {
+  vocabulary: boolean
+  sensitive: boolean
+  relationship: boolean
+  timeline: boolean
+  sequenceChart: boolean
+  organization: boolean
+}
+
 interface ProjectSettings {
   editor: ProjectEditorSettings
   highlight: ProjectHighlightSettings
@@ -959,6 +968,12 @@ export interface ProjectSettingsAPI {
   setExpandedFolders: (folders: string[]) => Promise<void>
   getHiddenItems: () => Promise<string[]>
   setHiddenItems: (items: string[]) => Promise<void>
+  // 左侧边栏徽章入口可见性
+  getSidebarBadgeVisibility: () => Promise<SidebarBadgeVisibility>
+  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<SidebarBadgeVisibility>
+  // 左侧边栏徽章入口排序
+  getSidebarBadgeOrder: () => Promise<string[]>
+  setSidebarBadgeOrder: (order: string[]) => Promise<string[]>
 }
 
 /**

@@ -2,18 +2,8 @@
  * 设置相关类型定义
  */
 
-// ============================================
-// 全局设置
-// ============================================
-
-/**
- * 主题模式
- */
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-/**
- * 全局主题配置
- */
 export interface GlobalThemeConfig {
   mode: ThemeMode
   primaryColor: string
@@ -21,9 +11,6 @@ export interface GlobalThemeConfig {
   fontFamily: string
 }
 
-/**
- * 窗口状态
- */
 export interface WindowState {
   isMaximized: boolean
   x?: number
@@ -32,14 +19,8 @@ export interface WindowState {
   height: number
 }
 
-/**
- * 语言选项
- */
 export type Language = 'zh-CN' | 'en-US' | 'ja-JP'
 
-/**
- * 全局设置
- */
 export interface GlobalSettings {
   theme: GlobalThemeConfig
   window: WindowState
@@ -48,9 +29,6 @@ export interface GlobalSettings {
   showWelcome: boolean
 }
 
-/**
- * 默认全局设置
- */
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   theme: {
     mode: 'light',
@@ -68,23 +46,9 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   showWelcome: true
 }
 
-// ============================================
-// 项目设置
-// ============================================
-
-/**
- * 视图模式
- */
 export type ViewMode = 'wysiwyg' | 'split'
-
-/**
- * 工具栏模式
- */
 export type ToolbarMode = 'fixed' | 'floating'
 
-/**
- * 项目编辑器设置
- */
 export interface ProjectEditorSettings {
   fontFamily: string
   fontSize: number
@@ -94,7 +58,7 @@ export interface ProjectEditorSettings {
   viewMode: ViewMode
   toolbarMode: ToolbarMode
   showToolbar: boolean
-  autoSaveInterval: number
+  autoSaveInterval: number // 毫秒
   wordWrap: boolean
   showLineNumbers: boolean
   tabSize: number
@@ -102,9 +66,6 @@ export interface ProjectEditorSettings {
   enablePreviewMode: boolean
 }
 
-/**
- * 默认项目编辑器设置
- */
 export const DEFAULT_PROJECT_EDITOR_SETTINGS: ProjectEditorSettings = {
   fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif',
   fontSize: 16,
@@ -122,41 +83,26 @@ export const DEFAULT_PROJECT_EDITOR_SETTINGS: ProjectEditorSettings = {
   enablePreviewMode: false
 }
 
-/**
- * 项目高亮设置
- */
 export interface ProjectHighlightSettings {
   vocabularyHighlight: boolean
   sensitiveWordCheck: boolean
 }
 
-/**
- * 默认项目高亮设置
- */
 export const DEFAULT_PROJECT_HIGHLIGHT_SETTINGS: ProjectHighlightSettings = {
   vocabularyHighlight: true,
   sensitiveWordCheck: true
 }
 
-/**
- * 项目备份设置
- */
 export interface ProjectBackupSettings {
   enabled: boolean
   maxCount: number
 }
 
-/**
- * 默认项目备份设置
- */
 export const DEFAULT_PROJECT_BACKUP_SETTINGS: ProjectBackupSettings = {
   enabled: true,
   maxCount: 10
 }
 
-/**
- * 徽章可见性配置
- */
 export interface BadgeVisibility {
   vocabulary: boolean
   sensitive: boolean
@@ -168,9 +114,6 @@ export interface BadgeVisibility {
   terminal: boolean
 }
 
-/**
- * 默认徽章可见性配置
- */
 export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
   vocabulary: true,
   sensitive: true,
@@ -182,54 +125,57 @@ export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
   terminal: true
 }
 
-/**
- * 项目设置
- */
+/** 左侧边栏徽章入口可见性（仅包含有全屏功能的徽章） */
+export interface SidebarBadgeVisibility {
+  vocabulary: boolean
+  sensitive: boolean
+  relationship: boolean
+  timeline: boolean
+  sequenceChart: boolean
+  organization: boolean
+}
+
+export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
+  vocabulary: true,
+  sensitive: true,
+  relationship: true,
+  timeline: true,
+  sequenceChart: true,
+  organization: true
+}
+
+export const DEFAULT_SIDEBAR_BADGE_ORDER = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization']
+
 export interface ProjectSettings {
   editor: ProjectEditorSettings
   highlight: ProjectHighlightSettings
   autoCreateVocabularyFile: boolean
   backup: ProjectBackupSettings
   badgeVisibility: BadgeVisibility
-  /** 显示隐藏文件（以.开头的文件/目录） */
-  showHiddenFiles?: boolean
-  /** 用户自定义隐藏的文件/文件夹路径列表（相对路径） */
-  hiddenItems?: string[]
+  sidebarBadgeVisibility: SidebarBadgeVisibility
+  sidebarBadgeOrder?: string[]
+  showHiddenFiles?: boolean // 以.开头的文件/目录
+  hiddenItems?: string[] // 用户自定义隐藏的文件/文件夹（相对路径）
 }
 
-/**
- * 默认项目设置
- */
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   editor: DEFAULT_PROJECT_EDITOR_SETTINGS,
   highlight: DEFAULT_PROJECT_HIGHLIGHT_SETTINGS,
   autoCreateVocabularyFile: false,
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
   badgeVisibility: DEFAULT_BADGE_VISIBILITY,
+  sidebarBadgeVisibility: DEFAULT_SIDEBAR_BADGE_VISIBILITY,
+  sidebarBadgeOrder: [...DEFAULT_SIDEBAR_BADGE_ORDER],
   showHiddenFiles: false,
   hiddenItems: []
 }
 
-// ============================================
-// 备份信息
-// ============================================
-
-/**
- * 备份信息
- */
 export interface BackupInfo {
   filename: string
   createdAt: string
   size: number
 }
 
-// ============================================
-// 预设颜色
-// ============================================
-
-/**
- * 预设主色
- */
 export interface PresetColor {
   name: string
   value: string

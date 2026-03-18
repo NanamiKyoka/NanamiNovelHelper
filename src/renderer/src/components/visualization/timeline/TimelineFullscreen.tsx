@@ -37,6 +37,7 @@ import {
 } from '@ant-design/icons'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
+import { useUIStore } from '@stores/uiStore'
 import type { TimelineNode, TimeInfo, CharacterRef, ChapterRef } from '@types/timeline'
 import type { MenuProps } from 'antd'
 import styles from './TimelineFullscreen.module.css'
@@ -80,6 +81,15 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   } = useTimelineStore()
 
   const { types: vocabularyTypes, loadTypes, entries, loadEntries } = useVocabularyStore()
+  
+  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
+  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+
+  // 设置全屏模式，卸载时退出
+  useEffect(() => {
+    setFullscreenMode('timeline')
+    return () => exitFullscreen()
+  }, [setFullscreenMode, exitFullscreen])
 
   // 视图状态
   const [zoom, setZoom] = useState(1)

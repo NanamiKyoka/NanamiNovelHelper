@@ -1,14 +1,21 @@
-import { useState, useCallback } from 'react'
-import { Layout } from 'antd'
+import { useCallback } from 'react'
+import { Layout, Button, Typography } from 'antd'
+import { ArrowLeftOutlined } from '@ant-design/icons'
 import FileTree from '@components/file-tree/FileTree'
 import { SearchPanel } from '@components/search'
 import { VisualizationPanel } from '@components/visualization'
 import { GitPanel } from '@components/git'
 import VocabularyPanel from '@components/vocabulary/VocabularyPanel'
 import SensitiveWordPanel from '@components/vocabulary/SensitiveWordPanel'
+import RelationshipPanel from '@components/visualization/relationship/RelationshipPanel'
+import TimelinePanel from '@components/visualization/timeline/TimelinePanel'
+import { SequenceChartPanel } from '@components/visualization/sequence-chart'
+import { OrganizationPanel } from '@components/visualization/organization'
+import { useSettingsStore } from '@stores/settingsStore'
 import styles from './Sidebar.module.css'
 
 const { Sider } = Layout
+const { Text } = Typography
 
 interface SidebarProps {
   collapsed: boolean
@@ -16,17 +23,35 @@ interface SidebarProps {
   onCollapse: (collapsed: boolean) => void
 }
 
+// 面板标题映射
+const PANEL_TITLES: Record<string, string> = {
+  files: '文件',
+  search: '搜索',
+  vocabulary: '词汇查询',
+  sensitive: '敏感词',
+  git: 'Git',
+  visualization: '可视化工具',
+  relationship: '关系图',
+  timeline: '时间线',
+  sequenceChart: '事序图',
+  organization: '组织架构'
+}
+
+// 全屏功能面板列表（这些面板需要返回按钮）
+const FULLSCREEN_PANELS = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization']
+
 function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Element {
-  const [width, setWidth] = useState(260)
+  const sidebarWidth = useSettingsStore((state) => state.globalSettings.sidebarWidth)
+  const setSidebarWidth = useSettingsStore((state) => state.setSidebarWidth)
 
   const handleResize = useCallback(
     (e: MouseEvent) => {
       const newWidth = e.clientX - 48 // 48px 是 ActivityBar 的宽度
       if (newWidth >= 200 && newWidth <= 600) {
-        setWidth(newWidth)
+        setSidebarWidth(newWidth)
       }
     },
-    [setWidth]
+    [setSidebarWidth]
   )
 
   const handleResizeEnd = useCallback(() => {
@@ -55,10 +80,26 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
         return <GitPanel />
       case 'visualization':
         return <VisualizationPanel />
+      case 'relationship':
+        return <RelationshipPanel />
+      case 'timeline':
+        return <TimelinePanel />
+      case 'sequenceChart':
+        return <SequenceChartPanel />
+      case 'organization':
+        return <OrganizationPanel />
       default:
         return <div className={styles.panelContent}>未知面板</div>
     }
   }
+
+  // 返回主面板（文件树）
+  const handleBackToFiles = useCallback(() => {
+    // 通过触发 ActivityBar 的点击来切换回文件面板
+    // 这里需要一种方式通知 ActivityBar 切换面板
+    // 暂时使用自定义事件
+    window.dispatchEvent(new CustomEvent('sidebar-back-to-files'))
+  }, [])
 
   // 设置页面在 MainContent 中全屏显示，不需要 Sidebar
   if (activePanel === 'settings') {
@@ -69,15 +110,32 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
     return <div className={styles.collapsed} />
   }
 
+  // 判断是否显示返回按钮
+  const showBackButton = FULLSCREEN_PANELS.includes(activePanel)
+  const panelTitle = PANEL_TITLES[activePanel] || '面板'
+
   return (
     <Sider
-      width={width}
+      width={sidebarWidth}
       className={styles.sidebar}
       collapsed={collapsed}
       collapsedWidth={0}
       trigger={null}
     >
-      <div className={styles.content}>{renderContent()}</div>
+      {showBackButton && (
+        <div className={styles.panelHeader}>
+          <Button 
+            type="text" 
+            icon={<ArrowLeftOutlined />} 
+            onClick={handleBackToFiles}
+            className={styles.backButton}
+          />
+          <Text strong className={styles.panelTitle}>{panelTitle}</Text>
+        </div>
+      )}
+      <div className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`}>
+        {renderContent()}
+      </div>
       <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
     </Sider>
   )

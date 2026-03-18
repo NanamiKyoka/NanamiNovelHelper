@@ -226,6 +226,15 @@ interface BadgeVisibility {
 
 type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'terminal'
 
+interface SidebarBadgeVisibility {
+  vocabulary: boolean
+  sensitive: boolean
+  relationship: boolean
+  timeline: boolean
+  sequenceChart: boolean
+  organization: boolean
+}
+
 interface ProjectSettings {
   editor: ProjectEditorSettings
   highlight: ProjectHighlightSettings
@@ -848,7 +857,17 @@ const api = {
             getHiddenItems: (): Promise<string[]> =>
               ipcRenderer.invoke('settings:project:getHiddenItems'),
             setHiddenItems: (items: string[]): Promise<void> =>
-              ipcRenderer.invoke('settings:project:setHiddenItems', items)
+              ipcRenderer.invoke('settings:project:setHiddenItems', items),
+            // 左侧边栏徽章入口可见性
+            getSidebarBadgeVisibility: (): Promise<SidebarBadgeVisibility> =>
+              ipcRenderer.invoke('settings:project:getSidebarBadgeVisibility'),
+            updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>): Promise<SidebarBadgeVisibility> =>
+              ipcRenderer.invoke('settings:project:updateSidebarBadgeVisibility', settings),
+            // 左侧边栏徽章入口排序
+            getSidebarBadgeOrder: (): Promise<string[]> =>
+              ipcRenderer.invoke('settings:project:getSidebarBadgeOrder'),
+            setSidebarBadgeOrder: (order: string[]): Promise<string[]> =>
+              ipcRenderer.invoke('settings:project:setSidebarBadgeOrder', order)
           }
         },  // 备份管理
   backup: {
