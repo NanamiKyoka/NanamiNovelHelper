@@ -16,11 +16,13 @@ import {
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  FullscreenOutlined
 } from '@ant-design/icons'
 import { useSensitiveStore } from '../../stores/sensitiveStore'
 import type { SensitiveWord } from '../../types/sensitive'
 import { SENSITIVE_CATEGORIES, SEVERITY_LEVELS } from '../../types/sensitive'
+import SensitiveWordFullscreen from './SensitiveWordFullscreen'
 import styles from './SensitiveWordPanel.module.css'
 
 interface SensitiveWordPanelProps {
@@ -41,6 +43,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
   const [editingWord, setEditingWord] = useState<SensitiveWord | null>(null)
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
 
   // 加载数据
   useEffect(() => {
@@ -181,6 +184,11 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
     )
   }
 
+  // 全屏编辑模式
+  if (fullscreen) {
+    return <SensitiveWordFullscreen onBack={() => setFullscreen(false)} />
+  }
+
   return (
     <div className={styles.container}>
       {/* 头部提示 */}
@@ -193,9 +201,14 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
 
       {/* 工具栏 */}
       <div className={styles.toolbar}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate} disabled={readOnly}>
-          添加敏感词
-        </Button>
+        <Space>
+          <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)}>
+            编辑
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate} disabled={readOnly}>
+            添加敏感词
+          </Button>
+        </Space>
       </div>
 
       {/* 表格 */}

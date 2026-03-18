@@ -251,6 +251,10 @@ export interface ProjectSettings {
   badgeOrder: BadgeType[]
   /** 显示隐藏文件（以.开头的文件/目录） */
   showHiddenFiles: boolean
+  /** 文件树展开的文件夹路径列表 */
+  expandedFolders: string[]
+  /** 用户自定义隐藏的文件/文件夹路径列表（相对路径） */
+  hiddenItems: string[]
 }
 
 /**
@@ -263,7 +267,9 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
   badgeVisibility: DEFAULT_BADGE_VISIBILITY,
   badgeOrder: DEFAULT_BADGE_ORDER,
-  showHiddenFiles: false
+  showHiddenFiles: false,
+  expandedFolders: [],
+  hiddenItems: []
 }
 
 /**

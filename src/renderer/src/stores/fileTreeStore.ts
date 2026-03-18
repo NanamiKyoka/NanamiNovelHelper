@@ -5,6 +5,9 @@
 import { create } from 'zustand'
 import type { FileNodeData, FlattenedNode, ClipboardState, SortMode, SortField, SortOrder, SortOptions } from '@types/fileTree'
 
+// 防抖保存展开状态的计时器
+let saveExpandedFoldersTimer: ReturnType<typeof setTimeout> | null = null
+
 interface FileTreeState {
   // 数据
   roots: FileNodeData[]
@@ -233,6 +236,19 @@ function toSortMode(options: SortOptions): SortMode {
   return `${options.field}-${options.order}` as SortMode
 }
 
+/**
+ * 防抖保存展开状态到项目设置
+ */
+function debouncedSaveExpandedFolders(expandedKeys: Set<string>) {
+  if (saveExpandedFoldersTimer) {
+    clearTimeout(saveExpandedFoldersTimer)
+  }
+  saveExpandedFoldersTimer = setTimeout(() => {
+    window.electron.settings.project.setExpandedFolders(Array.from(expandedKeys))
+    saveExpandedFoldersTimer = null
+  }, 500)
+}
+
 export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   roots: [],
   loading: false,
@@ -255,15 +271,25 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     const { sortOptions } = get()
     set({ loading: true, error: null })
     try {
-      // 从设置中获取是否显示隐藏文件
+      // 从设置中获取是否显示隐藏文件和隐藏项列表
       const showHiddenFiles = await window.electron.settings.project.getShowHiddenFiles()
-      const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions)
-      // 默认展开根目录
-      const rootKeys = tree.filter(n => n.isDirectory).map(n => n.key)
+      const hiddenItems = await window.electron.settings.project.getHiddenItems()
+      const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+      
+      // 从项目设置中读取展开状态
+      const savedExpandedFolders = await window.electron.settings.project.getExpandedFolders()
+      const expandedKeys = new Set(savedExpandedFolders)
+      
+      // 如果没有保存的展开状态，默认展开根目录
+      if (expandedKeys.size === 0) {
+        const rootKeys = tree.filter(n => n.isDirectory).map(n => n.key)
+        rootKeys.forEach(k => expandedKeys.add(k))
+      }
+      
       set({ 
         roots: tree, 
         loading: false,
-        expandedKeys: new Set(rootKeys)
+        expandedKeys
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载文件树失败'
@@ -284,22 +310,30 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
       } else {
         next.add(key)
       }
+      // 保存展开状态到项目设置
+      debouncedSaveExpandedFolders(next)
       return { expandedKeys: next }
     })
   },
   
   expandAll: () => {
     const { roots } = get()
-    set({ expandedKeys: new Set(collectAllKeys(roots)) })
+    const expandedKeys = new Set(collectAllKeys(roots))
+    set({ expandedKeys })
+    // 保存展开状态到项目设置
+    debouncedSaveExpandedFolders(expandedKeys)
   },
   
   collapseAll: () => {
-    set({ expandedKeys: new Set() })
+    const expandedKeys = new Set<string>()
+    set({ expandedKeys })
+    // 保存展开状态到项目设置
+    debouncedSaveExpandedFolders(expandedKeys)
   },
   
   expandToPath: async (path) => {
     // 展开到指定路径
-    const parts = path.split('/').filter(Boolean)
+    const parts = path.split(/[/\\]/).filter(Boolean)
     const keysToExpand: string[] = []
     
     let currentPath = ''
@@ -308,9 +342,12 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
       keysToExpand.push(currentPath)
     }
     
-    set(state => ({
-      expandedKeys: new Set([...state.expandedKeys, ...keysToExpand])
-    }))
+    set(state => {
+      const expandedKeys = new Set([...state.expandedKeys, ...keysToExpand])
+      // 保存展开状态到项目设置
+      debouncedSaveExpandedFolders(expandedKeys)
+      return { expandedKeys }
+    })
   },
   
   select: (key, mode = 'single') => {
@@ -363,8 +400,8 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
       return
     }
     
-    // 计算新路径
-    const pathParts = node.path.split('/')
+    // 计算新路径（兼容 Windows 和 Unix 路径分隔符）
+    const pathParts = node.path.split(/[/\\]/)
     pathParts[pathParts.length - 1] = newName.trim()
     const newPath = pathParts.join('/')
     
@@ -390,9 +427,12 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     
     // 如果父节点是目录，确保展开
     if (parentKey) {
-      set(state => ({
-        expandedKeys: new Set([...state.expandedKeys, parentKey])
-      }))
+      set(state => {
+        const expandedKeys = new Set([...state.expandedKeys, parentKey])
+        // 保存展开状态到项目设置
+        debouncedSaveExpandedFolders(expandedKeys)
+        return { expandedKeys }
+      })
     }
   },
   
@@ -479,12 +519,14 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     }
     
     const matches = searchNodes(roots, pattern)
+    const expandedKeys = new Set([...get().expandedKeys, ...matches])
     set({ 
       searchPattern: pattern, 
       filteredKeys: matches,
-      // 展开所有匹配的父节点
-      expandedKeys: new Set([...get().expandedKeys, ...matches])
+      expandedKeys
     })
+    // 保存展开状态到项目设置
+    debouncedSaveExpandedFolders(expandedKeys)
   },
   
   clearSearch: () => {

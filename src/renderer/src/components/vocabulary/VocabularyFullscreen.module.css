@@ -1,0 +1,189 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--ant-color-bg-layout);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-container);
+  border-bottom: 1px solid var(--ant-color-border);
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  margin: 0 !important;
+}
+
+.stats {
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}
+
+.mainLayout {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sider {
+  background: var(--ant-color-bg-container) !important;
+  border-right: 1px solid var(--ant-color-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.siderHeader {
+  padding: 12px;
+  border-bottom: 1px solid var(--ant-color-border);
+  display: flex;
+  gap: 8px;
+}
+
+.siderBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.typeItem {
+  padding: 8px 12px !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent !important;
+}
+
+.typeItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.typeItem.active {
+  background: var(--ant-color-primary-bg);
+  border-color: var(--ant-color-primary-border) !important;
+}
+
+.typeItemContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.typeIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.typeInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.typeName {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typeMeta {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.typeItemActions {
+  display: none;
+  gap: 4px;
+}
+
+.typeItem:hover .typeItemActions {
+  display: flex;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.emptyContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contentBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--ant-color-bg-container);
+}
+
+.tabs {
+  padding: 0 16px;
+  background: var(--ant-color-bg-container);
+  border-bottom: 1px solid var(--ant-color-border);
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 0;
+}
+
+.tabContent {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* 图标选择器样式 */
+.iconPreviewBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.iconPreview {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+}
+
+.iconHint {
+  color: var(--ant-color-text-secondary);
+  font-size: 13px;
+}

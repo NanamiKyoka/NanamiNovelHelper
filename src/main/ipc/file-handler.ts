@@ -99,9 +99,9 @@ export function registerFileHandlers(): void {
   })
 
   // 获取文件树
-  ipcMain.handle('file:get-tree', async (_, includeHidden?: boolean, sortOptions?: SortOptions): Promise<ReturnType<typeof fileService.getFileTree>> => {
+  ipcMain.handle('file:get-tree', async (_, includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]): Promise<ReturnType<typeof fileService.getFileTree>> => {
     try {
-      return fileService.getFileTree(includeHidden, sortOptions)
+      return fileService.getFileTree(includeHidden, sortOptions, hiddenItems)
     } catch (error) {
       console.error('Failed to get file tree:', error)
       throw error

@@ -4,6 +4,8 @@ import FileTree from '@components/file-tree/FileTree'
 import { SearchPanel } from '@components/search'
 import { VisualizationPanel } from '@components/visualization'
 import { GitPanel } from '@components/git'
+import VocabularyPanel from '@components/vocabulary/VocabularyPanel'
+import SensitiveWordPanel from '@components/vocabulary/SensitiveWordPanel'
 import styles from './Sidebar.module.css'
 
 const { Sider } = Layout
@@ -46,7 +48,9 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
       case 'search':
         return <SearchPanel />
       case 'vocabulary':
-        return <div className={styles.panelContent}>词汇面板（开发中）</div>
+        return <VocabularyPanel />
+      case 'sensitive':
+        return <SensitiveWordPanel />
       case 'git':
         return <GitPanel />
       case 'visualization':

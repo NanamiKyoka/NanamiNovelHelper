@@ -840,7 +840,15 @@ const api = {
             getShowHiddenFiles: (): Promise<boolean> =>
               ipcRenderer.invoke('settings:project:getShowHiddenFiles'),
             setShowHiddenFiles: (value: boolean): Promise<void> =>
-              ipcRenderer.invoke('settings:project:setShowHiddenFiles', value)
+              ipcRenderer.invoke('settings:project:setShowHiddenFiles', value),
+            getExpandedFolders: (): Promise<string[]> =>
+              ipcRenderer.invoke('settings:project:getExpandedFolders'),
+            setExpandedFolders: (folders: string[]): Promise<void> =>
+              ipcRenderer.invoke('settings:project:setExpandedFolders', folders),
+            getHiddenItems: (): Promise<string[]> =>
+              ipcRenderer.invoke('settings:project:getHiddenItems'),
+            setHiddenItems: (items: string[]): Promise<void> =>
+              ipcRenderer.invoke('settings:project:setHiddenItems', items)
           }
         },  // 备份管理
   backup: {
@@ -1087,8 +1095,8 @@ const api = {
       recursive?: boolean
       includeHidden?: boolean
     }): Promise<FileNode[]> => ipcRenderer.invoke('file:list', path, options),
-    getTree: (includeHidden?: boolean, sortOptions?: SortOptions): Promise<FileNode[]> => 
-      ipcRenderer.invoke('file:get-tree', includeHidden, sortOptions),
+    getTree: (includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]): Promise<FileNode[]> => 
+      ipcRenderer.invoke('file:get-tree', includeHidden, sortOptions, hiddenItems),
     getInfo: (path: string): Promise<FileNode> => ipcRenderer.invoke('file:get-info', path)
   },
   // 图片管理

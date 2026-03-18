@@ -279,6 +279,6 @@ export const DEFAULT_HIGHLIGHT_CONFIG: HighlightConfig = {
 }
 
 /**
- * 高亮配置文件名
+ * 高亮配置文件名（存储在 .novelhelper 目录下）
  */
-export const HIGHLIGHT_CONFIG_FILE = '.highlight.json'
+export const HIGHLIGHT_CONFIG_FILE = 'highlight.json5'

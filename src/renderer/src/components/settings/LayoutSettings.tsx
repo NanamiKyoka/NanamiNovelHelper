@@ -4,8 +4,8 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { Switch, message } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined } from '@ant-design/icons'
+import { Switch, message, Input, Button, Tag, Space } from 'antd'
+import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, CloseOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
@@ -73,11 +73,16 @@ function LayoutSettings(): JSX.Element {
   
   // 显示隐藏文件设置
   const [showHiddenFiles, setShowHiddenFiles] = useState(false)
+  // 隐藏项列表
+  const [hiddenItems, setHiddenItems] = useState<string[]>([])
+  // 新增隐藏项输入
+  const [newHiddenItem, setNewHiddenItem] = useState('')
 
-  // 加载显示隐藏文件设置
+  // 加载设置
   useEffect(() => {
     if (currentProject) {
       window.electron.settings.project.getShowHiddenFiles().then(setShowHiddenFiles)
+      window.electron.settings.project.getHiddenItems().then(setHiddenItems)
     }
   }, [currentProject])
 
@@ -101,6 +106,40 @@ function LayoutSettings(): JSX.Element {
       await window.electron.settings.project.setShowHiddenFiles(checked)
       setShowHiddenFiles(checked)
       // 刷新文件树
+      refreshTree()
+    } catch (error) {
+      message.error('保存设置失败')
+    }
+  }
+
+  // 添加隐藏项
+  const handleAddHiddenItem = async () => {
+    const item = newHiddenItem.trim()
+    if (!item) return
+    
+    if (hiddenItems.includes(item)) {
+      message.warning('该项已存在于隐藏列表中')
+      return
+    }
+
+    try {
+      const newItems = [...hiddenItems, item]
+      await window.electron.settings.project.setHiddenItems(newItems)
+      setHiddenItems(newItems)
+      setNewHiddenItem('')
+      refreshTree()
+      message.success('已添加到隐藏列表')
+    } catch (error) {
+      message.error('保存设置失败')
+    }
+  }
+
+  // 移除隐藏项
+  const handleRemoveHiddenItem = async (item: string) => {
+    try {
+      const newItems = hiddenItems.filter(i => i !== item)
+      await window.electron.settings.project.setHiddenItems(newItems)
+      setHiddenItems(newItems)
       refreshTree()
     } catch (error) {
       message.error('保存设置失败')
@@ -179,6 +218,68 @@ function LayoutSettings(): JSX.Element {
             />
           </div>
         </div>
+
+        {/* 隐藏指定文件/文件夹 */}
+        <div style={{ marginTop: 16 }}>
+          <div className={styles.badgeItem} style={{ alignItems: 'flex-start' }}>
+            <div className={styles.badgeItemLeft}>
+              <div className={styles.badgeIcon}>
+                <FolderOutlined />
+              </div>
+              <div className={styles.badgeInfo}>
+                <span className={styles.badgeName}>隐藏指定项目</span>
+                <span className={styles.badgeDesc}>自定义隐藏指定的文件或文件夹（输入相对路径）</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ marginLeft: 44, marginTop: 8 }}>
+            <Space.Compact style={{ width: '100%' }}>
+              <Input
+                placeholder="例如: node_modules、dist、temp"
+                value={newHiddenItem}
+                onChange={(e) => setNewHiddenItem(e.target.value)}
+                onPressEnter={handleAddHiddenItem}
+              />
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={handleAddHiddenItem}
+              >
+                添加
+              </Button>
+            </Space.Compact>
+            
+            {hiddenItems.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ marginBottom: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+                  已隐藏的项目：
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {hiddenItems.map((item) => (
+                    <Tag
+                      key={item}
+                      closable
+                      onClose={(e) => {
+                        e.preventDefault()
+                        handleRemoveHiddenItem(item)
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 4,
+                        padding: '4px 8px'
+                      }}
+                    >
+                      {item.includes('.') ? <FileOutlined /> : <FolderOutlined />}
+                      <span>{item}</span>
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className={styles.tip}>
@@ -189,6 +290,7 @@ function LayoutSettings(): JSX.Element {
             <li>徽章的显示顺序可以在工具栏中长按拖拽调整</li>
             <li>隐藏的徽章功能仍然可用，只是入口被隐藏</li>
             <li>显示隐藏文件后可在文件树中查看配置目录</li>
+            <li>隐藏指定项目可输入文件或文件夹的相对路径，支持多层路径如 <code>src/utils</code></li>
           </ul>
         </div>
       </div>

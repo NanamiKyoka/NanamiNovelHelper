@@ -25,7 +25,9 @@ import {
   CalendarOutlined,
   TagOutlined,
   LinkOutlined,
-  PictureOutlined
+  PictureOutlined,
+  SettingOutlined,
+  FullscreenOutlined
 } from '@ant-design/icons'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
 import type { 
@@ -35,6 +37,8 @@ import type {
 } from '../../types/vocabulary'
 import { DEFAULT_COLORS } from '../../types/vocabulary'
 import ImageUpload from './ImageUpload'
+import VocabularyTypeSettings from './VocabularyTypeSettings'
+import VocabularyFullscreen from './VocabularyFullscreen'
 import styles from './VocabularyPanel.module.css'
 
 // 类型图标映射
@@ -51,9 +55,21 @@ interface VocabularyPanelProps {
   readOnly?: boolean
   /** 外部搜索关键词（选中文字后自动搜索） */
   externalSearchText?: string
+  /** 嵌入模式（隐藏类型标签页和工具栏，用于全屏编辑器） */
+  embedded?: boolean
+  /** 当前类型ID（嵌入模式下使用） */
+  currentTypeId?: string
+  /** 类型切换回调（嵌入模式下使用） */
+  onTypeChange?: (typeId: string) => void
 }
 
-function VocabularyPanel({ readOnly = false, externalSearchText }: VocabularyPanelProps): JSX.Element {
+function VocabularyPanel({ 
+  readOnly = false, 
+  externalSearchText,
+  embedded = false,
+  currentTypeId,
+  onTypeChange
+}: VocabularyPanelProps): JSX.Element {
   const {
     types,
     entries,
@@ -68,10 +84,18 @@ function VocabularyPanel({ readOnly = false, externalSearchText }: VocabularyPan
   
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<VocabularyEntry | null>(null)
-  const [currentType, setCurrentType] = useState<string>('')
+  const [internalCurrentType, setInternalCurrentType] = useState<string>('')
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState('')
+  const [typeSettingsOpen, setTypeSettingsOpen] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
+
+  // 嵌入模式下使用外部传入的 currentTypeId，否则使用内部状态
+  const currentType = embedded ? (currentTypeId || '') : internalCurrentType
+  const setCurrentType = embedded 
+    ? (typeId: string) => onTypeChange?.(typeId) 
+    : setInternalCurrentType
 
   // 加载数据
   useEffect(() => {
@@ -511,10 +535,15 @@ function VocabularyPanel({ readOnly = false, externalSearchText }: VocabularyPan
     )
   }
 
+  // 全屏编辑模式
+  if (fullscreen) {
+    return <VocabularyFullscreen onBack={() => setFullscreen(false)} />
+  }
+
   return (
     <div className={styles.container}>
-      {/* 类型标签页 */}
-      {types.length > 0 && (
+      {/* 类型标签页 - 嵌入模式下隐藏 */}
+      {!embedded && types.length > 0 && (
         <Tabs
           activeKey={currentType}
           onChange={(key) => { setCurrentType(key); setSearchText('') }}
@@ -529,17 +558,37 @@ function VocabularyPanel({ readOnly = false, externalSearchText }: VocabularyPan
         <Input.Search
           placeholder="搜索..."
           allowClear
-          style={{ width: 200 }}
+          style={{ width: embedded ? '100%' : 200 }}
           onChange={(e) => setSearchText(e.target.value)}
         />
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={handleCreate} 
-          disabled={readOnly || !currentType}
-        >
-          新建
-        </Button>
+        {!embedded && (
+          <Space>
+            <Button 
+              icon={<FullscreenOutlined />} 
+              onClick={() => setFullscreen(true)}
+            >
+              编辑
+            </Button>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />} 
+              onClick={handleCreate} 
+              disabled={readOnly || !currentType}
+            >
+              新建
+            </Button>
+          </Space>
+        )}
+        {embedded && (
+          <Button 
+            type="primary" 
+            icon={<PlusOutlined />} 
+            onClick={handleCreate} 
+            disabled={readOnly || !currentType}
+          >
+            新建
+          </Button>
+        )}
       </div>
       
       {/* 表格 */}
@@ -632,6 +681,18 @@ function VocabularyPanel({ readOnly = false, externalSearchText }: VocabularyPan
             <Input placeholder="关联的 Markdown 文件路径" disabled />
           </Form.Item>
         </Form>
+      </Drawer>
+
+      {/* 管理词汇类型抽屉 */}
+      <Drawer
+        title="管理词汇类型"
+        placement="right"
+        width={600}
+        open={typeSettingsOpen}
+        onClose={() => setTypeSettingsOpen(false)}
+        footer={null}
+      >
+        <VocabularyTypeSettings />
       </Drawer>
     </div>
   )

@@ -68,6 +68,14 @@ interface FileNode {
 }
 
 /**
+ * 排序选项
+ */
+interface SortOptions {
+  field: 'name' | 'modified'
+  order: 'asc' | 'desc'
+}
+
+/**
  * 词汇相关类型定义
  */
 interface VocabularyType {
@@ -282,6 +290,8 @@ interface ProjectSettings {
   badgeVisibility: BadgeVisibility
   badgeOrder: BadgeType[]
   showHiddenFiles: boolean
+  expandedFolders: string[]
+  hiddenItems: string[]
 }
 
 interface BackupInfo {
@@ -945,6 +955,10 @@ export interface ProjectSettingsAPI {
   setBadgeOrder: (order: BadgeType[]) => Promise<BadgeType[]>
   getShowHiddenFiles: () => Promise<boolean>
   setShowHiddenFiles: (value: boolean) => Promise<void>
+  getExpandedFolders: () => Promise<string[]>
+  setExpandedFolders: (folders: string[]) => Promise<void>
+  getHiddenItems: () => Promise<string[]>
+  setHiddenItems: (items: string[]) => Promise<void>
 }
 
 /**
@@ -1121,7 +1135,7 @@ export interface FileAPI {
     recursive?: boolean
     includeHidden?: boolean
   }) => Promise<FileNode[]>
-  getTree: (includeHidden?: boolean) => Promise<FileNode[]>
+  getTree: (includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]) => Promise<FileNode[]>
   getInfo: (path: string) => Promise<FileNode>
 }
 

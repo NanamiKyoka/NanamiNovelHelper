@@ -1,0 +1,38 @@
+.container {
+  padding: 0;
+}
+
+.toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.category {
+  margin-bottom: 24px;
+}
+
+.categoryTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.editContent {
+  padding: 16px 0;
+}
+
+.keyInput {
+  font-family: monospace;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.keyInput:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}

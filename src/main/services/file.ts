@@ -212,6 +212,11 @@ class FileService {
       throw new Error(`源路径不存在: ${oldPath}`)
     }
 
+    // 如果新旧路径相同，直接返回
+    if (absoluteOldPath === absoluteNewPath) {
+      return
+    }
+
     if (existsSync(absoluteNewPath)) {
       throw new Error(`目标路径已存在: ${newPath}`)
     }
@@ -317,7 +322,8 @@ class FileService {
     dirPath: string,
     recursive: boolean,
     includeHidden: boolean,
-    sortOptions?: SortOptions
+    sortOptions?: SortOptions,
+    hiddenItems?: string[]
   ): FileNode[] {
     const items = readdirSync(dirPath, { withFileTypes: true })
     const nodes: FileNode[] = []
@@ -333,6 +339,11 @@ class FileService {
         ? relative(this.currentProjectPath, absolutePath)
         : absolutePath
 
+      // 跳过用户隐藏的文件/文件夹
+      if (hiddenItems && hiddenItems.includes(relativePath)) {
+        continue
+      }
+
       const stats = statSync(absolutePath)
       const isDirectory = item.isDirectory()
 
@@ -347,7 +358,7 @@ class FileService {
       }
 
       if (recursive && isDirectory) {
-        node.children = this.scanDirectory(absolutePath, recursive, includeHidden, sortOptions)
+        node.children = this.scanDirectory(absolutePath, recursive, includeHidden, sortOptions, hiddenItems)
       }
 
       nodes.push(node)
@@ -388,12 +399,12 @@ class FileService {
   /**
    * 获取文件树
    */
-  getFileTree(includeHidden: boolean = false, sortOptions?: SortOptions): FileNode[] {
+  getFileTree(includeHidden: boolean = false, sortOptions?: SortOptions, hiddenItems?: string[]): FileNode[] {
     if (!this.currentProjectPath) {
       throw new Error('没有打开的项目')
     }
 
-    return this.scanDirectory(this.currentProjectPath, true, includeHidden, sortOptions)
+    return this.scanDirectory(this.currentProjectPath, true, includeHidden, sortOptions, hiddenItems)
   }
 
   /**

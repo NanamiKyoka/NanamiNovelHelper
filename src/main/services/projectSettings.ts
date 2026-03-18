@@ -61,7 +61,9 @@ class ProjectSettingsService {
         backup: { ...DEFAULT_PROJECT_SETTINGS.backup, ...saved.backup },
         badgeVisibility: { ...DEFAULT_PROJECT_SETTINGS.badgeVisibility, ...saved.badgeVisibility },
         badgeOrder: this.validateBadgeOrder(saved.badgeOrder),
-        showHiddenFiles: saved.showHiddenFiles ?? DEFAULT_PROJECT_SETTINGS.showHiddenFiles
+        showHiddenFiles: saved.showHiddenFiles ?? DEFAULT_PROJECT_SETTINGS.showHiddenFiles,
+        expandedFolders: saved.expandedFolders ?? DEFAULT_PROJECT_SETTINGS.expandedFolders,
+        hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
       }
     } catch (error) {
       console.error('Failed to load project settings:', error)
@@ -143,6 +145,12 @@ class ProjectSettingsService {
     }
     if (source.showHiddenFiles !== undefined) {
       result.showHiddenFiles = source.showHiddenFiles
+    }
+    if (source.expandedFolders !== undefined) {
+      result.expandedFolders = source.expandedFolders
+    }
+    if (source.hiddenItems !== undefined) {
+      result.hiddenItems = source.hiddenItems
     }
     
     return result
@@ -315,6 +323,42 @@ class ProjectSettingsService {
    */
   setShowHiddenFiles(value: boolean): void {
     this.update({ showHiddenFiles: value })
+  }
+
+  // ============================================
+  // 文件树展开状态设置
+  // ============================================
+
+  /**
+   * 获取文件树展开的文件夹列表
+   */
+  getExpandedFolders(): string[] {
+    return [...this.settings.expandedFolders]
+  }
+
+  /**
+   * 设置文件树展开的文件夹列表
+   */
+  setExpandedFolders(folders: string[]): void {
+    this.update({ expandedFolders: folders })
+  }
+
+  // ============================================
+  // 隐藏项设置
+  // ============================================
+
+  /**
+   * 获取隐藏的文件/文件夹列表
+   */
+  getHiddenItems(): string[] {
+    return [...this.settings.hiddenItems]
+  }
+
+  /**
+   * 设置隐藏的文件/文件夹列表
+   */
+  setHiddenItems(items: string[]): void {
+    this.update({ hiddenItems: items })
   }
 }
 

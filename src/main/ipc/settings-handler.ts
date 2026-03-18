@@ -184,6 +184,26 @@ export function registerSettingsHandlers(): void {
     projectSettingsService.setShowHiddenFiles(value)
   })
 
+  // 获取文件树展开的文件夹列表
+  ipcMain.handle('settings:project:getExpandedFolders', (): string[] => {
+    return projectSettingsService.getExpandedFolders()
+  })
+
+  // 设置文件树展开的文件夹列表
+  ipcMain.handle('settings:project:setExpandedFolders', (_, folders: string[]): void => {
+    projectSettingsService.setExpandedFolders(folders)
+  })
+
+  // 获取隐藏的文件/文件夹列表
+  ipcMain.handle('settings:project:getHiddenItems', (): string[] => {
+    return projectSettingsService.getHiddenItems()
+  })
+
+  // 设置隐藏的文件/文件夹列表
+  ipcMain.handle('settings:project:setHiddenItems', (_, items: string[]): void => {
+    projectSettingsService.setHiddenItems(items)
+  })
+
   // ============================================
   // 备份管理
   // ============================================
@@ -281,6 +301,12 @@ export function unregisterSettingsHandlers(): void {
     'settings:project:updateBadgeVisibility',
     'settings:project:getBadgeOrder',
     'settings:project:updateBadgeOrder',
+    'settings:project:getShowHiddenFiles',
+    'settings:project:setShowHiddenFiles',
+    'settings:project:getExpandedFolders',
+    'settings:project:setExpandedFolders',
+    'settings:project:getHiddenItems',
+    'settings:project:setHiddenItems',
     'backup:create',
     'backup:list',
     'backup:restore',

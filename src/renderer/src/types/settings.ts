@@ -193,6 +193,8 @@ export interface ProjectSettings {
   badgeVisibility: BadgeVisibility
   /** 显示隐藏文件（以.开头的文件/目录） */
   showHiddenFiles?: boolean
+  /** 用户自定义隐藏的文件/文件夹路径列表（相对路径） */
+  hiddenItems?: string[]
 }
 
 /**
@@ -204,7 +206,8 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   autoCreateVocabularyFile: false,
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
   badgeVisibility: DEFAULT_BADGE_VISIBILITY,
-  showHiddenFiles: false
+  showHiddenFiles: false,
+  hiddenItems: []
 }
 
 // ============================================

@@ -1,0 +1,75 @@
+.container {
+  padding: 0;
+}
+
+.apiCard {
+  margin-bottom: 12px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.keyDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.keyText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.addSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.addCard {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.addCard:hover {
+  border-color: var(--primary-color);
+}
+
+.addCardContent {
+  text-align: center;
+}
+
+.form {
+  max-width: 500px;
+}
+
+.formItem {
+  background: var(--background-color);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.securityTips {
+  padding: 16px;
+  background: var(--background-color);
+  border-radius: 6px;
+}
+
+.securityTips ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  color: var(--text-color-secondary);
+}
+
+.securityTips li {
+  margin-bottom: 4px;
+  font-size: 13px;
+}

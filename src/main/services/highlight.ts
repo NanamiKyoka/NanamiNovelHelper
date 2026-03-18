@@ -4,12 +4,14 @@
  */
 
 import { join } from 'path'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import JSON5 from 'json5'
 import type { HighlightConfig } from '../types/highlight'
 import {
   DEFAULT_HIGHLIGHT_CONFIG,
   HIGHLIGHT_CONFIG_FILE
 } from '../types/highlight'
+import { PROJECT_META_DIR } from '../types/project'
 import { projectService } from './project'
 
 class HighlightService {
@@ -18,11 +20,12 @@ class HighlightService {
 
   /**
    * 获取当前项目的配置文件路径
+   * 配置文件存储在 .novelhelper 目录下
    */
   private getConfigPath(): string | null {
     const project = projectService.getCurrentProject()
     if (!project) return null
-    return join(project.path, HIGHLIGHT_CONFIG_FILE)
+    return join(project.path, PROJECT_META_DIR, HIGHLIGHT_CONFIG_FILE)
   }
 
   /**
@@ -46,7 +49,7 @@ class HighlightService {
 
     try {
       const content = readFileSync(configPath, 'utf-8')
-      const loaded = JSON.parse(content) as HighlightConfig
+      const loaded = JSON5.parse(content) as HighlightConfig
       
       // 合并默认配置（处理版本升级时新增的字段）
       this.config = {
@@ -78,6 +81,12 @@ class HighlightService {
     }
 
     this.configPath = configPath
+
+    // 确保 .novelhelper 目录存在
+    const metaDir = join(projectService.getCurrentProject()!.path, PROJECT_META_DIR)
+    if (!existsSync(metaDir)) {
+      mkdirSync(metaDir, { recursive: true })
+    }
 
     // 合并配置
     const newConfig: HighlightConfig = {
@@ -117,7 +126,7 @@ class HighlightService {
     newConfig.version = DEFAULT_HIGHLIGHT_CONFIG.version
 
     try {
-      writeFileSync(configPath, JSON.stringify(newConfig, null, 2), 'utf-8')
+      writeFileSync(configPath, JSON5.stringify(newConfig, null, 2), 'utf-8')
       this.config = newConfig
     } catch (error) {
       console.error('Failed to save highlight config:', error)
