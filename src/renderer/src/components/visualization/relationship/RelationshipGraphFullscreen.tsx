@@ -11,7 +11,6 @@ import {
   Select,
   Modal,
   App,
-  Popconfirm,
   Empty,
   Spin,
   ColorPicker,
@@ -33,8 +32,6 @@ import {
   TeamOutlined,
   SettingOutlined,
   ExpandOutlined,
-  CopyOutlined,
-  UserAddOutlined,
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
@@ -144,9 +141,6 @@ function RelationshipGraphFullscreen({
     type: null,
     targetId: null,
   })
-
-  // 剪贴板（用于复制节点）
-  const [clipboard, setClipboard] = useState<RelationshipNode | null>(null)
 
   const relationTypes: RelationType[] = useMemo(() => {
     const customTypes = currentGraph?.customRelationTypes || []
@@ -269,42 +263,15 @@ function RelationshipGraphFullscreen({
         setSelectedEdgeId(null)
       })
 
-      graph.on('node:dblclick', (evt: any) => {
-        const nodeId = evt.target.id
-        const store = useRelationshipStore.getState()
-        const node = store.currentGraph?.nodes.find(n => n.id === nodeId)
-        if (node) {
-          setNodeModal({ visible: true, mode: 'edit', node: { ...node } })
-        }
-      })
-
       graph.on('edge:click', (evt: any) => {
         setSelectedEdgeId(evt.target.id)
         setSelectedNodeId(null)
-      })
-
-      graph.on('edge:dblclick', (evt: any) => {
-        const edgeId = evt.target.id
-        const store = useRelationshipStore.getState()
-        const edge = store.currentGraph?.edges.find(e => e.id === edgeId)
-        if (edge) {
-          setEdgeModal({ visible: true, mode: 'edit', edge: { ...edge } })
-        }
       })
 
       graph.on('canvas:click', () => {
         setSelectedNodeId(null)
         setSelectedEdgeId(null)
         setContextMenu(prev => ({ ...prev, visible: false }))
-      })
-
-      graph.on('canvas:dblclick', (evt: any) => {
-        const { canvasX, canvasY } = evt
-        setNodeModal({
-          visible: true,
-          mode: 'create',
-          node: { name: '', gender: 'unknown', color: '#1890ff', x: canvasX, y: canvasY },
-        })
       })
 
       // 右键菜单事件 - 使用 G6 v5 原生事件
@@ -595,54 +562,6 @@ function RelationshipGraphFullscreen({
     setContextMenu(prev => ({ ...prev, visible: false }))
   }
 
-  // 复制节点
-  const handleCopyNode = () => {
-    if (!selectedNodeId) return
-    const node = currentGraph?.nodes.find(n => n.id === selectedNodeId)
-    if (node) {
-      setClipboard(node)
-      message.success(`已复制节点「${node.name}」`)
-    }
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
-
-  // 粘贴节点
-  const handlePasteNode = async (canvasX?: number, canvasY?: number) => {
-    if (!clipboard) {
-      message.warning('剪贴板为空')
-      return
-    }
-    await addNode({
-      name: `${clipboard.name} (副本)`,
-      gender: clipboard.gender,
-      description: clipboard.description,
-      color: clipboard.color,
-      x: canvasX,
-      y: canvasY,
-    })
-    message.success('节点已粘贴')
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
-
-  // 添加关联节点
-  const handleAddRelatedNode = () => {
-    if (!selectedNodeId) return
-    const sourceNode = currentGraph?.nodes.find(n => n.id === selectedNodeId)
-    if (!sourceNode) return
-
-    setNodeModal({
-      visible: true,
-      mode: 'create',
-      node: {
-        name: '',
-        gender: 'unknown',
-        color: '#1890ff',
-        relatedTo: selectedNodeId,
-      },
-    })
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
-
   const handleSaveNode = async () => {
     if (!nodeModal.node?.name?.trim()) {
       message.warning('请输入人物名称')
@@ -728,7 +647,7 @@ function RelationshipGraphFullscreen({
   const selectedNode = selectedNodeId ? currentGraph?.nodes.find((n) => n.id === selectedNodeId) : null
   const selectedEdge = selectedEdgeId ? currentGraph?.edges.find((e) => e.id === selectedEdgeId) : null
 
-  // 右键菜单项定义
+  // 右键菜单项定义（精简版：只保留编辑和删除）
   const nodeContextMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
@@ -738,26 +657,6 @@ function RelationshipGraphFullscreen({
         if (selectedNode) {
           setNodeModal({ visible: true, mode: 'edit', node: { ...selectedNode } })
         }
-        setContextMenu(prev => ({ ...prev, visible: false }))
-      },
-    },
-    {
-      key: 'copy',
-      icon: <CopyOutlined />,
-      label: '复制节点',
-      onClick: handleCopyNode,
-    },
-    {
-      key: 'addRelated',
-      icon: <UserAddOutlined />,
-      label: '添加关联人物',
-      onClick: () => {
-        if (!selectedNodeId) return
-        setNodeModal({
-          visible: true,
-          mode: 'create',
-          node: { name: '', gender: 'unknown', color: '#1890ff', relatedTo: selectedNodeId },
-        })
         setContextMenu(prev => ({ ...prev, visible: false }))
       },
     },
@@ -828,11 +727,22 @@ function RelationshipGraphFullscreen({
       },
     },
     {
-      key: 'paste',
-      icon: <CopyOutlined />,
-      label: '粘贴人物',
-      disabled: !clipboard,
-      onClick: () => handlePasteNode(contextMenu.canvasX, contextMenu.canvasY),
+      key: 'addEdge',
+      icon: <HeartOutlined />,
+      label: '添加关系',
+      onClick: () => {
+        if (!currentGraph?.nodes.length) {
+          message.warning('请先添加人物节点')
+          setContextMenu(prev => ({ ...prev, visible: false }))
+          return
+        }
+        setEdgeModal({
+          visible: true,
+          mode: 'create',
+          edge: { source: undefined, target: undefined, relationTypeId: relationTypes[0]?.id },
+        })
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      },
     },
   ]
 
@@ -904,7 +814,7 @@ function RelationshipGraphFullscreen({
         <div ref={containerRef} className={styles.canvas} onContextMenu={(e) => e.preventDefault()} />
 
         <div className={styles.hints}>
-          <span>双击画布添加人物 | 双击节点/关系编辑 | 右键查看更多操作 | 拖拽移动位置会自动保存</span>
+          <span>右键添加人物或编辑节点 | 拖拽移动位置会自动保存</span>
         </div>
       </div>
 

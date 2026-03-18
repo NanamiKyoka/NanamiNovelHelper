@@ -1,0 +1,401 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--ant-color-bg-container);
+}
+
+.loading,
+.empty,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+}
+
+.error {
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.branchInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.branchName {
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.commitArea {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.commitInput {
+  margin-bottom: 8px;
+}
+
+.commitActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tabs {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 0;
+  padding: 0 16px;
+}
+
+.tabs :global(.ant-tabs-content) {
+  height: calc(100% - 46px);
+}
+
+.tabs :global(.ant-tabs-tabpane) {
+  height: 100%;
+  overflow: auto;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: #fff;
+  background-color: var(--ant-color-primary);
+  border-radius: 9px;
+}
+
+/* 变更列表样式 */
+.changesSection {
+  padding: 8px 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-bg-layout);
+}
+
+.sectionCount {
+  font-weight: 400;
+}
+
+.fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.fileItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.fileItem.selected {
+  background: var(--ant-color-primary-bg);
+}
+
+.fileStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.fileStatus.modified {
+  color: #1890ff;
+  background: #e6f7ff;
+}
+
+.fileStatus.added {
+  color: #52c41a;
+  background: #f6ffed;
+}
+
+.fileStatus.deleted {
+  color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.fileStatus.untracked {
+  color: #8c8c8c;
+  background: #fafafa;
+}
+
+.fileName {
+  flex: 1;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileStats {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.fileStats .additions {
+  color: #52c41a;
+}
+
+.fileStats .deletions {
+  color: #ff4d4f;
+}
+
+.fileActions {
+  display: none;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.fileItem:hover .fileActions {
+  display: flex;
+}
+
+/* 差异查看器样式 */
+.diffContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--ant-color-bg-container);
+}
+
+.diffHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.diffContent {
+  flex: 1;
+  overflow: auto;
+  font-family: 'Consolas', 'Monaco', 'Andale Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hunk {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.hunkHeader {
+  padding: 4px 16px;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-bg-layout);
+}
+
+.diffLine {
+  display: flex;
+  min-height: 22px;
+  padding: 0 16px;
+}
+
+.diffLine.add {
+  background: #f6ffed;
+}
+
+.diffLine.delete {
+  background: #fff2f0;
+}
+
+.lineNumber {
+  display: inline-block;
+  width: 40px;
+  min-width: 40px;
+  padding-right: 8px;
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary);
+  text-align: right;
+  user-select: none;
+  background: var(--ant-color-bg-layout);
+}
+
+.lineContent {
+  flex: 1;
+  white-space: pre;
+}
+
+.linePrefix {
+  display: inline-block;
+  width: 1em;
+}
+
+/* 提交历史样式 */
+.historyList {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.commitItem {
+  display: flex;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  transition: background-color 0.2s;
+}
+
+.commitItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.commitHash {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: var(--ant-color-primary);
+}
+
+.commitInfo {
+  flex: 1;
+  margin-left: 12px;
+  overflow: hidden;
+}
+
+.commitTitle {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commitMeta {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.commitRefs {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.commitRef {
+  padding: 0 6px;
+  font-size: 11px;
+  border: 1px solid var(--ant-color-primary);
+  border-radius: 4px;
+}
+
+/* 分支管理样式 */
+.branchList {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.branchItem {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  transition: background-color 0.2s;
+}
+
+.branchItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.branchItem.current {
+  background: var(--ant-color-primary-bg);
+}
+
+.branchName {
+  flex: 1;
+  font-size: 13px;
+}
+
+.branchStatus {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+/* 工具栏 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.searchInput {
+  flex: 1;
+}
+
+/* 空状态 */
+.noChanges {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  color: var(--ant-color-text-secondary);
+}
+
+.noChanges :global(.ant-empty-image) {
+  height: 60px;
+}

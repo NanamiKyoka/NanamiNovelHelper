@@ -4,7 +4,8 @@ import {
   SearchOutlined,
   TagsOutlined,
   ApartmentOutlined,
-  SettingOutlined
+  SettingOutlined,
+  BranchesOutlined
 } from '@ant-design/icons'
 import styles from './ActivityBar.module.css'
 
@@ -23,6 +24,7 @@ const items: ActivityBarItem[] = [
   { id: 'files', icon: <FileOutlined />, title: '文件资源管理器' },
   { id: 'search', icon: <SearchOutlined />, title: '搜索' },
   { id: 'vocabulary', icon: <TagsOutlined />, title: '词汇管理' },
+  { id: 'git', icon: <BranchesOutlined />, title: '版本控制' },
   { id: 'visualization', icon: <ApartmentOutlined />, title: '可视化工具' }
 ]
 

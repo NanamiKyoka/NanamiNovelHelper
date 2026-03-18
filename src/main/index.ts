@@ -13,6 +13,7 @@ import { registerTimelineHandlers } from './ipc/timeline-handler'
 import { registerSequenceChartHandlers } from './ipc/sequence-chart-handler'
 import { registerOrganizationHandlers } from './ipc/organization-handler'
 import { registerTerminalHandlers } from './ipc/terminal-handler'
+import { registerGitHandlers } from './ipc/git-handler'
 import { terminalService } from './services/terminal'
 import { fileService } from './services/file'
 
@@ -279,6 +280,7 @@ app.whenReady().then(() => {
   registerSequenceChartHandlers()
   registerOrganizationHandlers()
   registerTerminalHandlers()
+  registerGitHandlers()
 
   createWindow()
 

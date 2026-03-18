@@ -12,10 +12,12 @@ import {
   Modal,
   Spin,
   App,
-  Popconfirm,
   Tooltip,
   InputNumber,
+  Dropdown,
+  ColorPicker,
 } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   ArrowLeftOutlined,
   PlusOutlined,
@@ -23,6 +25,7 @@ import {
   LeftOutlined,
   RightOutlined,
   ExpandOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import type { SequenceEvent } from '@types/sequence-chart'
@@ -81,6 +84,22 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const [originalEnd, setOriginalEnd] = useState(10)
   const [hasMoved, setHasMoved] = useState(false)
 
+  // 右键菜单状态
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    type: 'event' | 'cell' | null
+    targetId: string | null
+    cellIndex?: number
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    type: null,
+    targetId: null,
+  })
+
   const timelineBodyRef = useRef<HTMLDivElement>(null)
   const cellWidth = 40
 
@@ -121,19 +140,11 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       title: editingEvent.title.trim(),
       description: editingEvent.description,
       progress: editingEvent.progress,
+      color: editingEvent.color,
     })
     setEditModalVisible(false)
     setEditingEvent(null)
     message.success('更新成功')
-  }
-
-  // 删除事件
-  const handleDeleteEvent = async () => {
-    if (!editingEvent) return
-    await deleteEvent(editingEvent.id)
-    setEditModalVisible(false)
-    setEditingEvent(null)
-    message.success('删除成功')
   }
 
   // 扩展单元格
@@ -219,14 +230,6 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     }
   }, [dragType, draggingEvent, dragStartX, originalStart, originalEnd, hasMoved, currentChart, cellWidth, updateEventTime, message])
 
-  // 点击事件条打开编辑
-  const handleEventClick = useCallback((e: React.MouseEvent, event: SequenceEvent) => {
-    if (!hasMoved) {
-      setEditingEvent(event)
-      setEditModalVisible(true)
-    }
-  }, [hasMoved])
-
   // 获取事件条样式
   const getEventBarStyle = useCallback((event: SequenceEvent): React.CSSProperties => {
     const start = event.timeInfo.cellStart || 1
@@ -249,6 +252,75 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1)
   }
 
+  // 右键菜单处理
+  const handleEventContextMenu = (e: React.MouseEvent, event: SequenceEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      type: 'event',
+      targetId: event.id,
+    })
+  }
+
+  const handleCellContextMenu = (e: React.MouseEvent, cellIndex: number) => {
+    e.preventDefault()
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      type: 'cell',
+      targetId: null,
+      cellIndex,
+    })
+  }
+
+  // 事件右键菜单项
+  const getEventContextMenuItems = (eventId: string): MenuProps['items'] => [
+    {
+      key: 'edit',
+      icon: <EditOutlined />,
+      label: '编辑',
+      onClick: () => {
+        const event = currentChart?.events.find(e => e.id === eventId)
+        if (event) {
+          setEditingEvent(event)
+          setEditModalVisible(true)
+        }
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      },
+    },
+    { type: 'divider' },
+    {
+      key: 'delete',
+      icon: <DeleteOutlined />,
+      label: '删除',
+      danger: true,
+      onClick: async () => {
+        await deleteEvent(eventId)
+        setContextMenu(prev => ({ ...prev, visible: false }))
+        message.success('删除成功')
+      },
+    },
+  ]
+
+  // 单元格右键菜单项
+  const getCellContextMenuItems = (cellIndex: number): MenuProps['items'] => [
+    {
+      key: 'addEvent',
+      icon: <PlusOutlined />,
+      label: '在此处添加事件',
+      onClick: () => {
+        setNewEventStart(cellIndex + 1)
+        setNewEventEnd(cellIndex + 3)
+        setAddModalVisible(true)
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      },
+    },
+  ]
+
   // 渲染时间轴标签（每格一个）
   const renderTimelineLabels = () => {
     const cellCount = currentChart?.axisConfig.initialCellCount || 100
@@ -263,7 +335,12 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const renderGridCells = () => {
     const cellCount = currentChart?.axisConfig.initialCellCount || 100
     return Array.from({ length: cellCount }, (_, i) => (
-      <div key={i + 1} className={styles.gridCell} style={{ width: cellWidth }} />
+      <div
+        key={i + 1}
+        className={styles.gridCell}
+        style={{ width: cellWidth }}
+        onContextMenu={(e) => handleCellContextMenu(e, i)}
+      />
     ))
   }
 
@@ -349,7 +426,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                       <div
                         className={`${styles.eventBar} ${draggingEvent?.id === event.id ? styles.dragging : ''}`}
                         style={getEventBarStyle(event)}
-                        onDoubleClick={(e) => handleEventClick(e, event)}
+                        onContextMenu={(e) => handleEventContextMenu(e, event)}
                       >
                         {/* 左边缘拖拽手柄 */}
                         <div
@@ -411,14 +488,9 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
         open={editModalVisible}
         onCancel={() => { setEditModalVisible(false); setEditingEvent(null); }}
         footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Popconfirm title="确定删除？" onConfirm={handleDeleteEvent} okText="删除" cancelText="取消">
-              <Button danger icon={<DeleteOutlined />}>删除</Button>
-            </Popconfirm>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={() => setEditModalVisible(false)}>取消</Button>
-              <Button type="primary" onClick={handleUpdateEvent}>保存</Button>
-            </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setEditModalVisible(false)}>取消</Button>
+            <Button type="primary" onClick={handleUpdateEvent}>保存</Button>
           </div>
         }
       >
@@ -443,6 +515,14 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               </div>
               <div className={styles.formTip}>提示：在时间轴上拖动事件条边缘可调整时间范围</div>
             </div>
+            <div className={styles.formItem}>
+              <label className={styles.formLabel}>颜色</label>
+              <ColorPicker
+                value={editingEvent.color || '#409EFF'}
+                onChange={(color) => setEditingEvent({ ...editingEvent, color: color.toHexString() })}
+                showText
+              />
+            </div>
           </>
         )}
       </Modal>
@@ -457,6 +537,30 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
           </div>
         </div>
       </Modal>
+
+      {/* 右键菜单 */}
+      <Dropdown
+        menu={{
+          items: contextMenu.type === 'event' && contextMenu.targetId
+            ? getEventContextMenuItems(contextMenu.targetId)
+            : contextMenu.type === 'cell' && contextMenu.cellIndex !== undefined
+              ? getCellContextMenuItems(contextMenu.cellIndex)
+              : [],
+        }}
+        open={contextMenu.visible}
+        onOpenChange={(open) => {
+          if (!open) {
+            setContextMenu(prev => ({ ...prev, visible: false }))
+          }
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
     </div>
   )
 }

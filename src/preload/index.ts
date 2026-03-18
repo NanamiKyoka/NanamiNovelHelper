@@ -1163,6 +1163,71 @@ const api = {
       ipcRenderer.removeAllListeners('terminal-window-closed')
     }
   },
+  // Git 版本控制
+  git: {
+    // 仓库管理
+    isRepo: (repoPath: string): Promise<boolean> => 
+      ipcRenderer.invoke('git:isRepo', repoPath),
+    init: (options: { path: string; defaultBranch?: string; initialCommit?: string }) => 
+      ipcRenderer.invoke('git:init', options),
+    status: (repoPath: string) => 
+      ipcRenderer.invoke('git:status', repoPath),
+    // 提交管理
+    log: (repoPath: string, options?: {
+      maxCount?: number;
+      skip?: number;
+      path?: string;
+      search?: string;
+      author?: string;
+    }) => ipcRenderer.invoke('git:log', repoPath, options),
+    add: (repoPath: string, filepaths: string[]) => 
+      ipcRenderer.invoke('git:add', repoPath, filepaths),
+    restore: (repoPath: string, filepaths: string[], source?: string) => 
+      ipcRenderer.invoke('git:restore', repoPath, filepaths, source),
+    commit: (repoPath: string, options: {
+      message: string;
+      all?: boolean;
+      authorName?: string;
+      authorEmail?: string;
+    }) => ipcRenderer.invoke('git:commit', repoPath, options),
+    reset: (repoPath: string, options: {
+      commit: string;
+      mode: 'soft' | 'mixed' | 'hard';
+    }) => ipcRenderer.invoke('git:reset', repoPath, options),
+    // 差异
+    diff: (repoPath: string, filepath: string, staged?: boolean) => 
+      ipcRenderer.invoke('git:diff', repoPath, filepath, staged),
+    // 分支管理
+    branchList: (repoPath: string) => 
+      ipcRenderer.invoke('git:branch:list', repoPath),
+    branchCreate: (repoPath: string, name: string, startPoint?: string) => 
+      ipcRenderer.invoke('git:branch:create', repoPath, name, startPoint),
+    branchDelete: (repoPath: string, name: string, force?: boolean) => 
+      ipcRenderer.invoke('git:branch:delete', repoPath, name, force),
+    branchRename: (repoPath: string, oldName: string, newName: string) => 
+      ipcRenderer.invoke('git:branch:rename', repoPath, oldName, newName),
+    checkout: (repoPath: string, options: {
+      target: string;
+      createBranch?: boolean;
+      branchName?: string;
+      force?: boolean;
+      paths?: string[];
+    }) => ipcRenderer.invoke('git:checkout', repoPath, options),
+    merge: (repoPath: string, options: {
+      branch: string;
+      allowUnrelatedHistories?: boolean;
+      message?: string;
+    }) => ipcRenderer.invoke('git:merge', repoPath, options),
+    // 配置
+    configGet: (repoPath: string, key: string) => 
+      ipcRenderer.invoke('git:config:get', repoPath, key),
+    configSet: (repoPath: string, key: string, value: string) => 
+      ipcRenderer.invoke('git:config:set', repoPath, key, value),
+    // 模式
+    setMode: (mode: 'system' | 'isomorphic' | 'auto') => 
+      ipcRenderer.invoke('git:setMode', mode),
+    getMode: () => ipcRenderer.invoke('git:getMode')
+  },
   // 平台信息
   platform: process.platform
 }

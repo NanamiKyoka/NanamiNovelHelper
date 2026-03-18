@@ -31,7 +31,6 @@ import {
   ExpandOutlined,
   UserAddOutlined,
   TeamOutlined,
-  CopyOutlined,
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import { useOrganizationStore } from '@stores/organizationStore'
@@ -155,7 +154,6 @@ function OrganizationGraphFullscreen({
   const [zoom, setZoom] = useState(1)
   const [selectFromVocabulary, setSelectFromVocabulary] = useState(false)
   const [nodeStyle, setNodeStyle] = useState<OrganizationNodeStyle>('simple')
-  const [copiedNode, setCopiedNode] = useState<OrganizationNode | null>(null)
 
   const [nodeModal, setNodeModal] = useState<NodeModalState>({
     visible: false,
@@ -285,15 +283,6 @@ function OrganizationGraphFullscreen({
       // 事件绑定
       graph.on('node:click', (evt: any) => {
         setSelectedNodeId(evt.target.id)
-      })
-
-      graph.on('node:dblclick', (evt: any) => {
-        const nodeId = evt.target.id
-        const store = useOrganizationStore.getState()
-        const node = store.currentGraph?.nodes.find(n => n.id === nodeId)
-        if (node) {
-          setNodeModal({ visible: true, mode: 'edit', node: { ...node } })
-        }
       })
 
       graph.on('canvas:click', () => {
@@ -484,29 +473,6 @@ function OrganizationGraphFullscreen({
     handleEditNode(selectedNodeId)
   }
 
-  const handleCopyNode = (nodeId: string) => {
-    const node = currentGraph?.nodes.find((n) => n.id === nodeId)
-    if (node) {
-      setCopiedNode({ ...node })
-      message.success('节点已复制')
-    }
-  }
-
-  const handlePasteNode = () => {
-    if (!copiedNode) {
-      message.info('请先复制节点')
-      return
-    }
-    // 粘贴为根节点
-    addNode({
-      name: `${copiedNode.name} (副本)`,
-      description: copiedNode.description,
-      color: copiedNode.color,
-      linkedEntryId: copiedNode.linkedEntryId,
-    })
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
-
   const handleDeleteNode = async (nodeId: string) => {
     await deleteNode(nodeId)
     setSelectedNodeId(null)
@@ -567,17 +533,6 @@ function OrganizationGraphFullscreen({
         }
       },
     },
-    {
-      key: 'copy',
-      icon: <CopyOutlined />,
-      label: '复制节点',
-      onClick: () => {
-        if (contextMenu.targetId) {
-          handleCopyNode(contextMenu.targetId)
-          setContextMenu(prev => ({ ...prev, visible: false }))
-        }
-      },
-    },
     { type: 'divider' },
     {
       key: 'delete',
@@ -601,13 +556,6 @@ function OrganizationGraphFullscreen({
         handleAddNode(null)
         setContextMenu(prev => ({ ...prev, visible: false }))
       },
-    },
-    {
-      key: 'paste',
-      icon: <CopyOutlined />,
-      label: '粘贴节点',
-      disabled: !copiedNode,
-      onClick: handlePasteNode,
     },
   ]
 
@@ -695,7 +643,7 @@ function OrganizationGraphFullscreen({
         <div ref={containerRef} className={styles.canvas} onContextMenu={(e) => e.preventDefault()} />
 
         <div className={styles.hints}>
-          <span>双击节点编辑 | 右键打开操作菜单</span>
+          <span>右键添加节点或编辑 | 选中节点后可通过工具栏添加子节点</span>
         </div>
       </div>
 

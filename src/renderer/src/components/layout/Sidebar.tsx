@@ -3,6 +3,7 @@ import { Layout } from 'antd'
 import FileTree from '@components/file-tree/FileTree'
 import { SearchPanel } from '@components/search'
 import { VisualizationPanel } from '@components/visualization'
+import { GitPanel } from '@components/git'
 import styles from './Sidebar.module.css'
 
 const { Sider } = Layout
@@ -46,6 +47,8 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
         return <SearchPanel />
       case 'vocabulary':
         return <div className={styles.panelContent}>词汇面板（开发中）</div>
+      case 'git':
+        return <GitPanel />
       case 'visualization':
         return <VisualizationPanel />
       default:

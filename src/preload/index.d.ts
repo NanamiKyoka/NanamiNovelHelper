@@ -703,6 +703,127 @@ interface ShellInfo {
 }
 
 /**
+ * Git 相关类型定义
+ */
+type GitMode = 'system' | 'isomorphic' | 'auto'
+
+type GitFileStatus = 'modified' | 'added' | 'deleted' | 'renamed' | 'copied' | 'untracked' | 'ignored' | 'unmodified'
+
+type GitFileStatusShort = 'M' | 'A' | 'D' | 'R' | 'C' | '?' | '!' | ' '
+
+interface GitFileChange {
+  path: string
+  oldPath?: string
+  status: GitFileStatus
+  statusShort: GitFileStatusShort
+  staged: boolean
+  additions: number
+  deletions: number
+}
+
+interface GitCommit {
+  hash: string
+  shortHash: string
+  message: string
+  title: string
+  authorName: string
+  authorEmail: string
+  timestamp: number
+  date: string
+  parentHashes: string[]
+  refs: string[]
+}
+
+interface GitBranch {
+  name: string
+  current: boolean
+  upstream?: string
+  ahead?: number
+  behind?: number
+  lastCommit?: GitCommit
+  remote: boolean
+}
+
+interface GitDiffLine {
+  type: 'add' | 'delete' | 'context'
+  oldLineNumber?: number
+  newLineNumber?: number
+  content: string
+}
+
+interface GitDiffHunk {
+  oldStart: number
+  oldLines: number
+  newStart: number
+  newLines: number
+  header: string
+  lines: GitDiffLine[]
+}
+
+interface GitFileDiff {
+  path: string
+  oldPath?: string
+  status: GitFileStatus
+  binary: boolean
+  hunks: GitDiffHunk[]
+  additions: number
+  deletions: number
+}
+
+interface GitRepositoryStatus {
+  branch: string | null
+  hasChanges: boolean
+  hasStagedChanges: boolean
+  changes: GitFileChange[]
+  stagedChanges: GitFileChange[]
+  ahead: number
+  behind: number
+  rebasing: boolean
+  merging: boolean
+  conflicts: string[]
+}
+
+interface GitResult<T> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+interface GitLogOptions {
+  maxCount?: number
+  skip?: number
+  path?: string
+  search?: string
+  author?: string
+}
+
+interface GitCommitOptions {
+  message: string
+  all?: boolean
+  authorName?: string
+  authorEmail?: string
+}
+
+interface GitResetOptions {
+  commit: string
+  mode: 'soft' | 'mixed' | 'hard'
+}
+
+interface GitCheckoutOptions {
+  target: string
+  createBranch?: boolean
+  branchName?: string
+  force?: boolean
+  paths?: string[]
+}
+
+interface GitMergeOptions {
+  branch: string
+  allowUnrelatedHistories?: boolean
+  message?: string
+}
+
+/**
  * 窗口控制 API
  */
 export interface WindowAPI {
@@ -1051,6 +1172,37 @@ export interface TerminalWindowAPI {
   removeClosedListener: () => void
 }
 
+/**
+ * Git 版本控制 API
+ */
+export interface GitAPI {
+  // 仓库管理
+  isRepo: (repoPath: string) => Promise<boolean>
+  init: (options: { path: string; defaultBranch?: string; initialCommit?: string }) => Promise<GitResult<void>>
+  status: (repoPath: string) => Promise<GitResult<GitRepositoryStatus>>
+  // 提交管理
+  log: (repoPath: string, options?: GitLogOptions) => Promise<GitResult<GitCommit[]>>
+  add: (repoPath: string, filepaths: string[]) => Promise<GitResult<void>>
+  restore: (repoPath: string, filepaths: string[], source?: string) => Promise<GitResult<void>>
+  commit: (repoPath: string, options: GitCommitOptions) => Promise<GitResult<string>>
+  reset: (repoPath: string, options: GitResetOptions) => Promise<GitResult<void>>
+  // 差异
+  diff: (repoPath: string, filepath: string, staged?: boolean) => Promise<GitResult<GitFileDiff>>
+  // 分支管理
+  branchList: (repoPath: string) => Promise<GitResult<GitBranch[]>>
+  branchCreate: (repoPath: string, name: string, startPoint?: string) => Promise<GitResult<void>>
+  branchDelete: (repoPath: string, name: string, force?: boolean) => Promise<GitResult<void>>
+  branchRename: (repoPath: string, oldName: string, newName: string) => Promise<GitResult<void>>
+  checkout: (repoPath: string, options: GitCheckoutOptions) => Promise<GitResult<void>>
+  merge: (repoPath: string, options: GitMergeOptions) => Promise<GitResult<void>>
+  // 配置
+  configGet: (repoPath: string, key: string) => Promise<GitResult<string>>
+  configSet: (repoPath: string, key: string, value: string) => Promise<GitResult<void>>
+  // 模式
+  setMode: (mode: GitMode) => Promise<GitResult<void>>
+  getMode: () => Promise<{ mode: GitMode; useSystemGit: boolean }>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI & {
@@ -1069,6 +1221,7 @@ declare global {
       image: ImageAPI
       terminal: TerminalAPI
       terminalWindow: TerminalWindowAPI
+      git: GitAPI
       platform: NodeJS.Platform
     }
   }

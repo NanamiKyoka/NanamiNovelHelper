@@ -11,7 +11,6 @@ import {
   Select,
   Modal,
   App,
-  Popconfirm,
   Spin,
   Tag,
   Tooltip,
@@ -27,15 +26,11 @@ import {
   RedoOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
-  BranchesOutlined,
   UserOutlined,
   FileTextOutlined,
   CalendarOutlined,
   TagOutlined,
   CheckOutlined,
-  CopyOutlined,
-  MoreOutlined,
-  DragOutlined,
   MenuOutlined,
   ClockCircleOutlined,
   EditOutlined,
@@ -104,6 +99,19 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   // 拖拽状态
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+
+  // 右键菜单状态
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    nodeId: string | null
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    nodeId: null,
+  })
 
   // 初始化
   useEffect(() => {
@@ -339,42 +347,18 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     }
   }
 
-  // 获取节点操作菜单
-  const getNodeMenu = (node: TimelineNode): MenuProps['items'] => [
+  // 获取节点操作菜单（精简版：只保留编辑和删除）
+  const getNodeContextMenu = (node: TimelineNode): MenuProps['items'] => [
     {
       key: 'edit',
       icon: <EditOutlined />,
       label: '编辑',
-      onClick: () => handleEditNode(node),
-    },
-    {
-      key: 'copy',
-      icon: <CopyOutlined />,
-      label: '复制',
-      onClick: async () => {
-        const newNode = {
-          ...node,
-          id: undefined,
-          title: `${node.title} (副本)`,
-          order: node.order + 1,
-        }
-        await addNode(newNode as Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt'>)
-      },
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'branch',
-      icon: <BranchesOutlined />,
-      label: '从此处分支',
       onClick: () => {
-        message.info('分支功能开发中')
+        handleEditNode(node)
+        setContextMenu(prev => ({ ...prev, visible: false }))
       },
     },
-    {
-      type: 'divider',
-    },
+    { type: 'divider' },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
@@ -391,6 +375,18 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         }),
     },
   ]
+
+  // 处理右键菜单
+  const handleContextMenu = (e: React.MouseEvent, node: TimelineNode) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeId: node.id,
+    })
+  }
 
   if (isLoading) {
     return (
@@ -496,6 +492,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                 onDrop={(e) => handleDrop(e, node.id)}
                 onDragEnd={handleDragEnd}
                 onClick={() => isBatchMode && toggleNodeSelection(node.id)}
+                onContextMenu={(e) => handleContextMenu(e, node)}
               >
                 <div className={styles.timelineLine}>
                   <div
@@ -507,37 +504,26 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                 <div className={styles.timelineContent}>
                   <div className={styles.nodeHeader}>
                     <div className={styles.nodeTitleRow}>
-                      {!isBatchMode && <DragOutlined className={styles.dragHandle} />}
                       <Text strong className={styles.nodeTitle}>
                         {node.title}
                       </Text>
                       {node.isBranchPoint && (
-                        <Tag color="blue" icon={<BranchesOutlined />}>
+                        <Tag color="blue">
                           分支点
                         </Tag>
                       )}
                     </div>
                     <div className={styles.nodeActions}>
                       {!isBatchMode && (
-                        <>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditNode(node)
-                            }}
-                          />
-                          <Dropdown menu={{ items: getNodeMenu(node) }} trigger={['click']}>
-                            <Button
-                              type="text"
-                              size="small"
-                              icon={<MoreOutlined />}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </Dropdown>
-                        </>
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditNode(node)
+                          }}
+                        />
                       )}
                       {isBatchMode && selectedNodes.includes(node.id) && (
                         <CheckOutlined className={styles.checkIcon} />
@@ -760,6 +746,28 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           </div>
         </div>
       </Modal>
+
+      {/* 右键菜单 */}
+      <Dropdown
+        menu={{
+          items: contextMenu.nodeId
+            ? getNodeContextMenu(sortedNodes.find(n => n.id === contextMenu.nodeId)!)
+            : [],
+        }}
+        open={contextMenu.visible}
+        onOpenChange={(open) => {
+          if (!open) {
+            setContextMenu(prev => ({ ...prev, visible: false }))
+          }
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
     </div>
   )
 }
