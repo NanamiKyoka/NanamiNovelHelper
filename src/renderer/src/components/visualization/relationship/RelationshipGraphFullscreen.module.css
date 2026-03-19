@@ -1,48 +1,41 @@
+/* 引入公共样式 */
 .container {
-  position: fixed;
-  top: var(--titlebar-height, 0);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-color);
+  composes: fullscreenContainer from '../common.module.css';
 }
 
 .loading {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  composes: loading from '../common.module.css';
 }
 
 /* 顶部工具栏 */
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  composes: toolbar from '../common.module.css';
 }
 
 .toolbarLeft {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  composes: toolbarLeft from '../common.module.css';
 }
 
+.toolbarRight {
+  composes: toolbarRight from '../common.module.css';
+}
+
+.zoomControls {
+  composes: zoomControls from '../common.module.css';
+}
+
+.zoomLevel {
+  composes: zoomLevel from '../common.module.css';
+}
+
+/* 标题 */
 .title {
   margin: 0 !important;
-  font-size: 18px !important;
+  font-size: var(--font-size-xl) !important;
 }
 
 .stats {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -51,212 +44,104 @@
 .toolbarCenter {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.toolbarRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.zoomControls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--bg-color);
-  border-radius: 6px;
-}
-
-.zoomLevel {
-  min-width: 50px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: var(--spacing-2);
 }
 
 /* 画布区域 */
 .canvasContainer {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  background: var(--bg-secondary);
+  composes: canvasContainer from '../common.module.css';
 }
 
 .canvas {
-  width: 100%;
-  height: 100%;
-  background: var(--bg-secondary);
+  composes: canvas from '../common.module.css';
 }
 
 /* 选中信息悬浮框 */
 .selectionInfo {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px 16px;
-  min-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  composes: selectionInfo from '../common.module.css';
 }
 
 .selectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  composes: selectionHeader from '../common.module.css';
 }
 
 .selectionColor {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  composes: selectionColor from '../common.module.css';
 }
 
 .selectionName {
-  font-weight: 500;
-  font-size: 15px;
+  composes: selectionName from '../common.module.css';
 }
 
 .selectionActions {
-  display: flex;
-  gap: 8px;
+  composes: selectionActions from '../common.module.css';
 }
 
 /* 提示 */
 .hints {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 12px;
-  color: var(--text-tertiary);
+  composes: hints from '../common.module.css';
 }
 
 /* 模态框内容 */
 .modalContent {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  composes: modalContent from '../common.module.css';
 }
 
 .formItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  composes: formItem from '../common.module.css';
 }
 
 .formLabel {
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--text-secondary);
+  composes: formLabel from '../common.module.css';
 }
 
 /* 性别选择 */
 .genderOptions {
-  display: flex;
-  gap: 8px;
+  composes: optionButtons from '../common.module.css';
 }
 
 .genderOption {
-  flex: 1;
-  text-align: center;
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.genderOption:hover {
-  border-color: var(--primary-color);
+  composes: optionButton from '../common.module.css';
 }
 
 .genderOptionSelected {
-  border-color: var(--primary-color);
-  background: rgba(24, 144, 255, 0.1);
-  color: var(--primary-color);
+  composes: optionButtonSelected from '../common.module.css';
 }
 
 /* 关系类型选择 */
 .relationTypeList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  composes: tagList from '../common.module.css';
 }
 
 .relationTypeItem {
-  padding: 6px 16px;
-  border-radius: 16px;
-  cursor: pointer;
-  color: #fff;
-  font-size: 13px;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.relationTypeItem:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+  composes: tagItem from '../common.module.css';
 }
 
 .relationTypeSelected {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+  composes: tagSelected from '../common.module.css';
 }
 
 /* 词库选择 */
 .vocabularyList {
-  max-height: 280px;
-  overflow-y: auto;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  composes: optionList from '../common.module.css';
 }
 
 .vocabularyItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.vocabularyItem:hover {
-  background-color: var(--hover-bg);
-}
-
-.vocabularyItem:not(:last-child) {
-  border-bottom: 1px solid var(--border-color);
+  composes: optionItem from '../common.module.css';
 }
 
 .vocabularyColor {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  composes: optionColor from '../common.module.css';
 }
 
 .vocabularyInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  composes: optionInfo from '../common.module.css';
 }
 
 .vocabularyName {
-  font-weight: 500;
-  font-size: 14px;
+  composes: optionName from '../common.module.css';
 }
 
 .vocabularyType {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  composes: optionMeta from '../common.module.css';
 }

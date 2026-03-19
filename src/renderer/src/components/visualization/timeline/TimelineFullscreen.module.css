@@ -1,48 +1,46 @@
+/* 引入公共样式 */
 .container {
-  position: fixed;
-  top: var(--titlebar-height, 0);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-color);
+  composes: fullscreenContainer from '../common.module.css';
 }
 
 .loading {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
+  composes: loading from '../common.module.css';
 }
 
 /* 顶部工具栏 */
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 24px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  composes: toolbar from '../common.module.css';
 }
 
 .toolbarLeft {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  composes: toolbarLeft from '../common.module.css';
 }
 
+.toolbarRight {
+  composes: toolbarRight from '../common.module.css';
+}
+
+.zoomControls {
+  composes: zoomControls from '../common.module.css';
+}
+
+.zoomLevel {
+  composes: zoomLevel from '../common.module.css';
+}
+
+/* 内容区域 */
+.content {
+  composes: content from '../common.module.css';
+}
+
+/* 标题 */
 .title {
   margin: 0 !important;
-  font-size: 18px !important;
+  font-size: var(--font-size-xl) !important;
 }
 
 .stats {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -51,45 +49,17 @@
 .toolbarCenter {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-2);
 }
 
-.toolbarRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.zoomControls {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--bg-color);
-  border-radius: 6px;
-}
-
-.zoomLevel {
-  min-width: 50px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* 内容区域 */
-.content {
-  flex: 1;
-  overflow: auto;
-  padding: 32px;
-}
-
+/* 空节点 */
 .emptyNodes {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 300px;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .emptyIcon {
@@ -114,9 +84,9 @@
 
 .timelineItem.selected {
   background: var(--hover-bg);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   margin: -8px;
-  padding: 8px;
+  padding: var(--spacing-2);
 }
 
 .timelineItem.dropTarget {
@@ -135,7 +105,7 @@
 .timelineDot {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
   border: 3px solid var(--bg-color);
   box-shadow: 0 0 0 3px var(--border-color);
@@ -149,41 +119,42 @@
 .timelineConnector {
   flex: 1;
   width: 3px;
-  background: linear-gradient(to bottom, var(--border-color) 0%, var(--border-color) 100%);
+  background: var(--border-color);
   min-height: 60px;
 }
 
 .timelineContent {
   flex: 1;
-  padding-bottom: 24px;
+  padding-bottom: var(--spacing-6);
   background: var(--card-bg);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
   border: 1px solid var(--border-color);
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
 }
 
 .timelineItem:hover .timelineContent {
   border-color: var(--primary-color);
+  box-shadow: var(--shadow-md);
 }
 
 .nodeHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-3);
 }
 
 .nodeTitleRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-3);
 }
 
 .dragHandle {
   color: var(--text-tertiary);
   cursor: grab;
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 
 .dragHandle:hover {
@@ -191,52 +162,44 @@
 }
 
 .nodeTitle {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
 }
 
 .nodeActions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.timelineItem:hover .nodeActions {
-  opacity: 1;
+  composes: nodeActions from '../common.module.css';
 }
 
 .checkIcon {
   color: var(--primary-color);
-  font-size: 18px;
+  font-size: var(--font-size-xl);
 }
 
 .nodeTime {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  margin-bottom: 12px;
-  padding: 6px 12px;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-3);
+  padding: 6px var(--spacing-3);
   background: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   width: fit-content;
 }
 
 .nodeDescription {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-base);
   line-height: 1.8;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
   white-space: pre-wrap;
 }
 
 .nodeCharacters {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 14px;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+  font-size: var(--font-size-base);
 }
 
 .characterList {
@@ -248,80 +211,44 @@
 .nodeChapter {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  padding: 8px 12px;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-2) var(--spacing-3);
   background: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   width: fit-content;
 }
 
 .addNodeButton {
   padding-left: 52px;
-  padding-bottom: 16px;
+  padding-bottom: var(--spacing-4);
 }
 
 /* 模态框样式 */
 .modalContent {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  composes: modalContent from '../common.module.css';
 }
 
 .formItem {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  composes: formItem from '../common.module.css';
 }
 
 .formLabel {
-  font-weight: 500;
-  font-size: 14px;
+  composes: formLabel from '../common.module.css';
 }
 
 .colorPicker {
-  display: flex;
-  gap: 12px;
-  padding: 8px 0;
+  composes: colorPicker from '../common.module.css';
 }
 
 .colorOption {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-}
-
-.colorOption:hover {
-  transform: scale(1.15);
+  composes: colorOption from '../common.module.css';
 }
 
 .colorSelected {
-  border-color: var(--bg-color);
-  box-shadow: 0 0 0 2px var(--primary-color);
+  composes: colorSelected from '../common.module.css';
 }
 
 .checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.checkboxLabel input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-/* 暗色模式适配 */
-:global(.dark) .timelineConnector {
-  background: linear-gradient(to bottom, #434343 0%, #434343 100%);
-}
-
-:global(.dark) .timelineContent:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  composes: checkboxLabel from '../common.module.css';
 }

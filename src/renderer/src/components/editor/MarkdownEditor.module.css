@@ -4,12 +4,8 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--editor-bg);
   position: relative;
-}
-
-[data-theme="dark"] .editorWrapper {
-  background: #1e1e1e;
 }
 
 /* 编辑器容器 */
@@ -26,26 +22,18 @@
   min-height: 100%;
   max-width: 800px;
   margin: 0 auto;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--text-primary);
   word-wrap: break-word;
   white-space: pre-wrap;
-}
-
-[data-theme="dark"] .editorContent {
-  color: rgba(255, 255, 255, 0.85);
 }
 
 /* 占位符 */
 .editorContent p.is-empty::before {
   content: attr(data-placeholder);
   float: left;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--text-placeholder);
   pointer-events: none;
   height: 0;
-}
-
-[data-theme="dark"] .editorContent p.is-empty::before {
-  color: rgba(255, 255, 255, 0.25);
 }
 
 /* 段落 */
@@ -67,13 +55,13 @@
 
 .editorContent h1 {
   font-size: 2em;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid var(--border-secondary);
   padding-bottom: 0.3em;
 }
 
 .editorContent h2 {
   font-size: 1.5em;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid var(--border-secondary);
   padding-bottom: 0.3em;
 }
 
@@ -91,16 +79,7 @@
 
 .editorContent h6 {
   font-size: 0.85em;
-  color: rgba(0, 0, 0, 0.65);
-}
-
-[data-theme="dark"] .editorContent h1,
-[data-theme="dark"] .editorContent h2 {
-  border-bottom-color: #3c3c3c;
-}
-
-[data-theme="dark"] .editorContent h6 {
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
 }
 
 /* 粗体、斜体、删除线 */
@@ -118,15 +97,11 @@
 
 /* 行内代码 */
 .editorContent code {
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 3px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: var(--hover-bg);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono);
   font-size: 0.9em;
   padding: 0.2em 0.4em;
-}
-
-[data-theme="dark"] .editorContent code {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 /* 代码块 */
@@ -226,15 +201,10 @@
 
 /* 引用块 */
 .editorContent blockquote {
-  border-left: 4px solid #e8e8e8;
+  border-left: 4px solid var(--border-secondary);
   margin: 1em 0;
   padding: 0.5em 0 0.5em 1em;
-  color: rgba(0, 0, 0, 0.65);
-}
-
-[data-theme="dark"] .editorContent blockquote {
-  border-left-color: #3c3c3c;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
 }
 
 /* 列表 */
@@ -258,17 +228,14 @@
 
 /* 链接 */
 .editorContent a.editor-link {
-  color: #1890ff;
+  color: var(--color-primary);
   text-decoration: none;
   cursor: pointer;
 }
 
 .editorContent a.editor-link:hover {
   text-decoration: underline;
-}
-
-[data-theme="dark"] .editorContent a.editor-link {
-  color: #40a9ff;
+  color: var(--color-primary-hover);
 }
 
 /* 图片 */
@@ -281,24 +248,16 @@
 
 /* 高亮 */
 .editorContent mark {
-  background-color: #fef3cd;
-  border-radius: 2px;
+  background-color: var(--color-warning-bg);
+  border-radius: var(--radius-sm);
   padding: 0 2px;
-}
-
-[data-theme="dark"] .editorContent mark {
-  background-color: #4d3800;
 }
 
 /* 水平分隔线 */
 .editorContent hr {
   border: none;
-  border-top: 2px solid #e8e8e8;
+  border-top: 2px solid var(--border-secondary);
   margin: 2em 0;
-}
-
-[data-theme="dark"] .editorContent hr {
-  border-top-color: #3c3c3c;
 }
 
 /* 加载状态 */
@@ -307,11 +266,7 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  color: rgba(0, 0, 0, 0.45);
-}
-
-[data-theme="dark"] .loading {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--text-tertiary);
 }
 
 /* 滚动条 */
@@ -325,29 +280,17 @@
 }
 
 .editorContainer::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  background: var(--text-quaternary);
+  border-radius: var(--radius-base);
 }
 
 .editorContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-[data-theme="dark"] .editorContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--text-tertiary);
 }
 
 /* ProseMirror 特定样式 */
 .editorContent .ProseMirror-selectednode {
-  outline: 2px solid #1890ff;
-}
-
-[data-theme="dark"] .editorContent .ProseMirror-selectednode {
-  outline-color: #40a9ff;
+  outline: 2px solid var(--color-primary);
 }
 
 /* 任务列表样式 */
@@ -394,15 +337,11 @@
   left: -48px;
   width: 40px;
   text-align: right;
-  color: rgba(0, 0, 0, 0.25);
-  font-size: 12px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: var(--text-quaternary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
   user-select: none;
   pointer-events: none;
-}
-
-[data-theme="dark"] .editorContent .line-number {
-  color: rgba(255, 255, 255, 0.25);
 }
 
 /* 当显示行号时，编辑器内容需要左边距 */

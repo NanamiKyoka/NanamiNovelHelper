@@ -10,50 +10,29 @@
 
 /* 菜单项激活状态 */
 .menuItemActive {
-  color: #1890ff !important;
-  background-color: rgba(24, 144, 255, 0.1) !important;
-}
-
-[data-theme="dark"] .menuItemActive {
-  color: #40a9ff !important;
-  background-color: rgba(64, 169, 255, 0.1) !important;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-bg) !important;
 }
 
 /* 快捷键样式 */
 .menuItemActive :global(.ant-dropdown-menu-item-icon) {
-  color: #1890ff;
+  color: var(--color-primary);
 }
 
 /* 覆盖 Ant Design 菜单样式 */
 .menuWrapper :global(.ant-dropdown-menu) {
   min-width: 180px;
-  padding: 4px 0;
-  border-radius: 6px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  padding: var(--spacing-1) 0;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
 }
 
 .menuWrapper :global(.ant-dropdown-menu-item),
 .menuWrapper :global(.ant-dropdown-menu-submenu-title) {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 6px var(--spacing-3);
+  font-size: var(--font-size-sm);
 }
 
 .menuWrapper :global(.ant-dropdown-menu-item-divider) {
-  margin: 4px 0;
-}
-
-/* 深色模式 */
-[data-theme="dark"] .menuWrapper :global(.ant-dropdown-menu) {
-  background: #2d2d2d;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="dark"] .menuWrapper :global(.ant-dropdown-menu-item),
-[data-theme="dark"] .menuWrapper :global(.ant-dropdown-menu-submenu-title) {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-[data-theme="dark"] .menuWrapper :global(.ant-dropdown-menu-item:hover),
-[data-theme="dark"] .menuWrapper :global(.ant-dropdown-menu-submenu-title:hover) {
-  background: rgba(255, 255, 255, 0.08);
+  margin: var(--spacing-1) 0;
 }

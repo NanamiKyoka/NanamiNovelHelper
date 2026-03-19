@@ -5,16 +5,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  width: 48px;
+  width: var(--activitybar-width);
   height: 100%;
-  background: #333333;
-  border-right: 1px solid #252526;
-}
-
-/* 浅色主题 */
-:global(body:not(.dark)) .container {
-  background: #f3f3f3;
-  border-right-color: #e5e5e5;
+  background: var(--activitybar-bg);
+  border-right: 1px solid var(--activitybar-border);
 }
 
 /* 主要按钮区域 */
@@ -22,7 +16,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 0;
+  padding: var(--spacing-1) 0;
 }
 
 /* 全屏功能入口区域 */
@@ -30,7 +24,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 0;
+  padding: var(--spacing-1) 0;
 }
 
 /* 设置按钮区域（底部） */
@@ -39,24 +33,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 4px;
+  padding-bottom: var(--spacing-1);
 }
 
 .settingsButton .divider {
-  margin-bottom: 4px;
+  margin-bottom: var(--spacing-1);
 }
 
 /* 分割线 */
 .divider {
   width: 32px;
   height: 1px;
-  margin: 4px 0;
-  background: rgba(255, 255, 255, 0.15);
+  margin: var(--spacing-1) 0;
+  background: var(--border-secondary);
   align-self: center;
-}
-
-:global(body:not(.dark)) .divider {
-  background: rgba(0, 0, 0, 0.15);
 }
 
 /* 活动按钮 */
@@ -65,33 +55,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: var(--activitybar-width);
+  height: var(--activitybar-width);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.6);
-  transition: color 0.15s ease;
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
   user-select: none;
 }
 
-:global(body:not(.dark)) .button {
-  color: rgba(0, 0, 0, 0.6);
-}
-
 .button:hover {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-:global(body:not(.dark)) .button:hover {
-  color: rgba(0, 0, 0, 0.9);
+  color: var(--text-secondary);
 }
 
 /* 活动状态 */
 .button.active {
-  color: #ffffff;
-}
-
-:global(body:not(.dark)) .button.active {
-  color: #1890ff;
+  color: var(--color-primary);
 }
 
 /* 活动指示器（左侧竖条） */
@@ -102,11 +80,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #ffffff;
-}
-
-:global(body:not(.dark)) .button.active::before {
-  background: #1890ff;
+  background: var(--color-primary);
 }
 
 /* 按钮图标 */
@@ -137,10 +111,10 @@
 .button.dragOverBottom::after {
   content: '';
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: var(--spacing-2);
+  right: var(--spacing-2);
   height: 2px;
-  background: #1890ff;
+  background: var(--color-primary);
   pointer-events: none;
   z-index: 1;
 }

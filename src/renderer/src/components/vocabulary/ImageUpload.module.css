@@ -1,25 +1,25 @@
 .container {
   position: relative;
-  border: 1px dashed #d9d9d9;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fafafa;
-  transition: all 0.3s;
+  border: 1px dashed var(--border-tertiary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  background: var(--bg-surface);
+  transition: all var(--transition-slow);
   outline: none;
 }
 
 .container:hover {
-  border-color: #1890ff;
+  border-color: var(--color-primary);
 }
 
 .container:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
 }
 
 .container.dragOver {
-  border-color: #1890ff;
-  background: #e6f7ff;
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
 }
 
 .container.disabled {
@@ -37,9 +37,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg-mask);
   z-index: 10;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 /* 上传区域 */
@@ -54,29 +54,29 @@
 
 .icon {
   font-size: 32px;
-  color: #bfbfbf;
-  margin-bottom: 8px;
+  color: var(--text-quaternary);
+  margin-bottom: var(--spacing-2);
 }
 
 .text {
-  margin: 0 0 4px;
-  color: #595959;
-  font-size: 14px;
+  margin: 0 0 var(--spacing-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
 }
 
 .hint {
-  margin: 0 0 12px;
-  color: #8c8c8c;
-  font-size: 12px;
+  margin: 0 0 var(--spacing-3);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
 .buttons {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-2);
 }
 
 .formats {
   margin: 0;
-  color: #bfbfbf;
+  color: var(--text-quaternary);
   font-size: 11px;
 }
 
@@ -89,48 +89,17 @@
 
 .imageWrapper {
   max-width: 100%;
-  margin-bottom: 12px;
+  margin-bottom: var(--spacing-3);
 }
 
 .image {
   max-width: 100%;
   max-height: 200px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: var(--radius-base);
 }
 
 .actions {
   display: flex;
-  gap: 8px;
-}
-
-/* 暗色模式 */
-:global(.dark) .container {
-  background: #1f1f1f;
-  border-color: #434343;
-}
-
-:global(.dark) .container:hover {
-  border-color: #177ddc;
-}
-
-:global(.dark) .container.dragOver {
-  background: #111b26;
-  border-color: #177ddc;
-}
-
-:global(.dark) .icon {
-  color: #5a5a5a;
-}
-
-:global(.dark) .text {
-  color: #a6a6a6;
-}
-
-:global(.dark) .hint {
-  color: #666;
-}
-
-:global(.dark) .formats {
-  color: #5a5a5a;
+  gap: var(--spacing-2);
 }
