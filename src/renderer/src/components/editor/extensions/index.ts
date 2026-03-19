@@ -5,6 +5,9 @@
 
 import { Extension } from '@tiptap/core'
 
+// 导出行号扩展
+export { LineNumbers } from './lineNumbers'
+
 /**
  * Tab 键扩展 - 插入两个空格
  */

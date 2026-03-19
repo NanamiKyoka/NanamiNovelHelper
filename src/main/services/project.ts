@@ -27,6 +27,14 @@ import {
   PresetVocabularyType,
   DEFAULT_DIRECTORIES
 } from '../types/project'
+import { vocabularyService } from './vocabulary'
+import { projectSettingsService } from './projectSettings'
+import { highlightService } from './highlight'
+import { relationshipService } from './relationship'
+import { timelineService } from './timeline'
+import { sequenceChartService } from './sequence-chart'
+import { organizationService } from './organization'
+import { fileService } from './file'
 
 /**
  * 最近项目存储
@@ -769,16 +777,6 @@ ${project.name}/
     if (!this.currentProject) {
       throw new Error('没有打开的项目')
     }
-
-    // 动态导入服务，避免循环依赖
-    const { vocabularyService } = await import('./vocabulary')
-    const { projectSettingsService } = await import('./projectSettings')
-    const { highlightService } = await import('./highlight')
-    const { relationshipService } = await import('./relationship')
-    const { timelineService } = await import('./timeline')
-    const { sequenceChartService } = await import('./sequence-chart')
-    const { organizationService } = await import('./organization')
-    const { fileService } = await import('./file')
 
     // 并行获取所有数据
     const [

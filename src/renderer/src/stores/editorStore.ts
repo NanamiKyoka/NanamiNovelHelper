@@ -10,10 +10,12 @@ import type {
   EditorSettings,
   EditorFileContent,
   WordCount,
+  CursorPosition,
+  StatusBarConfig,
   ViewMode,
   ToolbarMode
 } from '../types/editor'
-import { DEFAULT_EDITOR_SETTINGS as defaultSettings } from '../types/editor'
+import { DEFAULT_EDITOR_SETTINGS as defaultSettings, DEFAULT_STATUS_BAR_CONFIG as defaultStatusBarConfig } from '../types/editor'
 
 interface EditorState {
   // 标签页状态
@@ -30,6 +32,12 @@ interface EditorState {
 
   // 字数统计
   wordCount: WordCount
+
+  // 光标位置
+  cursorPosition: CursorPosition
+
+  // 状态栏配置
+  statusBarConfig: StatusBarConfig
 
   // 编辑器状态
   isSaving: boolean
@@ -65,6 +73,12 @@ interface EditorState {
   // 字数统计
   updateWordCount: (content: string) => void
 
+  // 光标位置
+  updateCursorPosition: (position: CursorPosition) => void
+
+  // 状态栏配置
+  updateStatusBarConfig: (config: Partial<StatusBarConfig>) => void
+
   // 工具方法
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
@@ -73,29 +87,116 @@ interface EditorState {
 }
 
 /**
- * 计算字数统计
+ * 标点符号正则（Unicode 标点类别）
+ */
+const PUNCT_REGEX = /\p{P}/u
+
+/**
+ * 判断是否是 ASCII 单词字符
+ */
+function isAsciiWordChar(code: number): boolean {
+  return (
+    (code >= 0x30 && code <= 0x39) || // 0-9
+    (code >= 0x41 && code <= 0x5A) || // A-Z
+    (code >= 0x61 && code <= 0x7A) || // a-z
+    code === 0x5F
+  ) // _
+}
+
+/**
+ * 判断是否是 CJK 字符（中日韩文字）
+ * 覆盖常见统一表意文字区段
+ */
+function isHan(code: number): boolean {
+  return (
+    (code >= 0x3400 && code <= 0x9FFF) || // CJK Unified Ideographs Ext A + Basic
+    (code >= 0xF900 && code <= 0xFAFF) || // CJK Compatibility Ideographs
+    (code >= 0x20000 && code <= 0x2FFFF)
+  ) // CJK Ext B..G（代理对）
+}
+
+/**
+ * 计算字数统计（参考 Andrea-novel-helper 的算法）
+ * 
+ * 统计规则：
+ * - 中文字符（CJK）按字计算
+ * - 英文按单词计算（连续的字母数字下划线为一个单词）
+ * - 总字数 = CJK 字符数 + 英文单词数
  */
 function calculateWordCount(content: string): WordCount {
-  if (!content) {
+  // 空白内容返回零值
+  if (!content || !content.trim()) {
     return {
-      characters: 0,
-      charactersWithoutSpaces: 0,
+      cjkChars: 0,
+      asciiChars: 0,
       words: 0,
+      nonWSChars: 0,
+      nonWSNoPunct: 0,
+      total: 0,
       lines: 0,
       paragraphs: 0
     }
   }
 
-  // 字符数
-  const characters = content.length
+  let cjkChars = 0
+  let asciiChars = 0
+  let words = 0
+  let nonWSChars = 0
+  let nonWSNoPunct = 0
 
-  // 字符数（不含空格）
-  const charactersWithoutSpaces = content.replace(/\s/g, '').length
+  let inAsciiWord = false
 
-  // 单词数（中文字符 + 英文单词）
-  const chineseChars = (content.match(/[\u4e00-\u9fa5]/g) || []).length
-  const englishWords = (content.match(/[a-zA-Z]+/g) || []).length
-  const words = chineseChars + englishWords
+  for (let i = 0; i < content.length; i++) {
+    let code = content.charCodeAt(i)
+
+    // 处理代理对（用于处理 CJK 扩展字符）
+    if (code >= 0xd800 && code <= 0xdbff && i + 1 < content.length) {
+      const next = content.charCodeAt(i + 1)
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        code = ((code - 0xd800) << 10) + (next - 0xdc00) + 0x10000
+        i++
+      }
+    }
+
+    // 获取当前字符
+    const ch = String.fromCodePoint(code)
+
+    // 非空白字符统计
+    if (!/\s/.test(ch)) {
+      nonWSChars++
+      // 非空白非标点字符统计
+      if (!PUNCT_REGEX.test(ch)) {
+        nonWSNoPunct++
+      }
+    }
+
+    // ASCII 字符统计
+    if (code <= 0x7f) {
+      asciiChars++
+    }
+
+    // CJK 字符统计
+    if (isHan(code)) {
+      cjkChars++
+      // CJK 字符会打断 ASCII 单词
+      if (inAsciiWord) {
+        inAsciiWord = false
+      }
+      continue
+    }
+
+    // ASCII 单词识别（有限状态机）
+    if (isAsciiWordChar(code)) {
+      if (!inAsciiWord) {
+        words++
+        inAsciiWord = true
+      }
+    } else {
+      if (inAsciiWord) {
+        inAsciiWord = false
+      }
+    }
+  }
 
   // 行数
   const lines = content.split('\n').length
@@ -103,10 +204,16 @@ function calculateWordCount(content: string): WordCount {
   // 段落数（非空行）
   const paragraphs = content.split('\n').filter(line => line.trim().length > 0).length
 
+  // 总字数 = CJK 字符数 + 英文单词数
+  const total = cjkChars + words
+
   return {
-    characters,
-    charactersWithoutSpaces,
+    cjkChars,
+    asciiChars,
     words,
+    nonWSChars,
+    nonWSNoPunct,
+    total,
     lines,
     paragraphs
   }
@@ -138,12 +245,20 @@ export const useEditorStore = create<EditorState>()(
       fileContents: new Map(),
       settings: defaultSettings,
       wordCount: {
-        characters: 0,
-        charactersWithoutSpaces: 0,
+        cjkChars: 0,
+        asciiChars: 0,
         words: 0,
+        nonWSChars: 0,
+        nonWSNoPunct: 0,
+        total: 0,
         lines: 0,
         paragraphs: 0
       },
+      cursorPosition: {
+        line: 1,
+        column: 1
+      },
+      statusBarConfig: defaultStatusBarConfig,
       isSaving: false,
       isLoading: false,
       lastSavedAt: null,
@@ -406,9 +521,7 @@ export const useEditorStore = create<EditorState>()(
 
         // 标记为已修改
         get().markDirty(activeTab.id, true)
-
-        // 更新字数统计
-        get().updateWordCount(content)
+        // 注意：字数统计在 MarkdownEditor 中单独调用，使用纯文本而非 HTML
       },
 
       // 保存编辑器状态（包括撤销历史）
@@ -465,6 +578,18 @@ export const useEditorStore = create<EditorState>()(
       updateWordCount: (content: string) => {
         const wordCount = calculateWordCount(content)
         set({ wordCount })
+      },
+
+      // 更新光标位置
+      updateCursorPosition: (position: CursorPosition) => {
+        set({ cursorPosition: position })
+      },
+
+      // 更新状态栏配置
+      updateStatusBarConfig: (config: Partial<StatusBarConfig>) => {
+        set(state => ({
+          statusBarConfig: { ...state.statusBarConfig, ...config }
+        }))
       },
 
       // 获取活动标签

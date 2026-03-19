@@ -14,9 +14,14 @@ import Typography from '@tiptap/extension-typography'
 import Underline from '@tiptap/extension-underline'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
-import { TabInsert, CustomKeymap } from '@components/editor/extensions'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import { common, createLowlight } from 'lowlight'
+import { TabInsert, CustomKeymap, LineNumbers } from '@components/editor/extensions'
 import { VocabularyHighlight } from '@components/editor/extensions/vocabularyHighlight'
 import type { HighlightStyleConfig, HoverCardConfig } from '@shared/highlight'
+
+// 创建 lowlight 实例，支持常用语言
+const lowlight = createLowlight(common)
 
 interface UseEditorExtensionsOptions {
   /** 高亮样式配置 */
@@ -29,6 +34,8 @@ interface UseEditorExtensionsOptions {
   onVocabularyClick?: (entryId: string) => void
   /** 悬停词汇回调 */
   onVocabularyHover?: (entryId: string, event: MouseEvent) => void
+  /** 是否显示行号 */
+  showLineNumbers?: boolean
 }
 
 /**
@@ -40,7 +47,8 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
     highlightEnabled = true,
     hoverCardConfig,
     onVocabularyClick,
-    onVocabularyHover
+    onVocabularyHover,
+    showLineNumbers = false
   } = options
 
   const getExtensions = useCallback(() => {
@@ -60,10 +68,14 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
         heading: {
           levels: [1, 2, 3, 4, 5, 6]
         },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'code-block'
-          }
+        codeBlock: false, // 禁用默认的 codeBlock，使用 CodeBlockLowlight 替代
+      }),
+      // 代码块扩展（带语法高亮）
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: 'plaintext',
+        HTMLAttributes: {
+          class: 'code-block'
         }
       }),
       Underline,
@@ -94,6 +106,10 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
       Typography,
       TabInsert,
       CustomKeymap,
+      // 行号扩展
+      LineNumbers.configure({
+        enabled: showLineNumbers
+      }),
       // 词汇高亮扩展
       VocabularyHighlight.configure({
         patterns: [], // 初始为空，通过全局状态更新
@@ -109,7 +125,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
     ]
 
     return extensions
-  }, [styleConfig, highlightEnabled, onVocabularyClick, onVocabularyHover])
+  }, [styleConfig, highlightEnabled, onVocabularyClick, onVocabularyHover, showLineNumbers])
 
   return {
     getExtensions

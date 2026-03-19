@@ -3,7 +3,7 @@
  * 整合标签页、工具栏、编辑器和预览
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Empty, message, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -16,7 +16,6 @@ export function EditorPanel() {
     activeTabId,
     settings,
     saveFileContent,
-    isSaving,
     isLoading,
     getCurrentContent,
     markDirty
@@ -104,20 +103,6 @@ export function EditorPanel() {
             />
           </div>
         )}
-      </div>
-
-      {/* 状态栏 */}
-      <div className={styles.statusBar}>
-        <div className={styles.statusLeft}>
-          <span>{activeTab?.name}</span>
-          {activeTab?.isDirty && <span className={styles.dirty}>● 已修改</span>}
-        </div>
-        <div className={styles.statusRight}>
-          <span>
-            {settings.viewMode === 'wysiwyg' ? '实时预览' : '分栏预览'}
-          </span>
-          {isSaving && <span>保存中...</span>}
-        </div>
       </div>
     </div>
   )

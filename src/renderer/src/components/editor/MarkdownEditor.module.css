@@ -139,12 +139,89 @@
   padding: 16px;
   overflow-x: auto;
   margin: 1em 0;
+  position: relative;
+}
+
+/* 代码块语言标签 */
+.editorContent pre[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .editorContent pre code {
   background: transparent;
   padding: 0;
   color: inherit;
+}
+
+/* Lowlight 语法高亮 - 基于 One Dark 主题 */
+.editorContent pre .hljs-comment,
+.editorContent pre .hljs-quote {
+  color: #5c6370;
+  font-style: italic;
+}
+
+.editorContent pre .hljs-doctag,
+.editorContent pre .hljs-keyword,
+.editorContent pre .hljs-formula {
+  color: #c678dd;
+}
+
+.editorContent pre .hljs-section,
+.editorContent pre .hljs-name,
+.editorContent pre .hljs-selector-tag,
+.editorContent pre .hljs-deletion,
+.editorContent pre .hljs-subst {
+  color: #e06c75;
+}
+
+.editorContent pre .hljs-literal {
+  color: #56b6c2;
+}
+
+.editorContent pre .hljs-string,
+.editorContent pre .hljs-regexp,
+.editorContent pre .hljs-addition,
+.editorContent pre .hljs-attribute,
+.editorContent pre .hljs-meta .hljs-string {
+  color: #98c379;
+}
+
+.editorContent pre .hljs-attr,
+.editorContent pre .hljs-variable,
+.editorContent pre .hljs-template-variable,
+.editorContent pre .hljs-type,
+.editorContent pre .hljs-class .hljs-title,
+.editorContent pre .hljs-built_in {
+  color: #e5c07b;
+}
+
+.editorContent pre .hljs-number,
+.editorContent pre .hljs-symbol,
+.editorContent pre .hljs-bullet,
+.editorContent pre .hljs-link,
+.editorContent pre .hljs-meta,
+.editorContent pre .hljs-selector-id,
+.editorContent pre .hljs-title {
+  color: #61aeee;
+}
+
+.editorContent pre .hljs-emphasis {
+  font-style: italic;
+}
+
+.editorContent pre .hljs-strong {
+  font-weight: bold;
+}
+
+.editorContent pre .hljs-link {
+  text-decoration: underline;
 }
 
 /* 引用块 */
@@ -309,4 +386,26 @@
 /* 下划线样式 */
 .editorContent u {
   text-decoration: underline;
+}
+
+/* 行号样式 */
+.editorContent .line-number {
+  position: absolute;
+  left: -48px;
+  width: 40px;
+  text-align: right;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+  user-select: none;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .editorContent .line-number {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* 当显示行号时，编辑器内容需要左边距 */
+.editorContent.hasLineNumbers {
+  padding-left: 48px;
 }

@@ -27,7 +27,7 @@ import {
   SearchOutlined,
   FolderAddOutlined,
   FileAddOutlined,
-  CaretRightOutlined,
+  RightOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
   FieldTimeOutlined
@@ -138,7 +138,7 @@ const TreeNode = memo(function TreeNode({
             }
           }}
         >
-          <CaretRightOutlined />
+          <RightOutlined />
         </span>
         
         {/* 图标 */}
@@ -195,7 +195,7 @@ const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, o
   return (
     <div className={styles.treeNode} style={{ paddingLeft: depth * 16 + 8 }}>
       <span className={`${styles.arrow} ${styles.hidden}`}>
-        <CaretRightOutlined />
+        <RightOutlined />
       </span>
       <span className={styles.icon}>
         {type === 'folder' ? <FolderOutlined /> : <FileMarkdownOutlined />}
@@ -314,24 +314,8 @@ function FileTree(): JSX.Element {
         activeElement.closest('[contenteditable="true"]')
       )
       
-      // 如果焦点在输入元素或编辑器中，不处理方向键和 Home/End
+      // 如果焦点在输入元素或编辑器中，不处理任何快捷键（让编辑器/浏览器原生处理）
       if (isInputFocused) {
-        // 仍然允许 Ctrl+C/V/X 等操作
-        const selectedArray = Array.from(selectedKeys)
-        if (e.key === 'c' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
-          e.preventDefault()
-          copyItems(selectedArray)
-          message.success(`已复制 ${selectedArray.length} 个项目`)
-        }
-        if (e.key === 'x' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
-          e.preventDefault()
-          cutItems(selectedArray)
-          message.success(`已剪切 ${selectedArray.length} 个项目`)
-        }
-        if (e.key === 'v' && (e.ctrlKey || e.metaKey) && clipboard) {
-          e.preventDefault()
-          handlePaste(selectedArray[0])
-        }
         return
       }
       

@@ -145,19 +145,64 @@ export const DEFAULT_SHORTCUTS: ShortcutConfig = {
 }
 
 /**
- * 字数统计
+ * 字数统计（参考 Andrea-novel-helper 的统计算法）
+ * 
+ * 统计规则：
+ * - 中文字符（CJK）按字计算
+ * - 英文按单词计算（连续的字母数字下划线为一个单词）
+ * - 总字数 = CJK 字符数 + 英文单词数
  */
 export interface WordCount {
-  /** 字符数 */
-  characters: number
-  /** 字符数（不含空格） */
-  charactersWithoutSpaces: number
-  /** 单词数 */
+  /** CJK 字符数（中日韩文字） */
+  cjkChars: number
+  /** ASCII 字符数 */
+  asciiChars: number
+  /** 英文单词数 */
   words: number
+  /** 非空白字符数 */
+  nonWSChars: number
+  /** 非空白非标点字符数 */
+  nonWSNoPunct: number
+  /** 总字数（CJK 字符数 + 英文单词数） */
+  total: number
   /** 行数 */
   lines: number
-  /** 段落数 */
+  /** 段落数（非空行） */
   paragraphs: number
+}
+
+/**
+ * 光标位置
+ */
+export interface CursorPosition {
+  /** 行号（从 1 开始） */
+  line: number
+  /** 列号（从 1 开始） */
+  column: number
+}
+
+/**
+ * 状态栏显示配置
+ */
+export interface StatusBarConfig {
+  /** 显示字数 */
+  showWordCount: boolean
+  /** 显示字符数 */
+  showCharacterCount: boolean
+  /** 显示编码 */
+  showEncoding: boolean
+  /** 显示文件类型 */
+  showFileType: boolean
+}
+
+/**
+ * 默认状态栏配置
+ */
+export const DEFAULT_STATUS_BAR_CONFIG: StatusBarConfig = {
+  showWordCount: true,
+  showCharacterCount: true,
+  showEncoding: true,
+  showFileType: true
 }
 
 /**

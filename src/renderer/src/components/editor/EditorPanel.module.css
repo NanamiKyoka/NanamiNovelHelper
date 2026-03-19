@@ -69,40 +69,6 @@
   flex: 1;
 }
 
-/* 状态栏 */
-.statusBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  height: 24px;
-  font-size: 12px;
-  background: #f3f3f3;
-  border-top: 1px solid #e8e8e8;
-  color: rgba(0, 0, 0, 0.45);
-}
-
-[data-theme="dark"] .statusBar {
-  background: #252526;
-  border-top-color: #3c3c3c;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.statusLeft,
-.statusRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dirty {
-  color: #faad14;
-}
-
-[data-theme="dark"] .dirty {
-  color: #ffc53d;
-}
-
 /* 滚动条 */
 .editorContainer::-webkit-scrollbar {
   width: 8px;

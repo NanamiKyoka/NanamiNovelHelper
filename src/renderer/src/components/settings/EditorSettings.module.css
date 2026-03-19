@@ -13,6 +13,16 @@
   color: var(--text-color, rgba(0, 0, 0, 0.85));
 }
 
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.checkboxGroup label {
+  margin-inline-start: 0;
+}
+
 /* 滑块样式 */
 :global(.ant-slider) {
   margin: 8px 0;

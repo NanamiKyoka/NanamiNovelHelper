@@ -2,7 +2,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--bg-color);
+  background: var(--ant-color-bg-container);
 }
 
 .header {
@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--ant-color-border);
 }
 
 .headerLeft {
@@ -39,28 +39,28 @@
 .graphCard {
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
+  border: 1px solid var(--ant-color-border);
+  background: var(--ant-color-bg-container);
 }
 
 .graphCard:hover {
-  border-color: var(--primary-color);
+  border-color: var(--ant-color-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .graphCardSelected {
-  border-color: var(--primary-color);
+  border-color: var(--ant-color-primary);
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .thumbnail {
   width: 100%;
   height: 120px;
-  background: var(--bg-secondary);
+  background: var(--ant-color-bg-layout);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--ant-color-border);
   overflow: hidden;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .thumbnailPlaceholder {
-  color: var(--text-tertiary);
+  color: var(--ant-color-text-tertiary);
   font-size: 32px;
 }
 
@@ -88,7 +88,7 @@
 }
 
 .graphDescription {
-  color: var(--text-secondary);
+  color: var(--ant-color-text-secondary);
   font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,7 +100,7 @@
   display: flex;
   gap: 12px;
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--ant-color-text-tertiary);
 }
 
 .stat {
@@ -116,20 +116,20 @@
   justify-content: center;
   height: 100%;
   min-height: 300px;
-  color: var(--text-secondary);
+  color: var(--ant-color-text-secondary);
 }
 
 .emptyIcon {
   font-size: 48px;
   margin-bottom: 16px;
-  color: var(--text-tertiary);
+  color: var(--ant-color-text-tertiary);
 }
 
 /* 右键菜单样式 */
 .contextMenu {
   position: fixed;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border);
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   padding: 4px 0;
@@ -147,16 +147,16 @@
 }
 
 .contextMenuItem:hover {
-  background: var(--hover-bg);
+  background: var(--ant-color-bg-text-hover);
 }
 
 .contextMenuItemDanger {
-  color: var(--error-color);
+  color: var(--ant-color-error);
 }
 
 .contextMenuDivider {
   height: 1px;
-  background: var(--border-color);
+  background: var(--ant-color-border);
   margin: 4px 0;
 }
 
@@ -179,7 +179,7 @@
 
 .formHint {
   font-size: 12px;
-  color: var(--text-tertiary);
+  color: var(--ant-color-text-tertiary);
 }
 
 .vocabularyTypeSelect {

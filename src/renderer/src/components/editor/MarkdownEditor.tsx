@@ -38,6 +38,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const getEditorState = useEditorStore((state) => state.getEditorState)
   const activeTabId = useEditorStore((state) => state.activeTabId)
   const tabs = useEditorStore((state) => state.tabs)
+  const updateCursorPosition = useEditorStore((state) => state.updateCursorPosition)
   const setSelectedText = useUIStore((state) => state.setSelectedText)
   
   // Local state
@@ -97,7 +98,8 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     },
     onVocabularyHover: (entryId, event) => {
       hoverCard.handleHover(entryId, event)
-    }
+    },
+    showLineNumbers: settings.showLineNumbers
   })
 
   // 创建编辑器实例
@@ -107,7 +109,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     editable: !readonly,
     editorProps: {
       attributes: {
-        class: styles.editorContent,
+        class: `${styles.editorContent}${settings.showLineNumbers ? ` ${styles.hasLineNumbers}` : ''}`,
         style: `font-family: ${settings.fontFamily}; font-size: ${settings.fontSize}px; line-height: ${settings.lineHeight};`
       },
       handleKeyDown: (view, event) => {
@@ -130,9 +132,13 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       // 如果正在输入法输入，不更新内容
       if (isComposing) return
 
-      const content = editor.getHTML()
-      updateContent(content)
-      onChange?.(content)
+      const htmlContent = editor.getHTML()
+      const textContent = editor.getText() // 纯文本用于字数统计
+      updateContent(htmlContent)
+      onChange?.(htmlContent)
+
+      // 更新字数统计（使用纯文本）
+      useEditorStore.getState().updateWordCount(textContent)
 
       // 实时保存编辑器状态（包括历史记录）到当前文件
       const filePath = currentFilePathRef.current
@@ -158,6 +164,13 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       } else {
         setSelectedText('')
       }
+
+      // 更新光标位置
+      const $from = editor.state.doc.resolve(from)
+      const line = $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
+      const lineStart = from - $from.textOffset
+      const column = from - lineStart + 1
+      updateCursorPosition({ line, column })
     }
   })
 
@@ -186,9 +199,12 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     const handleCompositionStart = () => setIsComposing(true)
     const handleCompositionEnd = () => {
       setIsComposing(false)
-      const content = editor.getHTML()
-      updateContent(content)
-      onChange?.(content)
+      const htmlContent = editor.getHTML()
+      const textContent = editor.getText()
+      updateContent(htmlContent)
+      onChange?.(htmlContent)
+      // 更新字数统计（使用纯文本）
+      useEditorStore.getState().updateWordCount(textContent)
     }
 
     editorElement.addEventListener('compositionstart', handleCompositionStart)
@@ -229,6 +245,10 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       // 没有缓存，创建全新状态
       restoreEditorContent(editor, currentContent)
     }
+
+    // 切换标签后更新字数统计（使用纯文本）
+    const textContent = editor.getText()
+    useEditorStore.getState().updateWordCount(textContent)
     
     prevFilePathRef.current = currentPath
   }, [editor, getCurrentContent, activeTabId, currentFilePath, getEditorState, saveEditorState])

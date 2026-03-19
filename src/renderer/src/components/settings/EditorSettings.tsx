@@ -3,9 +3,9 @@
  */
 
 import { useCallback } from 'react'
-import { Form, Select, InputNumber, Switch, Slider, Divider, Button, message } from 'antd'
+import { Form, Select, InputNumber, Switch, Slider, Divider, Button, message, Checkbox, Row, Col } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
-import type { EditorSettings } from '@types/editor'
+import type { EditorSettings, StatusBarConfig } from '@types/editor'
 import styles from './EditorSettings.module.css'
 
 // 字体选项
@@ -33,7 +33,7 @@ const AUTO_SAVE_OPTIONS = [
 ]
 
 export function EditorSettings() {
-  const { settings, updateSettings } = useEditorStore()
+  const { settings, updateSettings, statusBarConfig, updateStatusBarConfig } = useEditorStore()
 
   const handleSettingChange = useCallback(<K extends keyof EditorSettings>(
     key: K,
@@ -42,6 +42,14 @@ export function EditorSettings() {
     updateSettings({ [key]: value })
     message.success('设置已保存')
   }, [updateSettings])
+
+  const handleStatusBarConfigChange = useCallback(<K extends keyof StatusBarConfig>(
+    key: K,
+    value: StatusBarConfig[K]
+  ) => {
+    updateStatusBarConfig({ [key]: value })
+    message.success('状态栏设置已保存')
+  }, [updateStatusBarConfig])
 
   return (
     <div className={styles.container}>
@@ -161,6 +169,43 @@ export function EditorSettings() {
               options={AUTO_SAVE_OPTIONS}
               style={{ width: '100%' }}
             />
+          </Form.Item>
+        </Form>
+      </div>
+
+      <Divider />
+
+      {/* 状态栏设置 */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>状态栏设置</h3>
+        <Form layout="vertical" size="small">
+          <Form.Item label="显示项目">
+            <div className={styles.checkboxGroup}>
+              <Checkbox
+                checked={statusBarConfig.showWordCount}
+                onChange={(e) => handleStatusBarConfigChange('showWordCount', e.target.checked)}
+              >
+                字数统计
+              </Checkbox>
+              <Checkbox
+                checked={statusBarConfig.showCharacterCount}
+                onChange={(e) => handleStatusBarConfigChange('showCharacterCount', e.target.checked)}
+              >
+                字符数
+              </Checkbox>
+              <Checkbox
+                checked={statusBarConfig.showEncoding}
+                onChange={(e) => handleStatusBarConfigChange('showEncoding', e.target.checked)}
+              >
+                文件编码
+              </Checkbox>
+              <Checkbox
+                checked={statusBarConfig.showFileType}
+                onChange={(e) => handleStatusBarConfigChange('showFileType', e.target.checked)}
+              >
+                文件类型
+              </Checkbox>
+            </div>
           </Form.Item>
         </Form>
       </div>
