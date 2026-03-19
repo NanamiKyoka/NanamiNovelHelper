@@ -15,18 +15,18 @@ import {
   ThunderboltOutlined,
   CalendarOutlined
 } from '@ant-design/icons'
-import { useProjectStore } from '@stores/projectStore'
+import { useProjectActions } from '@hooks/useProjectActions'
 import type { 
   CreateProjectOptions, 
   ProjectDirectoryType, 
   ProjectTemplateType,
   PresetVocabularyType 
-} from '../../types/project'
+} from '@shared/project'
 import { 
   DEFAULT_DIRECTORIES, 
   DEFAULT_TEMPLATES, 
   PRESET_VOCABULARY_TYPES 
-} from '../../types/project'
+} from '@shared/project'
 
 interface CreateProjectModalProps {
   open: boolean
@@ -57,8 +57,9 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
   const [directories, setDirectories] = useState(DEFAULT_DIRECTORIES)
   const [templates, setTemplates] = useState(DEFAULT_TEMPLATES)
   const [vocabularyTypes, setVocabularyTypes] = useState(PRESET_VOCABULARY_TYPES)
-  const createProject = useProjectStore((state) => state.createProject)
-  const showCreateDialog = useProjectStore((state) => state.showCreateDialog)
+  
+  // 使用 useProjectActions 处理跨 Store 的项目操作
+  const { createProject, showCreateDialog } = useProjectActions()
 
   // 选择项目保存位置
   const handleSelectPath = useCallback(async () => {

@@ -3,26 +3,17 @@
  * 基于 TipTap 实现，支持 WYSIWYG 和分栏预览两种模式
  */
 
-import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { EditorState } from '@tiptap/pm/state'
 import { DOMParser } from '@tiptap/pm/model'
-import StarterKit from '@tiptap/starter-kit'
-import Highlight from '@tiptap/extension-highlight'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import Placeholder from '@tiptap/extension-placeholder'
-import Typography from '@tiptap/extension-typography'
-import Underline from '@tiptap/extension-underline'
-import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
 import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
-import { TabInsert, CustomKeymap } from './extensions'
-import { VocabularyHighlight, updateHighlightPatterns, updateHighlightStyleConfig, updateHighlightEnabled, clearHighlightCache } from './extensions/vocabularyHighlight'
+import { useEditorExtensions, useHoverCard } from '@hooks'
+import { updateHighlightPatterns, updateHighlightStyleConfig, updateHighlightEnabled, clearHighlightCache } from './extensions/vocabularyHighlight'
 import { HighlightHoverCard } from './HighlightHoverCard'
 import { EditorToolbar } from './EditorToolbar'
 import { SearchReplacePanel } from './SearchReplacePanel'
@@ -38,6 +29,7 @@ interface MarkdownEditorProps {
 }
 
 export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownEditorProps) {
+  // Store state
   const settings = useEditorStore((state) => state.settings)
   const updateSettings = useEditorStore((state) => state.updateSettings)
   const updateContent = useEditorStore((state) => state.updateContent)
@@ -47,19 +39,11 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const activeTabId = useEditorStore((state) => state.activeTabId)
   const tabs = useEditorStore((state) => state.tabs)
   const setSelectedText = useUIStore((state) => state.setSelectedText)
+  
+  // Local state
   const [isComposing, setIsComposing] = useState(false)
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // 搜索面板状态
   const [searchPanelVisible, setSearchPanelVisible] = useState(false)
-  
-  // 悬浮卡片状态
-  const [hoverCardVisible, setHoverCardVisible] = useState(false)
-  const [hoverCardEntryId, setHoverCardEntryId] = useState<string>('')
-  const [hoverCardIsSensitive, setHoverCardIsSensitive] = useState(false)
-  const [hoverCardSeverity, setHoverCardSeverity] = useState<string | undefined>()
-  const [hoverCardPosition, setHoverCardPosition] = useState({ x: 0, y: 0 })
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // 高亮服务
   const { config, patterns, buildPatterns, hoverCardConfig } = useHighlightService()
@@ -72,9 +56,8 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const currentFilePath = activeTab?.path || ''
   
-  // 追踪当前文件路径的 ref，用于在 onUpdate 闭包中获取最新值
+  // 文件路径追踪 refs
   const currentFilePathRef = useRef<string>(currentFilePath)
-  // 追踪前一个文件路径，用于切换时保存状态
   const prevFilePathRef = useRef<string | null>(null)
   
   // 同步 ref
@@ -90,7 +73,6 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     const excludeExtensions = config.scope.excludeExtensions || []
     if (excludeExtensions.length === 0) return true
 
-    // 获取文件扩展名（不含点）
     const ext = currentFilePath.split('.').pop()?.toLowerCase() || ''
     return !excludeExtensions.includes(ext)
   }, [config?.scope.enabled, config?.scope.excludeExtensions, currentFilePath])
@@ -102,92 +84,21 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     }
   }, [entries, types, sensitiveWords, config, vocabLoaded, entriesLoaded, sensitiveLoaded, buildPatterns])
 
-  // 获取编辑器扩展
-  const getExtensions = useCallback(() => {
-    const extensions = [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4, 5, 6]
-        },
-        codeBlock: {
-          HTMLAttributes: {
-            class: 'code-block'
-          }
-        }
-      }),
-      Underline,
-      TaskList,
-      TaskItem.configure({
-        nested: true
-      }),
-      Highlight.configure({
-        multicolor: true
-      }),
-      Link.configure({
-        openOnClick: true,
-        HTMLAttributes: {
-          class: 'editor-link'
-        }
-      }),
-      Image.configure({
-        inline: false,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: 'editor-image'
-        }
-      }),
-      Placeholder.configure({
-        placeholder: '开始写作...',
-        emptyEditorClass: 'is-empty'
-      }),
-      Typography,
-      TabInsert,
-      CustomKeymap,
-      // 始终添加词汇高亮扩展，通过全局 enabled 状态控制是否生效
-      VocabularyHighlight.configure({
-        patterns: [],  // 初始为空，通过全局状态更新
-        styleConfig: config?.style || {
-          showTextColor: true,
-          showBold: false,
-          showItalic: false,
-          showUnderline: false,
-          underlineWidth: 1,
-          underlineStyle: 'solid',
-          showHoverTooltip: true,
-          hoverDelay: 300
-        },
-        enabled: config?.scope.enabled ?? true,
-        onClick: (entryId) => {
-          console.log('Clicked vocabulary:', entryId)
-        },
-        onHover: (entryId, event) => {
-          // 清除之前的定时器
-          if (hoverTimeoutRef.current) {
-            clearTimeout(hoverTimeoutRef.current)
-          }
-          
-          // 设置延迟显示
-          const delay = hoverCardConfig?.delay || 300
-          hoverTimeoutRef.current = setTimeout(() => {
-            const target = event.target as HTMLElement
-            const highlightEl = target.closest('[data-entry-id]')
-            if (highlightEl) {
-              const isSensitive = highlightEl.getAttribute('data-sensitive') === 'true'
-              const severity = highlightEl.getAttribute('data-severity') || undefined
-              
-              setHoverCardEntryId(entryId)
-              setHoverCardIsSensitive(isSensitive)
-              setHoverCardSeverity(severity)
-              setHoverCardPosition({ x: event.clientX, y: event.clientY })
-              setHoverCardVisible(true)
-            }
-          }, delay)
-        }
-      })
-    ]
+  // 悬浮卡片 hook
+  const hoverCard = useHoverCard({ config: hoverCardConfig })
 
-    return extensions
-  }, [config])
+  // 编辑器扩展 hook
+  const { getExtensions } = useEditorExtensions({
+    styleConfig: config?.style,
+    highlightEnabled: config?.scope.enabled ?? true,
+    hoverCardConfig,
+    onVocabularyClick: (entryId) => {
+      console.log('Clicked vocabulary:', entryId)
+    },
+    onVocabularyHover: (entryId, event) => {
+      hoverCard.handleHover(entryId, event)
+    }
+  })
 
   // 创建编辑器实例
   const editor = useEditor({
@@ -224,13 +135,12 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       onChange?.(content)
 
       // 实时保存编辑器状态（包括历史记录）到当前文件
-      // 使用 ref 获取最新的文件路径，避免闭包问题
       const filePath = currentFilePathRef.current
       if (filePath) {
         saveEditorState(filePath, editor.view.state)
       }
 
-      // 自动保存（如果有设置）
+      // 自动保存
       if (settings.autoSaveInterval > 0) {
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current)
@@ -241,7 +151,6 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       }
     },
     onSelectionUpdate: ({ editor }) => {
-      // 获取选中的文字
       const { from, to } = editor.state.selection
       if (from !== to) {
         const text = editor.state.doc.textBetween(from, to, ' ')
@@ -252,19 +161,17 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     }
   })
 
-  // 当 patterns 变化时，更新扩展的全局状态并触发编辑器重绘
+  // 当 patterns 变化时，更新扩展的全局状态
   useEffect(() => {
     if (!editor) return
 
-    // 更新全局状态
     updateHighlightPatterns(patterns)
     if (config?.style) {
       updateHighlightStyleConfig(config.style)
     }
-    // 根据文件扩展名和全局启用状态决定是否启用高亮
     updateHighlightEnabled(shouldHighlight)
 
-    // 触发编辑器更新，强制重新计算装饰
+    // 触发编辑器更新
     const { state, view } = editor
     const tr = state.tr.setMeta('vocabulary-highlight-update', true)
     view.dispatch(tr)
@@ -276,13 +183,9 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
     const editorElement = editor.view.dom
 
-    const handleCompositionStart = () => {
-      setIsComposing(true)
-    }
-
+    const handleCompositionStart = () => setIsComposing(true)
     const handleCompositionEnd = () => {
       setIsComposing(false)
-      // 输入法确认后，更新内容
       const content = editor.getHTML()
       updateContent(content)
       onChange?.(content)
@@ -304,59 +207,29 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
     
-    // 切换前，保存当前编辑器状态到前一个文件
+    // 切换前，保存当前编辑器状态
     if (prevPath && prevPath !== currentPath) {
       saveEditorState(prevPath, editor.view.state)
-      // 清空高亮缓存，防止切换文件时使用旧缓存
       clearHighlightCache()
     }
 
-    // 获取当前文件的内容
+    // 获取当前文件内容
     const currentContent = getCurrentContent()
-
-    // 尝试恢复之前保存的编辑器状态
     const savedState = getEditorState(currentPath)
     
     if (savedState) {
-      // 有缓存的状态，直接恢复（包括历史记录）
+      // 恢复缓存的状态
       try {
         editor.view.updateState(savedState as typeof editor.view.state)
       } catch {
-        // 如果恢复失败（如扩展配置变化），回退到创建新状态
-        try {
-          const tempDiv = document.createElement('div')
-          tempDiv.innerHTML = currentContent
-          const parser = DOMParser.fromSchema(editor.schema)
-          const newDoc = parser.parse(tempDiv)
-          const newState = EditorState.create({
-            doc: newDoc,
-            plugins: editor.view.state.plugins
-          })
-          editor.view.updateState(newState)
-        } catch {
-          editor.chain().clearContent(false).setContent(currentContent, false).run()
-        }
+        // 恢复失败，创建新状态
+        restoreEditorContent(editor, currentContent)
       }
     } else {
-      // 没有缓存状态，创建全新的 EditorState（历史为空）
-      try {
-        const tempDiv = document.createElement('div')
-        tempDiv.innerHTML = currentContent
-        const parser = DOMParser.fromSchema(editor.schema)
-        const newDoc = parser.parse(tempDiv)
-        
-        const newState = EditorState.create({
-          doc: newDoc,
-          plugins: editor.view.state.plugins
-        })
-        
-        editor.view.updateState(newState)
-      } catch {
-        editor.chain().clearContent(false).setContent(currentContent, false).run()
-      }
+      // 没有缓存，创建全新状态
+      restoreEditorContent(editor, currentContent)
     }
     
-    // 更新前一个文件路径
     prevFilePathRef.current = currentPath
   }, [editor, getCurrentContent, activeTabId, currentFilePath, getEditorState, saveEditorState])
 
@@ -370,7 +243,6 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     editorElement.style.lineHeight = String(settings.lineHeight)
     editorElement.style.letterSpacing = `${settings.letterSpacing}px`
     
-    // 设置段落间距（通过 CSS 变量）
     const editorContainer = editorElement.closest(`.${styles.editorContainer}`) as HTMLElement
     if (editorContainer) {
       editorContainer.style.setProperty('--paragraph-spacing', `${settings.paragraphSpacing}em`)
@@ -380,12 +252,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   // 清理定时器
   useEffect(() => {
     return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
-      }
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
   }, [])
   
@@ -394,20 +261,14 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     if (!editor) return
 
     const editorElement = editor.view.dom
-
     const handleMouseLeave = () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current)
-      }
-      setHoverCardVisible(false)
+      hoverCard.cancelHover()
+      hoverCard.hide()
     }
 
     editorElement.addEventListener('mouseleave', handleMouseLeave)
-
-    return () => {
-      editorElement.removeEventListener('mouseleave', handleMouseLeave)
-    }
-  }, [editor])
+    return () => editorElement.removeEventListener('mouseleave', handleMouseLeave)
+  }, [editor, hoverCard])
 
   if (!editor) {
     return <div className={styles.loading}>加载编辑器...</div>
@@ -415,7 +276,6 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
   return (
     <div className={styles.editorWrapper}>
-      {/* 工具栏 */}
       <EditorToolbar 
         editor={editor}
         settings={settings}
@@ -424,28 +284,46 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
         fileType={activeTab?.type}
       />
       
-      {/* 搜索替换面板 */}
       <SearchReplacePanel
         editor={editor}
         visible={searchPanelVisible}
         onClose={() => setSearchPanelVisible(false)}
       />
       
-      {/* 编辑器内容 */}
       <EditorContent editor={editor} className={styles.editorContainer} />
       
-      {/* 高亮悬浮卡片 */}
       <HighlightHoverCard
-        entryId={hoverCardEntryId}
-        isSensitive={hoverCardIsSensitive}
-        severity={hoverCardSeverity}
-        config={hoverCardConfig}
-        position={hoverCardPosition}
-        visible={hoverCardVisible}
-        onClose={() => setHoverCardVisible(false)}
+        entryId={hoverCard.state.entryId}
+        isSensitive={hoverCard.state.isSensitive}
+        severity={hoverCard.state.severity}
+        config={hoverCard.config}
+        position={hoverCard.state.position}
+        visible={hoverCard.state.visible}
+        onClose={() => hoverCard.hide()}
       />
     </div>
   )
+}
+
+/**
+ * 恢复编辑器内容
+ */
+function restoreEditorContent(editor: ReturnType<typeof useEditor>, content: string) {
+  try {
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = content
+    const parser = DOMParser.fromSchema(editor.schema)
+    const newDoc = parser.parse(tempDiv)
+    
+    const newState = EditorState.create({
+      doc: newDoc,
+      plugins: editor.view.state.plugins
+    })
+    
+    editor.view.updateState(newState)
+  } catch {
+    editor.chain().clearContent(false).setContent(content, false).run()
+  }
 }
 
 export default MarkdownEditor

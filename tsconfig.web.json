@@ -3,7 +3,8 @@
   "include": [
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.tsx",
-    "src/renderer/src/**/*.ts"
+    "src/renderer/src/**/*.ts",
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -15,7 +16,8 @@
       "@services/*": ["src/renderer/src/services/*"],
       "@hooks/*": ["src/renderer/src/hooks/*"],
       "@utils/*": ["src/renderer/src/utils/*"],
-      "@types/*": ["src/renderer/src/types/*"]
+      "@types/*": ["src/renderer/src/types/*"],
+      "@shared/*": ["src/shared/*"]
     },
     "outDir": "out/renderer",
     "jsx": "react-jsx",

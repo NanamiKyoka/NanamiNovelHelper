@@ -14,6 +14,7 @@ import {
   BookOutlined
 } from '@ant-design/icons'
 import { useProjectStore } from '@stores/projectStore'
+import { useProjectActions } from '@hooks/useProjectActions'
 import { useUIStore } from '@stores/uiStore'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -28,11 +29,12 @@ const { Title, Text, Paragraph } = Typography
 function WelcomePage(): JSX.Element {
   const recentProjects = useProjectStore((state) => state.recentProjects)
   const loadRecentProjects = useProjectStore((state) => state.loadRecentProjects)
-  const openProject = useProjectStore((state) => state.openProject)
   const removeRecentProject = useProjectStore((state) => state.removeRecentProject)
-  const showOpenDialog = useProjectStore((state) => state.showOpenDialog)
   const error = useProjectStore((state) => state.error)
   const clearError = useProjectStore((state) => state.clearError)
+  
+  // 使用 useProjectActions 处理跨 Store 的项目操作
+  const { openProject, browseAndOpen } = useProjectActions()
 
   // 加载最近项目列表
   useEffect(() => {
@@ -68,11 +70,12 @@ function WelcomePage(): JSX.Element {
 
   // 浏览打开项目
   const handleBrowse = useCallback(async () => {
-    const path = await showOpenDialog()
-    if (path) {
-      await handleQuickOpen(path)
+    try {
+      await browseAndOpen()
+    } catch {
+      // 错误已在 hook 中处理
     }
-  }, [showOpenDialog, handleQuickOpen])
+  }, [browseAndOpen])
 
   return (
     <div className={styles.welcomePage}>

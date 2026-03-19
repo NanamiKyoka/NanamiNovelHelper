@@ -1,10 +1,17 @@
 /**
  * 项目状态管理
+ * 
+ * 注意：createProject、openProject、closeProject 方法仅管理项目自身的状态
+ * 跨 Store 的协调操作（如初始化 settingsStore）应由 useProjectActions hook 处理
+ * 组件应优先使用 useProjectActions hook
  */
 
 import { create } from 'zustand'
-import type { Project, RecentProject, CreateProjectOptions } from '../types/project'
-import { useSettingsStore } from './settingsStore'
+import { createErrorHandler } from '@utils/error'
+import type { Project, RecentProject, CreateProjectOptions } from '@shared/project'
+
+// 创建带前缀的错误处理器
+const handleError = createErrorHandler('[ProjectStore]')
 
 interface ProjectState {
   // 状态
@@ -42,23 +49,12 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const project = await window.electron.project.create(options)
-      
-      // 创建后自动打开项目
       const openedProject = await window.electron.project.open(project.path)
-      set({ 
-        currentProject: openedProject, 
-        isLoading: false 
-      })
-      
-      // 初始化项目设置
-      await useSettingsStore.getState().initProjectSettings()
-      
-      // 刷新最近项目列表
+      set({ currentProject: openedProject, isLoading: false })
       get().loadRecentProjects()
-      
       return openedProject
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '创建项目失败'
+      const errorMessage = handleError(error, { fallbackMessage: '创建项目失败' })
       set({ error: errorMessage, isLoading: false })
       throw error
     }
@@ -69,20 +65,11 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const project = await window.electron.project.open(path)
-      set({ 
-        currentProject: project, 
-        isLoading: false 
-      })
-      
-      // 初始化项目设置
-      await useSettingsStore.getState().initProjectSettings()
-      
-      // 刷新最近项目列表
+      set({ currentProject: project, isLoading: false })
       get().loadRecentProjects()
-      
       return project
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '打开项目失败'
+      const errorMessage = handleError(error, { fallbackMessage: '打开项目失败' })
       set({ error: errorMessage, isLoading: false })
       throw error
     }
@@ -93,16 +80,9 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       await window.electron.project.close()
-      
-      // 清除项目设置
-      useSettingsStore.getState().clearProjectSettings()
-      
-      set({ 
-        currentProject: null, 
-        isLoading: false 
-      })
+      set({ currentProject: null, isLoading: false })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '关闭项目失败'
+      const errorMessage = handleError(error, { fallbackMessage: '关闭项目失败' })
       set({ error: errorMessage, isLoading: false })
       throw error
     }
@@ -113,15 +93,10 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const project = await window.electron.project.updateInfo(info)
-      set({ 
-        currentProject: project, 
-        isLoading: false 
-      })
-      
-      // 刷新最近项目列表
+      set({ currentProject: project, isLoading: false })
       get().loadRecentProjects()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '更新项目信息失败'
+      const errorMessage = handleError(error, { fallbackMessage: '更新项目信息失败' })
       set({ error: errorMessage, isLoading: false })
       throw error
     }
@@ -133,7 +108,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       const recent = await window.electron.project.getRecent()
       set({ recentProjects: recent })
     } catch (error) {
-      console.error('Failed to load recent projects:', error)
+      handleError(error, { fallbackMessage: '加载最近项目失败' })
     }
   },
 
@@ -144,7 +119,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       const recent = await window.electron.project.getRecent()
       set({ recentProjects: recent })
     } catch (error) {
-      console.error('Failed to remove recent project:', error)
+      handleError(error, { fallbackMessage: '移除最近项目失败' })
     }
   },
 
@@ -154,7 +129,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
       await window.electron.project.clearRecent()
       set({ recentProjects: [] })
     } catch (error) {
-      console.error('Failed to clear recent projects:', error)
+      handleError(error, { fallbackMessage: '清空最近项目失败' })
     }
   },
 

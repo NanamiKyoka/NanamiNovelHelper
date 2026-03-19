@@ -1,8 +1,0 @@
-{
-  autoSaveInterval: 30000,
-  defaultFileType: 'chapter',
-  editorFontSize: 14,
-  editorFontFamily: 'Microsoft YaHei',
-  sensitiveWordCheck: true,
-  vocabularyHighlight: true
-}

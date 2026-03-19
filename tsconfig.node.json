@@ -5,7 +5,8 @@
     "src/main/**/*",
     "src/preload/**/*",
     "src/main/**/*.ts",
-    "src/preload/**/*.ts"
+    "src/preload/**/*.ts",
+    "src/shared/**/*"
   ],
   "compilerOptions": {
     "composite": true,
@@ -13,7 +14,8 @@
     "baseUrl": ".",
     "paths": {
       "@main/*": ["src/main/*"],
-      "@preload/*": ["src/preload/*"]
+      "@preload/*": ["src/preload/*"],
+      "@shared/*": ["src/shared/*"]
     },
     "outDir": "out/main",
     "moduleResolution": "bundler",

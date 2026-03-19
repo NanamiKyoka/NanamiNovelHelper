@@ -11,6 +11,7 @@ import {
   FolderOutlined
 } from '@ant-design/icons'
 import { useProjectStore } from '@stores/projectStore'
+import { useProjectActions } from '@hooks/useProjectActions'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
@@ -31,10 +32,11 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
   const [openingPath, setOpeningPath] = useState<string | null>(null)
   
   const recentProjects = useProjectStore((state) => state.recentProjects)
-  const openProject = useProjectStore((state) => state.openProject)
   const loadRecentProjects = useProjectStore((state) => state.loadRecentProjects)
   const removeRecentProject = useProjectStore((state) => state.removeRecentProject)
-  const showOpenDialog = useProjectStore((state) => state.showOpenDialog)
+  
+  // 使用 useProjectActions 处理跨 Store 的项目操作
+  const { openProject, browseAndOpen } = useProjectActions()
 
   // 加载最近项目列表
   useEffect(() => {
@@ -45,11 +47,16 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
 
   // 选择项目目录
   const handleBrowse = useCallback(async () => {
-    const path = await showOpenDialog()
-    if (path) {
-      await handleOpen(path)
+    setLoading(true)
+    try {
+      await browseAndOpen()
+      onSuccess?.()
+    } catch {
+      // 错误已在 hook 中处理
+    } finally {
+      setLoading(false)
     }
-  }, [showOpenDialog])
+  }, [browseAndOpen, onSuccess])
 
   // 打开项目
   const handleOpen = useCallback(async (path: string) => {
@@ -60,8 +67,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
       message.success('项目已打开')
       onSuccess?.()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '打开项目失败'
-      message.error(errorMessage)
+      // 错误已在 hook 中处理，这里仅显示提示
     } finally {
       setLoading(false)
       setOpeningPath(null)
