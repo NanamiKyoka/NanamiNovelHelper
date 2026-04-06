@@ -1449,6 +1449,78 @@ const api = {
       }
     ) => ipcRenderer.invoke('search:replace', filePath, searchQuery, replaceText, options)
   },
+  // AI 写作助手
+  aiAssistant: {
+    // 模板管理
+    getTemplateList: () => ipcRenderer.invoke('aiAssistant:getTemplateList'),
+    getTemplates: () => ipcRenderer.invoke('aiAssistant:getTemplates'),
+    getTemplate: (id: string) => ipcRenderer.invoke('aiAssistant:getTemplate', id),
+    saveTemplate: (template: Record<string, unknown>) => 
+      ipcRenderer.invoke('aiAssistant:saveTemplate', template),
+    deleteTemplate: (id: string) => ipcRenderer.invoke('aiAssistant:deleteTemplate', id),
+    copyTemplateToProject: (id: string) => 
+      ipcRenderer.invoke('aiAssistant:copyTemplateToProject', id),
+    exportTemplate: (id: string) => ipcRenderer.invoke('aiAssistant:exportTemplate', id),
+    importTemplate: (json5Content: string) => 
+      ipcRenderer.invoke('aiAssistant:importTemplate', json5Content),
+    // 工作流管理
+    getWorkflowList: () => ipcRenderer.invoke('aiAssistant:getWorkflowList'),
+    getWorkflows: () => ipcRenderer.invoke('aiAssistant:getWorkflows'),
+    getWorkflow: (id: string) => ipcRenderer.invoke('aiAssistant:getWorkflow', id),
+    saveWorkflow: (workflow: Record<string, unknown>) => 
+      ipcRenderer.invoke('aiAssistant:saveWorkflow', workflow),
+    deleteWorkflow: (id: string) => ipcRenderer.invoke('aiAssistant:deleteWorkflow', id),
+    exportWorkflow: (id: string) => ipcRenderer.invoke('aiAssistant:exportWorkflow', id),
+    importWorkflow: (json5Content: string) => 
+      ipcRenderer.invoke('aiAssistant:importWorkflow', json5Content),
+    // 执行状态
+    createExecution: (workflowId: string, workflowName: string) => 
+      ipcRenderer.invoke('aiAssistant:createExecution', workflowId, workflowName),
+    getExecution: (id: string) => ipcRenderer.invoke('aiAssistant:getExecution', id),
+    updateExecution: (id: string, updates: Record<string, unknown>) => 
+      ipcRenderer.invoke('aiAssistant:updateExecution', id, updates),
+    getExecutionHistory: () => ipcRenderer.invoke('aiAssistant:getExecutionHistory'),
+    deleteExecution: (id: string) => ipcRenderer.invoke('aiAssistant:deleteExecution', id),
+    // API 调用
+    callApi: (prompt: string, options?: Record<string, unknown>) => 
+      ipcRenderer.invoke('aiAssistant:callApi', prompt, options),
+    testApiConnection: (provider: string) => 
+      ipcRenderer.invoke('aiAssistant:testApiConnection', provider),
+    getAvailableModels: (provider: string) => 
+      ipcRenderer.invoke('aiAssistant:getAvailableModels', provider)
+  },
+  // 动态 SKILL
+  dynamicSkill: {
+    getList: () => ipcRenderer.invoke('dynamicSkill:getList'),
+    get: (skillId: string) => ipcRenderer.invoke('dynamicSkill:get', skillId),
+    reload: () => ipcRenderer.invoke('dynamicSkill:reload'),
+    getTools: (skillId: string) => ipcRenderer.invoke('dynamicSkill:getTools', skillId),
+    execute: (
+      skillId: string,
+      toolId: string,
+      parameters: Record<string, unknown>,
+      context: Record<string, unknown>
+    ) => ipcRenderer.invoke('dynamicSkill:execute', skillId, toolId, parameters, context),
+    cancel: (executionId: string) => ipcRenderer.invoke('dynamicSkill:cancel', executionId),
+    getWhitelist: () => ipcRenderer.invoke('dynamicSkill:getWhitelist'),
+    addToWhitelist: (skillId: string, skillName: string, skillPath: string) => 
+      ipcRenderer.invoke('dynamicSkill:addToWhitelist', skillId, skillName, skillPath),
+    removeFromWhitelist: (skillId: string) => 
+      ipcRenderer.invoke('dynamicSkill:removeFromWhitelist', skillId),
+    isTrusted: (skillId: string, skillPath: string) => 
+      ipcRenderer.invoke('dynamicSkill:isTrusted', skillId, skillPath),
+    create: (options: Record<string, unknown>) => 
+      ipcRenderer.invoke('dynamicSkill:create', options),
+    update: (skillId: string, options: Record<string, unknown>) => 
+      ipcRenderer.invoke('dynamicSkill:update', skillId, options),
+    delete: (skillId: string) => ipcRenderer.invoke('dynamicSkill:delete', skillId),
+    onExecutionOutput: (callback: (data: { executionId: string; line: string }) => void) => {
+      ipcRenderer.on('dynamicSkill:execution-output', (_, data) => callback(data))
+    },
+    removeExecutionOutputListener: () => {
+      ipcRenderer.removeAllListeners('dynamicSkill:execution-output')
+    }
+  },
   // 平台信息
   platform: process.platform
 }

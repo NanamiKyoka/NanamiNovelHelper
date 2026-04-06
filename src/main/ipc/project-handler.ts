@@ -26,10 +26,9 @@ export function registerProjectHandlers(): void {
   // 创建项目
   ipcMain.handle('project:create', async (_, options: CreateProjectOptions): Promise<Project> => {
     try {
-      // 参数验证
-      validateParams('project:create ')
+      validateParams('project:create')
         .object(options, 'options')
-        .nonEmptyString((options as Record<string, unknown>).path as string, 'options.path')
+        .nonEmptyString((options as Record<string, unknown>).parentPath as string, 'options.parentPath')
         .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
         .validate()
       
