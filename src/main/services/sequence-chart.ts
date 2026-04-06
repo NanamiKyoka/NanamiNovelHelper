@@ -3,9 +3,6 @@
  * 负责事序图的 CRUD 操作、事件管理和缩略图生成
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import JSON5 from 'json5'
 import {
   SequenceChart,
@@ -21,58 +18,68 @@ import {
   BUILT_IN_EVENT_TYPES,
   EVENT_COLORS
 } from '../types/sequence-chart'
-import { PROJECT_META_DIR } from '../types/project'
-
-// 数据目录名
-const DATA_DIR = 'data'
-const SEQUENCE_CHARTS_DIR = 'sequence-charts'
+import { BaseService } from './base'
 
 /**
  * 默认事件类型颜色
  */
 const DEFAULT_EVENT_TYPE_ID = 'other'
 
-class SequenceChartService {
-  private projectPath: string | null = null
-  private chartsDir: string | null = null
-
-  /**
-   * 初始化服务
-   */
-  init(projectPath: string): void {
-    this.projectPath = projectPath
-    this.chartsDir = path.join(
-      projectPath,
-      PROJECT_META_DIR,
-      DATA_DIR,
-      SEQUENCE_CHARTS_DIR
-    )
-    this.ensureDirectories()
+/**
+ * 事序图服务
+ * 继承 BaseService 实现通用 CRUD 操作
+ */
+class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta> {
+  constructor() {
+    super({ dataSubDir: 'sequence-charts' })
   }
 
-  /**
-   * 确保目录存在
-   */
-  private ensureDirectories(): void {
-    if (!this.projectPath || !this.chartsDir) return
+  // ============================================
+  // BaseService 抽象方法实现
+  // ============================================
 
-    if (!fs.existsSync(this.chartsDir)) {
-      fs.mkdirSync(this.chartsDir, { recursive: true })
+  protected parseEntity(content: string): SequenceChart | null {
+    try {
+      return JSON5.parse(content) as SequenceChart
+    } catch {
+      return null
     }
   }
 
-  /**
-   * 获取事序图文件路径
-   */
-  private getChartPath(chartId: string): string {
-    return path.join(this.chartsDir!, `${chartId}.json5`)
+  protected serializeEntity(item: SequenceChart): string {
+    return JSON5.stringify(item, null, 2)
   }
 
-  /**
-   * 获取缩略图路径
-   */
-  private getThumbnailPath(chartId: string): string {
-    return path.join(this.chartsDir!, `${chartId}.png`)
+  protected toMetadata(item: SequenceChart): SequenceChartMeta {
+    // 获取缩略图完整路径
+    let thumbnailPath: string | undefined = undefined
+    if (item.thumbnail) {
+      const fullPath = this.getThumbnailFullPath(item.id)
+      if (fullPath) {
+        thumbnailPath = fullPath
+      }
+    }
+
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      thumbnail: thumbnailPath,
+      axisConfig: item.axisConfig,
+      customEventTypes: item.customEventTypes || [],
+      eventCount: item.events.length,
+      tags: item.tags,
+      order: item.order ?? 0,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }
+  }
+
+  protected sortItems(items: SequenceChartMeta[]): SequenceChartMeta[] {
+    // 按更新时间排序
+    return items.sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
   }
 
   // ============================================
@@ -80,81 +87,17 @@ class SequenceChartService {
   // ============================================
 
   /**
-   * 获取所有事序图列表
-   */
-  getChartList(): SequenceChartMeta[] {
-    if (!this.chartsDir || !fs.existsSync(this.chartsDir)) {
-      return []
-    }
-
-    const files = fs.readdirSync(this.chartsDir)
-    const charts: SequenceChartMeta[] = []
-
-    for (const file of files) {
-      if (file.endsWith('.json5')) {
-        try {
-          const filePath = path.join(this.chartsDir, file)
-          const content = fs.readFileSync(filePath, 'utf-8')
-          const chart = JSON5.parse(content) as SequenceChart
-
-          // 获取缩略图完整路径
-          let thumbnailPath: string | undefined = undefined
-          if (chart.thumbnail) {
-            const fullPath = this.getThumbnailPath(chart.id)
-            if (fs.existsSync(fullPath)) {
-              thumbnailPath = fullPath
-            }
-          }
-
-          charts.push({
-            id: chart.id,
-            name: chart.name,
-            description: chart.description,
-            thumbnail: thumbnailPath,
-            axisConfig: chart.axisConfig,
-            customEventTypes: chart.customEventTypes || [],
-            eventCount: chart.events.length,
-            tags: chart.tags,
-            createdAt: chart.createdAt,
-            updatedAt: chart.updatedAt
-          })
-        } catch (error) {
-          console.error(`Failed to load sequence chart ${file}:`, error)
-        }
-      }
-    }
-
-    // 按更新时间排序
-    return charts.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
-  }
-
-  /**
-   * 获取单个事序图详情
-   */
-  getChart(chartId: string): SequenceChart | null {
-    const chartPath = this.getChartPath(chartId)
-
-    if (!fs.existsSync(chartPath)) {
-      return null
-    }
-
-    try {
-      const content = fs.readFileSync(chartPath, 'utf-8')
-      return JSON5.parse(content) as SequenceChart
-    } catch (error) {
-      console.error(`Failed to load sequence chart ${chartId}:`, error)
-      return null
-    }
-  }
-
-  /**
    * 创建事序图
    */
   createChart(options: CreateSequenceChartOptions): SequenceChart {
-    const now = new Date().toISOString()
-    const chartId = uuidv4()
+    const now = this.getTimestamp()
+    const chartId = this.generateId()
+
+    // 获取当前最大 order
+    const existingCharts = this.getList()
+    const maxOrder = existingCharts.length > 0
+      ? Math.max(...existingCharts.map(c => c.order ?? 0))
+      : -1
 
     const axisConfig: TimelineAxisConfig = {
       ...DEFAULT_AXIS_CONFIG,
@@ -171,11 +114,12 @@ class SequenceChartService {
       events: [],
       eventCount: 0,
       tags: options.tags || [],
+      order: maxOrder + 1,
       createdAt: now,
       updatedAt: now
     }
 
-    this.saveChart(chart)
+    this.save(chart)
     return chart
   }
 
@@ -183,10 +127,10 @@ class SequenceChartService {
    * 更新事序图
    */
   updateChart(chartId: string, updates: UpdateSequenceChartOptions): SequenceChart | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     const updatedChart: SequenceChart = {
       ...chart,
@@ -209,41 +153,8 @@ class SequenceChartService {
       }
     }
 
-    this.saveChart(updatedChart)
+    this.save(updatedChart)
     return updatedChart
-  }
-
-  /**
-   * 删除事序图
-   */
-  deleteChart(chartId: string): boolean {
-    const chartPath = this.getChartPath(chartId)
-    const thumbnailPath = this.getThumbnailPath(chartId)
-
-    try {
-      // 删除数据文件
-      if (fs.existsSync(chartPath)) {
-        fs.unlinkSync(chartPath)
-      }
-
-      // 删除缩略图
-      if (fs.existsSync(thumbnailPath)) {
-        fs.unlinkSync(thumbnailPath)
-      }
-
-      return true
-    } catch (error) {
-      console.error(`Failed to delete sequence chart ${chartId}:`, error)
-      return false
-    }
-  }
-
-  /**
-   * 保存事序图
-   */
-  private saveChart(chart: SequenceChart): void {
-    const chartPath = this.getChartPath(chart.id)
-    fs.writeFileSync(chartPath, JSON5.stringify(chart, null, 2), 'utf-8')
   }
 
   // ============================================
@@ -257,10 +168,10 @@ class SequenceChartService {
     chartId: string,
     event: CreateSequenceEventOptions
   ): SequenceEvent | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 计算时间信息
     const timeInfo = {
@@ -283,7 +194,7 @@ class SequenceChartService {
     }
 
     const newEvent: SequenceEvent = {
-      id: uuidv4(),
+      id: this.generateId(),
       order: chart.events.length,
       title: event.title.trim(),
       description: event.description,
@@ -313,7 +224,7 @@ class SequenceChartService {
       }
     }
 
-    this.saveChart(chart)
+    this.save(chart)
     return newEvent
   }
 
@@ -325,13 +236,13 @@ class SequenceChartService {
     eventId: string,
     updates: UpdateSequenceEventOptions
   ): SequenceEvent | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
     const eventIndex = chart.events.findIndex(e => e.id === eventId)
     if (eventIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const existingEvent = chart.events[eventIndex]
 
     // 合并时间信息
@@ -350,7 +261,7 @@ class SequenceChartService {
     }
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
     return chart.events[eventIndex]
   }
 
@@ -358,13 +269,13 @@ class SequenceChartService {
    * 删除事件
    */
   deleteEvent(chartId: string, eventId: string): boolean {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return false
 
     const eventIndex = chart.events.findIndex(e => e.id === eventId)
     if (eventIndex === -1) return false
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 删除事件
     chart.events.splice(eventIndex, 1)
@@ -376,7 +287,7 @@ class SequenceChartService {
     })
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
     return true
   }
 
@@ -384,10 +295,10 @@ class SequenceChartService {
    * 批量删除事件
    */
   batchDeleteEvents(chartId: string, eventIds: string[]): number {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return 0
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const deletedCount = chart.events.length
 
     // 过滤掉要删除的事件
@@ -400,7 +311,7 @@ class SequenceChartService {
     })
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
 
     return deletedCount - chart.events.length
   }
@@ -413,13 +324,13 @@ class SequenceChartService {
     eventId: string,
     newOrder: number
   ): SequenceEvent[] | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
     const eventIndex = chart.events.findIndex(e => e.id === eventId)
     if (eventIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const event = chart.events[eventIndex]
 
     // 移除事件
@@ -435,7 +346,7 @@ class SequenceChartService {
     })
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
     return chart.events
   }
 
@@ -448,13 +359,13 @@ class SequenceChartService {
     cellStart: number,
     cellEnd: number
   ): SequenceEvent | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
     const eventIndex = chart.events.findIndex(e => e.id === eventId)
     if (eventIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     chart.events[eventIndex].timeInfo.cellStart = cellStart
     chart.events[eventIndex].timeInfo.cellEnd = cellEnd
@@ -472,7 +383,7 @@ class SequenceChartService {
     }
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
     return chart.events[eventIndex]
   }
 
@@ -480,10 +391,10 @@ class SequenceChartService {
    * 更新所有事件（批量更新）
    */
   updateEvents(chartId: string, events: SequenceEvent[]): SequenceChart | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     chart.events = events.map((e, index) => ({
       ...e,
@@ -493,7 +404,7 @@ class SequenceChartService {
     chart.eventCount = events.length
     chart.updatedAt = now
 
-    this.saveChart(chart)
+    this.save(chart)
     return chart
   }
 
@@ -517,7 +428,7 @@ class SequenceChartService {
    * 获取所有事件类型
    */
   getEventTypes(chartId: string): SequenceEventType[] {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return BUILT_IN_EVENT_TYPES
 
     const customTypes = chart.customEventTypes || []
@@ -534,13 +445,13 @@ class SequenceChartService {
     chartId: string,
     type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>
   ): SequenceEventType | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const newType: SequenceEventType = {
       ...type,
-      id: uuidv4(),
+      id: this.generateId(),
       isBuiltIn: false,
       order: (chart.customEventTypes?.length || 0) + BUILT_IN_EVENT_TYPES.length
     }
@@ -551,7 +462,7 @@ class SequenceChartService {
     chart.customEventTypes.push(newType)
     chart.updatedAt = now
 
-    this.saveChart(chart)
+    this.save(chart)
     return newType
   }
 
@@ -563,13 +474,13 @@ class SequenceChartService {
     typeId: string,
     updates: Partial<SequenceEventType>
   ): SequenceEventType | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
     const typeIndex = chart.customEventTypes?.findIndex(t => t.id === typeId)
     if (typeIndex === undefined || typeIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     chart.customEventTypes![typeIndex] = {
       ...chart.customEventTypes![typeIndex],
       ...updates,
@@ -578,7 +489,7 @@ class SequenceChartService {
     }
 
     chart.updatedAt = now
-    this.saveChart(chart)
+    this.save(chart)
     return chart.customEventTypes![typeIndex]
   }
 
@@ -586,62 +497,38 @@ class SequenceChartService {
    * 删除自定义事件类型
    */
   deleteEventType(chartId: string, typeId: string): boolean {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return false
 
     const typeIndex = chart.customEventTypes?.findIndex(t => t.id === typeId)
     if (typeIndex === undefined || typeIndex === -1) return false
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     chart.customEventTypes!.splice(typeIndex, 1)
     chart.updatedAt = now
 
-    this.saveChart(chart)
+    this.save(chart)
     return true
   }
 
   // ============================================
-  // 缩略图
+  // 缩略图（扩展基类方法）
   // ============================================
 
   /**
-   * 保存缩略图
+   * 保存缩略图（扩展基类方法以更新元数据）
    */
-  saveThumbnail(chartId: string, dataUrl: string): string | null {
-    try {
-      // 解析 data URL
-      const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/)
-      if (!matches) return null
-
-      const base64Data = matches[2]
-      const buffer = Buffer.from(base64Data, 'base64')
-
-      const thumbnailPath = this.getThumbnailPath(chartId)
-      fs.writeFileSync(thumbnailPath, buffer)
-
+  override saveThumbnail(chartId: string, dataUrl: string): string | null {
+    const result = super.saveThumbnail(chartId, dataUrl)
+    if (result) {
       // 更新事序图元数据
-      const chart = this.getChart(chartId)
+      const chart = this.get(chartId)
       if (chart) {
         chart.thumbnail = `${chartId}.png`
-        this.saveChart(chart)
+        this.save(chart)
       }
-
-      return thumbnailPath
-    } catch (error) {
-      console.error(`Failed to save thumbnail for ${chartId}:`, error)
-      return null
     }
-  }
-
-  /**
-   * 获取缩略图路径
-   */
-  getThumbnailPath_(chartId: string): string | null {
-    const thumbnailPath = this.getThumbnailPath(chartId)
-    if (fs.existsSync(thumbnailPath)) {
-      return thumbnailPath
-    }
-    return null
+    return result
   }
 
   // ============================================
@@ -649,24 +536,15 @@ class SequenceChartService {
   // ============================================
 
   /**
-   * 导出事序图为 JSON5
+   * 导入事序图（覆盖基类方法）
    */
-  exportChart(chartId: string): string | null {
-    const chart = this.getChart(chartId)
-    if (!chart) return null
-    return JSON5.stringify(chart, null, 2)
-  }
-
-  /**
-   * 导入事序图
-   */
-  importChart(jsonContent: string): SequenceChart | null {
+  override importItem(jsonContent: string): SequenceChart | null {
     try {
       const chart = JSON5.parse(jsonContent) as SequenceChart
 
       // 生成新 ID
-      const newId = uuidv4()
-      const now = new Date().toISOString()
+      const newId = this.generateId()
+      const now = this.getTimestamp()
 
       const importedChart: SequenceChart = {
         ...chart,
@@ -677,10 +555,10 @@ class SequenceChartService {
         thumbnail: undefined
       }
 
-      this.saveChart(importedChart)
+      this.save(importedChart)
       return importedChart
     } catch (error) {
-      console.error('Failed to import sequence chart:', error)
+      this.logger.error('Failed to import sequence chart', error)
       return null
     }
   }
@@ -689,7 +567,7 @@ class SequenceChartService {
    * 导出事序图为 Markdown
    */
   exportChartAsMarkdown(chartId: string): string | null {
-    const chart = this.getChart(chartId)
+    const chart = this.get(chartId)
     if (!chart) return null
 
     let md = `# ${chart.name}\n\n`
@@ -767,6 +645,26 @@ class SequenceChartService {
     }
 
     return md
+  }
+
+  /**
+   * 重新排序事序图
+   */
+  reorderCharts(chartIds: string[]): boolean {
+    try {
+      chartIds.forEach((chartId, index) => {
+        const chart = this.get(chartId)
+        if (chart) {
+          chart.order = index
+          chart.updatedAt = this.getTimestamp()
+          this.save(chart)
+        }
+      })
+      return true
+    } catch (error) {
+      this.logger.error('Failed to reorder sequence charts', error)
+      return false
+    }
   }
 }
 

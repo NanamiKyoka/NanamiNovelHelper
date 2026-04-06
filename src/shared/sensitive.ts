@@ -3,6 +3,8 @@
  * 主进程和渲染进程共用
  */
 
+import { SEMANTIC_COLORS } from './constants/colors'
+
 /**
  * 敏感词
  */
@@ -14,6 +16,7 @@ export interface SensitiveWord {
   severity: 'low' | 'medium' | 'high' | 'critical' // 严重程度
   suggestion?: string // 替换建议
   description?: string // 说明
+  order: number // 排序序号
   createdAt: string
   updatedAt: string
 }
@@ -33,8 +36,8 @@ export const SENSITIVE_CATEGORIES = [
  * 严重程度选项
  */
 export const SEVERITY_LEVELS = [
-  { value: 'low', label: '低', color: '#52c41a' },
-  { value: 'medium', label: '中', color: '#faad14' },
-  { value: 'high', label: '高', color: '#fa8c16' },
-  { value: 'critical', label: '严重', color: '#f5222d' }
+  { value: 'low', label: '低', color: SEMANTIC_COLORS.severity.low },
+  { value: 'medium', label: '中', color: SEMANTIC_COLORS.severity.medium },
+  { value: 'high', label: '高', color: SEMANTIC_COLORS.severity.high },
+  { value: 'critical', label: '严重', color: SEMANTIC_COLORS.severity.critical }
 ]

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Layout, theme, message, Button, Tooltip } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, CodeOutlined } from '@ant-design/icons'
+import { Layout, theme, Button, Tooltip } from 'antd'
+import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined } from '@ant-design/icons'
 import ActivityBar from '@components/layout/ActivityBar'
 import Sidebar from '@components/layout/Sidebar'
 import MainContent from '@components/layout/MainContent'
@@ -14,25 +14,29 @@ import { RelationshipPanel } from '@components/visualization/relationship'
 import { TimelinePanel } from '@components/visualization/timeline'
 import { SequenceChartPanel } from '@components/visualization/sequence-chart'
 import { OrganizationPanel } from '@components/visualization/organization'
+import { MapPanel } from '@components/visualization/map'
 import { TerminalPanel } from '@components/terminal'
-import { useProjectStore } from '@stores/projectStore'
+import { ErrorBoundary, GlobalLoading } from '@components/common'
+import { useProjectActions, useShortcuts } from '@hooks'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
+import { useMapStore } from '@stores/mapStore'
 import { useTerminalStore } from '@stores/terminalStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
-import { useHighlightService } from '@services/highlightService'
+import { useLoadingStore } from '@stores/loadingStore'
 import { DEFAULT_BADGE_VISIBILITY } from '@types/settings'
+import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
 const { Content } = Layout
 
 // 右侧面板类型
-type RightPanelKey = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'terminal' | null
+type RightPanelKey = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal' | null
 
 function App(): JSX.Element {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -43,10 +47,13 @@ function App(): JSX.Element {
     token: { colorBgContainer }
   } = theme.useToken()
   
-  // 项目状态
-  const currentProject = useProjectStore((state) => state.currentProject)
-  const error = useProjectStore((state) => state.error)
-  const clearError = useProjectStore((state) => state.clearError)
+  // 项目状态（使用 useProjectActions 统一管理）
+  const { 
+    currentProject, 
+    error, 
+    isLoading: projectLoading,
+    clearError 
+  } = useProjectActions()
 
   // 词汇和敏感词状态
   const entries = useVocabularyStore((state) => state.entries) || []
@@ -55,26 +62,18 @@ function App(): JSX.Element {
   const timelines = useTimelineStore((state) => state.timelines) || []
   const charts = useSequenceChartStore((state) => state.charts) || []
   const organizations = useOrganizationStore((state) => state.graphs) || []
-  // 终端状态
+  const maps = useMapStore((state) => state.maps) || []
   const terminals = useTerminalStore((state) => state.terminals) || []
-  const loadTypes = useVocabularyStore((state) => state.loadTypes)
-  const loadEntries = useVocabularyStore((state) => state.loadEntries)
-  const loadWords = useSensitiveStore((state) => state.loadWords)
-  const loadGraphList = useRelationshipStore((state) => state.loadList)
-  const loadTimelineList = useTimelineStore((state) => state.loadList)
-  const loadChartList = useSequenceChartStore((state) => state.loadList)
-  const loadOrganizationList = useOrganizationStore((state) => state.loadList)
-  const isVocabLoaded = useVocabularyStore((state) => state.isLoaded)
-  const isSensitiveLoaded = useSensitiveStore((state) => state.isLoaded)
+  
   const selectedText = useUIStore((state) => state.selectedText)
   const createProjectModalOpen = useUIStore((state) => state.createProjectModalOpen)
   const openProjectModalOpen = useUIStore((state) => state.openProjectModalOpen)
   const closeCreateProjectModal = useUIStore((state) => state.closeCreateProjectModal)
   const closeOpenProjectModal = useUIStore((state) => state.closeOpenProjectModal)
   
-  // 高亮服务状态
-  const loadHighlightConfig = useHighlightService((state) => state.loadConfig)
-  const highlightInitialized = useHighlightService((state) => state.initialized)
+  // 全局加载状态
+  const startLoading = useLoadingStore((s) => s.startLoading)
+  const endLoading = useLoadingStore((s) => s.endLoading)
   
   // 徽章可见性设置
   const projectSettings = useSettingsStore((state) => state.projectSettings)
@@ -83,41 +82,86 @@ function App(): JSX.Element {
   // 错误提示
   useEffect(() => {
     if (error) {
-      message.error(error)
+      // 动态导入 message 避免循环依赖
+      import('antd').then(({ message }) => {
+        message.error(error)
+      })
       clearError()
     }
   }, [error, clearError])
 
-  // 预加载词汇和敏感词数据
+  // 项目加载状态同步到全局 Loading Store
   useEffect(() => {
-    if (currentProject && !isVocabLoaded) {
-      loadTypes()
-      loadEntries()
+    if (projectLoading) {
+      startLoading('project-init', 'project', '加载项目中...')
+    } else {
+      endLoading('project-init')
     }
-    if (currentProject && !isSensitiveLoaded) {
-      loadWords()
+  }, [projectLoading, startLoading, endLoading])
+
+  // 全局快捷键
+  const shortcuts: ShortcutConfig[] = useMemo(() => [
+    // 文件操作
+    {
+      id: 'file.save',
+      key: 'Ctrl+S',
+      action: () => {
+        // 触发保存当前文件
+        window.dispatchEvent(new CustomEvent('shortcut:save'))
+      },
+      description: '保存当前文件',
+      category: '文件'
+    },
+    {
+      id: 'file.saveAll',
+      key: 'Ctrl+Shift+S',
+      action: () => {
+        window.dispatchEvent(new CustomEvent('shortcut:saveAll'))
+      },
+      description: '保存所有文件',
+      category: '文件'
+    },
+    // 视图操作
+    {
+      id: 'view.sidebar',
+      key: 'Ctrl+B',
+      action: () => setSidebarCollapsed(prev => !prev),
+      description: '切换侧边栏',
+      category: '视图'
+    },
+    // 工具面板切换
+    {
+      id: 'tools.vocabulary',
+      key: 'Ctrl+Shift+V',
+      action: () => toggleRightPanel('vocabulary'),
+      description: '词汇面板',
+      category: '工具'
+    },
+    {
+      id: 'tools.relationship',
+      key: 'Ctrl+Shift+R',
+      action: () => toggleRightPanel('relationship'),
+      description: '关系图面板',
+      category: '工具'
+    },
+    {
+      id: 'tools.timeline',
+      key: 'Ctrl+Shift+T',
+      action: () => toggleRightPanel('timeline'),
+      description: '时间线面板',
+      category: '工具'
+    },
+    {
+      id: 'tools.terminal',
+      key: 'Ctrl+`',
+      action: () => toggleRightPanel('terminal'),
+      description: '终端面板',
+      category: '工具'
     }
-    // 加载关系图列表
-    if (currentProject) {
-      loadGraphList()
-    }
-    // 加载时间线列表
-    if (currentProject) {
-      loadTimelineList()
-    }
-    // 加载事序图列表
-    if (currentProject) {
-      loadChartList()
-    }
-    // 加载组织架构图列表
-    if (currentProject) {
-      loadOrganizationList()
-    }
-    // 加载高亮配置
-    if (currentProject && !highlightInitialized) {
-      loadHighlightConfig()
-    }
-  }, [currentProject, isVocabLoaded, isSensitiveLoaded, highlightInitialized, loadTypes, loadEntries, loadWords, loadGraphList, loadTimelineList, loadChartList, loadOrganizationList, loadHighlightConfig])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [])
+
+  useShortcuts(shortcuts, [])
 
   const handleActivityBarClick = (panelId: string): void => {
     if (activePanel === panelId) {
@@ -259,6 +303,23 @@ function App(): JSX.Element {
         )
       },
       {
+        id: 'map' as const,
+        visible: badgeVisibility.map,
+        content: (
+          <Tooltip title="地图设计" placement="left">
+            <div
+              className={`${styles.triggerBtn} ${rightPanelKey === 'map' ? styles.active : ''}`}
+              onClick={() => toggleRightPanel('map')}
+            >
+              <EnvironmentOutlined />
+              {maps.length > 0 && (
+                <span className={styles.badge}>{maps.length}</span>
+              )}
+            </div>
+          </Tooltip>
+        )
+      },
+      {
         id: 'terminal' as const,
         visible: badgeVisibility.terminal,
         content: (
@@ -278,21 +339,25 @@ function App(): JSX.Element {
     ]
     
     return items.filter(item => item.visible)
-  }, [entries.length, words.length, graphs.length, timelines.length, charts.length, organizations.length, terminals.length, rightPanelKey, toggleRightPanel, badgeVisibility])
+  }, [entries.length, words.length, graphs.length, timelines.length, charts.length, organizations.length, maps.length, terminals.length, rightPanelKey, toggleRightPanel, badgeVisibility])
 
   // 如果没有打开项目，显示欢迎页面
   if (!currentProject) {
     return (
-      <div className={styles.app}>
+      <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
         {window.electron?.platform !== 'darwin' && <TitleBar />}
         <div className={styles.mainLayout}>
           <Content 
             className={styles.mainContent}
             style={{ background: colorBgContainer }}
+            role="main"
           >
             <WelcomePage />
           </Content>
         </div>
+        
+        {/* 全局加载指示器 */}
+        <GlobalLoading />
         
         {/* 全局模态框 */}
         <CreateProjectModal
@@ -310,81 +375,121 @@ function App(): JSX.Element {
   }
 
   return (
-    <div className={styles.app}>
+    <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
       {/* 自定义标题栏 - 仅在 Windows/Linux 显示 */}
       {window.electron?.platform !== 'darwin' && <TitleBar />}
       
       {/* 主布局区域 */}
       <div className={styles.mainLayout}>
-        <ActivityBar
-          activePanel={activePanel}
-          onPanelClick={handleActivityBarClick}
-        />
-        <div className={styles.contentLayout}>
-          <Sidebar
-            collapsed={sidebarCollapsed}
+        <nav aria-label="主导航">
+          <ActivityBar
             activePanel={activePanel}
-            onCollapse={setSidebarCollapsed}
+            onPanelClick={handleActivityBarClick}
           />
+        </nav>
+        <div className={styles.contentLayout}>
+          <aside aria-label="侧边栏">
+            <ErrorBoundary moduleName="Sidebar">
+              <Sidebar
+                collapsed={sidebarCollapsed}
+                activePanel={activePanel}
+                onCollapse={setSidebarCollapsed}
+              />
+            </ErrorBoundary>
+          </aside>
           <Content
             className={styles.mainContent}
             style={{ background: colorBgContainer, marginRight: rightPanelKey ? 420 : 60 }}
+            role="main"
           >
-            <MainContent activePanel={activePanel} />
+            <ErrorBoundary moduleName="MainContent">
+              <MainContent activePanel={activePanel} />
+            </ErrorBoundary>
           </Content>
         </div>
       </div>
 
       {/* 右侧浮动触发按钮 - 可拖拽排序 */}
-      <DraggableBadgeContainer badges={badgeItems} />
+      <nav aria-label="工具面板导航">
+        <DraggableBadgeContainer badges={badgeItems} />
+      </nav>
 
       {/* 右侧面板 */}
       {rightPanelKey && (
-        <div className={styles.rightSidebar}>
+        <aside 
+          className={styles.rightSidebar} 
+          aria-label={`${rightPanelKey === 'vocabulary' ? '词汇查询' : 
+            rightPanelKey === 'sensitive' ? '敏感词管理' : 
+            rightPanelKey === 'relationship' ? '关系图' : 
+            rightPanelKey === 'timeline' ? '时间线' : 
+            rightPanelKey === 'sequenceChart' ? '事序图' : 
+            rightPanelKey === 'organization' ? '组织架构' : 
+            rightPanelKey === 'map' ? '地图设计' :
+            rightPanelKey === 'terminal' ? '终端' : '面板'}面板`}
+        >
           <div className={styles.rightSidebarHeader}>
-            <span>
+            <span id={`right-panel-title-${rightPanelKey}`}>
               {rightPanelKey === 'vocabulary' ? '词汇查询' : 
                rightPanelKey === 'sensitive' ? '敏感词管理' : 
                rightPanelKey === 'relationship' ? '关系图' : 
                rightPanelKey === 'timeline' ? '时间线' : 
                rightPanelKey === 'sequenceChart' ? '事序图' : 
+               rightPanelKey === 'organization' ? '组织架构' : 
+               rightPanelKey === 'map' ? '地图设计' :
                rightPanelKey === 'terminal' ? '终端' :
-               '组织架构'}
+               '面板'}
             </span>
-            <Button type="text" size="small" onClick={closeRightPanel}>
+            <Button 
+              type="text" 
+              size="small" 
+              onClick={closeRightPanel}
+              aria-label="关闭面板"
+            >
               关闭
             </Button>
           </div>
-          <div className={styles.rightSidebarBody}>
-            {rightPanelKey === 'vocabulary' && (
-              <VocabularyPanel 
-                readOnly={false} 
-                externalSearchText={selectedText}
-              />
-            )}
-            {rightPanelKey === 'sensitive' && (
-              <SensitiveWordPanel readOnly={false} />
-            )}
-            {rightPanelKey === 'relationship' && (
-              <RelationshipPanel />
-            )}
-            {rightPanelKey === 'timeline' && (
-              <TimelinePanel />
-            )}
-            {rightPanelKey === 'sequenceChart' && (
-              <SequenceChartPanel />
-            )}
-            {rightPanelKey === 'organization' && (
-              <OrganizationPanel />
-            )}
-            {rightPanelKey === 'terminal' && (
-              <TerminalPanel onClose={closeRightPanel} />
-            )}
+          <div 
+            className={styles.rightSidebarBody}
+            role="region"
+            aria-labelledby={`right-panel-title-${rightPanelKey}`}
+          >
+            <ErrorBoundary moduleName={rightPanelKey}>
+              {rightPanelKey === 'vocabulary' && (
+                <VocabularyPanel 
+                  readOnly={false} 
+                  externalSearchText={selectedText}
+                />
+              )}
+              {rightPanelKey === 'sensitive' && (
+                <SensitiveWordPanel readOnly={false} />
+              )}
+              {rightPanelKey === 'relationship' && (
+                <RelationshipPanel />
+              )}
+              {rightPanelKey === 'timeline' && (
+                <TimelinePanel />
+              )}
+              {rightPanelKey === 'sequenceChart' && (
+                <SequenceChartPanel />
+              )}
+              {rightPanelKey === 'organization' && (
+                <OrganizationPanel />
+              )}
+              {rightPanelKey === 'map' && (
+                <MapPanel />
+              )}
+              {rightPanelKey === 'terminal' && (
+                <TerminalPanel onClose={closeRightPanel} />
+              )}
+            </ErrorBoundary>
           </div>
-        </div>
+        </aside>
       )}
       
       <StatusBar />
+      
+      {/* 全局加载指示器 */}
+      <GlobalLoading />
       
       {/* 全局模态框 */}
       <CreateProjectModal

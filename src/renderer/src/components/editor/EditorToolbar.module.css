@@ -135,3 +135,28 @@
 .fontDropdown :global(.ant-dropdown-menu-item-divider) {
   margin: 4px 0;
 }
+
+/* AI 按钮样式 */
+.aiButton {
+  color: var(--ant-color-primary) !important;
+  font-weight: 500;
+}
+
+.aiButton:hover {
+  background: var(--ant-color-primary-bg) !important;
+}
+
+/* AI 预览模态框 */
+.aiPreviewContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 6px;
+  background: var(--ant-color-bg-layout);
+}
+
+.aiPreviewContent {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.8;
+}

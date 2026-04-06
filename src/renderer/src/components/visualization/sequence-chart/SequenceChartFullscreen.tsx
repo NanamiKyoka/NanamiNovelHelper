@@ -1,10 +1,10 @@
 /**
  * 事序图全屏编辑器
  * 51mazi 风格的甘特图时间事件管理编辑器
- * 支持：拖动移动事件、拖动边缘调整时长
+ * 支持：拖动移动事件、拖动边缘调整时长、拖拽排序事件行
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Button,
   Input,
@@ -26,7 +26,25 @@ import {
   RightOutlined,
   ExpandOutlined,
   EditOutlined,
+  HolderOutlined,
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
 import type { SequenceEvent } from '@types/sequence-chart'
@@ -42,6 +60,52 @@ interface SequenceChartFullscreenProps {
 // 拖拽类型
 type DragType = 'move' | 'resize-left' | 'resize-right' | null
 
+// 可排序的事件行组件
+interface SortableEventRowProps {
+  event: SequenceEvent
+  isReordering: boolean
+}
+
+function SortableEventRow({ event, isReordering }: SortableEventRowProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: event.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 'auto',
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${styles.eventRow} ${isDragging ? styles.eventRowDragging : ''}`}
+      {...attributes}
+    >
+      <div className={styles.colIndex}>{event.order + 1}</div>
+      <div className={styles.colIntro}>
+        <Tooltip title={event.title}>
+          <span className={styles.introText}>{event.title}</span>
+        </Tooltip>
+      </div>
+      <div className={styles.colProgress}>{event.progress}%</div>
+      {isReordering && (
+        <div className={styles.dragHandle} {...listeners}>
+          <HolderOutlined />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenProps): JSX.Element {
   const { message } = App.useApp()
 
@@ -56,6 +120,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     updateEventTime,
     updateAxisConfig,
     toggleLeftPanel,
+    moveEvent,
   } = useSequenceChartStore()
   
   const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
@@ -93,6 +158,27 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const [originalStart, setOriginalStart] = useState(1)
   const [originalEnd, setOriginalEnd] = useState(10)
   const [hasMoved, setHasMoved] = useState(false)
+
+  // 事件行排序状态
+  const [isReordering, setIsReordering] = useState(false)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // 按 order 排序的事件列表
+  const sortedEvents = useMemo(() => {
+    if (!currentChart?.events) return []
+    return [...currentChart.events].sort((a, b) => a.order - b.order)
+  }, [currentChart])
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -171,6 +257,29 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setExpandCellCount(100)
     message.success(`扩展到 ${newTotal} 格`)
   }
+
+  // 事件行排序拖拽结束
+  const handleReorderDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = sortedEvents.findIndex((e) => e.id === active.id)
+      const newIndex = sortedEvents.findIndex((e) => e.id === over.id)
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // 调用 moveEvent 保存顺序
+        moveEvent(active.id as string, newIndex).catch((error) => {
+          console.error('Failed to move event:', error)
+          message.error('排序失败')
+        })
+      }
+    }
+  }, [sortedEvents, moveEvent, message])
+
+  // 切换排序模式
+  const toggleReorderMode = useCallback(() => {
+    setIsReordering((prev) => !prev)
+  }, [])
 
   // 开始拖拽
   const startDrag = useCallback((e: React.MouseEvent, event: SequenceEvent, type: DragType) => {
@@ -468,7 +577,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       </div>
 
       {/* 添加事件弹窗 */}
-      <Modal title="添加事件" open={addModalVisible} onCancel={() => { setAddModalVisible(false); resetAddForm(); }} onOk={handleAddEvent} okText="添加" cancelText="取消">
+      <Modal title="添加事件" open={addModalVisible} onCancel={() => { setAddModalVisible(false); resetAddForm(); }} onOk={handleAddEvent} okText="添加" cancelText="取消" zIndex={10000}>
         <div className={styles.formItem}>
           <label className={styles.formLabel}>简介 *</label>
           <Input placeholder="事件简介" value={newEventTitle} onChange={e => setNewEventTitle(e.target.value)} maxLength={30} showCount />
@@ -503,6 +612,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             <Button type="primary" onClick={handleUpdateEvent}>保存</Button>
           </div>
         }
+        zIndex={10000}
       >
         {editingEvent && (
           <>
@@ -538,7 +648,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       </Modal>
 
       {/* 扩展单元格弹窗 */}
-      <Modal title="扩展单元格数量" open={expandModalVisible} onCancel={() => setExpandModalVisible(false)} onOk={handleExpandCells} okText="确认" cancelText="取消">
+      <Modal title="扩展单元格数量" open={expandModalVisible} onCancel={() => setExpandModalVisible(false)} onOk={handleExpandCells} okText="确认" cancelText="取消" zIndex={10000}>
         <div className={styles.formItem}>
           <label className={styles.formLabel}>扩展数量</label>
           <InputNumber min={10} max={500} value={expandCellCount} onChange={v => setExpandCellCount(v || 100)} style={{ width: '100%' }} />
@@ -567,6 +677,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
           position: 'fixed',
           left: contextMenu.x,
           top: contextMenu.y,
+          zIndex: 10001,
         }}
       >
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />

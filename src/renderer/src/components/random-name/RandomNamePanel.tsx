@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Popover, Button, Radio, Input, Select, message, Tooltip, Tabs, Typography } from 'antd'
-import { ReloadOutlined, CopyOutlined, UserOutlined, EnvironmentOutlined, BookOutlined, ToolOutlined, ExperimentOutlined, SettingOutlined } from '@ant-design/icons'
+import { Popover, Button, Radio, Input, Select, message, Tooltip, Tabs, Typography, Switch, Divider } from 'antd'
+import { ReloadOutlined, CopyOutlined, UserOutlined, EnvironmentOutlined, BookOutlined, ToolOutlined, ExperimentOutlined, SettingOutlined, RobotOutlined } from '@ant-design/icons'
 import { generateNames, getRandomSurname, copyToClipboard } from '@utils/randomName'
 import { NAME_TYPES, type NameType } from '@constants/names'
 import styles from './RandomNamePanel.module.css'
@@ -28,6 +28,57 @@ const CATEGORY_CONFIG = {
   }
 }
 
+// AI 名字生成提示词
+const AI_NAME_PROMPTS: Record<string, string> = {
+  cn: `你是一个专业的中文起名专家。请生成{{count}}个中文名字，要求：
+- 性别：{{gender}}
+- 风格：{{style}}
+{{#surname}}- 姓氏：{{surname}}{{/surname}}
+{{#charCount}}- 名字字数：{{charCount}}字{{/charCount}}
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。重要：所有名字必须使用中文汉字。`,
+  jp: `你是一个专业的日文起名专家。请生成{{count}}个日文名字，要求：
+- 性别：{{gender}}
+- 风格：{{style}}
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。格式：姓氏 + 名字。`,
+  en: `You are a professional English name generator. Please generate {{count}} English names:
+- Gender: {{gender}}
+- Style: {{style}}
+
+Return only the names, one per line, without numbers or explanations.`,
+  fantasy: `你是一个专业的奇幻小说起名专家。请生成{{count}}个奇幻风格的名字，要求：
+- 风格：{{style}}
+- 用途：人物名
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+  martial: `你是一个专业的武侠小说起名专家。请生成{{count}}个武侠风格的名字，要求：
+- 性别：{{gender}}
+- 风格：江湖侠客
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+  xianxia: `你是一个专业的仙侠小说起名专家。请生成{{count}}个仙侠风格的名字，要求：
+- 性别：{{gender}}
+- 风格：飘逸出尘
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+  place: `你是一个专业的地名起名专家。请生成{{count}}个地名，要求：
+- 类型：{{style}}
+- 用途：小说中的地点
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+  organization: `你是一个专业的组织名称起名专家。请生成{{count}}个组织名称，要求：
+- 类型：{{style}}
+- 用途：小说中的门派、组织
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+  item: `你是一个专业的物品名称起名专家。请生成{{count}}个物品名称，要求：
+- 类型：{{style}}
+- 用途：小说中的武器、宝物
+
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+}
+
 function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.Element {
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('cn')
@@ -38,6 +89,10 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   const [suffix, setSuffix] = useState<string>('')
   const [names, setNames] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // AI 相关状态
+  const [useAi, setUseAi] = useState(false)
+  const [aiStyle, setAiStyle] = useState<string>('古风')
 
   // 当前选中的类型配置
   const currentTypeConfig = useMemo(() => {
@@ -49,11 +104,76 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
     return currentTypeConfig?.category === 'person'
   }, [currentTypeConfig])
 
+  // AI 生成名字
+  const generateNamesWithAi = useCallback(async () => {
+    const promptTemplate = AI_NAME_PROMPTS[selectedType] || AI_NAME_PROMPTS.cn
+    
+    // 构建提示词
+    let prompt = promptTemplate
+      .replace('{{count}}', '24')
+      .replace('{{gender}}', gender === 'random' ? '不限' : (gender === 'male' ? '男' : '女'))
+      .replace('{{style}}', aiStyle)
+    
+    if (surname) {
+      prompt = prompt.replace('{{surname}}', surname)
+    } else {
+      prompt = prompt.replace('{{#surname}}', '').replace('{{/surname}}', '').replace('{{surname}}', '')
+    }
+    
+    if (charCount !== 'random') {
+      prompt = prompt.replace('{{charCount}}', String(charCount))
+    } else {
+      prompt = prompt.replace('{{#charCount}}', '').replace('{{/charCount}}', '').replace('{{charCount}}', '')
+    }
+
+    try {
+      const result = await window.electron.aiAssistant.callApi(prompt, {
+        systemPrompt: '你是一个专业的起名助手。请按照用户的要求生成名字。重要：只输出名字列表，每行一个，不要添加任何解释或序号。',
+        temperature: 0.8,
+        maxTokens: 1000
+      })
+
+      if (result.success && result.content) {
+        // 解析返回的名字列表
+        const nameList = result.content
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line && !line.startsWith('#') && !line.startsWith('【'))
+          .slice(0, 24)
+        
+        if (nameList.length > 0) {
+          return nameList
+        }
+      }
+      
+      // AI 失败，回退到本地生成
+      return null
+    } catch {
+      return null
+    }
+  }, [selectedType, gender, aiStyle, surname, charCount])
+
   // 生成名字
-  const handleGenerate = useCallback(() => {
+  const handleGenerate = useCallback(async () => {
     setLoading(true)
     
-    // 模拟一点点延迟，让用户感觉到生成过程
+    // 如果启用 AI，尝试 AI 生成
+    if (useAi) {
+      try {
+        const aiNames = await generateNamesWithAi()
+        if (aiNames && aiNames.length > 0) {
+          setNames(aiNames)
+          setLoading(false)
+          return
+        }
+        // AI 生成失败，提示用户
+        message.warning('AI 生成失败，已切换到本地生成')
+      } catch {
+        message.warning('AI 服务暂时不可用，已切换到本地生成')
+      }
+    }
+    
+    // 本地生成
     setTimeout(() => {
       const options = {
         type: selectedType,
@@ -69,7 +189,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
       setNames(result)
       setLoading(false)
     }, 100)
-  }, [selectedType, surname, gender, charCount, middleChar, suffix])
+  }, [useAi, generateNamesWithAi, selectedType, surname, gender, charCount, middleChar, suffix])
 
   // 随机姓氏
   const handleRandomSurname = useCallback(() => {
@@ -229,16 +349,63 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
         </div>
       )}
 
+      {/* AI 生成开关 */}
+      <Divider style={{ margin: '12px 0' }} />
+      <div className={styles.configSection}>
+        <div className={styles.sectionLabel}>
+          <RobotOutlined style={{ marginRight: 4 }} />
+          AI 生成
+        </div>
+        <div className={styles.aiSwitchRow}>
+          <Switch
+            size="small"
+            checked={useAi}
+            onChange={setUseAi}
+          />
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {useAi ? '使用 AI 生成更有创意的名字' : '使用本地词库生成'}
+          </Text>
+        </div>
+        
+        {useAi && (
+          <div className={styles.aiStyleSection}>
+            <div className={styles.sectionLabel} style={{ fontSize: 12 }}>风格</div>
+            <Select
+              size="small"
+              value={aiStyle}
+              onChange={setAiStyle}
+              style={{ width: '100%' }}
+              options={
+                isPersonType
+                  ? [
+                      { value: '古风', label: '古风' },
+                      { value: '现代', label: '现代' },
+                      { value: '文艺', label: '文艺' },
+                      { value: '可爱', label: '可爱' },
+                      { value: '霸气', label: '霸气' },
+                    ]
+                  : [
+                      { value: '古风', label: '古风' },
+                      { value: '玄幻', label: '玄幻' },
+                      { value: '科幻', label: '科幻' },
+                      { value: '神秘', label: '神秘' },
+                    ]
+              }
+            />
+          </div>
+        )}
+      </div>
+
       {/* 生成按钮 */}
       <div className={styles.generateBtn}>
         <Button
           type="primary"
-          icon={<ReloadOutlined spin={loading} />}
+          icon={useAi ? <RobotOutlined /> : <ReloadOutlined spin={loading} />}
           onClick={handleGenerate}
           loading={loading}
           block
         >
-          生成名字
+          {useAi ? 'AI 生成名字' : '生成名字'}
         </Button>
       </div>
     </div>

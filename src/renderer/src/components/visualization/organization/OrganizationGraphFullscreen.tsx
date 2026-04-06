@@ -332,7 +332,11 @@ function OrganizationGraphFullscreen({
 
       graph.render().then(() => {
         setGraphReady(true)
-      }).catch(() => {})
+      }).catch((error) => {
+        console.error('Failed to render organization graph:', error)
+        message.error('组织图渲染失败，请刷新重试')
+        setGraphReady(false)
+      })
     }, 100)
   }, [nodeStyle, token.colorPrimary])
 
@@ -390,7 +394,10 @@ function OrganizationGraphFullscreen({
         // 不自动调整视图，像关系图一样保持默认
         setZoom(1)
       }
-    }).catch(() => {})
+    }).catch((error) => {
+      console.error('Failed to update organization graph data:', error)
+      // 不显示错误提示，因为可能是快速切换导致的正常取消
+    })
   }, [currentGraph, graphReady, nodeStyle, token.colorPrimary])
 
   // 缩放控制
@@ -672,6 +679,7 @@ function OrganizationGraphFullscreen({
           position: 'fixed',
           left: contextMenu.x,
           top: contextMenu.y,
+          zIndex: 10001,
         }}
       >
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
@@ -689,6 +697,7 @@ function OrganizationGraphFullscreen({
         okText="保存"
         cancelText="取消"
         width={480}
+        zIndex={10000}
       >
         <div className={styles.modalContent}>
           {selectFromVocabulary && linkedEntries.length > 0 ? (

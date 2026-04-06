@@ -1,0 +1,812 @@
+[
+  {
+    "id": "vocabulary_query",
+    "name": "查询词汇",
+    "description": "查询词汇类型和条目。支持列出所有类型、获取类型详情、按条件查询条目等操作。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list_types",
+        "description": "操作类型：list_types（列出类型）、get_type（获取类型详情）、list_entries（列出条目）、get_entry（获取条目详情）、search_entries（搜索条目）",
+        "enum": ["list_types", "get_type", "list_entries", "get_entry", "search_entries"]
+      },
+      {
+        "name": "typeId",
+        "type": "string",
+        "required": false,
+        "description": "类型 ID（get_type、list_entries 时需要）"
+      },
+      {
+        "name": "entryId",
+        "type": "string",
+        "required": false,
+        "description": "条目 ID（get_entry 时需要）"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词（search_entries 时使用）"
+      },
+      {
+        "name": "limit",
+        "type": "number",
+        "required": false,
+        "default": 20,
+        "description": "返回结果数量限制"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "vocabulary_add",
+    "name": "添加词汇",
+    "description": "添加词汇类型或条目。action=add_type 创建新类型，action=add_entry 添加条目。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "add_entry",
+        "description": "操作类型：add_type（添加类型）、add_entry（添加条目）",
+        "enum": ["add_type", "add_entry"]
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "类型名称或条目名称"
+      },
+      {
+        "name": "typeId",
+        "type": "string",
+        "required": false,
+        "description": "add_entry 时为所属类型 ID（必填）；add_type 时为自定义类型 ID（可选，不填则自动生成）"
+      },
+      {
+        "name": "fields",
+        "type": "object",
+        "required": false,
+        "description": "add_entry 时为条目字段值（key 为字段 ID）"
+      },
+      {
+        "name": "typeFields",
+        "type": "array",
+        "required": false,
+        "description": "add_type 时定义类型的字段结构，如 [{\"id\": \"age\", \"name\": \"年龄\", \"type\": \"number\"}]"
+      },
+      {
+        "name": "aliases",
+        "type": "array",
+        "required": false,
+        "description": "条目别名列表（add_entry 时使用）"
+      },
+      {
+        "name": "tags",
+        "type": "array",
+        "required": false,
+        "description": "条目标签列表（add_entry 时使用）"
+      },
+      {
+        "name": "icon",
+        "type": "string",
+        "required": false,
+        "default": "folder",
+        "description": "类型图标（add_type 时使用）"
+      },
+      {
+        "name": "color",
+        "type": "string",
+        "required": false,
+        "default": "#1890ff",
+        "description": "类型或条目的颜色"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "vocabulary_update",
+    "name": "更新词汇",
+    "description": "更新词汇类型或条目。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "update_entry",
+        "description": "操作类型：update_type（更新类型）、update_entry（更新条目）",
+        "enum": ["update_type", "update_entry"]
+      },
+      {
+        "name": "typeId",
+        "type": "string",
+        "required": true,
+        "description": "类型 ID"
+      },
+      {
+        "name": "entryId",
+        "type": "string",
+        "required": false,
+        "description": "条目 ID（update_entry 时需要）"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": false,
+        "description": "新名称"
+      },
+      {
+        "name": "fields",
+        "type": "object",
+        "required": false,
+        "description": "条目字段值（key 为字段 ID）"
+      },
+      {
+        "name": "aliases",
+        "type": "array",
+        "required": false,
+        "description": "条目别名列表"
+      },
+      {
+        "name": "color",
+        "type": "string",
+        "required": false,
+        "description": "新颜色"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "vocabulary_delete",
+    "name": "删除词汇",
+    "description": "删除词汇类型或条目。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "delete_entry",
+        "description": "操作类型：delete_type（删除类型）、delete_entry（删除条目）",
+        "enum": ["delete_type", "delete_entry"]
+      },
+      {
+        "name": "typeId",
+        "type": "string",
+        "required": true,
+        "description": "类型 ID"
+      },
+      {
+        "name": "entryId",
+        "type": "string",
+        "required": false,
+        "description": "条目 ID（delete_entry 时需要）"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "sensitive_query",
+    "name": "查询敏感词",
+    "description": "查询敏感词列表或详情。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list",
+        "description": "操作类型：list（列出所有）、get（获取详情）、search（搜索）",
+        "enum": ["list", "get", "search"]
+      },
+      {
+        "name": "wordId",
+        "type": "string",
+        "required": false,
+        "description": "敏感词 ID（get 时需要）"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词"
+      },
+      {
+        "name": "category",
+        "type": "string",
+        "required": false,
+        "description": "按分类筛选"
+      },
+      {
+        "name": "severity",
+        "type": "string",
+        "required": false,
+        "description": "按严重程度筛选",
+        "enum": ["low", "medium", "high", "critical"]
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "sensitive_add",
+    "name": "添加敏感词",
+    "description": "添加新的敏感词。",
+    "parameters": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "敏感词内容"
+      },
+      {
+        "name": "category",
+        "type": "string",
+        "required": false,
+        "default": "其他",
+        "description": "分类：政治、暴力、色情、违禁品、其他"
+      },
+      {
+        "name": "severity",
+        "type": "string",
+        "required": false,
+        "default": "medium",
+        "description": "严重程度",
+        "enum": ["low", "medium", "high", "critical"]
+      },
+      {
+        "name": "aliases",
+        "type": "array",
+        "required": false,
+        "description": "变体/别名列表"
+      },
+      {
+        "name": "suggestion",
+        "type": "string",
+        "required": false,
+        "description": "替换建议"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "required": false,
+        "description": "详细说明"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "sensitive_update",
+    "name": "更新敏感词",
+    "description": "更新敏感词信息。",
+    "parameters": [
+      {
+        "name": "wordId",
+        "type": "string",
+        "required": true,
+        "description": "敏感词 ID"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": false,
+        "description": "新内容"
+      },
+      {
+        "name": "category",
+        "type": "string",
+        "required": false,
+        "description": "新分类"
+      },
+      {
+        "name": "severity",
+        "type": "string",
+        "required": false,
+        "description": "新严重程度"
+      },
+      {
+        "name": "aliases",
+        "type": "array",
+        "required": false,
+        "description": "新别名列表"
+      },
+      {
+        "name": "suggestion",
+        "type": "string",
+        "required": false,
+        "description": "新替换建议"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "sensitive_delete",
+    "name": "删除敏感词",
+    "description": "删除敏感词。",
+    "parameters": [
+      {
+        "name": "wordId",
+        "type": "string",
+        "required": true,
+        "description": "要删除的敏感词 ID"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "relationship_query",
+    "name": "查询关系图",
+    "description": "查询关系图、节点、边。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list_graphs",
+        "description": "操作类型",
+        "enum": ["list_graphs", "get_graph", "get_node", "get_edge", "search_nodes", "get_relations"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": false,
+        "description": "关系图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "edgeId",
+        "type": "string",
+        "required": false,
+        "description": "边 ID"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词"
+      },
+      {
+        "name": "nodeId1",
+        "type": "string",
+        "required": false,
+        "description": "关系查询的第一个节点 ID"
+      },
+      {
+        "name": "nodeId2",
+        "type": "string",
+        "required": false,
+        "description": "关系查询的第二个节点 ID（可选）"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "relationship_add",
+    "name": "添加关系图",
+    "description": "创建关系图、添加节点或边。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "create_graph",
+        "description": "操作类型",
+        "enum": ["create_graph", "add_node", "add_edge", "add_relation_type"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": false,
+        "description": "关系图 ID（添加节点/边时需要）"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": false,
+        "description": "名称（创建图或节点时需要）"
+      },
+      {
+        "name": "source",
+        "type": "string",
+        "required": false,
+        "description": "边的源节点 ID"
+      },
+      {
+        "name": "target",
+        "type": "string",
+        "required": false,
+        "description": "边的目标节点 ID"
+      },
+      {
+        "name": "relationTypeId",
+        "type": "string",
+        "required": false,
+        "description": "关系类型 ID"
+      },
+      {
+        "name": "gender",
+        "type": "string",
+        "required": false,
+        "default": "unknown",
+        "description": "节点性别"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "required": false,
+        "description": "描述"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "relationship_update",
+    "name": "更新关系图",
+    "description": "更新关系图、节点或边。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "update_graph",
+        "description": "操作类型",
+        "enum": ["update_graph", "update_node", "update_edge"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": true,
+        "description": "关系图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "edgeId",
+        "type": "string",
+        "required": false,
+        "description": "边 ID"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": false,
+        "description": "新名称"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "required": false,
+        "description": "新描述"
+      },
+      {
+        "name": "relationTypeId",
+        "type": "string",
+        "required": false,
+        "description": "新关系类型"
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "required": false,
+        "description": "边的新标签"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "relationship_delete",
+    "name": "删除关系图",
+    "description": "删除关系图、节点或边。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "delete_graph",
+        "description": "操作类型",
+        "enum": ["delete_graph", "delete_node", "delete_edge"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": true,
+        "description": "关系图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "edgeId",
+        "type": "string",
+        "required": false,
+        "description": "边 ID"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "organization_query",
+    "name": "查询组织架构",
+    "description": "查询组织架构图、节点、层级关系。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list_graphs",
+        "description": "操作类型",
+        "enum": ["list_graphs", "get_graph", "get_node", "get_children", "get_descendants", "get_ancestors", "search_nodes"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": false,
+        "description": "组织架构图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "parentId",
+        "type": "string",
+        "required": false,
+        "description": "父节点 ID（get_children 时使用，None 表示根节点）"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词"
+      },
+      {
+        "name": "asTree",
+        "type": "boolean",
+        "required": false,
+        "default": false,
+        "description": "是否返回树形结构"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "organization_add",
+    "name": "添加组织架构",
+    "description": "创建组织架构图或添加节点。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "create_graph",
+        "description": "操作类型",
+        "enum": ["create_graph", "add_node"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": false,
+        "description": "组织架构图 ID（add_node 时需要）"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "名称"
+      },
+      {
+        "name": "parentId",
+        "type": "string",
+        "required": false,
+        "description": "父节点 ID（None 表示根节点）"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "required": false,
+        "description": "描述"
+      },
+      {
+        "name": "createRootNode",
+        "type": "boolean",
+        "required": false,
+        "default": true,
+        "description": "是否创建根节点"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "organization_update",
+    "name": "更新组织架构",
+    "description": "更新组织架构图或节点，支持移动节点。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "update_graph",
+        "description": "操作类型",
+        "enum": ["update_graph", "update_node", "move_node", "toggle_collapse"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": true,
+        "description": "组织架构图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "required": false,
+        "description": "新名称"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "required": false,
+        "description": "新描述"
+      },
+      {
+        "name": "newParentId",
+        "type": "string",
+        "required": false,
+        "description": "新父节点 ID（move_node 时使用）"
+      },
+      {
+        "name": "collapsed",
+        "type": "boolean",
+        "required": false,
+        "description": "折叠状态（toggle_collapse 时使用）"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "organization_delete",
+    "name": "删除组织架构",
+    "description": "删除组织架构图或节点（包含子节点）。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "delete_graph",
+        "description": "操作类型",
+        "enum": ["delete_graph", "delete_node"]
+      },
+      {
+        "name": "graphId",
+        "type": "string",
+        "required": true,
+        "description": "组织架构图 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "timeline_query",
+    "name": "查询时间线",
+    "description": "查询时间线列表、详情、节点、分支等（只读）。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list_timelines",
+        "description": "操作类型",
+        "enum": ["list_timelines", "get_timeline", "get_node", "get_branches", "search_nodes", "get_character_events"]
+      },
+      {
+        "name": "timelineId",
+        "type": "string",
+        "required": false,
+        "description": "时间线 ID"
+      },
+      {
+        "name": "nodeId",
+        "type": "string",
+        "required": false,
+        "description": "节点 ID"
+      },
+      {
+        "name": "characterId",
+        "type": "string",
+        "required": false,
+        "description": "角色 ID（get_character_events 时使用）"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词"
+      },
+      {
+        "name": "includeNodes",
+        "type": "boolean",
+        "required": false,
+        "default": true,
+        "description": "是否包含节点列表"
+      }
+    ],
+    "timeout": 30000
+  },
+  {
+    "id": "sequence_chart_query",
+    "name": "查询事序图",
+    "description": "查询事序图列表、详情、事件等（只读）。",
+    "parameters": [
+      {
+        "name": "action",
+        "type": "string",
+        "required": false,
+        "default": "list_charts",
+        "description": "操作类型",
+        "enum": ["list_charts", "get_chart", "get_event", "search_events", "get_character_events", "get_location_events", "get_event_types"]
+      },
+      {
+        "name": "chartId",
+        "type": "string",
+        "required": false,
+        "description": "事序图 ID"
+      },
+      {
+        "name": "eventId",
+        "type": "string",
+        "required": false,
+        "description": "事件 ID"
+      },
+      {
+        "name": "characterId",
+        "type": "string",
+        "required": false,
+        "description": "角色 ID"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "required": false,
+        "description": "地点名称（get_location_events 时使用）"
+      },
+      {
+        "name": "keyword",
+        "type": "string",
+        "required": false,
+        "description": "搜索关键词"
+      },
+      {
+        "name": "includeEvents",
+        "type": "boolean",
+        "required": false,
+        "default": true,
+        "description": "是否包含事件列表"
+      }
+    ],
+    "timeout": 30000
+  }
+]

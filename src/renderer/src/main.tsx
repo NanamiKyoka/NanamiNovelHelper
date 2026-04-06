@@ -35,7 +35,8 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
 
   const antdTheme = {
     algorithm: resolvedMode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
-    cssVar: true,
+    cssVar: { key: 'app' },
+    hashed: false,
     token: {
       colorPrimary: config.primaryColor,
       borderRadius: 4,
@@ -45,7 +46,11 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
   }
 
   return (
-    <ConfigProvider locale={zhCN} theme={antdTheme}>
+    <ConfigProvider 
+      locale={zhCN} 
+      theme={antdTheme}
+      getPopupContainer={() => document.body}
+    >
       <AntApp>
         {children}
       </AntApp>

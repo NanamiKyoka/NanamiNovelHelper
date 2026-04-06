@@ -1,8 +1,10 @@
 .container {
   height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg-color);
+  overflow: hidden;
 }
 
 .loading {
@@ -165,4 +167,56 @@
   padding-top: 12px;
   border-top: 1px dashed var(--border-color);
   font-size: 12px;
+}
+
+/* 拖拽相关样式 */
+.timelineItemWrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.timelineItemWrapper.editing {
+  padding-left: 24px;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 8px;
+  cursor: grab;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.dragHandle:hover {
+  background-color: var(--bg-secondary);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragOverlay {
+  background: var(--card-bg);
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  opacity: 0.95;
+  cursor: grabbing;
+}
+
+/* 编辑模式样式 */
+.editModeHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary-color-bg);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--primary-color);
 }

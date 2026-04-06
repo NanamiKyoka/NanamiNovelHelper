@@ -79,6 +79,16 @@ interface EditorState {
   // 状态栏配置
   updateStatusBarConfig: (config: Partial<StatusBarConfig>) => void
 
+  // 跳转到指定行/列（包含文件路径和匹配文本，确保在正确文件上执行）
+  goToPositionRequest: { filePath: string; matchText: string } | null
+  requestGoToPosition: (filePath: string, matchText: string) => void
+  clearGoToPositionRequest: () => void
+
+  // 外部刷新请求（如搜索替换后）
+  externalRefreshRequest: string | null
+  requestExternalRefresh: (filePath: string) => void
+  clearExternalRefreshRequest: () => void
+
   // 工具方法
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
@@ -262,6 +272,8 @@ export const useEditorStore = create<EditorState>()(
       isSaving: false,
       isLoading: false,
       lastSavedAt: null,
+      goToPositionRequest: null,
+      externalRefreshRequest: null,
 
       // 预览模式打开文件（单击）- VSCode 风格
       openPreview: async (path: string, name: string, type: EditorTab['type'] = getFileType(name)) => {
@@ -614,6 +626,26 @@ export const useEditorStore = create<EditorState>()(
       isPreviewTab: (tabId: string) => {
         const state = get()
         return state.previewTabId === tabId
+      },
+
+      // 请求跳转到指定匹配文本（包含文件路径）
+      requestGoToPosition: (filePath: string, matchText: string) => {
+        set({ goToPositionRequest: { filePath, matchText } })
+      },
+
+      // 清除跳转请求
+      clearGoToPositionRequest: () => {
+        set({ goToPositionRequest: null })
+      },
+
+      // 请求外部刷新
+      requestExternalRefresh: (filePath: string) => {
+        set({ externalRefreshRequest: filePath })
+      },
+
+      // 清除外部刷新请求
+      clearExternalRefreshRequest: () => {
+        set({ externalRefreshRequest: null })
       }
     }),
     {

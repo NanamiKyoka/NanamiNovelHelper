@@ -1,0 +1,77 @@
+/* ============================================
+   地图工具栏样式
+   使用 common.module.css 公共样式
+   ============================================ */
+
+.toolbar {
+  width: 52px;
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.toolsGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.toolsGroup :global(.ant-btn) {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--text-color);
+  background: transparent;
+  border: none;
+}
+
+.toolsGroup :global(.ant-btn:hover) {
+  background: var(--hover-bg);
+  color: var(--text-color);
+}
+
+.activeTool {
+  background: var(--primary-color) !important;
+  color: var(--bg-color) !important;
+}
+
+.activeTool:hover {
+  background: var(--primary-color-hover) !important;
+}
+
+.divider {
+  margin: var(--spacing-2) 0;
+  border-color: var(--border-color);
+}
+
+.hint {
+  margin-top: auto;
+  padding: var(--spacing-2);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.hintTitle {
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-1);
+  color: var(--text-secondary);
+}
+
+.hintList {
+  margin: 0;
+  padding-left: var(--spacing-4);
+  line-height: 1.6;
+}
+
+.hintList li {
+  margin: 2px 0;
+}

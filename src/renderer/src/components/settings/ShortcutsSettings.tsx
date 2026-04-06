@@ -2,8 +2,8 @@
  * 快捷键设置组件
  */
 
-import { useState } from 'react'
-import { Table, Input, Button, Modal, message, Tag, Space, Typography, Alert } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
+import { Table, Input, Button, Modal, message, Tag, Space, Typography } from 'antd'
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons'
 import styles from './ShortcutsSettings.module.css'
 
@@ -18,6 +18,9 @@ interface ShortcutConfig {
   currentKey: string
   category: string
 }
+
+// 本地存储键名
+const STORAGE_KEY = 'nanami-shortcuts'
 
 // 默认快捷键配置
 const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
@@ -47,29 +50,73 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   { id: 'format.heading', name: '标题', description: '切换标题级别', defaultKey: 'Ctrl+1', currentKey: 'Ctrl+1', category: '格式' },
 ]
 
+// 从本地存储加载快捷键配置
+function loadShortcuts(): ShortcutConfig[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const customKeys = JSON.parse(saved) as Record<string, string>
+      return DEFAULT_SHORTCUTS.map(s => ({
+        ...s,
+        currentKey: customKeys[s.id] || s.defaultKey
+      }))
+    }
+  } catch (error) {
+    console.error('Failed to load shortcuts:', error)
+  }
+  return [...DEFAULT_SHORTCUTS]
+}
+
+// 保存快捷键配置到本地存储
+function saveShortcuts(shortcuts: ShortcutConfig[]): void {
+  try {
+    const customKeys = shortcuts.reduce((acc, s) => {
+      if (s.currentKey !== s.defaultKey) {
+        acc[s.id] = s.currentKey
+      }
+      return acc
+    }, {} as Record<string, string>)
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(customKeys))
+  } catch (error) {
+    console.error('Failed to save shortcuts:', error)
+  }
+}
+
 export function ShortcutsSettings(): JSX.Element {
-  const [shortcuts, setShortcuts] = useState<ShortcutConfig[]>(DEFAULT_SHORTCUTS)
+  const [shortcuts, setShortcuts] = useState<ShortcutConfig[]>(() => loadShortcuts())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [currentEditKey, setCurrentEditKey] = useState('')
   const [recording, setRecording] = useState(false)
 
+  // 保存到本地存储
+  useEffect(() => {
+    saveShortcuts(shortcuts)
+  }, [shortcuts])
+
   // 打开编辑弹窗
-  const handleEdit = (record: ShortcutConfig) => {
+  const handleEdit = useCallback((record: ShortcutConfig) => {
     setEditingId(record.id)
     setCurrentEditKey(record.currentKey)
     setEditModalOpen(true)
     setRecording(false)
-  }
+  }, [])
 
   // 保存快捷键
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!editingId) return
     
     // 检查是否与其他快捷键冲突
     const conflict = shortcuts.find(s => s.id !== editingId && s.currentKey === currentEditKey)
     if (conflict) {
-      message.warning(`快捷键与「${conflict.name}」冲突`)
+      message.warning(`快捷键与「${conflict.name}」冲突，请选择其他组合`)
+      return
+    }
+    
+    // 验证快捷键格式
+    if (!currentEditKey || currentEditKey.length < 2) {
+      message.error('请输入有效的快捷键组合')
       return
     }
     
@@ -77,31 +124,38 @@ export function ShortcutsSettings(): JSX.Element {
       s.id === editingId ? { ...s, currentKey: currentEditKey } : s
     ))
     setEditModalOpen(false)
-    message.success('快捷键已更新')
-  }
+    message.success(`快捷键「${currentEditKey}」已保存`)
+  }, [editingId, currentEditKey, shortcuts])
 
   // 重置单个快捷键
-  const handleReset = (id: string) => {
-    setShortcuts(prev => prev.map(s => 
-      s.id === id ? { ...s, currentKey: s.defaultKey } : s
-    ))
-    message.success('已重置为默认')
-  }
+  const handleReset = useCallback((id: string) => {
+    const shortcut = shortcuts.find(s => s.id === id)
+    if (shortcut) {
+      setShortcuts(prev => prev.map(s => 
+        s.id === id ? { ...s, currentKey: s.defaultKey } : s
+      ))
+      message.success(`已重置为默认快捷键「${shortcut.defaultKey}」`)
+    }
+  }, [shortcuts])
 
   // 重置所有快捷键
-  const handleResetAll = () => {
+  const handleResetAll = useCallback(() => {
     Modal.confirm({
       title: '重置所有快捷键',
-      content: '确定要将所有快捷键重置为默认值吗？',
+      content: '确定要将所有快捷键重置为默认值吗？您的自定义设置将丢失。',
+      okText: '确定重置',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
       onOk: () => {
-        setShortcuts(DEFAULT_SHORTCUTS)
-        message.success('已重置所有快捷键')
+        setShortcuts([...DEFAULT_SHORTCUTS])
+        localStorage.removeItem(STORAGE_KEY)
+        message.success('已重置所有快捷键为默认值')
       }
     })
-  }
+  }, [])
 
   // 记录按键
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!recording) return
     
     e.preventDefault()
@@ -122,7 +176,7 @@ export function ShortcutsSettings(): JSX.Element {
     if (keys.length > 1) {
       setCurrentEditKey(keys.join('+'))
     }
-  }
+  }, [recording])
 
   // 表格列定义
   const columns = [
@@ -161,6 +215,7 @@ export function ShortcutsSettings(): JSX.Element {
             size="small"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            aria-label={`编辑 ${record.name} 快捷键`}
           >
             编辑
           </Button>
@@ -169,6 +224,7 @@ export function ShortcutsSettings(): JSX.Element {
               type="text"
               size="small"
               onClick={() => handleReset(record.id)}
+              aria-label={`重置 ${record.name} 快捷键`}
             >
               重置
             </Button>
@@ -187,18 +243,16 @@ export function ShortcutsSettings(): JSX.Element {
     return acc
   }, {} as Record<string, ShortcutConfig[]>)
 
+  // 统计自定义数量
+  const customCount = shortcuts.filter(s => s.currentKey !== s.defaultKey).length
+
   return (
     <div className={styles.container}>
-      <Alert
-        message="快捷键设置功能开发中"
-        description="当前仅展示默认快捷键配置，自定义功能即将推出。"
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-      />
-
       <div className={styles.toolbar}>
-        <Button icon={<ReloadOutlined />} onClick={handleResetAll}>
+        <Text type="secondary">
+          {customCount > 0 ? `已自定义 ${customCount} 个快捷键` : '所有快捷键均为默认值'}
+        </Text>
+        <Button icon={<ReloadOutlined />} onClick={handleResetAll} disabled={customCount === 0}>
           重置所有
         </Button>
       </div>
@@ -236,8 +290,14 @@ export function ShortcutsSettings(): JSX.Element {
             onFocus={() => setRecording(true)}
             onBlur={() => setRecording(false)}
             placeholder="点击此处并按下快捷键"
+            aria-label="快捷键输入框"
           />
           {recording && <Text type="secondary">正在记录按键...</Text>}
+          <div style={{ marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              提示：支持 Ctrl、Shift、Alt 与其他键的组合
+            </Text>
+          </div>
         </div>
       </Modal>
     </div>

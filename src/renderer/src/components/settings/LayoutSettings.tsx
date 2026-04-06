@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Switch, message, Input, Button, Tag, Space, Divider } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, CloseOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
+import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, CloseOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
@@ -62,6 +62,13 @@ const BADGE_CONFIG = [
     name: '组织架构',
     description: '组织结构和成员关系管理',
     icon: TeamOutlined,
+    hasSidebarEntry: true
+  },
+  {
+    key: 'map' as keyof BadgeVisibility,
+    name: '地图设计',
+    description: '绘制故事地图和地点关系',
+    icon: EnvironmentOutlined,
     hasSidebarEntry: true
   },
   {

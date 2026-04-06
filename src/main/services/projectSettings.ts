@@ -27,11 +27,13 @@ import {
   DEFAULT_SIDEBAR_BADGE_ORDER
 } from '../types/settings'
 import { PROJECT_META_DIR, PROJECT_SETTINGS_FILE } from '../types/project'
+import { createLogger } from '../utils/logger'
 
 /** 防抖计时器（模块级变量避免内存泄漏） */
 let saveTimer: NodeJS.Timeout | null = null
 
 class ProjectSettingsService {
+  private logger = createLogger('ProjectSettingsService')
   private projectPath: string | null = null
   private settingsPath: string | null = null
   private settings: ProjectSettings = DEFAULT_PROJECT_SETTINGS
@@ -71,7 +73,7 @@ class ProjectSettingsService {
         hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
       }
     } catch (error) {
-      console.error('Failed to load project settings:', error)
+      this.logger.error('Failed to load project settings', error)
       this.settings = { ...DEFAULT_PROJECT_SETTINGS }
     }
   }

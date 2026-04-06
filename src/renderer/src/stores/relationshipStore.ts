@@ -63,6 +63,8 @@ interface RelationshipState {
   clearData: () => void
   // 批量设置方法（用于聚合接口）
   setGraphs: (graphs: RelationshipGraphMeta[]) => void
+  // 排序方法
+  reorderGraphs: (graphIds: string[]) => Promise<boolean>
 }
 
 export const useRelationshipStore = create<RelationshipState>((set, get) => ({
@@ -506,5 +508,27 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   // 批量设置数据（用于聚合接口）
   setGraphs: (graphs: RelationshipGraphMeta[]) => {
     set({ graphs, isLoading: false, error: null })
+  },
+
+  // 重新排序关系图
+  reorderGraphs: async (graphIds: string[]): Promise<boolean> => {
+    try {
+      const success = await window.electron.relationship.reorderGraphs(graphIds)
+      if (success) {
+        // 按新顺序更新本地状态
+        set((state) => {
+          const graphMap = new Map(state.graphs.map((g) => [g.id, g]))
+          const reorderedGraphs = graphIds
+            .map((id) => graphMap.get(id))
+            .filter((g): g is RelationshipGraphMeta => g !== undefined)
+          return { graphs: reorderedGraphs }
+        })
+      }
+      return success
+    } catch (error) {
+      const errorMessage = handleError(error, { fallbackMessage: '排序关系图失败' })
+      set({ error: errorMessage })
+      return false
+    }
   },
 }))

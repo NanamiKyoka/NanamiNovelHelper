@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .searchSection {
@@ -50,8 +52,10 @@
   margin-bottom: 0;
 }
 
+/* 搜索结果区域 */
 .resultsSection {
   flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -64,33 +68,73 @@
   padding: 16px;
   text-align: center;
   color: var(--ant-color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.resultItem {
-  padding: 4px 8px !important;
-  border-bottom: 1px solid var(--ant-color-border-secondary) !important;
-  cursor: pointer;
+.resultsList {
+  padding: 0;
 }
 
-.resultItem:hover {
-  background: var(--ant-color-bg-text-hover);
+/* 文件组 */
+.fileGroup {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .fileHeader {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fileHeader:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.expandIcon {
+  width: 14px;
+  font-size: 10px;
+  color: var(--ant-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.fileIcon {
+  color: var(--ant-color-text-secondary);
+  flex-shrink: 0;
 }
 
 .fileName {
   flex: 1;
   font-size: 13px;
+  min-width: 0;
+}
+
+.matchCount {
+  font-size: 11px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* 匹配列表 */
+.matchesList {
+  padding-left: 8px;
 }
 
 .matchItem {
   display: flex;
-  padding: 2px 0 2px 20px;
+  align-items: flex-start;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  gap: 8px;
+}
+
+.matchItem:hover {
+  background: var(--ant-color-bg-text-hover);
 }
 
 .lineNumber {
@@ -98,12 +142,24 @@
   font-size: 12px;
   text-align: right;
   flex-shrink: 0;
+  color: var(--ant-color-text-secondary);
+}
+
+.matchContent {
+  flex: 1;
+  min-width: 0;
 }
 
 .matchText {
-  flex: 1;
-  margin: 0 !important;
   font-size: 12px;
+  font-family: var(--ant-font-family);
+  word-break: break-all;
+}
+
+.matchHighlight {
+  background: rgba(255, 200, 0, 0.4);
+  border-radius: 2px;
+  padding: 0 1px;
 }
 
 .empty {
@@ -113,4 +169,9 @@
 .placeholder {
   padding: 16px;
   text-align: center;
+}
+
+/* 暗色主题适配 */
+:global(.dark) .matchHighlight {
+  background: rgba(255, 200, 0, 0.3);
 }

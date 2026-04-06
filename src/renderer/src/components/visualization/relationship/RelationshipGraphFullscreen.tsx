@@ -350,7 +350,11 @@ function RelationshipGraphFullscreen({
 
       graph.render().then(() => {
         setGraphReady(true)
-      }).catch(() => {})
+      }).catch((error) => {
+        console.error('Failed to render relationship graph:', error)
+        message.error('关系图渲染失败，请刷新重试')
+        setGraphReady(false)
+      })
     }, 100)
   }, [isDarkMode, token.colorPrimary, updateNode])
 
@@ -460,7 +464,10 @@ function RelationshipGraphFullscreen({
           setZoom(1)
         }
       }
-    }).catch(() => {})
+    }).catch((error) => {
+      console.error('Failed to update relationship graph data:', error)
+      // 不显示错误提示，因为可能是快速切换导致的正常取消
+    })
   }, [currentGraph, relationTypes, graphReady])
 
   // 缩放控制
@@ -840,6 +847,7 @@ function RelationshipGraphFullscreen({
         okText="保存"
         cancelText="取消"
         width={480}
+        zIndex={10000}
       >
         <div className={styles.modalContent}>
           {selectFromVocabulary && linkedEntries.length > 0 ? (
@@ -928,6 +936,7 @@ function RelationshipGraphFullscreen({
         okText="保存"
         cancelText="取消"
         width={480}
+        zIndex={10000}
       >
         <div className={styles.modalContent}>
           <div className={styles.formItem}>
@@ -986,6 +995,7 @@ function RelationshipGraphFullscreen({
         onOk={handleAddRelationType}
         okText="添加"
         cancelText="取消"
+        zIndex={10000}
       >
         <div className={styles.modalContent}>
           <div className={styles.formItem}>
@@ -1038,6 +1048,7 @@ function RelationshipGraphFullscreen({
           position: 'fixed',
           left: contextMenu.x,
           top: contextMenu.y,
+          zIndex: 10001,
         }}
       >
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />

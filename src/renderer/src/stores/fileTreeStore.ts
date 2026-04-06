@@ -22,7 +22,7 @@ interface FileTreeState {
   // 编辑状态
   editingKey: string | null
   editingName: string
-  newItemParent: string | null
+  newItemParent: string | null | undefined  // undefined = 未开始新建, null = 在根目录新建, string = 在指定目录新建
   newItemType: 'file' | 'folder'
   newItemName: string
   
@@ -52,7 +52,7 @@ interface FileTreeState {
   finishRename: (newName: string) => Promise<void>
   cancelEdit: () => void
   startNewItem: (parentKey: string | null, type: 'file' | 'folder') => void
-  finishNewItem: (name: string) => Promise<void>
+  finishNewItem: (name: string, isBlur?: boolean) => Promise<void>
   deleteItems: (keys: string[], permanent: boolean) => Promise<void>
   copyItems: (keys: string[]) => void
   cutItems: (keys: string[]) => void
@@ -119,15 +119,16 @@ function flattenTree(
   nodes: FileNodeData[], 
   expandedKeys: Set<string>, 
   filteredKeys: Set<string> | null,
-  newItemParent: string | null,
+  newItemParent: string | null | undefined,
   newItemType: 'file' | 'folder',
   newItemName: string,
   depth = 0
 ): FlattenedNode[] {
   const result: FlattenedNode[] = []
   
-  // 根目录新建项（newItemParent === null）
-  if (newItemParent === null && depth === 0 && newItemName) {
+  // 根目录新建项（newItemParent === null 表示在根目录新建）
+  // newItemParent === undefined 表示未开始新建，不显示输入框
+  if (newItemParent === null && depth === 0) {
     result.push({
       node: {
         key: '__new_item__',
@@ -157,7 +158,8 @@ function flattenTree(
     // 如果是目录，处理子节点和新建项
     if (node.isDirectory && node.children) {
       // 如果新建项的父节点是当前节点，在子节点之前插入新建项
-      if (newItemParent === node.key && newItemName) {
+      // 注意：即使 newItemName 为空也显示输入框（VSCode 行为）
+      if (newItemParent === node.key) {
         // 确保目录展开
         if (!expandedKeys.has(node.key)) {
           // 目录未展开，但需要显示新建项，所以展开它
@@ -260,7 +262,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   focusedKey: null,
   editingKey: null,
   editingName: '',
-  newItemParent: null,
+  newItemParent: undefined,  // undefined 表示未开始新建
   newItemType: 'file',
   newItemName: '',
   clipboard: null,
@@ -417,7 +419,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   },
   
   cancelEdit: () => {
-    set({ editingKey: null, editingName: '', newItemParent: null, newItemName: '' })
+    set({ editingKey: null, editingName: '', newItemParent: undefined, newItemName: '' })
   },
   
   startNewItem: (parentKey, type) => {
@@ -438,10 +440,12 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     }
   },
   
-  finishNewItem: async (name) => {
+  finishNewItem: async (name, isBlur = false) => {
     const { newItemParent, newItemType, refreshTree } = get()
+    
+    // 空名时取消新建（VSCode 行为）
     if (!name.trim()) {
-      set({ newItemParent: null, newItemName: '' })
+      set({ newItemParent: undefined, newItemName: '' })
       return
     }
     
@@ -454,7 +458,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
       } else {
         await window.electron.file.write(newPath, '', { createParentDir: true })
       }
-      set({ newItemParent: null, newItemName: '' })
+      set({ newItemParent: undefined, newItemName: '' })
       await refreshTree()
     } catch (error) {
       throw error

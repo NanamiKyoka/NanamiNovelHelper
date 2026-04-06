@@ -50,6 +50,8 @@ interface OrganizationState {
   clearData: () => void
   // 批量设置方法（用于聚合接口）
   setGraphs: (graphs: OrganizationGraphMeta[]) => void
+  // 排序
+  reorderGraphs: (graphIds: string[]) => Promise<boolean>
 }
 
 export const useOrganizationStore = create<OrganizationState>((set, get) => ({
@@ -398,5 +400,26 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   // 批量设置数据（用于聚合接口）
   setGraphs: (graphs: OrganizationGraphMeta[]) => {
     set({ graphs, isLoading: false, error: null })
+  },
+
+  // 排序
+  reorderGraphs: async (graphIds: string[]) => {
+    try {
+      const success = await window.electron.organization.reorderGraphs(graphIds)
+      if (success) {
+        // 更新本地状态中的排序
+        set((state) => ({
+          graphs: graphIds
+            .map((id) => state.graphs.find((g) => g.id === id))
+            .filter((g): g is OrganizationGraphMeta => g !== undefined),
+        }))
+      }
+      return success
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '排序保存失败'
+      console.error('Failed to reorder organization graphs:', error)
+      set({ error: errorMessage })
+      return false
+    }
   },
 }))

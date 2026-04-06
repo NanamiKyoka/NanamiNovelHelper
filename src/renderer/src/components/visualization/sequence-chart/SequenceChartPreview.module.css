@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
+  overflow: hidden;
 }
 
 /* 顶部工具栏 */
@@ -89,6 +90,63 @@
 
 .eventListBody::-webkit-scrollbar {
   display: none;
+}
+
+/* 拖拽相关样式 */
+.eventRowWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eventRowWrapper.editing {
+  padding-left: 28px;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 8px;
+  cursor: grab;
+  border-radius: 4px;
+  flex-shrink: 0;
+  position: absolute;
+  left: 4px;
+}
+
+.dragHandle:hover {
+  background-color: var(--bg-secondary);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragOverlay {
+  background: var(--card-bg);
+  border: 2px solid var(--primary-color);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
+  opacity: 0.95;
+  cursor: grabbing;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 编辑模式样式 */
+.editModeHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary-color-bg);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--primary-color);
 }
 
 .eventRow {

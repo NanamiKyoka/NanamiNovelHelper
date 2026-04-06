@@ -1,0 +1,131 @@
+/* 引入公共样式 */
+.container {
+  composes: listContainer from '../common.module.css';
+}
+
+.header {
+  composes: listHeader from '../common.module.css';
+}
+
+.headerLeft {
+  composes: listHeaderLeft from '../common.module.css';
+}
+
+.headerActions {
+  composes: listHeaderActions from '../common.module.css';
+}
+
+.content {
+  composes: listContent from '../common.module.css';
+}
+
+.grid {
+  composes: grid from '../common.module.css';
+}
+
+/* 地图卡片 */
+.mapCard {
+  composes: card from '../common.module.css';
+}
+
+.thumbnail {
+  composes: cardThumbnail from '../common.module.css';
+}
+
+.thumbnailImage {
+  composes: cardThumbnailImage from '../common.module.css';
+}
+
+.thumbnailPlaceholder {
+  composes: cardThumbnailPlaceholder from '../common.module.css';
+}
+
+.cardBody {
+  composes: cardBody from '../common.module.css';
+}
+
+.mapName {
+  composes: cardTitle from '../common.module.css';
+}
+
+.mapDescription {
+  composes: cardDescription from '../common.module.css';
+}
+
+.mapStats {
+  composes: cardStats from '../common.module.css';
+}
+
+.stat {
+  composes: cardStat from '../common.module.css';
+}
+
+/* 拖拽 */
+.sortableCardWrapper {
+  composes: sortableCardWrapper from '../common.module.css';
+}
+
+.dragHandle {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.mapCard:hover .dragHandle {
+  opacity: 1;
+}
+
+/* 模态框 */
+.modalContent {
+  composes: modalContent from '../common.module.css';
+}
+
+.formItem {
+  composes: formItem from '../common.module.css';
+}
+
+.formLabel {
+  composes: formLabel from '../common.module.css';
+}
+
+.formHint {
+  composes: formHint from '../common.module.css';
+}
+
+/* 空状态 */
+.emptyState {
+  composes: emptyState from '../common.module.css';
+}
+
+.emptyIcon {
+  composes: emptyIcon from '../common.module.css';
+}
+
+/* 加载状态 */
+.loading {
+  composes: loading from '../common.module.css';
+}
+
+/* 右键菜单 */
+.contextMenu {
+  composes: contextMenu from '../common.module.css';
+}
+
+.contextMenuItem {
+  composes: contextMenuItem from '../common.module.css';
+}
+
+.contextMenuItemDanger {
+  composes: contextMenuItemDanger from '../common.module.css';
+}
+
+.contextMenuDivider {
+  composes: contextMenuDivider from '../common.module.css';
+}

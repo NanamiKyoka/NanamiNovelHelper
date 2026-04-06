@@ -1,6 +1,6 @@
 /**
  * 时间线列表组件
- * 展示所有时间线，支持创建、编辑、删除、导入导出
+ * 展示所有时间线，支持创建、编辑、删除、导入导出、拖拽排序
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -8,13 +8,11 @@ import {
   Typography,
   Button,
   Card,
-  Empty,
   Modal,
   App,
   Input,
   Spin,
   Tag,
-  Tooltip,
 } from 'antd'
 import {
   PlusOutlined,
@@ -25,7 +23,25 @@ import {
   ClockCircleOutlined,
   BranchesOutlined,
   FileTextOutlined,
+  HolderOutlined,
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
 import type { TimelineMeta } from '@types/timeline'
 import styles from './TimelineList.module.css'
@@ -45,6 +61,87 @@ interface ContextMenuState {
   timeline: TimelineMeta | null
 }
 
+// 可排序的卡片组件
+interface SortableCardProps {
+  timeline: TimelineMeta
+  onContextMenu: (e: React.MouseEvent, timeline: TimelineMeta) => void
+  onDoubleClick: (timelineId: string) => void
+  getLocalUrl: (filePath: string) => string
+  getBranchTypeTag: (timeline: TimelineMeta) => React.ReactNode
+}
+
+function SortableCard({
+  timeline,
+  onContextMenu,
+  onDoubleClick,
+  getLocalUrl,
+  getBranchTypeTag,
+}: SortableCardProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: timeline.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={styles.sortableCardWrapper}
+    >
+      <Card
+        className={styles.timelineCard}
+        onContextMenu={(e) => onContextMenu(e, timeline)}
+        onDoubleClick={() => onDoubleClick(timeline.id)}
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className={styles.thumbnail}>
+          {timeline.thumbnail ? (
+            <img
+              src={getLocalUrl(timeline.thumbnail)}
+              alt={timeline.name}
+              className={styles.thumbnailImage}
+            />
+          ) : (
+            <ClockCircleOutlined className={styles.thumbnailPlaceholder} />
+          )}
+          {/* 拖拽手柄 */}
+          <div
+            className={styles.dragHandle}
+            {...attributes}
+            {...listeners}
+          >
+            <HolderOutlined />
+          </div>
+          {getBranchTypeTag(timeline)}
+        </div>
+        <div className={styles.cardBody}>
+          <div className={styles.timelineName}>{timeline.name}</div>
+          {timeline.description && (
+            <div className={styles.timelineDescription}>{timeline.description}</div>
+          )}
+          <div className={styles.timelineStats}>
+            <span className={styles.stat}>
+              <FileTextOutlined />
+              {timeline.nodeCount} 节点
+            </span>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   const { modal, message } = App.useApp()
 
@@ -58,6 +155,7 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     exportTimeline,
     exportTimelineAsMarkdown,
     importTimeline,
+    reorderTimelines,
   } = useTimelineStore()
 
   // 创建模态框状态
@@ -75,6 +173,18 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   })
 
   const contextMenuRef = useRef<HTMLDivElement>(null)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // 加载列表
   useEffect(() => {
@@ -217,6 +327,31 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     return null
   }
 
+  // 拖拽结束
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id) {
+        const oldIndex = timelines.findIndex((t) => t.id === active.id)
+        const newIndex = timelines.findIndex((t) => t.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // 乐观更新：先本地排序
+          const newTimelines = arrayMove(timelines, oldIndex, newIndex)
+          const newTimelineIds = newTimelines.map((t) => t.id)
+
+          // 保存到后端
+          const success = await reorderTimelines(newTimelineIds)
+          if (!success) {
+            message.error('排序保存失败')
+          }
+        }
+      }
+    },
+    [timelines, reorderTimelines, message]
+  )
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -249,42 +384,26 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
             <Text type="secondary">点击"新建"创建第一个时间线</Text>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {timelines.map((timeline) => (
-              <Card
-                key={timeline.id}
-                className={styles.timelineCard}
-                onContextMenu={(e) => handleContextMenu(e, timeline)}
-                onDoubleClick={() => handleDoubleClick(timeline.id)}
-                styles={{ body: { padding: 0 } }}
-              >
-                <div className={styles.thumbnail}>
-                  {timeline.thumbnail ? (
-                    <img
-                      src={getLocalUrl(timeline.thumbnail)}
-                      alt={timeline.name}
-                      className={styles.thumbnailImage}
-                    />
-                  ) : (
-                    <ClockCircleOutlined className={styles.thumbnailPlaceholder} />
-                  )}
-                  {getBranchTypeTag(timeline)}
-                </div>
-                <div className={styles.cardBody}>
-                  <div className={styles.timelineName}>{timeline.name}</div>
-                  {timeline.description && (
-                    <div className={styles.timelineDescription}>{timeline.description}</div>
-                  )}
-                  <div className={styles.timelineStats}>
-                    <span className={styles.stat}>
-                      <FileTextOutlined />
-                      {timeline.nodeCount} 节点
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={timelines.map((t) => t.id)} strategy={rectSortingStrategy}>
+              <div className={styles.grid}>
+                {timelines.map((timeline) => (
+                  <SortableCard
+                    key={timeline.id}
+                    timeline={timeline}
+                    onContextMenu={handleContextMenu}
+                    onDoubleClick={handleDoubleClick}
+                    getLocalUrl={getLocalUrl}
+                    getBranchTypeTag={getBranchTypeTag}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

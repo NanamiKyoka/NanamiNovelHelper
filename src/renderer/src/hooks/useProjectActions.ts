@@ -16,7 +16,7 @@ import { useTimelineStore } from '@stores/timelineStore'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
-import { useHighlightService } from '@services/highlightService'
+import { useHighlightService, updateHighlightPatterns } from '@services/highlightService'
 import type { CreateProjectOptions } from '@shared/project'
 
 interface ProjectInitData {
@@ -129,6 +129,8 @@ export function useProjectActions() {
     clearSequenceChartData()
     clearOrganizationData()
     clearFileTreeData()
+    // 清空高亮模式，防止旧项目的词汇高亮残留
+    updateHighlightPatterns([], [], [])
   }, [
     clearProjectSettings,
     clearVocabularyData,
@@ -148,6 +150,12 @@ export function useProjectActions() {
     clearError()
     
     try {
+      // 如果当前有打开的项目，先清除旧数据（防止词汇高亮残留等问题）
+      const currentProject = useProjectStore.getState().currentProject
+      if (currentProject) {
+        clearAllProjectData()
+      }
+      
       // 打开项目（主进程初始化）
       const project = await window.electron.project.open(path)
       setCurrentProject(project)
@@ -173,7 +181,8 @@ export function useProjectActions() {
     setCurrentProject,
     dispatchInitData,
     loadRecentProjects,
-    setError
+    setError,
+    clearAllProjectData
   ])
 
   /**

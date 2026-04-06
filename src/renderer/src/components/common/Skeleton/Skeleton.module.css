@@ -1,0 +1,68 @@
+.container {
+  padding: var(--spacing-4, 16px);
+}
+
+.animate {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* 卡片骨架屏 */
+.cardImage {
+  width: 100% !important;
+  height: 150px !important;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-4, 16px);
+  padding: var(--spacing-4, 16px);
+}
+
+/* 列表骨架屏 */
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3, 12px);
+  padding: var(--spacing-3, 12px) 0;
+  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.listContent {
+  flex: 1;
+  margin: 0 !important;
+}
+
+/* 表格骨架屏 */
+.tableHeader {
+  display: flex;
+  gap: var(--spacing-2, 8px);
+  padding: var(--spacing-3, 12px);
+  background: var(--bg-muted, #f5f5f5);
+  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+}
+
+.tableRow {
+  display: flex;
+  gap: var(--spacing-2, 8px);
+  padding: var(--spacing-3, 12px);
+  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+}
+
+.tableCell {
+  flex: 1;
+  min-width: 80px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}

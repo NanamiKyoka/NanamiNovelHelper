@@ -23,12 +23,12 @@ export function registerTimelineHandlers(): void {
 
   // 获取时间线列表
   ipcMain.handle('timeline:getList', (): TimelineMeta[] => {
-    return timelineService.getTimelineList()
+    return timelineService.getList()
   })
 
   // 获取单个时间线
   ipcMain.handle('timeline:get', (_, timelineId: string): Timeline | null => {
-    return timelineService.getTimeline(timelineId)
+    return timelineService.get(timelineId)
   })
 
   // 创建时间线
@@ -43,7 +43,7 @@ export function registerTimelineHandlers(): void {
 
   // 删除时间线
   ipcMain.handle('timeline:delete', (_, timelineId: string): boolean => {
-    return timelineService.deleteTimeline(timelineId)
+    return timelineService.delete(timelineId)
   })
 
   // ============================================
@@ -120,7 +120,7 @@ export function registerTimelineHandlers(): void {
 
   // 获取缩略图路径
   ipcMain.handle('timeline:getThumbnailPath', (_, timelineId: string): string | null => {
-    return timelineService.getThumbnailPath_(timelineId)
+    return timelineService.getThumbnailFullPath(timelineId)
   })
 
   // ============================================
@@ -129,7 +129,7 @@ export function registerTimelineHandlers(): void {
 
   // 导出时间线为 JSON5
   ipcMain.handle('timeline:export', (_, timelineId: string): string | null => {
-    return timelineService.exportTimeline(timelineId)
+    return timelineService.exportItem(timelineId)
   })
 
   // 导出时间线为 Markdown
@@ -139,7 +139,7 @@ export function registerTimelineHandlers(): void {
 
   // 导入时间线
   ipcMain.handle('timeline:import', (_, jsonContent: string): Timeline | null => {
-    return timelineService.importTimeline(jsonContent)
+    return timelineService.importItem(jsonContent)
   })
 
   // 显示导出对话框
@@ -191,5 +191,10 @@ export function registerTimelineHandlers(): void {
       console.error('Failed to read import file:', error)
       return null
     }
+  })
+
+  // 重新排序时间线列表
+  ipcMain.handle('timeline:reorder', (_, timelineIds: string[]): boolean => {
+    return timelineService.reorderTimelines(timelineIds)
   })
 }

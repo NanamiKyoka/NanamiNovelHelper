@@ -5,8 +5,9 @@
 
 export * from '@shared/relationship'
 
-// 重新导出内置关系类型
+// 重新导出内置关系类型（分离值和类型导出）
 export { BUILTIN_RELATION_TYPES } from '@shared/constants'
+export type { BuiltinRelationTypeId } from '@shared/constants'
 
 /**
  * 性别配置

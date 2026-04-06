@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
+import { useProjectActions } from '@hooks/useProjectActions'
 import styles from './MenuBar.module.css'
 
 interface MenuItem {
@@ -25,10 +26,11 @@ function MenuBar(): JSX.Element {
   const {
     currentProject,
     recentProjects,
-    openProject,
-    closeProject,
     loadRecentProjects
   } = useProjectStore()
+
+  // 使用 useProjectActions 获取完整的项目操作，确保正确清除旧数据
+  const { openProject, closeProject } = useProjectActions()
 
   const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
   const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
@@ -63,7 +65,6 @@ function MenuBar(): JSX.Element {
         break
       case 'projectSettings':
         // TODO: 打开项目设置
-        console.log('打开项目设置')
         break
       
       // 最近项目

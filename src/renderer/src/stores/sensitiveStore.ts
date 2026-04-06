@@ -23,6 +23,8 @@ interface SensitiveState {
   // 批量设置方法（用于聚合接口）
   setWords: (words: SensitiveWord[]) => void
   clearData: () => void
+  // 重排序
+  reorderWords: (wordIds: string[]) => Promise<void>
 }
 
 export const useSensitiveStore = create<SensitiveState>((set, get) => ({
@@ -38,7 +40,6 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
     try {
       const words = await window.electron.sensitive.loadWords()
       set({ words, isLoading: false, isLoaded: true, error: null })
-      console.log('[SensitiveStore] Loaded words:', words.length)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载敏感词失败'
       console.error('Failed to load sensitive words:', error)
@@ -157,5 +158,23 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       isLoading: false,
       error: null
     })
+  },
+
+  // 重排序敏感词
+  reorderWords: async (wordIds: string[]) => {
+    try {
+      const { words } = get()
+      // 根据 wordIds 顺序重新排列并更新 order 字段
+      const reorderedWords = wordIds.map((id, index) => {
+        const word = words.find(w => w.id === id)
+        if (!word) throw new Error(`敏感词 ${id} 不存在`)
+        return { ...word, order: index, updatedAt: new Date().toISOString() }
+      })
+      await window.electron.sensitive.saveWords(reorderedWords)
+      set({ words: reorderedWords })
+    } catch (error) {
+      console.error('Failed to reorder sensitive words:', error)
+      throw error
+    }
   }
 }))

@@ -12,6 +12,7 @@ export type FullscreenMode =
   | 'organization'
   | 'timeline'
   | 'sequenceChart'
+  | 'map'
   | null
 
 interface UIState {

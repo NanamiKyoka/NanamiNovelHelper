@@ -1,0 +1,57 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tableWrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.dragHandle {
+  cursor: grab;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.overlayRow {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-primary);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+/* 拖拽中的行样式 */
+.tableWrapper :global(.ant-table-tbody > tr) {
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+/* 空表格背景修复 */
+.tableWrapper :global(.ant-table-empty .ant-table-body) {
+  background: transparent !important;
+}
+
+.tableWrapper :global(.ant-empty) {
+  background: transparent;
+}
+
+/* 拖拽手柄单元格 */
+.tableWrapper :global(.drag-handle-cell) {
+  padding: 0 4px !important;
+}
+
+.tableWrapper :global(.drag-handle-cell .ant-table-cell-content) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

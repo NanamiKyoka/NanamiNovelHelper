@@ -110,6 +110,8 @@ interface SequenceChartState {
   clearData: () => void
   // 批量设置方法（用于聚合接口）
   setCharts: (charts: SequenceChartMeta[]) => void
+  // 排序方法
+  reorderCharts: (chartIds: string[]) => Promise<boolean>
 }
 
 export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
@@ -840,5 +842,29 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 批量设置数据（用于聚合接口）
   setCharts: (charts: SequenceChartMeta[]) => {
     set({ charts, isLoading: false, error: null })
+  },
+
+  // 重新排序事序图
+  reorderCharts: async (chartIds: string[]) => {
+    try {
+      const success = await window.electron.sequenceChart.reorderCharts(chartIds)
+      if (success) {
+        // 根据 chartIds 的顺序更新本地状态
+        set((state) => {
+          const reorderedCharts = chartIds.map((id, index) => {
+            const chart = state.charts.find((c) => c.id === id)
+            return chart ? { ...chart, order: index } : null
+          }).filter((c): c is SequenceChartMeta => c !== null)
+          
+          return { charts: reorderedCharts }
+        })
+      }
+      return success
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '排序失败'
+      console.error('Failed to reorder sequence charts:', error)
+      set({ error: errorMessage })
+      return false
+    }
   },
 }))

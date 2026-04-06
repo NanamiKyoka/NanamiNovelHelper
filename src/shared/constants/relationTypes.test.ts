@@ -30,13 +30,13 @@ describe('relationTypes constants', () => {
 
     it('should have family as first type', () => {
       expect(BUILTIN_RELATION_TYPES[0].id).toBe('family')
-      expect(BUILTIN_RELATION_TYPES[0].name).toBe('家人')
+      expect(BUILTIN_RELATION_TYPES[0].name).toBe('亲情')
     })
 
-    it('should have acquaintance as last type', () => {
+    it('should have neighbor as last type', () => {
       const lastType = BUILTIN_RELATION_TYPES[BUILTIN_RELATION_TYPES.length - 1]
-      expect(lastType.id).toBe('acquaintance')
-      expect(lastType.name).toBe('熟人')
+      expect(lastType.id).toBe('neighbor')
+      expect(lastType.name).toBe('邻居')
     })
 
     it('should have valid line styles', () => {
@@ -70,7 +70,7 @@ describe('relationTypes constants', () => {
     it('should return correct type for valid id', () => {
       const familyType = getRelationTypeById('family')
       expect(familyType).toBeDefined()
-      expect(familyType?.name).toBe('家人')
+      expect(familyType?.name).toBe('亲情')
     })
 
     it('should return undefined for invalid id', () => {
@@ -79,8 +79,8 @@ describe('relationTypes constants', () => {
     })
 
     it('should return correct type for all built-in ids', () => {
-      const ids = ['family', 'friend', 'lover', 'enemy', 'colleague', 
-                   'neighbor', 'classmate', 'master-disciple', 'rival', 'acquaintance']
+      const ids = ['family', 'friendship', 'love', 'enemy', 'master', 
+                   'superior', 'ally', 'rival', 'colleague', 'neighbor']
       ids.forEach(id => {
         const type = getRelationTypeById(id)
         expect(type).toBeDefined()

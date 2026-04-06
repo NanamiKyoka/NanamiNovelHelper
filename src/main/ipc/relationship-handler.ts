@@ -24,12 +24,12 @@ export function registerRelationshipHandlers(): void {
 
   // 获取关系图列表
   ipcMain.handle('relationship:getList', (): RelationshipGraphMeta[] => {
-    return relationshipService.getGraphList()
+    return relationshipService.getList()
   })
 
   // 获取单个关系图
   ipcMain.handle('relationship:get', (_, graphId: string): RelationshipGraph | null => {
-    return relationshipService.getGraph(graphId)
+    return relationshipService.get(graphId)
   })
 
   // 创建关系图
@@ -44,7 +44,7 @@ export function registerRelationshipHandlers(): void {
 
   // 删除关系图
   ipcMain.handle('relationship:delete', (_, graphId: string): boolean => {
-    return relationshipService.deleteGraph(graphId)
+    return relationshipService.delete(graphId)
   })
 
   // ============================================
@@ -120,7 +120,7 @@ export function registerRelationshipHandlers(): void {
 
   // 获取缩略图路径
   ipcMain.handle('relationship:getThumbnailPath', (_, graphId: string): string | null => {
-    return relationshipService.getThumbnailPath_(graphId)
+    return relationshipService.getThumbnailFullPath(graphId)
   })
 
   // ============================================
@@ -129,12 +129,12 @@ export function registerRelationshipHandlers(): void {
 
   // 导出关系图
   ipcMain.handle('relationship:export', (_, graphId: string): string | null => {
-    return relationshipService.exportGraph(graphId)
+    return relationshipService.exportItem(graphId)
   })
 
   // 导入关系图
   ipcMain.handle('relationship:import', (_, jsonContent: string): RelationshipGraph | null => {
-    return relationshipService.importGraph(jsonContent)
+    return relationshipService.importItem(jsonContent)
   })
 
   // 显示导出对话框
@@ -163,5 +163,10 @@ export function registerRelationshipHandlers(): void {
       properties: ['openFile']
     })
     return result.canceled ? null : result.filePaths[0]
+  })
+
+  // 重新排序关系图
+  ipcMain.handle('relationship:reorderGraphs', (_, graphIds: string[]): boolean => {
+    return relationshipService.reorderGraphs(graphIds)
   })
 }

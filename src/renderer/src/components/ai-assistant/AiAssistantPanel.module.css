@@ -1,0 +1,147 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ant-color-bg-container);
+}
+
+.skillButtonContainer {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.tabs {
+  height: 100%;
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 0;
+  padding: 0 12px;
+}
+
+.tabs :global(.ant-tabs-content) {
+  height: calc(100% - 46px);
+}
+
+.tabs :global(.ant-tabs-tabpane) {
+  height: 100%;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tabContent :global(.ant-list) {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.listToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.listToolbar :global(.ant-input-search) {
+  flex: 1;
+  max-width: 200px;
+}
+
+.itemDescription {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 标题行样式：名称和标签上下排列 */
+.titleRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.templateName {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* 列表项样式 */
+:global(.ant-list-item) {
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--ant-color-border-secondary) !important;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+:global(.ant-list-item:hover) {
+  background-color: var(--ant-color-bg-text-hover);
+}
+
+:global(.ant-list-item-meta-title) {
+  margin-bottom: 2px !important;
+}
+
+:global(.ant-list-item-meta-description) {
+  font-size: 12px;
+}
+
+/* 操作按钮 - 竖向排列 */
+:global(.ant-list-item-action) {
+  margin-left: 8px;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* 隐藏按钮之间的分割线 */
+:global(.ant-list-item-action-split) {
+  display: none !important;
+}
+
+:global(.ant-list-item-action > li) {
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:global(.ant-list-item-action .ant-btn) {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

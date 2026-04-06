@@ -3,8 +3,8 @@
  * 以只读模式展示时间线，可进入编辑模式
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { Typography, Button, Spin, App, Tag, Empty, Tooltip } from 'antd'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Typography, Button, Spin, App, Tag, Empty } from 'antd'
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -14,12 +14,135 @@ import {
   FileTextOutlined,
   CalendarOutlined,
   TagOutlined,
+  HolderOutlined,
+  CheckOutlined,
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
-import type { TimelineNode, TimeInfo, CharacterRef } from '@types/timeline'
+import type { TimelineNode, TimeInfo } from '@renderer/types/timeline'
 import styles from './TimelinePreview.module.css'
 
 const { Text, Title } = Typography
+
+// 可排序的时间线节点组件
+interface SortableTimelineItemProps {
+  node: TimelineNode
+  index: number
+  totalCount: number
+  isEditMode: boolean
+  formatTimeInfo: (timeInfo: TimeInfo) => string
+  getTimeIcon: (format: string) => JSX.Element
+}
+
+function SortableTimelineItem({
+  node,
+  index,
+  totalCount,
+  isEditMode,
+  formatTimeInfo,
+  getTimeIcon,
+}: SortableTimelineItemProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id, disabled: !isEditMode })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`${styles.timelineItemWrapper}${isEditMode ? ` ${styles.editing}` : ''}`}
+    >
+      {/* 拖拽手柄 */}
+      {isEditMode && (
+        <div className={styles.dragHandle} {...attributes} {...listeners}>
+          <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+        </div>
+      )}
+      <div className={styles.timelineItem}>
+        <div className={styles.timelineLine}>
+          <div className={styles.timelineDot} style={{ backgroundColor: node.color || '#1890ff' }} />
+          {index < totalCount - 1 && <div className={styles.timelineConnector} />}
+        </div>
+        <div className={styles.timelineContent}>
+          <div className={styles.nodeHeader}>
+            <Text strong className={styles.nodeTitle}>
+              {node.title}
+            </Text>
+            {node.timeInfo && (
+              <div className={styles.nodeTime}>
+                {getTimeIcon(node.timeInfo.format)}
+                <Text type="secondary">{formatTimeInfo(node.timeInfo)}</Text>
+              </div>
+            )}
+          </div>
+
+          {node.description && (
+            <div className={styles.nodeDescription}>{node.description}</div>
+          )}
+
+          {/* 关联角色 */}
+          {node.characters && node.characters.length > 0 && (
+            <div className={styles.nodeCharacters}>
+              <UserOutlined />
+              <div className={styles.characterList}>
+                {node.characters.map((char) => (
+                  <Tag key={char.id} color={char.color || 'default'}>
+                    {char.name}
+                  </Tag>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 关联章节 */}
+          {node.chapter && (
+            <div className={styles.nodeChapter}>
+              <FileTextOutlined />
+              <Text type="secondary">{node.chapter.title}</Text>
+            </div>
+          )}
+
+          {/* 分支标记 */}
+          {node.isBranchPoint && node.branchedTimelineIds && node.branchedTimelineIds.length > 0 && (
+            <div className={styles.branchMark}>
+              <BranchesOutlined />
+              <Text type="secondary">此处有 {node.branchedTimelineIds.length} 个分支</Text>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface TimelinePreviewProps {
   timelineId: string
@@ -34,7 +157,25 @@ function TimelinePreview({
 }: TimelinePreviewProps): JSX.Element {
   const { message } = App.useApp()
 
-  const { currentTimeline, isLoading, loadTimeline } = useTimelineStore()
+  const { currentTimeline, isLoading, loadTimeline, updateNodesOrder } = useTimelineStore()
+
+  // 编辑模式状态
+  const [isEditMode, setIsEditMode] = useState(false)
+
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // 加载时间线数据
   useEffect(() => {
@@ -42,7 +183,7 @@ function TimelinePreview({
   }, [timelineId, loadTimeline])
 
   // 格式化时间信息
-  const formatTimeInfo = (timeInfo: TimeInfo): string => {
+  const formatTimeInfo = useCallback((timeInfo: TimeInfo): string => {
     switch (timeInfo.format) {
       case 'datetime':
         return timeInfo.datetime || ''
@@ -53,10 +194,10 @@ function TimelinePreview({
       default:
         return ''
     }
-  }
+  }, [])
 
   // 获取时间类型的图标
-  const getTimeIcon = (format: string) => {
+  const getTimeIcon = useCallback((format: string) => {
     switch (format) {
       case 'datetime':
         return <CalendarOutlined />
@@ -65,12 +206,56 @@ function TimelinePreview({
       default:
         return <TagOutlined />
     }
-  }
+  }, [])
 
-  // 按顺序排序节点
-  const sortedNodes: TimelineNode[] = currentTimeline
-    ? [...currentTimeline.nodes].sort((a, b) => a.order - b.order)
-    : []
+  // 按顺序排序节点 - 使用 useMemo 优化
+  const sortedNodes: TimelineNode[] = useMemo(() => {
+    return currentTimeline ? [...currentTimeline.nodes].sort((a, b) => a.order - b.order) : []
+  }, [currentTimeline])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  // 拖拽结束
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent): Promise<void> => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedNodes.findIndex((n) => n.id === active.id)
+        const newIndex = sortedNodes.findIndex((n) => n.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // 创建新排序的节点数组
+          const newNodes = arrayMove(sortedNodes, oldIndex, newIndex).map((node, index) => ({
+            ...node,
+            order: index,
+          }))
+
+          // 调用 updateNodesOrder 更新顺序
+          try {
+            await updateNodesOrder(newNodes)
+          } catch (error) {
+            console.error('Failed to update nodes order:', error)
+            message.error('排序失败')
+          }
+        }
+      }
+
+      setActiveId(null)
+    },
+    [sortedNodes, updateNodesOrder, message]
+  )
+
+  // 当前拖拽的节点
+  const activeNode = activeId ? sortedNodes.find((n) => n.id === activeId) : null
+
+  // 切换编辑模式
+  const toggleEditMode = useCallback((): void => {
+    setIsEditMode((prev) => !prev)
+  }, [])
 
   if (isLoading) {
     return (
@@ -112,10 +297,30 @@ function TimelinePreview({
             )}
           </div>
         </div>
-        <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
-          编辑
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {isEditMode && (
+            <Button icon={<CheckOutlined />} onClick={toggleEditMode}>
+              完成排序
+            </Button>
+          )}
+          {!isEditMode && (
+            <Button icon={<HolderOutlined />} onClick={toggleEditMode}>
+              排序
+            </Button>
+          )}
+          <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
+            编辑
+          </Button>
+        </div>
       </div>
+
+      {/* 编辑模式提示 */}
+      {isEditMode && (
+        <div className={styles.editModeHint}>
+          <HolderOutlined />
+          <Text>拖拽节点左侧的手柄调整顺序</Text>
+        </div>
+      )}
 
       {/* 描述 */}
       {currentTimeline.description && (
@@ -130,63 +335,53 @@ function TimelinePreview({
             <Text type="secondary">暂无节点，点击编辑添加</Text>
           </div>
         ) : (
-          <div className={styles.timeline}>
-            {sortedNodes.map((node, index) => (
-              <div key={node.id} className={styles.timelineItem}>
-                <div className={styles.timelineLine}>
-                  <div className={styles.timelineDot} style={{ backgroundColor: node.color || '#1890ff' }} />
-                  {index < sortedNodes.length - 1 && <div className={styles.timelineConnector} />}
-                </div>
-                <div className={styles.timelineContent}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedNodes.map((n) => n.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className={styles.timeline}>
+                {sortedNodes.map((node, index) => (
+                  <SortableTimelineItem
+                    key={node.id}
+                    node={node}
+                    index={index}
+                    totalCount={sortedNodes.length}
+                    isEditMode={isEditMode}
+                    formatTimeInfo={formatTimeInfo}
+                    getTimeIcon={getTimeIcon}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+
+            {/* 拖拽覆盖层 */}
+            <DragOverlay>
+              {activeNode ? (
+                <div className={styles.dragOverlay}>
                   <div className={styles.nodeHeader}>
                     <Text strong className={styles.nodeTitle}>
-                      {node.title}
+                      {activeNode.title}
                     </Text>
-                    {node.timeInfo && (
+                    {activeNode.timeInfo && (
                       <div className={styles.nodeTime}>
-                        {getTimeIcon(node.timeInfo.format)}
-                        <Text type="secondary">{formatTimeInfo(node.timeInfo)}</Text>
+                        {getTimeIcon(activeNode.timeInfo.format)}
+                        <Text type="secondary">{formatTimeInfo(activeNode.timeInfo)}</Text>
                       </div>
                     )}
                   </div>
-
-                  {node.description && (
-                    <div className={styles.nodeDescription}>{node.description}</div>
-                  )}
-
-                  {/* 关联角色 */}
-                  {node.characters && node.characters.length > 0 && (
-                    <div className={styles.nodeCharacters}>
-                      <UserOutlined />
-                      <div className={styles.characterList}>
-                        {node.characters.map((char) => (
-                          <Tag key={char.id} color={char.color || 'default'}>
-                            {char.name}
-                          </Tag>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 关联章节 */}
-                  {node.chapter && (
-                    <div className={styles.nodeChapter}>
-                      <FileTextOutlined />
-                      <Text type="secondary">{node.chapter.title}</Text>
-                    </div>
-                  )}
-
-                  {/* 分支标记 */}
-                  {node.isBranchPoint && node.branchedTimelineIds && node.branchedTimelineIds.length > 0 && (
-                    <div className={styles.branchMark}>
-                      <BranchesOutlined />
-                      <Text type="secondary">此处有 {node.branchedTimelineIds.length} 个分支</Text>
-                    </div>
+                  {activeNode.description && (
+                    <div className={styles.nodeDescription}>{activeNode.description}</div>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
       </div>
     </div>

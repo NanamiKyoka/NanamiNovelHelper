@@ -27,6 +27,7 @@ Thumbs.db
 *.swo
 .crkilo/
 memory_data/
+.trae/
 
 # Environment
 .env

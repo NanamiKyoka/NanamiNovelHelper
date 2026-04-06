@@ -1,0 +1,61 @@
+.sortableList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sortableItem {
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+}
+
+.sortableItem:active {
+  cursor: grabbing;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  color: var(--text-color-secondary, #999);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.sortableItem:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.overlayItem {
+  opacity: 0.9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  cursor: grabbing;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 水平排列模式 */
+.sortableList[data-strategy="horizontal"] {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+/* 矩形排列模式 */
+.sortableList[data-strategy="rect"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}

@@ -96,6 +96,7 @@ export interface TimelineMeta {
   branchInfo: BranchInfo
   nodeCount: number
   tags?: string[]
+  order: number
   createdAt: string
   updatedAt: string
 }

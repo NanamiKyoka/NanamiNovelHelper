@@ -596,6 +596,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         okText="保存"
         cancelText="取消"
         width={600}
+        zIndex={10000}
       >
         <div className={styles.modalContent}>
           <div className={styles.formItem}>
@@ -774,6 +775,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           position: 'fixed',
           left: contextMenu.x,
           top: contextMenu.y,
+          zIndex: 10001,
         }}
       >
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />

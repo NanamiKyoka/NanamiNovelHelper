@@ -91,7 +91,7 @@ export interface FileTreeState {
   // 编辑状态
   editingKey: string | null
   editingName: string
-  newItemParent: string | null
+  newItemParent: string | null | undefined  // undefined = 未开始新建, null = 在根目录新建
   newItemType: 'file' | 'folder'
   newItemName: string
   

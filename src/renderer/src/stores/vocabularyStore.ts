@@ -21,13 +21,15 @@ interface VocabularyState {
   addType: (type: Omit<VocabularyType, 'id' | 'createdAt' | 'updatedAt'>) => Promise<VocabularyType>
   updateType: (id: string, updates: Partial<VocabularyType>) => Promise<void>
   deleteType: (id: string) => Promise<void>
+  reorderTypes: (typeIds: string[]) => Promise<void>
   
   // 条目操作
   loadEntries: (typeId?: string) => Promise<void>
   saveEntries: (typeId: string, entries: VocabularyEntry[]) => Promise<void>
-  addEntry: (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<VocabularyEntry>
+  addEntry: (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<VocabularyEntry>
   updateEntry: (id: string, updates: Partial<VocabularyEntry>) => Promise<void>
   deleteEntry: (id: string) => Promise<void>
+  reorderEntries: (typeId: string, entryIds: string[]) => Promise<void>
   
   // 关联文件操作
   createLinkedFile: (entry: VocabularyEntry) => Promise<string | null>
@@ -128,6 +130,31 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
     }
   },
   
+  reorderTypes: async (typeIds: string[]) => {
+    const { types } = get()
+    // 保存原始数据以便回滚
+    const originalTypes = [...types]
+    
+    // 根据 typeIds 顺序重新排列并更新 order 字段
+    const reorderedTypes = typeIds.map((id, index) => {
+      const type = types.find(t => t.id === id)
+      if (!type) throw new Error(`类型 ${id} 不存在`)
+      return { ...type, order: index, updatedAt: new Date().toISOString() }
+    })
+    
+    // 乐观更新：先更新本地状态
+    set({ types: reorderedTypes })
+    
+    try {
+      await window.electron.vocabulary.saveTypes(reorderedTypes)
+    } catch (error) {
+      console.error('Failed to reorder vocabulary types:', error)
+      // 回滚到原始状态
+      set({ types: originalTypes })
+      throw error
+    }
+  },
+  
   // 条目操作
   loadEntries: async (typeId?: string) => {
     set({ isLoading: true, error: null })
@@ -147,7 +174,6 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       } else {
         set({ entries, isLoading: false, entriesLoaded: true, error: null })
       }
-      console.log('[VocabularyStore] Loaded entries:', entries.length)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载词汇条目失败'
       console.error('Failed to load vocabulary entries:', error)
@@ -205,6 +231,43 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       }
     } catch (error) {
       console.error('Failed to delete vocabulary entry:', error)
+      throw error
+    }
+  },
+  
+  reorderEntries: async (typeId: string, entryIds: string[]) => {
+    const { entries } = get()
+    // 保存原始数据以便回滚
+    const originalEntries = entries.filter(e => e.typeId === typeId)
+    
+    // 获取当前类型的所有条目
+    const typeEntries = entries.filter(e => e.typeId === typeId)
+    // 根据 entryIds 顺序重新排列并更新 order 字段
+    const reorderedEntries = entryIds.map((id, index) => {
+      const entry = typeEntries.find(e => e.id === id)
+      if (!entry) throw new Error(`条目 ${id} 不存在`)
+      return { ...entry, order: index, updatedAt: new Date().toISOString() }
+    })
+    
+    // 乐观更新：先更新本地状态
+    set(state => ({
+      entries: [
+        ...state.entries.filter(e => e.typeId !== typeId),
+        ...reorderedEntries
+      ]
+    }))
+    
+    try {
+      await window.electron.vocabulary.saveEntries(typeId, reorderedEntries)
+    } catch (error) {
+      console.error('Failed to reorder vocabulary entries:', error)
+      // 回滚到原始状态
+      set(state => ({
+        entries: [
+          ...state.entries.filter(e => e.typeId !== typeId),
+          ...originalEntries
+        ]
+      }))
       throw error
     }
   },

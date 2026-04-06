@@ -24,12 +24,12 @@ export function registerOrganizationHandlers(): void {
 
   // 获取组织架构图列表
   ipcMain.handle('organization:getList', (): OrganizationGraphMeta[] => {
-    return organizationService.getGraphList()
+    return organizationService.getList()
   })
 
   // 获取单个组织架构图
   ipcMain.handle('organization:get', (_, graphId: string): OrganizationGraph | null => {
-    return organizationService.getGraph(graphId)
+    return organizationService.get(graphId)
   })
 
   // 创建组织架构图
@@ -44,7 +44,7 @@ export function registerOrganizationHandlers(): void {
 
   // 删除组织架构图
   ipcMain.handle('organization:delete', (_, graphId: string): boolean => {
-    return organizationService.deleteGraph(graphId)
+    return organizationService.delete(graphId)
   })
 
   // ============================================
@@ -97,7 +97,7 @@ export function registerOrganizationHandlers(): void {
 
   // 获取缩略图路径
   ipcMain.handle('organization:getThumbnailPath', (_, graphId: string): string | null => {
-    return organizationService.getThumbnailPath_(graphId)
+    return organizationService.getThumbnailFullPath(graphId)
   })
 
   // ============================================
@@ -106,12 +106,12 @@ export function registerOrganizationHandlers(): void {
 
   // 导出组织架构图
   ipcMain.handle('organization:export', (_, graphId: string): string | null => {
-    return organizationService.exportGraph(graphId)
+    return organizationService.exportItem(graphId)
   })
 
   // 导入组织架构图
   ipcMain.handle('organization:import', (_, jsonContent: string): OrganizationGraph | null => {
-    return organizationService.importGraph(jsonContent)
+    return organizationService.importItem(jsonContent)
   })
 
   // 显示导出对话框
@@ -140,5 +140,10 @@ export function registerOrganizationHandlers(): void {
       properties: ['openFile']
     })
     return result.canceled ? null : result.filePaths[0]
+  })
+
+  // 重新排序组织架构图列表
+  ipcMain.handle('organization:reorderGraphs', (_, graphIds: string[]): boolean => {
+    return organizationService.reorderGraphs(graphIds)
   })
 }

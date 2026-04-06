@@ -5,12 +5,31 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip, App } from 'antd'
-import { EditOutlined } from '@ant-design/icons'
+import { EditOutlined, HolderOutlined, CheckOutlined } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import type { SequenceEvent, SequenceEventType } from '@types/sequence-chart'
 import styles from './SequenceChartPreview.module.css'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 interface SequenceChartPreviewProps {
   chartId: string
@@ -32,6 +51,65 @@ const BUILT_IN_EVENT_TYPES: SequenceEventType[] = [
   { id: 'other', name: '其他', color: '#8c8c8c', isBuiltIn: true, order: 9 },
 ]
 
+// 可排序的事件行组件（左侧列表）
+interface SortableEventRowProps {
+  event: SequenceEvent
+  index: number
+  isEditMode: boolean
+  getEventColor: (event: SequenceEvent) => string
+}
+
+function SortableEventRow({
+  event,
+  index,
+  isEditMode,
+  getEventColor,
+}: SortableEventRowProps): JSX.Element {
+  const { token } = theme.useToken()
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: event.id, disabled: !isEditMode })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`${styles.eventRowWrapper}${isEditMode ? ` ${styles.editing}` : ''}`}
+    >
+      <div className={styles.eventRow}>
+        {/* 拖拽手柄 */}
+        {isEditMode && (
+          <div className={styles.dragHandle} {...attributes} {...listeners}>
+            <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+          </div>
+        )}
+        <span className={styles.colIndex} style={{ color: token.colorTextSecondary }}>
+          {index + 1}
+        </span>
+        <span className={styles.colTitle}>
+          <span
+            className={styles.eventColorDot}
+            style={{ backgroundColor: getEventColor(event) }}
+          />
+          <span className={styles.eventTitleText}>{event.title}</span>
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function SequenceChartPreview({
   chartId,
   onClose,
@@ -44,10 +122,29 @@ function SequenceChartPreview({
     currentChart,
     isLoading,
     loadChart,
+    moveEvent,
   } = useSequenceChartStore()
 
   const timelineBodyRef = useRef<HTMLDivElement>(null)
   const eventListBodyRef = useRef<HTMLDivElement>(null)
+
+  // 编辑模式状态
+  const [isEditMode, setIsEditMode] = useState(false)
+
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // 加载数据
   useEffect(() => {
@@ -85,15 +182,59 @@ function SequenceChartPreview({
     return { minCell: 1, maxCell: maxCell + 10 }
   }, [currentChart])
 
-  // 按起始位置排序的事件
+  // 按 order 排序的事件（用于拖拽排序）
   const sortedEvents = useMemo(() => {
     if (!currentChart?.events) return []
-    return [...currentChart.events].sort((a, b) => {
-      const aStart = a.timeInfo.cellStart || 1
-      const bStart = b.timeInfo.cellStart || 1
-      return aStart - bStart
-    })
+    return [...currentChart.events].sort((a, b) => a.order - b.order)
   }, [currentChart])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  // 拖拽结束
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent): Promise<void> => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedEvents.findIndex((e) => e.id === active.id)
+        const newIndex = sortedEvents.findIndex((e) => e.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // 创建新排序的事件数组
+          const newEvents = arrayMove(sortedEvents, oldIndex, newIndex).map((evt, index) => ({
+            ...evt,
+            order: index,
+          }))
+
+          // 调用 moveEvent 更新顺序
+          try {
+            // 使用第一个需要移动的事件来触发后端更新
+            const movedEvent = newEvents.find((e) => e.id === active.id)
+            if (movedEvent) {
+              await moveEvent(movedEvent.id, newIndex)
+            }
+          } catch (error) {
+            console.error('Failed to update events order:', error)
+            message.error('排序失败')
+          }
+        }
+      }
+
+      setActiveId(null)
+    },
+    [sortedEvents, moveEvent, message]
+  )
+
+  // 当前拖拽的事件
+  const activeEvent = activeId ? sortedEvents.find((e) => e.id === activeId) : null
+
+  // 切换编辑模式
+  const toggleEditMode = useCallback((): void => {
+    setIsEditMode((prev) => !prev)
+  }, [])
 
   // 同步滚动：左侧事件列表和右侧时间轴垂直滚动同步
   const handleTimelineScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -138,11 +279,29 @@ function SequenceChartPreview({
           <Title level={5} className={styles.title}>{currentChart.name}</Title>
         </div>
         <div className={styles.toolbarRight}>
+          {isEditMode && (
+            <Button icon={<CheckOutlined />} onClick={toggleEditMode}>
+              完成排序
+            </Button>
+          )}
+          {!isEditMode && (
+            <Button icon={<HolderOutlined />} onClick={toggleEditMode}>
+              排序
+            </Button>
+          )}
           <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
             编辑
           </Button>
         </div>
       </div>
+
+      {/* 编辑模式提示 */}
+      {isEditMode && (
+        <div className={styles.editModeHint}>
+          <HolderOutlined />
+          <Text>拖拽事件左侧的手柄调整顺序</Text>
+        </div>
+      )}
 
       {/* 主内容区 */}
       <div className={styles.main}>
@@ -157,24 +316,45 @@ function SequenceChartPreview({
             ref={eventListBodyRef}
             onScroll={handleEventListScroll}
           >
-            {sortedEvents.map((event, index) => (
-              <div key={event.id} className={styles.eventRow}>
-                <span className={styles.colIndex} style={{ color: token.colorTextSecondary }}>
-                  {index + 1}
-                </span>
-                <span className={styles.colTitle}>
-                  <span
-                    className={styles.eventColorDot}
-                    style={{ backgroundColor: getEventColor(event) }}
-                  />
-                  <span className={styles.eventTitleText}>{event.title}</span>
-                </span>
-              </div>
-            ))}
-            {sortedEvents.length === 0 && (
+            {sortedEvents.length === 0 ? (
               <div className={styles.emptyList}>
                 暂无事件
               </div>
+            ) : (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedEvents.map((e) => e.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sortedEvents.map((event, index) => (
+                    <SortableEventRow
+                      key={event.id}
+                      event={event}
+                      index={index}
+                      isEditMode={isEditMode}
+                      getEventColor={getEventColor}
+                    />
+                  ))}
+                </SortableContext>
+
+                {/* 拖拽覆盖层 */}
+                <DragOverlay>
+                  {activeEvent ? (
+                    <div className={styles.dragOverlay}>
+                      <span
+                        className={styles.eventColorDot}
+                        style={{ backgroundColor: getEventColor(activeEvent) }}
+                      />
+                      <span className={styles.eventTitleText}>{activeEvent.title}</span>
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </div>
         </div>

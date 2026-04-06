@@ -1,0 +1,43 @@
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2, 8px);
+}
+
+.discardBtn,
+.cancelBtn,
+.saveBtn {
+  padding: 4px 15px;
+  font-size: 14px;
+  border-radius: var(--radius-base, 4px);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-color, #d9d9d9);
+  background: var(--bg-component, #ffffff);
+}
+
+.discardBtn:hover {
+  color: var(--color-primary, #1890ff);
+  border-color: var(--color-primary, #1890ff);
+}
+
+.cancelBtn:hover {
+  color: var(--color-primary, #1890ff);
+  border-color: var(--color-primary, #1890ff);
+}
+
+.saveBtn {
+  background: var(--color-primary, #1890ff);
+  border-color: var(--color-primary, #1890ff);
+  color: #ffffff;
+}
+
+.saveBtn:hover {
+  background: var(--color-primary-hover, #40a9ff);
+  border-color: var(--color-primary-hover, #40a9ff);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -179,3 +179,21 @@
   background: var(--ant-color-bg-text-hover);
   border-radius: 6px;
 }
+
+.dragHandle {
+  cursor: grab;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ant-color-text-secondary);
+  transition: color 0.2s;
+}
+
+.dragHandle:hover {
+  color: var(--ant-color-text);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}

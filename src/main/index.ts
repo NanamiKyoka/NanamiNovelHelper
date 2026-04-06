@@ -12,10 +12,16 @@ import { registerImageHandlers } from './ipc/image-handler'
 import { registerTimelineHandlers } from './ipc/timeline-handler'
 import { registerSequenceChartHandlers } from './ipc/sequence-chart-handler'
 import { registerOrganizationHandlers } from './ipc/organization-handler'
+import { registerMapHandlers } from './ipc/map-handler'
 import { registerTerminalHandlers } from './ipc/terminal-handler'
 import { registerGitHandlers } from './ipc/git-handler'
+import { registerAiAssistantHandlers } from './ipc/ai-assistant-handler'
+import { registerDynamicSkillHandlers } from './ipc/dynamic-skill-handler'
+import { registerSearchHandlers } from './ipc/search-handler'
 import { terminalService } from './services/terminal'
+import { dynamicSkillService } from './services/dynamicSkill'
 import { fileService } from './services/file'
+import { aiAssistantService } from './services/aiAssistant'
 
 let mainWindow: BrowserWindow | null = null
 let terminalWindow: BrowserWindow | null = null
@@ -226,25 +232,10 @@ app.whenReady().then(() => {
   protocol.handle('local', (request) => {
     // URL 格式：local://file/E%3A/path/to/file.png
     // 其中 E%3A 是 URL 编码后的盘符（避免浏览器把盘符当作主机名）
-    let url = request.url
+    const url = request.url
 
-    // 去掉 local:// 前缀
-    let filePath = url.slice('local://'.length)
-
-    // 新格式：local://file/E%3A/path -> E:/path
-    if (filePath.startsWith('file/')) {
-      filePath = filePath.slice(5) // 去掉 'file/'
-    }
-    // 兼容旧格式：local:///E:/path 或 local://E:/path
-    else if (filePath.startsWith('/')) {
-      // 处理三个斜杠的情况：local:///E:/path -> E:/path
-      if (filePath.length > 2 && filePath.charAt(2) === ':') {
-        filePath = filePath.slice(1)
-      }
-    }
-
-    // 解码 URL 编码（处理 E%3A -> E:）
-    filePath = decodeURIComponent(filePath)
+    // 去掉 local://file/ 前缀
+    const filePath = decodeURIComponent(url.slice('local://file/'.length))
 
     try {
       const data = fs.readFileSync(filePath)
@@ -279,8 +270,16 @@ app.whenReady().then(() => {
   registerTimelineHandlers()
   registerSequenceChartHandlers()
   registerOrganizationHandlers()
+  registerMapHandlers()
   registerTerminalHandlers()
   registerGitHandlers()
+  registerAiAssistantHandlers()
+  registerDynamicSkillHandlers()
+  registerSearchHandlers()
+
+  // 初始化服务
+  aiAssistantService.initGlobal()
+  dynamicSkillService.initialize()
 
   createWindow()
 

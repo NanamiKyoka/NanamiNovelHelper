@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Table,
   Button,
@@ -17,8 +17,26 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  FullscreenOutlined
+  FullscreenOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useSensitiveStore } from '../../stores/sensitiveStore'
 import type { SensitiveWord } from '../../types/sensitive'
 import { SENSITIVE_CATEGORIES, SEVERITY_LEVELS } from '../../types/sensitive'
@@ -29,6 +47,54 @@ interface SensitiveWordPanelProps {
   readOnly?: boolean
 }
 
+// 可排序的表格行组件
+interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  'data-row-key': string
+}
+
+function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id })
+
+  const style: React.CSSProperties = {
+    ...props.style,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  }
+
+  return (
+    <tr
+      {...props}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+    >
+      {React.Children.map(props.children, (child) => {
+        if (React.isValidElement(child) && (child as React.ReactElement<{ className?: string }>).props?.className?.includes('drag-handle-cell')) {
+          return React.cloneElement(child as React.ReactElement<object>, {
+            children: (
+              <div
+                className={styles.dragHandle}
+                {...listeners}
+              >
+                <HolderOutlined />
+              </div>
+            )
+          })
+        }
+        return child
+      })}
+    </tr>
+  )
+}
+
 function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.Element {
   const {
     words,
@@ -36,6 +102,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
     addWord,
     updateWord,
     deleteWord,
+    reorderWords,
     isLoaded
   } = useSensitiveStore()
   
@@ -44,6 +111,23 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
+
+  // 按 order 排序的敏感词列表
+  const sortedWords = useMemo(() => {
+    return [...words].sort((a, b) => a.order - b.order)
+  }, [words])
 
   // 加载数据
   useEffect(() => {
@@ -105,6 +189,25 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
     message.success('删除成功')
   }
 
+  // 拖拽结束
+  const handleDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = sortedWords.findIndex(w => w.id === active.id)
+      const newIndex = sortedWords.findIndex(w => w.id === over.id)
+      
+      const newWords = arrayMove(sortedWords, oldIndex, newIndex)
+      const newWordIds = newWords.map(w => w.id)
+      
+      // 调用 reorderWords 更新顺序
+      reorderWords(newWordIds).catch((error) => {
+        console.error('Failed to reorder words:', error)
+        message.error('排序失败')
+      })
+    }
+  }
+
   // 获取严重程度标签
   const getSeverityTag = (severity: string): JSX.Element => {
     const level = SEVERITY_LEVELS.find(l => l.value === severity)
@@ -117,6 +220,17 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
 
   // 表格列定义
   const columns = [
+    {
+      title: '',
+      key: 'drag',
+      width: 40,
+      className: 'drag-handle-cell',
+      render: () => (
+        <div className={styles.dragHandle}>
+          <HolderOutlined />
+        </div>
+      )
+    },
     {
       title: '词汇',
       dataIndex: 'name',
@@ -213,14 +327,30 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
 
       {/* 表格 */}
       <div className={styles.tableContainer}>
-        <Table
-          dataSource={words}
-          columns={columns}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 20 }}
-          locale={{ emptyText: <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
-        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortedWords.map(w => w.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <Table
+              dataSource={sortedWords}
+              columns={columns}
+              rowKey="id"
+              size="small"
+              pagination={{ pageSize: 20 }}
+              locale={{ emptyText: <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+              components={{
+                body: {
+                  row: SortableRow
+                }
+              }}
+            />
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* 编辑抽屉 */}

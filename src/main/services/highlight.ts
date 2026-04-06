@@ -13,8 +13,10 @@ import {
 } from '../types/highlight'
 import { PROJECT_META_DIR } from '../types/project'
 import { projectService } from './project'
+import { createLogger } from '../utils/logger'
 
 class HighlightService {
+  private logger = createLogger('HighlightService')
   private config: HighlightConfig | null = null
   private configPath: string | null = null
 
@@ -64,7 +66,7 @@ class HighlightService {
       
       return this.config
     } catch (error) {
-      console.error('Failed to load highlight config:', error)
+      this.logger.error('Failed to load highlight config', error)
       this.config = DEFAULT_HIGHLIGHT_CONFIG
       return this.config
     }
@@ -129,7 +131,7 @@ class HighlightService {
       writeFileSync(configPath, JSON5.stringify(newConfig, null, 2), 'utf-8')
       this.config = newConfig
     } catch (error) {
-      console.error('Failed to save highlight config:', error)
+      this.logger.error('Failed to save highlight config', error)
       throw error
     }
   }

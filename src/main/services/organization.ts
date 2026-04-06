@@ -3,9 +3,6 @@
  * 负责组织架构图的 CRUD 操作和树形节点管理
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import JSON5 from 'json5'
 import {
   OrganizationGraph,
@@ -17,53 +14,63 @@ import {
   UpdateOrganizationNodeOptions,
   ORGANIZATION_NODE_COLORS
 } from '../types/organization'
-import { PROJECT_META_DIR } from '../types/project'
+import { BaseService } from './base'
 
-// 数据目录名
-const DATA_DIR = 'data'
-const ORGANIZATIONS_DIR = 'organizations'
-
-class OrganizationService {
-  private projectPath: string | null = null
-  private organizationsDir: string | null = null
-
-  /**
-   * 初始化服务
-   */
-  init(projectPath: string): void {
-    this.projectPath = projectPath
-    this.organizationsDir = path.join(
-      projectPath,
-      PROJECT_META_DIR,
-      DATA_DIR,
-      ORGANIZATIONS_DIR
-    )
-    this.ensureDirectories()
+/**
+ * 组织架构图服务
+ * 继承 BaseService 实现通用 CRUD 操作
+ */
+class OrganizationService extends BaseService<OrganizationGraph, OrganizationGraphMeta> {
+  constructor() {
+    super({ dataSubDir: 'organizations' })
   }
 
-  /**
-   * 确保目录存在
-   */
-  private ensureDirectories(): void {
-    if (!this.projectPath || !this.organizationsDir) return
+  // ============================================
+  // BaseService 抽象方法实现
+  // ============================================
 
-    if (!fs.existsSync(this.organizationsDir)) {
-      fs.mkdirSync(this.organizationsDir, { recursive: true })
+  protected parseEntity(content: string): OrganizationGraph | null {
+    try {
+      return JSON5.parse(content) as OrganizationGraph
+    } catch {
+      return null
     }
   }
 
-  /**
-   * 获取组织架构图文件路径
-   */
-  private getGraphPath(graphId: string): string {
-    return path.join(this.organizationsDir!, `${graphId}.json5`)
+  protected serializeEntity(item: OrganizationGraph): string {
+    return JSON5.stringify(item, null, 2)
   }
 
-  /**
-   * 获取缩略图路径
-   */
-  private getThumbnailPath(graphId: string): string {
-    return path.join(this.organizationsDir!, `${graphId}.png`)
+  protected toMetadata(item: OrganizationGraph): OrganizationGraphMeta {
+    // 获取缩略图完整路径
+    let thumbnailPath: string | undefined = undefined
+    if (item.thumbnail) {
+      const fullPath = this.getThumbnailFullPath(item.id)
+      if (fullPath) {
+        thumbnailPath = fullPath
+      }
+    }
+
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      thumbnail: thumbnailPath,
+      linkedVocabularyTypes: item.linkedVocabularyTypes,
+      nodeStyle: item.nodeStyle || 'simple',
+      nodeCount: item.nodes.length,
+      viewState: item.viewState,
+      order: item.order ?? 0,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }
+  }
+
+  protected sortItems(items: OrganizationGraphMeta[]): OrganizationGraphMeta[] {
+    // 按更新时间排序
+    return items.sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    )
   }
 
   // ============================================
@@ -71,81 +78,17 @@ class OrganizationService {
   // ============================================
 
   /**
-   * 获取所有组织架构图列表
-   */
-  getGraphList(): OrganizationGraphMeta[] {
-    if (!this.organizationsDir || !fs.existsSync(this.organizationsDir)) {
-      return []
-    }
-
-    const files = fs.readdirSync(this.organizationsDir)
-    const graphs: OrganizationGraphMeta[] = []
-
-    for (const file of files) {
-      if (file.endsWith('.json5')) {
-        try {
-          const filePath = path.join(this.organizationsDir, file)
-          const content = fs.readFileSync(filePath, 'utf-8')
-          const graph = JSON5.parse(content) as OrganizationGraph
-
-          // 获取缩略图完整路径
-          let thumbnailPath: string | undefined = undefined
-          if (graph.thumbnail) {
-            const fullPath = this.getThumbnailPath(graph.id)
-            if (fs.existsSync(fullPath)) {
-              thumbnailPath = fullPath
-            }
-          }
-
-          graphs.push({
-            id: graph.id,
-            name: graph.name,
-            description: graph.description,
-            thumbnail: thumbnailPath,
-            linkedVocabularyTypes: graph.linkedVocabularyTypes,
-            nodeStyle: graph.nodeStyle || 'simple',
-            nodeCount: graph.nodes.length,
-            viewState: graph.viewState,
-            createdAt: graph.createdAt,
-            updatedAt: graph.updatedAt
-          })
-        } catch (error) {
-          console.error(`Failed to load organization graph ${file}:`, error)
-        }
-      }
-    }
-
-    // 按更新时间排序
-    return graphs.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
-  }
-
-  /**
-   * 获取单个组织架构图详情
-   */
-  getGraph(graphId: string): OrganizationGraph | null {
-    const graphPath = this.getGraphPath(graphId)
-
-    if (!fs.existsSync(graphPath)) {
-      return null
-    }
-
-    try {
-      const content = fs.readFileSync(graphPath, 'utf-8')
-      return JSON5.parse(content) as OrganizationGraph
-    } catch (error) {
-      console.error(`Failed to load organization graph ${graphId}:`, error)
-      return null
-    }
-  }
-
-  /**
    * 创建组织架构图
    */
   createGraph(options: CreateOrganizationGraphOptions): OrganizationGraph {
-    const now = new Date().toISOString()
-    const graphId = uuidv4()
+    const now = this.getTimestamp()
+    const graphId = this.generateId()
+
+    // 获取当前最大 order
+    const existingGraphs = this.getList()
+    const maxOrder = existingGraphs.length > 0
+      ? Math.max(...existingGraphs.map(g => g.order ?? 0))
+      : -1
 
     const graph: OrganizationGraph = {
       id: graphId,
@@ -156,6 +99,7 @@ class OrganizationService {
       nodeStyle: options.nodeStyle || 'simple',
       nodes: [],
       nodeCount: 0,
+      order: maxOrder + 1,
       createdAt: now,
       updatedAt: now
     }
@@ -163,7 +107,7 @@ class OrganizationService {
     // 如果需要创建根节点
     if (options.createRootNode !== false) {
       const rootNode: OrganizationNode = {
-        id: uuidv4(),
+        id: this.generateId(),
         name: options.rootNodeName || graph.name,
         color: ORGANIZATION_NODE_COLORS[0],
         order: 0,
@@ -174,7 +118,7 @@ class OrganizationService {
       graph.nodeCount = 1
     }
 
-    this.saveGraph(graph)
+    this.save(graph)
     return graph
   }
 
@@ -182,10 +126,10 @@ class OrganizationService {
    * 更新组织架构图
    */
   updateGraph(graphId: string, updates: UpdateOrganizationGraphOptions): OrganizationGraph | null {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     const updatedGraph: OrganizationGraph = {
       ...graph,
@@ -200,39 +144,8 @@ class OrganizationService {
       updatedGraph.nodeCount = updates.nodes.length
     }
 
-    this.saveGraph(updatedGraph)
+    this.save(updatedGraph)
     return updatedGraph
-  }
-
-  /**
-   * 删除组织架构图
-   */
-  deleteGraph(graphId: string): boolean {
-    const graphPath = this.getGraphPath(graphId)
-    const thumbnailPath = this.getThumbnailPath(graphId)
-
-    try {
-      if (fs.existsSync(graphPath)) {
-        fs.unlinkSync(graphPath)
-      }
-
-      if (fs.existsSync(thumbnailPath)) {
-        fs.unlinkSync(thumbnailPath)
-      }
-
-      return true
-    } catch (error) {
-      console.error(`Failed to delete organization graph ${graphId}:`, error)
-      return false
-    }
-  }
-
-  /**
-   * 保存组织架构图
-   */
-  private saveGraph(graph: OrganizationGraph): void {
-    const graphPath = this.getGraphPath(graph.id)
-    fs.writeFileSync(graphPath, JSON5.stringify(graph, null, 2), 'utf-8')
   }
 
   // ============================================
@@ -243,10 +156,10 @@ class OrganizationService {
    * 添加节点
    */
   addNode(graphId: string, options: CreateOrganizationNodeOptions): OrganizationNode | null {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 获取同级节点的最大排序值
     const siblings = graph.nodes.filter(n => n.parentId === options.parentId)
@@ -255,7 +168,7 @@ class OrganizationService {
       : -1
 
     const newNode: OrganizationNode = {
-      id: uuidv4(),
+      id: this.generateId(),
       name: options.name.trim(),
       parentId: options.parentId,
       description: options.description,
@@ -272,7 +185,7 @@ class OrganizationService {
     graph.nodeCount = graph.nodes.length
     graph.updatedAt = now
 
-    this.saveGraph(graph)
+    this.save(graph)
     return newNode
   }
 
@@ -280,13 +193,13 @@ class OrganizationService {
    * 更新节点
    */
   updateNode(graphId: string, nodeId: string, updates: UpdateOrganizationNodeOptions): OrganizationNode | null {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return null
 
     const nodeIndex = graph.nodes.findIndex(n => n.id === nodeId)
     if (nodeIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     graph.nodes[nodeIndex] = {
       ...graph.nodes[nodeIndex],
       ...updates,
@@ -296,7 +209,7 @@ class OrganizationService {
     }
 
     graph.updatedAt = now
-    this.saveGraph(graph)
+    this.save(graph)
     return graph.nodes[nodeIndex]
   }
 
@@ -304,13 +217,13 @@ class OrganizationService {
    * 删除节点（及其所有子节点）
    */
   deleteNode(graphId: string, nodeId: string): boolean {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return false
 
     const nodeIndex = graph.nodes.findIndex(n => n.id === nodeId)
     if (nodeIndex === -1) return false
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 递归获取所有子孙节点
     const getDescendants = (parentId: string): string[] => {
@@ -330,7 +243,7 @@ class OrganizationService {
     graph.nodeCount = graph.nodes.length
     graph.updatedAt = now
 
-    this.saveGraph(graph)
+    this.save(graph)
     return true
   }
 
@@ -338,7 +251,7 @@ class OrganizationService {
    * 移动节点（更改父节点）
    */
   moveNode(graphId: string, nodeId: string, newParentId: string | undefined): OrganizationNode | null {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return null
 
     const nodeIndex = graph.nodes.findIndex(n => n.id === nodeId)
@@ -361,7 +274,7 @@ class OrganizationService {
       }
     }
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 获取新父节点下的最大排序值
     const siblings = graph.nodes.filter(n => n.parentId === newParentId && n.id !== nodeId)
@@ -377,7 +290,7 @@ class OrganizationService {
     }
 
     graph.updatedAt = now
-    this.saveGraph(graph)
+    this.save(graph)
     return graph.nodes[nodeIndex]
   }
 
@@ -385,7 +298,7 @@ class OrganizationService {
    * 获取直接子节点
    */
   getChildren(graphId: string, parentId: string | undefined): OrganizationNode[] {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return []
 
     return graph.nodes
@@ -397,7 +310,7 @@ class OrganizationService {
    * 获取所有子孙节点
    */
   getDescendants(graphId: string, nodeId: string): OrganizationNode[] {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return []
 
     const getDescendantsRecursive = (parentId: string): OrganizationNode[] => {
@@ -416,7 +329,7 @@ class OrganizationService {
    * 获取所有祖先节点
    */
   getAncestors(graphId: string, nodeId: string): OrganizationNode[] {
-    const graph = this.getGraph(graphId)
+    const graph = this.get(graphId)
     if (!graph) return []
 
     const result: OrganizationNode[] = []
@@ -436,45 +349,22 @@ class OrganizationService {
   }
 
   // ============================================
-  // 缩略图
+  // 缩略图（扩展基类方法）
   // ============================================
 
   /**
-   * 保存缩略图
+   * 保存缩略图（扩展基类方法以更新元数据）
    */
-  saveThumbnail(graphId: string, dataUrl: string): string | null {
-    try {
-      const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/)
-      if (!matches) return null
-
-      const base64Data = matches[2]
-      const buffer = Buffer.from(base64Data, 'base64')
-
-      const thumbnailPath = this.getThumbnailPath(graphId)
-      fs.writeFileSync(thumbnailPath, buffer)
-
-      const graph = this.getGraph(graphId)
+  override saveThumbnail(graphId: string, dataUrl: string): string | null {
+    const result = super.saveThumbnail(graphId, dataUrl)
+    if (result) {
+      const graph = this.get(graphId)
       if (graph) {
         graph.thumbnail = `${graphId}.png`
-        this.saveGraph(graph)
+        this.save(graph)
       }
-
-      return thumbnailPath
-    } catch (error) {
-      console.error(`Failed to save thumbnail for ${graphId}:`, error)
-      return null
     }
-  }
-
-  /**
-   * 获取缩略图路径
-   */
-  getThumbnailPath_(graphId: string): string | null {
-    const thumbnailPath = this.getThumbnailPath(graphId)
-    if (fs.existsSync(thumbnailPath)) {
-      return thumbnailPath
-    }
-    return null
+    return result
   }
 
   // ============================================
@@ -482,38 +372,56 @@ class OrganizationService {
   // ============================================
 
   /**
-   * 导出组织架构图为 JSON5
+   * 导入组织架构图（覆盖基类方法）
    */
-  exportGraph(graphId: string): string | null {
-    const graph = this.getGraph(graphId)
-    if (!graph) return null
-    return JSON5.stringify(graph, null, 2)
-  }
-
-  /**
-   * 导入组织架构图
-   */
-  importGraph(jsonContent: string): OrganizationGraph | null {
+  override importItem(jsonContent: string): OrganizationGraph | null {
     try {
       const graph = JSON5.parse(jsonContent) as OrganizationGraph
 
-      const newId = uuidv4()
-      const now = new Date().toISOString()
+      const newId = this.generateId()
+      const now = this.getTimestamp()
+
+      // 获取当前最大 order
+      const existingGraphs = this.getList()
+      const maxOrder = existingGraphs.length > 0
+        ? Math.max(...existingGraphs.map(g => g.order ?? 0))
+        : -1
 
       const importedGraph: OrganizationGraph = {
         ...graph,
         id: newId,
         name: `${graph.name} (导入)`,
+        order: maxOrder + 1,
         createdAt: now,
         updatedAt: now,
         thumbnail: undefined
       }
 
-      this.saveGraph(importedGraph)
+      this.save(importedGraph)
       return importedGraph
     } catch (error) {
-      console.error('Failed to import organization graph:', error)
+      this.logger.error('Failed to import organization graph', error)
       return null
+    }
+  }
+
+  /**
+   * 重新排序组织架构图列表
+   */
+  reorderGraphs(graphIds: string[]): boolean {
+    try {
+      for (let i = 0; i < graphIds.length; i++) {
+        const graph = this.get(graphIds[i])
+        if (graph) {
+          graph.order = i
+          graph.updatedAt = this.getTimestamp()
+          this.save(graph)
+        }
+      }
+      return true
+    } catch (error) {
+      this.logger.error('Failed to reorder organization graphs', error)
+      return false
     }
   }
 }

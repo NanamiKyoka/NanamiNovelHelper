@@ -20,6 +20,7 @@ import {
 } from 'fs'
 import { join, relative, dirname, basename, extname, resolve } from 'path'
 import { FileNode } from '../types/file'
+import { createLogger } from '../utils/logger'
 
 /**
  * 排序选项
@@ -34,6 +35,7 @@ export interface SortOptions {
  */
 class FileService {
   private currentProjectPath: string | null = null
+  private logger = createLogger('FileService')
 
   /**
    * 初始化文件服务
@@ -177,7 +179,7 @@ class FileService {
         return
       } catch {
         // 如果回收站失败，继续使用永久删除
-        console.warn('移入回收站失败，使用永久删除')
+        this.logger.warn('移入回收站失败，使用永久删除')
       }
     }
 

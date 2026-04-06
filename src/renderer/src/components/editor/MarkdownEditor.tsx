@@ -40,6 +40,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const tabs = useEditorStore((state) => state.tabs)
   const updateCursorPosition = useEditorStore((state) => state.updateCursorPosition)
   const setSelectedText = useUIStore((state) => state.setSelectedText)
+  const loadFileContent = useEditorStore((state) => state.loadFileContent)
   
   // Local state
   const [isComposing, setIsComposing] = useState(false)
@@ -289,6 +290,126 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     editorElement.addEventListener('mouseleave', handleMouseLeave)
     return () => editorElement.removeEventListener('mouseleave', handleMouseLeave)
   }, [editor, hoverCard])
+
+  // 处理跳转到指定行/列的请求
+  const goToPositionRequest = useEditorStore((state) => state.goToPositionRequest)
+  const clearGoToPositionRequest = useEditorStore((state) => state.clearGoToPositionRequest)
+  
+  useEffect(() => {
+    if (!editor || !goToPositionRequest) return
+
+    const { filePath, matchText } = goToPositionRequest
+
+    // 统一路径分隔符进行比较（使用正斜杠）
+    const normalizedRequestPath = filePath.replace(/\\/g, '/')
+    const normalizedCurrentPath = currentFilePath.replace(/\\/g, '/')
+
+    console.log('[MarkdownEditor] goToPositionRequest:', {
+      filePath,
+      matchText,
+      normalizedRequestPath,
+      normalizedCurrentPath,
+      isMatch: normalizedRequestPath === normalizedCurrentPath
+    })
+
+    // 只处理当前文件的跳转请求
+    if (normalizedRequestPath !== normalizedCurrentPath) {
+      console.log('[MarkdownEditor] 路径不匹配，跳过')
+      return
+    }
+
+    // 使用 ProseMirror 的方式在文档中搜索匹配文本
+    const doc = editor.state.doc
+    let foundFrom = -1
+    let foundTo = -1
+    
+    // 遍历文档节点找到匹配文本
+    doc.descendants((node, pos) => {
+      if (foundFrom !== -1) return false // 已经找到，停止遍历
+      
+      if (node.isText && node.text) {
+        const text = node.text
+        const index = text.indexOf(matchText)
+        
+        if (index !== -1) {
+          // pos 是节点在文档中的起始位置
+          // 加上 index 得到匹配文本的起始位置
+          foundFrom = pos + index
+          foundTo = pos + index + matchText.length
+          console.log('[MarkdownEditor] 找到匹配:', {
+            nodeText: text.substring(0, 30),
+            nodePos: pos,
+            matchIndex: index,
+            foundFrom,
+            foundTo
+          })
+          return false
+        }
+      }
+      return true
+    })
+    
+    console.log('[MarkdownEditor] 搜索结果:', { foundFrom, foundTo })
+    
+    if (foundFrom !== -1 && foundTo !== -1) {
+      console.log('[MarkdownEditor] 设置选区:', { from: foundFrom, to: foundTo })
+      
+      // 设置光标位置并选中匹配文本
+      editor.chain()
+        .focus()
+        .setTextSelection({ from: foundFrom, to: foundTo })
+        .run()
+      
+      console.log('[MarkdownEditor] 已设置光标位置')
+      
+      // 延迟滚动，确保 DOM 已更新
+      requestAnimationFrame(() => {
+        const editorDom = editor.view.dom
+        // 使用 CSS Modules 导出的类名查找滚动容器
+        const scrollContainer = editorDom.closest(`.${styles.editorContainer}`) as HTMLElement
+        
+        if (scrollContainer) {
+          const selection = window.getSelection()
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0)
+            const rangeRect = range.getBoundingClientRect()
+            const containerRect = scrollContainer.getBoundingClientRect()
+            
+            const offsetInContainer = rangeRect.top - containerRect.top
+            const targetScrollTop = scrollContainer.scrollTop + offsetInContainer - containerRect.height / 3
+            
+            scrollContainer.scrollTo({
+              top: Math.max(0, targetScrollTop),
+              behavior: 'smooth'
+            })
+          }
+        }
+      })
+    } else {
+      console.log('[MarkdownEditor] 未找到匹配文本')
+    }
+
+    // 清除请求
+    clearGoToPositionRequest()
+  }, [editor, goToPositionRequest, currentFilePath, clearGoToPositionRequest])
+
+  // 处理外部刷新请求
+  const externalRefreshRequest = useEditorStore((state) => state.externalRefreshRequest)
+  const clearExternalRefreshRequest = useEditorStore((state) => state.clearExternalRefreshRequest)
+  
+  useEffect(() => {
+    if (!editor || !externalRefreshRequest) return
+
+    // 检查是否是当前打开的文件
+    if (externalRefreshRequest === currentFilePathRef.current) {
+      loadFileContent(externalRefreshRequest).then(content => {
+        restoreEditorContent(editor, content)
+        const textContent = editor.getText()
+        useEditorStore.getState().updateWordCount(textContent)
+      })
+    }
+    clearExternalRefreshRequest()
+  }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest])
 
   if (!editor) {
     return <div className={styles.loading}>加载编辑器...</div>

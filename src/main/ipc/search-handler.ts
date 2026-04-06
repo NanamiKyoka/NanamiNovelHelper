@@ -1,0 +1,37 @@
+/**
+ * 搜索功能 IPC 处理器
+ */
+
+import { ipcMain } from 'electron'
+import { searchService, SearchOptions, SearchResult } from '../services/search'
+
+/**
+ * 注册搜索相关的 IPC 处理器
+ */
+export function registerSearchHandlers(): void {
+  // 执行搜索
+  ipcMain.handle('search:content', async (_event, options: SearchOptions): Promise<SearchResult> => {
+    return await searchService.search(options)
+  })
+
+  // 替换内容
+  ipcMain.handle(
+    'search:replace',
+    async (
+      _event,
+      filePath: string,
+      searchQuery: string,
+      replaceText: string,
+      options: {
+        caseSensitive?: boolean
+        wholeWord?: boolean
+        useRegex?: boolean
+        replaceAll?: boolean
+        line?: number
+        column?: number
+      }
+    ) => {
+      return await searchService.replace(filePath, searchQuery, replaceText, options)
+    }
+  )
+}

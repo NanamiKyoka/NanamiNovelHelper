@@ -3,6 +3,8 @@
  * 主进程和渲染进程共用
  */
 
+import { THEME_COLORS, CHART_PALETTE } from './constants/colors'
+
 // ============================================
 // 字段类型定义
 // ============================================
@@ -98,6 +100,7 @@ export interface VocabularyEntry {
   tags: string[] // 标签
   description?: string // 备注/描述
   linkedFilePath?: string // 关联的 Markdown 文件路径（相对于项目根目录）
+  order: number // 排序序号
   createdAt: string
   updatedAt: string
 }
@@ -213,7 +216,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'character',
       name: '角色',
       icon: 'TeamOutlined',
-      color: '#1890ff',
+      color: THEME_COLORS.primary,
       fields: CHARACTER_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -225,7 +228,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'location',
       name: '地点',
       icon: 'EnvironmentOutlined',
-      color: '#52c41a',
+      color: THEME_COLORS.success,
       fields: LOCATION_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -237,7 +240,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'organization',
       name: '组织',
       icon: 'TeamOutlined',
-      color: '#722ed1',
+      color: THEME_COLORS.purple,
       fields: ORGANIZATION_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -249,7 +252,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'item',
       name: '道具',
       icon: 'GiftOutlined',
-      color: '#fa8c16',
+      color: THEME_COLORS.warning,
       fields: ITEM_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -261,7 +264,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'magic',
       name: '魔法/技能',
       icon: 'ThunderboltOutlined',
-      color: '#eb2f96',
+      color: THEME_COLORS.magenta,
       fields: MAGIC_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -273,7 +276,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       id: 'event',
       name: '事件',
       icon: 'CalendarOutlined',
-      color: '#13c2c2',
+      color: THEME_COLORS.info,
       fields: EVENT_FIELDS,
       tableConfig: [],
       isBuiltIn: true,
@@ -285,9 +288,12 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
 }
 
 /**
- * 默认颜色
+ * 默认颜色（使用图表调色板）
  */
-export const DEFAULT_COLORS = [
-  '#f5222d', '#fa8c16', '#faad14', '#52c41a', '#13c2c2',
-  '#1890ff', '#722ed1', '#eb2f96', '#2f54eb', '#595959'
-]
+export const VOCABULARY_DEFAULT_COLORS = CHART_PALETTE
+
+
+/**
+ * @deprecated 使用 VOCABULARY_DEFAULT_COLORS 代替
+ */
+export const DEFAULT_COLORS = VOCABULARY_DEFAULT_COLORS

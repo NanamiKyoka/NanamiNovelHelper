@@ -1,22 +1,176 @@
 /**
- * 组织架构图预览组件（只读模式）
- * 基于 AntV G6 v5 实现
+ * 组织架构图预览组件
+ * 基于 AntV G6 v5 实现 Canvas 视图
+ * 支持树形列表拖拽排序（编辑模式）
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { Button, Empty, Spin, Typography, theme, Tooltip } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined, TeamOutlined } from '@ant-design/icons'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { Button, Empty, Spin, Typography, theme, Tooltip, App } from 'antd'
+import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined, TeamOutlined, HolderOutlined, CheckOutlined, UnorderedListOutlined, AppstoreOutlined } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
 import type { OrganizationNode, OrganizationNodeStyle } from '@types/organization'
 import styles from './OrganizationGraphPreview.module.css'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 interface OrganizationGraphPreviewProps {
   graphId: string
   onClose: () => void
   onEnterEditMode: () => void
+}
+
+// 视图模式类型
+type ViewMode = 'canvas' | 'list'
+
+// 可排序的树节点组件
+interface SortableTreeNodeProps {
+  node: OrganizationNode
+  depth: number
+  isEditMode: boolean
+  children: OrganizationNode[]
+  allNodes: OrganizationNode[]
+}
+
+function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: SortableTreeNodeProps): JSX.Element {
+  const { token } = theme.useToken()
+  const [expanded, setExpanded] = useState(true)
+  const hasChildren = children.length > 0
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  // 缩进样式
+  const indentStyle = {
+    paddingLeft: depth * 24,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className={styles.treeNodeRow}
+        style={{
+          ...indentStyle,
+          backgroundColor: isDragging ? token.colorBgTextHover : 'transparent',
+        }}
+      >
+        {/* 展开/折叠按钮 */}
+        {hasChildren ? (
+          <span
+            className={styles.expandBtn}
+            onClick={() => setExpanded(!expanded)}
+            style={{ marginRight: 4 }}
+          >
+            {expanded ? '▼' : '▶'}
+          </span>
+        ) : (
+          <span style={{ width: 16, marginRight: 4 }} />
+        )}
+
+        {/* 拖拽手柄 */}
+        {isEditMode && (
+          <div
+            className={styles.dragHandle}
+            {...attributes}
+            {...listeners}
+          >
+            <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+          </div>
+        )}
+
+        {/* 节点颜色标记 */}
+        <div
+          className={styles.nodeColor}
+          style={{ backgroundColor: node.color || token.colorPrimary }}
+        />
+
+        {/* 节点名称 */}
+        <span className={styles.nodeName}>
+          {node.name}
+        </span>
+
+        {/* 节点描述 */}
+        {node.description && (
+          <Text type="secondary" className={styles.nodeDesc}>
+            {node.description}
+          </Text>
+        )}
+      </div>
+
+      {/* 子节点 */}
+      {expanded && hasChildren && (
+        <div className={styles.treeNodeChildren}>
+          {children
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((child) => {
+              const grandChildren = allNodes.filter(n => n.parentId === child.id)
+              return (
+                <SortableTreeNode
+                  key={child.id}
+                  node={child}
+                  depth={depth + 1}
+                  isEditMode={isEditMode}
+                  children={grandChildren}
+                  allNodes={allNodes}
+                />
+              )
+            })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// 拖拽覆盖层节点
+interface DragOverlayNodeProps {
+  node: OrganizationNode
+}
+
+function DragOverlayNode({ node }: DragOverlayNodeProps): JSX.Element {
+  const { token } = theme.useToken()
+
+  return (
+    <div className={styles.dragOverlayNode}>
+      <div className={styles.dragHandle}>
+        <HolderOutlined style={{ color: '#999' }} />
+      </div>
+      <div
+        className={styles.nodeColor}
+        style={{ backgroundColor: node.color || token.colorPrimary }}
+      />
+      <span className={styles.nodeName}>{node.name}</span>
+    </div>
+  )
 }
 
 // 计算树形布局位置
@@ -28,7 +182,7 @@ function calculateTreePositions(
   vGap: number
 ): Map<string, { x: number; y: number }> {
   const positions = new Map<string, { x: number; y: number }>()
-  
+
   // 构建父子关系映射
   const childrenMap = new Map<string | undefined, OrganizationNode[]>()
   nodes.forEach(node => {
@@ -38,12 +192,12 @@ function calculateTreePositions(
     }
     childrenMap.get(parentId)!.push(node)
   })
-  
+
   // 按 order 排序
   childrenMap.forEach(children => {
     children.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   })
-  
+
   // 计算每个节点的子树宽度
   const getSubtreeWidth = (nodeId: string | undefined): number => {
     const children = childrenMap.get(nodeId) || []
@@ -53,18 +207,18 @@ function calculateTreePositions(
     const childrenWidth = children.reduce((sum, child) => sum + getSubtreeWidth(child.id) + hGap, -hGap)
     return Math.max(nodeWidth, childrenWidth)
   }
-  
+
   // 递归设置位置
   const setPositions = (nodeId: string | undefined, x: number, y: number) => {
     const children = childrenMap.get(nodeId) || []
-    
+
     if (nodeId) {
       positions.set(nodeId, { x, y })
     }
-    
+
     if (children.length > 0) {
       let currentX = x - (getSubtreeWidth(nodeId) - nodeWidth) / 2
-      
+
       children.forEach(child => {
         const childWidth = getSubtreeWidth(child.id)
         const childX = currentX + (childWidth - nodeWidth) / 2
@@ -73,24 +227,24 @@ function calculateTreePositions(
       })
     }
   }
-  
+
   // 获取根节点
   const rootNodes = childrenMap.get(undefined) || []
-  
+
   if (rootNodes.length === 0) {
     return positions
   }
-  
+
   // 计算总宽度
   const totalWidth = rootNodes.reduce((sum, node) => sum + getSubtreeWidth(node.id) + hGap, -hGap)
   let startX = 400 - totalWidth / 2
-  
+
   rootNodes.forEach(node => {
     const nodeWidth_ = getSubtreeWidth(node.id)
     setPositions(node.id, startX + (nodeWidth_ - nodeWidth) / 2, 50)
     startX += nodeWidth_ + hGap
   })
-  
+
   return positions
 }
 
@@ -100,11 +254,13 @@ function OrganizationGraphPreview({
   onEnterEditMode,
 }: OrganizationGraphPreviewProps): JSX.Element {
   const { token } = theme.useToken()
+  const { message } = App.useApp()
 
   const {
     currentGraph,
     isLoading,
     loadGraph,
+    updateNode,
   } = useOrganizationStore()
 
   const graphRef = useRef<Graph | null>(null)
@@ -112,21 +268,57 @@ function OrganizationGraphPreview({
   const [graphReady, setGraphReady] = useState(false)
   const [nodeStyle, setNodeStyle] = useState<OrganizationNodeStyle>('simple')
 
+  // 视图模式
+  const [viewMode, setViewMode] = useState<ViewMode>('canvas')
+  // 编辑模式（只在列表模式下可用）
+  const [isEditMode, setIsEditMode] = useState(false)
+
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   // 加载组织架构图数据
   useEffect(() => {
     loadGraph(graphId)
   }, [graphId, loadGraph])
+
+  // 获取所有节点和根节点
+  const allNodes = currentGraph?.nodes || []
+  const rootNodes = useMemo(() => {
+    return allNodes
+      .filter(n => !n.parentId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  }, [allNodes])
+
+  // 当前拖拽的节点
+  const activeNode = activeId ? allNodes.find(n => n.id === activeId) : null
 
   // 使用 callback ref 来初始化图
   const containerRef = useCallback((container: HTMLDivElement | null) => {
     if (!container) return
     if (graphRef.current) return
 
-    setTimeout(() => {
+    const tryInit = (retries: number) => {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      if (width === 0 || height === 0) return
+      if (width === 0 || height === 0) {
+        if (retries > 0) {
+          requestAnimationFrame(() => tryInit(retries - 1))
+        }
+        return
+      }
 
       const nodeSize = nodeStyle === 'card' ? [180, 70] : [120, 40]
       const nodeRadius = nodeStyle === 'card' ? 8 : 4
@@ -191,8 +383,14 @@ function OrganizationGraphPreview({
 
       graph.render().then(() => {
         setGraphReady(true)
-      }).catch(() => {})
-    }, 100)
+      }).catch((error) => {
+        console.error('Failed to render organization graph preview:', error)
+        // 预览模式下不显示错误提示，避免频繁打扰
+      })
+    }
+
+    // 开始初始化尝试，最多重试 20 次（约 330ms）
+    tryInit(20)
   }, [token.colorPrimary, nodeStyle])
 
   // 清理
@@ -250,7 +448,10 @@ function OrganizationGraphPreview({
         graph.fitView(40)
         setZoom(graph.getZoom())
       }
-    }).catch(() => {})
+    }).catch((error) => {
+      console.error('Failed to update organization graph preview data:', error)
+      // 预览模式下不显示错误提示
+    })
   }, [currentGraph, graphReady, nodeStyle, token.colorPrimary])
 
   // 缩放控制
@@ -276,6 +477,64 @@ function OrganizationGraphPreview({
     if (graphRef.current && !graphRef.current.destroyed) {
       graphRef.current.fitView(40)
       setZoom(graphRef.current.getZoom())
+    }
+  }
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  // 拖拽结束 - 同级节点排序
+  const handleDragEnd = useCallback(async (event: DragEndEvent): Promise<void> => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const activeNode = allNodes.find(n => n.id === active.id)
+      const overNode = allNodes.find(n => n.id === over.id)
+
+      // 只允许同级节点排序
+      if (activeNode && overNode && activeNode.parentId === overNode.parentId) {
+        const parentId = activeNode.parentId
+        const siblings = allNodes
+          .filter(n => n.parentId === parentId)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+        const oldIndex = siblings.findIndex(s => s.id === active.id)
+        const newIndex = siblings.findIndex(s => s.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // 重新排列同级节点
+          const newSiblings = [...siblings]
+          const [movedItem] = newSiblings.splice(oldIndex, 1)
+          newSiblings.splice(newIndex, 0, movedItem)
+
+          // 批量更新 order
+          try {
+            await Promise.all(
+              newSiblings.map((sibling, index) =>
+                updateNode(sibling.id, { order: index })
+              )
+            )
+            message.success('排序已保存')
+          } catch (error) {
+            console.error('Failed to reorder nodes:', error)
+            message.error('排序保存失败')
+          }
+        }
+      } else {
+        message.warning('只能在同级节点之间排序')
+      }
+    }
+
+    setActiveId(null)
+  }, [allNodes, updateNode, message])
+
+  // 切换视图模式时退出编辑模式
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    if (mode === 'canvas') {
+      setIsEditMode(false)
     }
   }
 
@@ -308,33 +567,117 @@ function OrganizationGraphPreview({
           <Button onClick={onClose}>返回</Button>
           <Title level={5} className={styles.title}>{currentGraph.name}</Title>
         </div>
-        <div className={styles.toolbarRight}>
-          <div className={styles.zoomControls}>
-            <Tooltip title="缩小">
-              <Button icon={<ZoomOutOutlined />} onClick={handleZoomOut} size="small" />
+        <div className={styles.toolbarCenter}>
+          <div className={styles.viewModeSwitch}>
+            <Tooltip title="图形视图">
+              <Button
+                type={viewMode === 'canvas' ? 'primary' : 'text'}
+                icon={<AppstoreOutlined />}
+                onClick={() => handleViewModeChange('canvas')}
+              />
             </Tooltip>
-            <span className={styles.zoomLevel}>{Math.round(zoom * 100)}%</span>
-            <Tooltip title="放大">
-              <Button icon={<ZoomInOutlined />} onClick={handleZoomIn} size="small" />
-            </Tooltip>
-            <Tooltip title="适应画布">
-              <Button icon={<ExpandOutlined />} onClick={handleFitView} size="small" />
+            <Tooltip title="列表视图">
+              <Button
+                type={viewMode === 'list' ? 'primary' : 'text'}
+                icon={<UnorderedListOutlined />}
+                onClick={() => handleViewModeChange('list')}
+              />
             </Tooltip>
           </div>
+        </div>
+        <div className={styles.toolbarRight}>
+          {viewMode === 'canvas' && (
+            <div className={styles.zoomControls}>
+              <Tooltip title="缩小">
+                <Button icon={<ZoomOutOutlined />} onClick={handleZoomOut} size="small" />
+              </Tooltip>
+              <span className={styles.zoomLevel}>{Math.round(zoom * 100)}%</span>
+              <Tooltip title="放大">
+                <Button icon={<ZoomInOutlined />} onClick={handleZoomIn} size="small" />
+              </Tooltip>
+              <Tooltip title="适应画布">
+                <Button icon={<ExpandOutlined />} onClick={handleFitView} size="small" />
+              </Tooltip>
+            </div>
+          )}
+          {viewMode === 'list' && (
+            <>
+              <Button
+                type={isEditMode ? 'primary' : 'default'}
+                icon={isEditMode ? <CheckOutlined /> : <EditOutlined />}
+                onClick={() => setIsEditMode(!isEditMode)}
+              >
+                {isEditMode ? '完成' : '排序'}
+              </Button>
+            </>
+          )}
           <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
             编辑
           </Button>
         </div>
       </div>
 
-      {/* 画布区域 */}
-      <div className={styles.canvasContainer}>
-        <div ref={containerRef} className={styles.canvas} />
-      </div>
+      {/* 内容区域 */}
+      {viewMode === 'canvas' ? (
+        <div className={styles.canvasContainer}>
+          <div ref={containerRef} className={styles.canvas} />
+        </div>
+      ) : (
+        <div className={styles.listContainer}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={allNodes.map(n => n.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className={styles.treeList}>
+                {rootNodes.length === 0 ? (
+                  <div className={styles.emptyList}>
+                    <Empty description="暂无节点" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  </div>
+                ) : (
+                  rootNodes.map((node) => {
+                    const children = allNodes.filter(n => n.parentId === node.id)
+                    return (
+                      <SortableTreeNode
+                        key={node.id}
+                        node={node}
+                        depth={0}
+                        isEditMode={isEditMode}
+                        children={children}
+                        allNodes={allNodes}
+                      />
+                    )
+                  })
+                )}
+              </div>
+            </SortableContext>
+
+            <DragOverlay>
+              {activeNode ? <DragOverlayNode node={activeNode} /> : null}
+            </DragOverlay>
+          </DndContext>
+
+          {isEditMode && (
+            <div className={styles.editHint}>
+              <Text type="secondary">
+                拖拽节点可调整同级顺序，跨级拖拽无效
+              </Text>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 底部统计 */}
       <div className={styles.statsBar}>
         <span><TeamOutlined /> 节点: {currentGraph.nodeCount}</span>
+        {viewMode === 'list' && isEditMode && (
+          <span style={{ color: token.colorPrimary }}>排序模式</span>
+        )}
       </div>
     </div>
   )

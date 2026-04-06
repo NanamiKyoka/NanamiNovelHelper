@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   Table,
   Button,
@@ -10,7 +10,6 @@ import {
   Space,
   Popconfirm,
   message,
-  Tooltip,
   Empty,
   InputNumber
 } from 'antd'
@@ -20,8 +19,27 @@ import {
   DeleteOutlined,
   HolderOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { v4 as uuidv4 } from 'uuid'
 import type { FieldType, FieldDefinition, VocabularyType } from '../../types/vocabulary'
+import styles from './FieldDefinitionEditor.module.css'
 
 interface FieldDefinitionEditorProps {
   fields: FieldDefinition[]
@@ -43,6 +61,42 @@ const FIELD_TYPE_OPTIONS = [
   { value: 'reference', label: '引用' }
 ]
 
+// 可排序的表格行组件
+interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  'data-row-key': string
+}
+
+function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id })
+
+  const style: React.CSSProperties = {
+    ...props.style,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    ...(isDragging ? {
+      opacity: 0.5,
+      background: 'var(--ant-color-bg-text-hover)'
+    } : {})
+  }
+
+  return (
+    <tr
+      {...props}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    />
+  )
+}
+
 function FieldDefinitionEditor({
   fields,
   vocabularyTypes,
@@ -53,6 +107,60 @@ function FieldDefinitionEditor({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
+
+  // 按 order 排序的字段列表
+  const sortedFields = useMemo(() => {
+    return [...fields].sort((a, b) => a.order - b.order)
+  }, [fields])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  // 拖拽结束 - 重新排序
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = sortedFields.findIndex(f => f.id === active.id)
+      const newIndex = sortedFields.findIndex(f => f.id === over.id)
+
+      // 创建新顺序的字段列表
+      const newFields = [...sortedFields]
+      const [movedField] = newFields.splice(oldIndex, 1)
+      newFields.splice(newIndex, 0, movedField)
+
+      // 更新 order 字段
+      const updatedFields = newFields.map((f, i) => ({ ...f, order: i }))
+
+      // 乐观更新
+      onChange(updatedFields).catch((error) => {
+        console.error('Failed to reorder fields:', error)
+        message.error('排序失败')
+      })
+    }
+
+    setActiveId(null)
+  }, [sortedFields, onChange])
+
+  // 当前拖拽的字段
+  const activeField = activeId ? fields.find(f => f.id === activeId) : null
 
   // 打开新建弹窗
   const handleCreate = (): void => {
@@ -71,7 +179,7 @@ function FieldDefinitionEditor({
   const handleEdit = (field: FieldDefinition): void => {
     if (readOnly) return
     setEditingField(field)
-    
+
     // 处理 imageConfig 的加载（将字节转换为 MB）
     const imageConfigForForm = field.imageConfig ? {
       maxSize: field.imageConfig.maxSize ? field.imageConfig.maxSize / 1024 / 1024 : undefined,
@@ -79,7 +187,7 @@ function FieldDefinitionEditor({
       maxHeight: field.imageConfig.maxHeight,
       quality: field.imageConfig.quality
     } : undefined
-    
+
     form.setFieldsValue({
       ...field,
       options: field.options?.join('\n'),
@@ -165,49 +273,17 @@ function FieldDefinitionEditor({
     }
   }
 
-  // 移动字段顺序
-  const handleMove = async (id: string, direction: 'up' | 'down'): Promise<void> => {
-    if (readOnly) return
-    const index = fields.findIndex(f => f.id === id)
-    if (index === -1) return
-
-    const newFields = [...fields]
-    if (direction === 'up' && index > 0) {
-      [newFields[index - 1], newFields[index]] = [newFields[index], newFields[index - 1]]
-    } else if (direction === 'down' && index < fields.length - 1) {
-      [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]]
-    }
-
-    // 更新 order
-    const updatedFields = newFields.map((f, i) => ({ ...f, order: i }))
-    await onChange(updatedFields)
-  }
-
   // 表格列定义
   const columns = [
     {
       title: '',
-      key: 'drag',
-      width: 30,
-      render: (_: unknown, __: FieldDefinition, index: number) => (
-        <Space direction="vertical" size={0}>
-          <Button
-            type="text"
-            size="small"
-            icon={<HolderOutlined rotate={-90} />}
-            onClick={() => handleMove(fields[index].id, 'up')}
-            disabled={index === 0 || readOnly}
-            style={{ padding: '0 4px', height: 16 }}
-          />
-          <Button
-            type="text"
-            size="small"
-            icon={<HolderOutlined rotate={90} />}
-            onClick={() => handleMove(fields[index].id, 'down')}
-            disabled={index === fields.length - 1 || readOnly}
-            style={{ padding: '0 4px', height: 16 }}
-          />
-        </Space>
+      key: 'dragHandle',
+      width: 40,
+      className: 'drag-handle-cell',
+      render: (_: unknown, record: FieldDefinition) => (
+        <div className={styles.dragHandle} style={{ cursor: 'grab', padding: '4px' }}>
+          <HolderOutlined style={{ color: '#999' }} />
+        </div>
       )
     },
     {
@@ -221,7 +297,7 @@ function FieldDefinitionEditor({
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type: FieldType) => 
+      render: (type: FieldType) =>
         FIELD_TYPE_OPTIONS.find(o => o.value === type)?.label || type
     },
     {
@@ -265,11 +341,11 @@ function FieldDefinitionEditor({
           </Popconfirm>
         </Space>
       )
-    }])
+    } as const])
   ]
 
   return (
-    <div>
+    <div className={styles.container}>
       <div style={{ marginBottom: 12 }}>
         <Button
           type="dashed"
@@ -283,18 +359,52 @@ function FieldDefinitionEditor({
       </div>
 
       {fields.length === 0 ? (
-        <Empty 
-          description="暂无字段定义" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE} 
+        <Empty
+          description="暂无字段定义"
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
-        <Table
-          dataSource={fields}
-          columns={columns as unknown[]}
-          rowKey="id"
-          size="small"
-          pagination={false}
-        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortedFields.map(f => f.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className={styles.tableWrapper}>
+              <Table
+                dataSource={sortedFields}
+                columns={columns as unknown[]}
+                rowKey="id"
+                size="small"
+                pagination={false}
+                components={{
+                  body: {
+                    row: SortableRow
+                  }
+                }}
+              />
+            </div>
+          </SortableContext>
+
+          <DragOverlay>
+            {activeField ? (
+              <div className={styles.overlayRow}>
+                <Table
+                  dataSource={[activeField]}
+                  columns={columns as unknown[]}
+                  rowKey="id"
+                  size="small"
+                  pagination={false}
+                  showHeader={false}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       <Modal
@@ -329,7 +439,7 @@ function FieldDefinitionEditor({
           >
             {({ getFieldValue }) => {
               const type = getFieldValue('type')
-              
+
               if (type === 'select') {
                 return (
                   <Form.Item
@@ -341,7 +451,7 @@ function FieldDefinitionEditor({
                   </Form.Item>
                 )
               }
-              
+
               if (type === 'reference') {
                 return (
                   <Form.Item
@@ -394,7 +504,7 @@ function FieldDefinitionEditor({
                   </>
                 )
               }
-              
+
               return null
             }}
           </Form.Item>
@@ -410,9 +520,9 @@ function FieldDefinitionEditor({
           <Form.Item name="width" label="表格列宽">
             <Space.Compact>
               <InputNumber min={50} max={500} placeholder="默认 120" style={{ width: 100 }} />
-              <span style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
                 padding: '0 12px',
                 background: 'var(--ant-color-bg-container-disabled)',
                 border: '1px solid var(--ant-color-border)',

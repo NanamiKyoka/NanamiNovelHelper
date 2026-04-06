@@ -14,6 +14,8 @@ import {
   VOCABULARY_DEFAULT_DIR,
   SENSITIVE_WORDS_FILE
 } from '../types/project'
+import { createLogger } from '../utils/logger'
+import { ensureInitialized, Errors } from '../../shared/errors'
 
 // 项目设置接口
 interface ProjectSettings {
@@ -32,6 +34,7 @@ class VocabularyService {
   private vocabularyDefaultDir: string | null = null
   private sensitiveWordsPath: string | null = null
   private settings: ProjectSettings = DEFAULT_PROJECT_SETTINGS
+  private logger = createLogger('VocabularyService')
 
   // 初始化服务
   init(projectPath: string): void {
@@ -64,8 +67,9 @@ class VocabularyService {
     }
 
     // 创建预设类型目录
-    if (!fs.existsSync(this.vocabularyDefaultDir!)) {
-      fs.mkdirSync(this.vocabularyDefaultDir!, { recursive: true })
+    if (!this.vocabularyDefaultDir) return
+    if (!fs.existsSync(this.vocabularyDefaultDir)) {
+      fs.mkdirSync(this.vocabularyDefaultDir, { recursive: true })
     }
   }
 
@@ -106,6 +110,7 @@ class VocabularyService {
 
   // 获取词汇类型文件路径
   private getVocabularyTypesPath(): string {
+    ensureInitialized(this.vocabularyDir, 'VocabularyService')
     return path.join(this.vocabularyDir!, VOCABULARY_TYPES_FILE)
   }
 
@@ -123,7 +128,7 @@ class VocabularyService {
       const content = fs.readFileSync(typesPath, 'utf-8')
       return JSON5.parse(content)
     } catch (error) {
-      console.error('Failed to load vocabulary types:', error)
+      this.logger.error('Failed to load vocabulary types', error)
       return []
     }
   }
@@ -200,9 +205,11 @@ class VocabularyService {
     const types = this.loadVocabularyTypes()
     const type = types.find(t => t.id === typeId)
     
+    ensureInitialized(this.vocabularyDir, 'VocabularyService')
+    
     // 检查是否为预设类型（内置类型）
-    if (type?.isBuiltIn) {
-      return path.join(this.vocabularyDefaultDir!, fileName)
+    if (type?.isBuiltIn && this.vocabularyDefaultDir) {
+      return path.join(this.vocabularyDefaultDir, fileName)
     }
     
     return path.join(this.vocabularyDir!, fileName)
@@ -222,7 +229,7 @@ class VocabularyService {
         const content = fs.readFileSync(entriesPath, 'utf-8')
         return JSON5.parse(content)
       } catch (error) {
-        console.error(`Failed to load vocabulary entries for type ${typeId}:`, error)
+        this.logger.error(`Failed to load vocabulary entries for type ${typeId}`, error)
         return []
       }
     } else {
@@ -253,13 +260,14 @@ class VocabularyService {
   }
 
   // 添加词汇条目
-  addVocabularyEntry(entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>): VocabularyEntry {
+  addVocabularyEntry(entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>): VocabularyEntry {
     const entries = this.loadVocabularyEntries(entry.typeId)
     const now = new Date().toISOString()
     
     const newEntry: VocabularyEntry = {
       ...entry,
       id: uuidv4(),
+      order: entries.length,
       createdAt: now,
       updatedAt: now
     }
@@ -322,6 +330,7 @@ class VocabularyService {
 
   // 获取词汇详细描述目录
   private getVocabularyDetailDir(): string {
+    ensureInitialized(this.projectPath, 'VocabularyService')
     return path.join(this.projectPath!, '设定', '词汇详情')
   }
 
@@ -329,19 +338,20 @@ class VocabularyService {
   createLinkedMarkdownFile(entry: VocabularyEntry): string | null {
     if (!this.projectPath) return null
     
-    const detailDir = this.getVocabularyDetailDir()
-    if (!fs.existsSync(detailDir)) {
-      fs.mkdirSync(detailDir, { recursive: true })
-    }
-    
-    // 使用类型名和条目名作为文件名
-    const safeTypeName = entry.typeName.replace(/[\\/:*?"<>|]/g, '_')
-    const safeEntryName = entry.name.replace(/[\\/:*?"<>|]/g, '_')
-    const fileName = `${safeTypeName}_${safeEntryName}.md`
-    const filePath = path.join(detailDir, fileName)
-    
-    // 创建 Markdown 内容
-    const content = `---
+    try {
+      const detailDir = this.getVocabularyDetailDir()
+      if (!fs.existsSync(detailDir)) {
+        fs.mkdirSync(detailDir, { recursive: true })
+      }
+      
+      // 使用类型名和条目名作为文件名
+      const safeTypeName = entry.typeName.replace(/[\\/:*?"<>|]/g, '_')
+      const safeEntryName = entry.name.replace(/[\\/:*?"<>|]/g, '_')
+      const fileName = `${safeTypeName}_${safeEntryName}.md`
+      const filePath = path.join(detailDir, fileName)
+      
+      // 创建 Markdown 内容
+      const content = `---
 id: ${entry.id}
 type: ${entry.typeName}
 name: ${entry.name}
@@ -353,18 +363,23 @@ updatedAt: ${new Date().toISOString()}
 
 ${entry.description || '详细描述...'}
 `
-    
-    fs.writeFileSync(filePath, content, 'utf-8')
-    
-    // 更新条目的链接路径（相对于项目根目录）
-    const relativePath = path.relative(this.projectPath, filePath)
-    this.updateVocabularyEntry(entry.id, { linkedFilePath: relativePath })
-    
-    return relativePath
+      
+      fs.writeFileSync(filePath, content, 'utf-8')
+      
+      // 更新条目的链接路径（相对于项目根目录）
+      const relativePath = path.relative(this.projectPath, filePath)
+      this.updateVocabularyEntry(entry.id, { linkedFilePath: relativePath })
+      
+      return relativePath
+    } catch (error) {
+      this.logger.error('Failed to create linked markdown file', error)
+      return null
+    }
   }
 
   // 手动链接到现有文件
   linkToMarkdownFile(entryId: string, filePath: string): boolean {
+    ensureInitialized(this.projectPath, 'VocabularyService')
     const relativePath = path.relative(this.projectPath!, filePath)
     const result = this.updateVocabularyEntry(entryId, { linkedFilePath: relativePath })
     return result !== null
@@ -390,7 +405,7 @@ ${entry.description || '详细描述...'}
       const content = fs.readFileSync(this.sensitiveWordsPath, 'utf-8')
       return JSON5.parse(content)
     } catch (error) {
-      console.error('Failed to load sensitive words:', error)
+      this.logger.error('Failed to load sensitive words', error)
       return []
     }
   }
@@ -409,13 +424,14 @@ ${entry.description || '详细描述...'}
   }
 
   // 添加敏感词
-  addSensitiveWord(word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>): SensitiveWord {
+  addSensitiveWord(word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>): SensitiveWord {
     const words = this.loadSensitiveWords()
     const now = new Date().toISOString()
     
     const newWord: SensitiveWord = {
       ...word,
       id: uuidv4(),
+      order: words.length,
       createdAt: now,
       updatedAt: now
     }
@@ -458,7 +474,7 @@ ${entry.description || '详细描述...'}
   }
 
   // 批量导入敏感词
-  importSensitiveWords(words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>>): number {
+  importSensitiveWords(words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>>): number {
     const existingWords = this.loadSensitiveWords()
     const now = new Date().toISOString()
     
@@ -472,6 +488,7 @@ ${entry.description || '详细描述...'}
       const newWord: SensitiveWord = {
         ...word,
         id: uuidv4(),
+        order: existingWords.length,
         createdAt: now,
         updatedAt: now
       }

@@ -3,9 +3,6 @@
  * 负责时间线的 CRUD 操作、节点管理和缩略图生成
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import JSON5 from 'json5'
 import {
   Timeline,
@@ -16,11 +13,7 @@ import {
   BranchInfo,
   TimeInfo
 } from '../types/timeline'
-import { PROJECT_META_DIR } from '../types/project'
-
-// 数据目录名
-const DATA_DIR = 'data'
-const TIMELINES_DIR = 'timelines'
+import { BaseService, BaseEntity } from './base'
 
 /**
  * 默认时间信息
@@ -38,47 +31,58 @@ const DEFAULT_BRANCH_INFO: BranchInfo = {
   type: 'main'
 }
 
-class TimelineService {
-  private projectPath: string | null = null
-  private timelinesDir: string | null = null
-
-  /**
-   * 初始化服务
-   */
-  init(projectPath: string): void {
-    this.projectPath = projectPath
-    this.timelinesDir = path.join(
-      projectPath,
-      PROJECT_META_DIR,
-      DATA_DIR,
-      TIMELINES_DIR
-    )
-    this.ensureDirectories()
+/**
+ * 时间线服务
+ * 继承 BaseService 实现通用 CRUD 操作
+ */
+class TimelineService extends BaseService<Timeline, TimelineMeta> {
+  constructor() {
+    super({ dataSubDir: 'timelines' })
   }
 
-  /**
-   * 确保目录存在
-   */
-  private ensureDirectories(): void {
-    if (!this.projectPath || !this.timelinesDir) return
+  // ============================================
+  // BaseService 抽象方法实现
+  // ============================================
 
-    if (!fs.existsSync(this.timelinesDir)) {
-      fs.mkdirSync(this.timelinesDir, { recursive: true })
+  protected parseEntity(content: string): Timeline | null {
+    try {
+      return JSON5.parse(content) as Timeline
+    } catch {
+      return null
     }
   }
 
-  /**
-   * 获取时间线文件路径
-   */
-  private getTimelinePath(timelineId: string): string {
-    return path.join(this.timelinesDir!, `${timelineId}.json5`)
+  protected serializeEntity(item: Timeline): string {
+    return JSON5.stringify(item, null, 2)
   }
 
-  /**
-   * 获取缩略图路径
-   */
-  private getThumbnailPath(timelineId: string): string {
-    return path.join(this.timelinesDir!, `${timelineId}.png`)
+  protected toMetadata(item: Timeline): TimelineMeta {
+    // 获取缩略图完整路径
+    let thumbnailPath: string | undefined = undefined
+    if (item.thumbnail) {
+      const fullPath = this.getThumbnailFullPath(item.id)
+      if (fullPath) {
+        thumbnailPath = fullPath
+      }
+    }
+
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      thumbnail: thumbnailPath,
+      branchInfo: item.branchInfo || DEFAULT_BRANCH_INFO,
+      nodeCount: item.nodes.length,
+      tags: item.tags,
+      order: item.order ?? 0,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt
+    }
+  }
+
+  protected sortItems(items: TimelineMeta[]): TimelineMeta[] {
+    // 按 order 字段排序
+    return items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }
 
   // ============================================
@@ -86,80 +90,17 @@ class TimelineService {
   // ============================================
 
   /**
-   * 获取所有时间线列表
-   */
-  getTimelineList(): TimelineMeta[] {
-    if (!this.timelinesDir || !fs.existsSync(this.timelinesDir)) {
-      return []
-    }
-
-    const files = fs.readdirSync(this.timelinesDir)
-    const timelines: TimelineMeta[] = []
-
-    for (const file of files) {
-      if (file.endsWith('.json5')) {
-        try {
-          const filePath = path.join(this.timelinesDir, file)
-          const content = fs.readFileSync(filePath, 'utf-8')
-          const timeline = JSON5.parse(content) as Timeline
-
-          // 获取缩略图完整路径
-          let thumbnailPath: string | undefined = undefined
-          if (timeline.thumbnail) {
-            const fullPath = this.getThumbnailPath(timeline.id)
-            if (fs.existsSync(fullPath)) {
-              thumbnailPath = fullPath
-            }
-          }
-
-          timelines.push({
-            id: timeline.id,
-            name: timeline.name,
-            description: timeline.description,
-            thumbnail: thumbnailPath,
-            branchInfo: timeline.branchInfo || DEFAULT_BRANCH_INFO,
-            nodeCount: timeline.nodes.length,
-            tags: timeline.tags,
-            createdAt: timeline.createdAt,
-            updatedAt: timeline.updatedAt
-          })
-        } catch (error) {
-          console.error(`Failed to load timeline ${file}:`, error)
-        }
-      }
-    }
-
-    // 按更新时间排序
-    return timelines.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
-  }
-
-  /**
-   * 获取单个时间线详情
-   */
-  getTimeline(timelineId: string): Timeline | null {
-    const timelinePath = this.getTimelinePath(timelineId)
-
-    if (!fs.existsSync(timelinePath)) {
-      return null
-    }
-
-    try {
-      const content = fs.readFileSync(timelinePath, 'utf-8')
-      return JSON5.parse(content) as Timeline
-    } catch (error) {
-      console.error(`Failed to load timeline ${timelineId}:`, error)
-      return null
-    }
-  }
-
-  /**
    * 创建时间线
    */
   createTimeline(options: CreateTimelineOptions): Timeline {
-    const now = new Date().toISOString()
-    const timelineId = uuidv4()
+    const now = this.getTimestamp()
+    const timelineId = this.generateId()
+
+    // 获取当前最大 order
+    const existingTimelines = this.getList()
+    const maxOrder = existingTimelines.length > 0
+      ? Math.max(...existingTimelines.map(t => t.order ?? 0))
+      : -1
 
     const timeline: Timeline = {
       id: timelineId,
@@ -170,11 +111,12 @@ class TimelineService {
       nodes: [],
       nodeCount: 0,
       tags: options.tags || [],
+      order: maxOrder + 1,
       createdAt: now,
       updatedAt: now
     }
 
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return timeline
   }
 
@@ -182,10 +124,10 @@ class TimelineService {
    * 更新时间线
    */
   updateTimeline(timelineId: string, updates: UpdateTimelineOptions): Timeline | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     const updatedTimeline: Timeline = {
       ...timeline,
@@ -200,54 +142,8 @@ class TimelineService {
       updatedTimeline.nodeCount = updates.nodes.length
     }
 
-    this.saveTimeline(updatedTimeline)
+    this.save(updatedTimeline)
     return updatedTimeline
-  }
-
-  /**
-   * 删除时间线
-   */
-  deleteTimeline(timelineId: string): boolean {
-    const timelinePath = this.getTimelinePath(timelineId)
-    const thumbnailPath = this.getThumbnailPath(timelineId)
-
-    try {
-      // 如果是主线，检查是否有分支时间线依赖它
-      const timeline = this.getTimeline(timelineId)
-      if (timeline && timeline.branchInfo.type === 'main') {
-        const allTimelines = this.getTimelineList()
-        const dependentBranches = allTimelines.filter(
-          t => t.branchInfo.parentTimelineId === timelineId
-        )
-        if (dependentBranches.length > 0) {
-          // 有分支依赖，需要先删除分支或解除关联
-          console.warn(`Timeline ${timelineId} has dependent branches`)
-        }
-      }
-
-      // 删除数据文件
-      if (fs.existsSync(timelinePath)) {
-        fs.unlinkSync(timelinePath)
-      }
-
-      // 删除缩略图
-      if (fs.existsSync(thumbnailPath)) {
-        fs.unlinkSync(thumbnailPath)
-      }
-
-      return true
-    } catch (error) {
-      console.error(`Failed to delete timeline ${timelineId}:`, error)
-      return false
-    }
-  }
-
-  /**
-   * 保存时间线
-   */
-  private saveTimeline(timeline: Timeline): void {
-    const timelinePath = this.getTimelinePath(timeline.id)
-    fs.writeFileSync(timelinePath, JSON5.stringify(timeline, null, 2), 'utf-8')
   }
 
   // ============================================
@@ -261,13 +157,13 @@ class TimelineService {
     timelineId: string,
     node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>
   ): TimelineNode | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const newNode: TimelineNode = {
       ...node,
-      id: uuidv4(),
+      id: this.generateId(),
       order: timeline.nodes.length,
       createdAt: now,
       updatedAt: now
@@ -277,7 +173,7 @@ class TimelineService {
     timeline.nodeCount = timeline.nodes.length
     timeline.updatedAt = now
 
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return newNode
   }
 
@@ -289,13 +185,13 @@ class TimelineService {
     nodeId: string,
     updates: Partial<TimelineNode>
   ): TimelineNode | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
     const nodeIndex = timeline.nodes.findIndex(n => n.id === nodeId)
     if (nodeIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     timeline.nodes[nodeIndex] = {
       ...timeline.nodes[nodeIndex],
       ...updates,
@@ -305,7 +201,7 @@ class TimelineService {
     }
 
     timeline.updatedAt = now
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return timeline.nodes[nodeIndex]
   }
 
@@ -313,13 +209,13 @@ class TimelineService {
    * 删除节点
    */
   deleteNode(timelineId: string, nodeId: string): boolean {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return false
 
     const nodeIndex = timeline.nodes.findIndex(n => n.id === nodeId)
     if (nodeIndex === -1) return false
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 删除节点
     timeline.nodes.splice(nodeIndex, 1)
@@ -331,7 +227,7 @@ class TimelineService {
     })
 
     timeline.updatedAt = now
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return true
   }
 
@@ -339,10 +235,10 @@ class TimelineService {
    * 批量删除节点
    */
   batchDeleteNodes(timelineId: string, nodeIds: string[]): number {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return 0
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const deletedCount = timeline.nodes.length
 
     // 过滤掉要删除的节点
@@ -355,7 +251,7 @@ class TimelineService {
     })
 
     timeline.updatedAt = now
-    this.saveTimeline(timeline)
+    this.save(timeline)
 
     return deletedCount - timeline.nodes.length
   }
@@ -368,13 +264,13 @@ class TimelineService {
     nodeId: string,
     newOrder: number
   ): TimelineNode[] | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
     const nodeIndex = timeline.nodes.findIndex(n => n.id === nodeId)
     if (nodeIndex === -1) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     const node = timeline.nodes[nodeIndex]
 
     // 移除节点
@@ -390,7 +286,7 @@ class TimelineService {
     })
 
     timeline.updatedAt = now
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return timeline.nodes
   }
 
@@ -402,10 +298,10 @@ class TimelineService {
     nodeIds: string[],
     targetOrder: number
   ): TimelineNode[] | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
     
     // 获取要移动的节点
     const nodesToMove = timeline.nodes.filter(n => nodeIds.includes(n.id))
@@ -424,7 +320,7 @@ class TimelineService {
     })
 
     timeline.updatedAt = now
-    this.saveTimeline(timeline)
+    this.save(timeline)
     return timeline.nodes
   }
 
@@ -440,14 +336,14 @@ class TimelineService {
     branchFromNodeId: string,
     name?: string
   ): Timeline | null {
-    const parentTimeline = this.getTimeline(parentTimelineId)
+    const parentTimeline = this.get(parentTimelineId)
     if (!parentTimeline) return null
 
     const branchNode = parentTimeline.nodes.find(n => n.id === branchFromNodeId)
     if (!branchNode) return null
 
-    const now = new Date().toISOString()
-    const timelineId = uuidv4()
+    const now = this.getTimestamp()
+    const timelineId = this.generateId()
 
     // 创建分支信息
     const branchInfo: BranchInfo = {
@@ -471,7 +367,7 @@ class TimelineService {
       updatedAt: now
     }
 
-    this.saveTimeline(branchTimeline)
+    this.save(branchTimeline)
 
     // 更新父时间线的分支点信息
     branchNode.isBranchPoint = true
@@ -480,7 +376,7 @@ class TimelineService {
     }
     branchNode.branchedTimelineIds.push(timelineId)
     parentTimeline.updatedAt = now
-    this.saveTimeline(parentTimeline)
+    this.save(parentTimeline)
 
     return branchTimeline
   }
@@ -493,19 +389,19 @@ class TimelineService {
     targetTimelineId: string,
     targetNodeId?: string
   ): boolean {
-    const branchTimeline = this.getTimeline(branchTimelineId)
-    const targetTimeline = this.getTimeline(targetTimelineId)
+    const branchTimeline = this.get(branchTimelineId)
+    const targetTimeline = this.get(targetTimelineId)
 
     if (!branchTimeline || !targetTimeline) return false
     if (branchTimeline.branchInfo.type !== 'branch') return false
 
-    const now = new Date().toISOString()
+    const now = this.getTimestamp()
 
     // 更新分支信息
     branchTimeline.branchInfo.mergeToTimelineId = targetTimelineId
     branchTimeline.branchInfo.mergeToNodeId = targetNodeId
     branchTimeline.updatedAt = now
-    this.saveTimeline(branchTimeline)
+    this.save(branchTimeline)
 
     return true
   }
@@ -514,7 +410,7 @@ class TimelineService {
    * 获取时间线的所有分支
    */
   getBranchTimelines(parentTimelineId: string): TimelineMeta[] {
-    const allTimelines = this.getTimelineList()
+    const allTimelines = this.getList()
     return allTimelines.filter(
       t => t.branchInfo.parentTimelineId === parentTimelineId
     )
@@ -524,7 +420,7 @@ class TimelineService {
    * 获取分支来源节点
    */
   getBranchSourceNode(timelineId: string): TimelineNode | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline || timeline.branchInfo.type !== 'main') return null
 
     const parentId = timeline.branchInfo.parentTimelineId
@@ -532,54 +428,30 @@ class TimelineService {
 
     if (!parentId || !nodeId) return null
 
-    const parentTimeline = this.getTimeline(parentId)
+    const parentTimeline = this.get(parentId)
     if (!parentTimeline) return null
 
     return parentTimeline.nodes.find(n => n.id === nodeId) || null
   }
 
   // ============================================
-  // 缩略图
+  // 缩略图（扩展基类方法）
   // ============================================
 
   /**
-   * 保存缩略图
+   * 保存缩略图（扩展基类方法以更新元数据）
    */
-  saveThumbnail(timelineId: string, dataUrl: string): string | null {
-    try {
-      // 解析 data URL
-      const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/)
-      if (!matches) return null
-
-      const base64Data = matches[2]
-      const buffer = Buffer.from(base64Data, 'base64')
-
-      const thumbnailPath = this.getThumbnailPath(timelineId)
-      fs.writeFileSync(thumbnailPath, buffer)
-
+  override saveThumbnail(timelineId: string, dataUrl: string): string | null {
+    const result = super.saveThumbnail(timelineId, dataUrl)
+    if (result) {
       // 更新时间线元数据
-      const timeline = this.getTimeline(timelineId)
+      const timeline = this.get(timelineId)
       if (timeline) {
         timeline.thumbnail = `${timelineId}.png`
-        this.saveTimeline(timeline)
+        this.save(timeline)
       }
-
-      return thumbnailPath
-    } catch (error) {
-      console.error(`Failed to save thumbnail for ${timelineId}:`, error)
-      return null
     }
-  }
-
-  /**
-   * 获取缩略图路径
-   */
-  getThumbnailPath_(timelineId: string): string | null {
-    const thumbnailPath = this.getThumbnailPath(timelineId)
-    if (fs.existsSync(thumbnailPath)) {
-      return thumbnailPath
-    }
-    return null
+    return result
   }
 
   // ============================================
@@ -587,24 +459,15 @@ class TimelineService {
   // ============================================
 
   /**
-   * 导出时间线为 JSON5
+   * 导入时间线（覆盖基类方法）
    */
-  exportTimeline(timelineId: string): string | null {
-    const timeline = this.getTimeline(timelineId)
-    if (!timeline) return null
-    return JSON5.stringify(timeline, null, 2)
-  }
-
-  /**
-   * 导入时间线
-   */
-  importTimeline(jsonContent: string): Timeline | null {
+  override importItem(jsonContent: string): Timeline | null {
     try {
       const timeline = JSON5.parse(jsonContent) as Timeline
 
       // 生成新 ID
-      const newId = uuidv4()
-      const now = new Date().toISOString()
+      const newId = this.generateId()
+      const now = this.getTimestamp()
 
       const importedTimeline: Timeline = {
         ...timeline,
@@ -617,10 +480,10 @@ class TimelineService {
         branchInfo: DEFAULT_BRANCH_INFO
       }
 
-      this.saveTimeline(importedTimeline)
+      this.save(importedTimeline)
       return importedTimeline
     } catch (error) {
-      console.error('Failed to import timeline:', error)
+      this.logger.error('Failed to import timeline', error)
       return null
     }
   }
@@ -629,7 +492,7 @@ class TimelineService {
    * 导出时间线为 Markdown
    */
   exportTimelineAsMarkdown(timelineId: string): string | null {
-    const timeline = this.getTimeline(timelineId)
+    const timeline = this.get(timelineId)
     if (!timeline) return null
 
     let md = `# ${timeline.name}\n\n`
@@ -689,6 +552,29 @@ class TimelineService {
     }
 
     return md
+  }
+
+  /**
+   * 重新排序时间线列表
+   */
+  reorderTimelines(timelineIds: string[]): boolean {
+    try {
+      const now = this.getTimestamp()
+      
+      for (let i = 0; i < timelineIds.length; i++) {
+        const timeline = this.get(timelineIds[i])
+        if (timeline) {
+          timeline.order = i
+          timeline.updatedAt = now
+          this.save(timeline)
+        }
+      }
+      
+      return true
+    } catch (error) {
+      this.logger.error('Failed to reorder timelines', error)
+      return false
+    }
   }
 }
 

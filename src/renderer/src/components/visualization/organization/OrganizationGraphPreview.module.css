@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-color);
+  overflow: hidden;
 }
 
 .loading {
@@ -40,6 +41,12 @@
   gap: 16px;
 }
 
+.toolbarCenter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .title {
   margin: 0 !important;
   font-size: 16px !important;
@@ -49,6 +56,15 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.viewModeSwitch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-color);
+  border-radius: 6px;
 }
 
 .zoomControls {
@@ -78,7 +94,121 @@
 .canvas {
   width: 100%;
   height: 100%;
+  min-height: 200px;
   background: var(--bg-secondary);
+}
+
+/* 列表视图样式 */
+.listContainer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-color);
+  overflow: auto;
+}
+
+.treeList {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.emptyList {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.treeNodeRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background-color 0.2s;
+  cursor: default;
+}
+
+.treeNodeRow:hover {
+  background-color: var(--bg-secondary);
+}
+
+.treeNodeChildren {
+  /* 子节点容器 */
+}
+
+.expandBtn {
+  width: 16px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expandBtn:hover {
+  color: var(--text-primary);
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 8px;
+  cursor: grab;
+  border-radius: 4px;
+}
+
+.dragHandle:hover {
+  background-color: var(--bg-secondary);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.nodeColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.nodeName {
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.nodeDesc {
+  font-size: 12px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 拖拽覆盖层样式 */
+.dragOverlayNode {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--card-bg);
+  border: 2px solid var(--primary-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.editHint {
+  padding: 8px 16px;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+  background: var(--card-bg);
 }
 
 .statsBar {

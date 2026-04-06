@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Table,
   Button,
@@ -18,17 +18,32 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  TeamOutlined,
-  EnvironmentOutlined,
-  GiftOutlined,
-  ThunderboltOutlined,
-  CalendarOutlined,
   TagOutlined,
   LinkOutlined,
   PictureOutlined,
   SettingOutlined,
-  FullscreenOutlined
+  FullscreenOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
 import type { 
   VocabularyEntry, 
@@ -39,16 +54,43 @@ import { DEFAULT_COLORS } from '../../types/vocabulary'
 import ImageUpload from './ImageUpload'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
 import VocabularyFullscreen from './VocabularyFullscreen'
+import { getIconPreview } from './IconPicker'
 import styles from './VocabularyPanel.module.css'
 
-// 类型图标映射
-const TYPE_ICONS: Record<string, React.ReactNode> = {
-  'character': <TeamOutlined />,
-  'location': <EnvironmentOutlined />,
-  'organization': <TeamOutlined />,
-  'item': <GiftOutlined />,
-  'magic': <ThunderboltOutlined />,
-  'event': <CalendarOutlined />
+// 可排序的表格行组件
+interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  'data-row-key': string
+}
+
+function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id })
+
+  const style: React.CSSProperties = {
+    ...props.style,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    ...(isDragging ? {
+      opacity: 0.5,
+      background: 'var(--ant-color-bg-text-hover)'
+    } : {})
+  }
+
+  return (
+    <tr
+      {...props}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    />
+  )
 }
 
 interface VocabularyPanelProps {
@@ -61,6 +103,8 @@ interface VocabularyPanelProps {
   currentTypeId?: string
   /** 类型切换回调（嵌入模式下使用） */
   onTypeChange?: (typeId: string) => void
+  /** 启用拖拽排序（仅在编辑界面启用） */
+  enableSorting?: boolean
 }
 
 function VocabularyPanel({ 
@@ -68,7 +112,8 @@ function VocabularyPanel({
   externalSearchText,
   embedded = false,
   currentTypeId,
-  onTypeChange
+  onTypeChange,
+  enableSorting = false
 }: VocabularyPanelProps): JSX.Element {
   const {
     types,
@@ -79,6 +124,7 @@ function VocabularyPanel({
     updateEntry,
     deleteEntry,
     createLinkedFile,
+    reorderEntries,
     isLoaded
   } = useVocabularyStore()
   
@@ -90,6 +136,21 @@ function VocabularyPanel({
   const [searchText, setSearchText] = useState('')
   const [typeSettingsOpen, setTypeSettingsOpen] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
+  
+  // 拖拽状态（仅在启用排序时使用）
+  const [activeId, setActiveId] = useState<string | null>(null)
+  
+  // DnD 传感器（仅在启用排序时使用）
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
 
   // 嵌入模式下使用外部传入的 currentTypeId，否则使用内部状态
   const currentType = embedded ? (currentTypeId || '') : internalCurrentType
@@ -137,10 +198,61 @@ function VocabularyPanel({
     item.aliases.some(a => a.toLowerCase().includes(searchText.toLowerCase()))
   )
 
+  // 按 order 字段排序的条目（用于拖拽排序）
+  const sortedEntries = useMemo(() => {
+    return [...filteredEntries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  }, [filteredEntries])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+  
+  // 拖拽结束
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id && currentType) {
+      const oldIndex = sortedEntries.findIndex(e => e.id === active.id)
+      const newIndex = sortedEntries.findIndex(e => e.id === over.id)
+      
+      const newEntries = arrayMove(sortedEntries, oldIndex, newIndex)
+      const newEntryIds = newEntries.map(e => e.id)
+      
+      // 调用 reorderEntries 更新顺序
+      reorderEntries(currentType, newEntryIds).catch((error) => {
+        console.error('Failed to reorder entries:', error)
+        message.error('排序失败')
+      })
+    }
+    
+    setActiveId(null)
+  }, [sortedEntries, currentType, reorderEntries])
+  
+  // 当前拖拽的条目
+  const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
+
   // 根据配置生成表格列
   const columns = useMemo(() => {
+    // 拖拽手柄列（仅在启用排序时显示）
+    const dragHandleColumn = (enableSorting && !readOnly) ? {
+      title: '',
+      key: 'dragHandle',
+      width: 40,
+      fixed: 'left' as const,
+      className: 'drag-handle-cell',
+      render: (_: unknown, record: VocabularyEntry) => (
+        <div
+          className={styles.dragHandle}
+          style={{ cursor: 'grab', padding: '4px' }}
+        >
+          <HolderOutlined style={{ color: '#999' }} />
+        </div>
+      )
+    } : null
+
     if (!currentTypeDefinition) {
-      return getDefaultColumns()
+      return [dragHandleColumn, ...getDefaultColumns()].filter(Boolean)
     }
 
     const fields = currentTypeDefinition.fields
@@ -148,7 +260,7 @@ function VocabularyPanel({
 
     // 如果没有字段，使用默认列
     if (!fields || fields.length === 0) {
-      return getDefaultColumns()
+      return [dragHandleColumn, ...getDefaultColumns()].filter(Boolean)
     }
 
     // 创建字段映射便于查找
@@ -278,8 +390,8 @@ function VocabularyPanel({
       )
     }
 
-    return [nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
-  }, [currentTypeDefinition, readOnly])
+    return [dragHandleColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
+  }, [currentTypeDefinition, readOnly, enableSorting])
 
   // 默认列定义
   function getDefaultColumns() {
@@ -517,10 +629,10 @@ function VocabularyPanel({
   const tabItems = types.map(type => ({
     key: type.id,
     label: (
-      <span>
-        {TYPE_ICONS[type.id] || <TagOutlined />}
-        {' '}{type.name}
-        <span style={{ marginLeft: 4, fontSize: 12, color: '#999' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <span style={{ marginRight: 4 }}>{getIconPreview(type.icon, <TagOutlined />)}</span>
+        {type.name}
+        <span style={{ fontSize: 12, color: '#999', marginLeft: 4 }}>
           ({entries.filter(e => e.typeId === type.id).length})
         </span>
       </span>
@@ -593,15 +705,59 @@ function VocabularyPanel({
       
       {/* 表格 */}
       <div className={styles.tableContainer}>
-        <Table
-          dataSource={filteredEntries}
-          columns={columns as unknown[]}
-          rowKey="id"
-          size="small"
-          scroll={{ x: 'max-content' }}
-          pagination={{ pageSize: 10, align: 'center' }}
-          locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
-        />
+        {enableSorting ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedEntries.map(e => e.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Table
+                dataSource={sortedEntries}
+                columns={columns as unknown[]}
+                rowKey="id"
+                size="small"
+                scroll={{ x: 'max-content' }}
+                pagination={{ pageSize: 10, align: 'center' }}
+                locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                components={{
+                  body: {
+                    row: SortableRow
+                  }
+                }}
+              />
+            </SortableContext>
+            
+            <DragOverlay>
+              {activeEntry ? (
+                <div className={styles.overlayRow}>
+                  <Table
+                    dataSource={[activeEntry]}
+                    columns={columns as unknown[]}
+                    rowKey="id"
+                    size="small"
+                    pagination={false}
+                    showHeader={false}
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        ) : (
+          <Table
+            dataSource={filteredEntries}
+            columns={columns as unknown[]}
+            rowKey="id"
+            size="small"
+            scroll={{ x: 'max-content' }}
+            pagination={{ pageSize: 10, align: 'center' }}
+            locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+          />
+        )}
       </div>
 
       {/* 编辑抽屉 */}

@@ -14,6 +14,19 @@ import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
 import { useHighlightService } from '@services/highlightService'
+import type {
+  Project,
+  ProjectSettings,
+  VocabularyType,
+  VocabularyEntry,
+  SensitiveWord,
+  HighlightConfig,
+  RelationshipGraphMeta,
+  TimelineMeta,
+  SequenceChartMeta,
+  OrganizationGraphMeta,
+  FileNode
+} from '@shared/index'
 
 interface ProjectInitState {
   isLoading: boolean
@@ -21,29 +34,34 @@ interface ProjectInitState {
   isInitialized: boolean
 }
 
+/**
+ * 项目初始化数据（聚合接口返回）
+ * 一次性返回项目打开所需的所有数据，减少 IPC 调用次数
+ */
 interface ProjectInitData {
-  project: {
-    id: string
-    name: string
-    description?: string
-    author?: string
-    path: string
-    cover?: string
-    tags: string[]
-    createdAt: string
-    updatedAt: string
-  }
-  settings: any
-  vocabularyTypes: any[]
-  vocabularyEntries: any[]
-  sensitiveWords: any[]
-  highlightConfig: any
-  relationshipGraphs: any[]
-  timelines: any[]
-  sequenceCharts: any[]
-  organizationGraphs: any[]
+  /** 项目信息 */
+  project: Project
+  /** 项目设置 */
+  settings: ProjectSettings
+  /** 词汇类型列表 */
+  vocabularyTypes: VocabularyType[]
+  /** 词汇条目列表（所有类型） */
+  vocabularyEntries: VocabularyEntry[]
+  /** 敏感词列表 */
+  sensitiveWords: SensitiveWord[]
+  /** 高亮配置 */
+  highlightConfig: HighlightConfig
+  /** 关系图列表 */
+  relationshipGraphs: RelationshipGraphMeta[]
+  /** 时间线列表 */
+  timelines: TimelineMeta[]
+  /** 事序图列表 */
+  sequenceCharts: SequenceChartMeta[]
+  /** 组织架构图列表 */
+  organizationGraphs: OrganizationGraphMeta[]
+  /** 文件树初始化数据 */
   fileTree: {
-    tree: any[]
+    tree: FileNode[]
     expandedFolders: string[]
     showHiddenFiles: boolean
     hiddenItems: string[]

@@ -2,6 +2,8 @@
  * 时间线管理类型定义
  */
 
+import { CHART_PALETTE, DEFAULT_COLORS } from '@shared/constants/colors'
+
 // ============================================
 // 时间格式定义
 // ============================================
@@ -130,6 +132,8 @@ export interface TimelineMeta {
   nodeCount: number
   /** 标签（用于分类） */
   tags?: string[]
+  /** 排序序号 */
+  order: number
   createdAt: string
   updatedAt: string
 }
@@ -322,24 +326,15 @@ export type TimelineSortBy = 'createdAt' | 'updatedAt' | 'name' | 'nodeCount'
 export type TimelineSortOrder = 'asc' | 'desc'
 
 // ============================================
-// 默认颜色配置
+// 默认节点颜色（使用共享调色板）
 // ============================================
 
 /**
  * 默认节点颜色列表
  */
-export const DEFAULT_NODE_COLORS = [
-  '#1890ff', // 蓝色
-  '#52c41a', // 绿色
-  '#faad14', // 金色
-  '#eb2f96', // 粉色
-  '#722ed1', // 紫色
-  '#13c2c2', // 青色
-  '#fa541c', // 橙色
-  '#2f54eb', // 靛蓝
-]
+export const TIMELINE_NODE_COLORS: string[] = [...CHART_PALETTE]
 
 /**
  * 时间线默认颜色
  */
-export const DEFAULT_TIMELINE_COLOR = '#1890ff'
+export const DEFAULT_TIMELINE_COLOR = DEFAULT_COLORS.timeline

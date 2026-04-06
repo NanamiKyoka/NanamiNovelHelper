@@ -1,7 +1,7 @@
 .container {
   display: flex;
   height: 100%;
-  min-height: 400px;
+  min-height: 0;
   border: 1px solid var(--ant-color-border);
   border-radius: 8px;
   overflow: hidden;
@@ -9,9 +9,11 @@
 
 .typeListPanel {
   width: 280px;
+  min-width: 280px;
   border-right: 1px solid var(--ant-color-border);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .typeListHeader {
@@ -22,11 +24,14 @@
   align-items: center;
   font-weight: 500;
   background: var(--ant-color-bg-container);
+  flex-shrink: 0;
 }
 
 .typeListBody {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px;
 }
 
@@ -40,6 +45,7 @@
   margin-bottom: 4px !important;
   border: none !important;
   background: transparent !important;
+  transition: background 0.2s;
 }
 
 .typeItem:hover {
@@ -50,10 +56,41 @@
   background: var(--ant-color-primary-bg) !important;
 }
 
+.typeItem.dragging {
+  opacity: 0.5;
+  background: var(--ant-color-bg-text-hover) !important;
+}
+
 .typeItemContent {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--ant-color-text-quaternary);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.typeItem:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle:hover {
+  color: var(--ant-color-text-secondary);
 }
 
 .typeIcon {
@@ -96,9 +133,29 @@
 
 .typeConfigPanel {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100%;
+}
+
+/* hideTypeList 模式下的样式 */
+.containerHideTypeList {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.containerHideTypeList .typeConfigPanel {
+  height: 100%;
+}
+
+.containerHideTypeList .configContent {
+  height: calc(100% - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .emptyConfig {
@@ -110,7 +167,9 @@
 
 .configContent {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
 }
 
@@ -173,4 +232,20 @@
 .iconHint {
   font-size: 13px;
   color: var(--ant-color-text-secondary);
+}
+
+/* 拖拽覆盖层 */
+.overlayItem {
+  background: var(--ant-color-bg-container);
+  border: 2px solid var(--ant-color-primary);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
+  cursor: grabbing;
+}
+
+.overlayItem .typeItemContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

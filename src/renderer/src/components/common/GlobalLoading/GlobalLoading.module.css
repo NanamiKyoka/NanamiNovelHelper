@@ -1,0 +1,164 @@
+/* 全局加载组件样式 */
+
+/* 全屏遮罩 */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+}
+
+/* 加载容器 */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 48px;
+  background: var(--color-bg-container, #fff);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 加载动画 */
+.spinner {
+  margin-bottom: 16px;
+}
+
+/* 加载消息 */
+.message {
+  font-size: 16px;
+  color: var(--color-text, rgba(0, 0, 0, 0.88));
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* 进度条 */
+.progress {
+  width: 200px;
+  margin-top: 8px;
+}
+
+/* 加载模块标签 */
+.modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.moduleTag {
+  padding: 2px 8px;
+  background: var(--color-primary-bg, #e6f4ff);
+  color: var(--color-primary, #1677ff);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* 任务计数 */
+.taskCount {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+/* 应用初始化加载 - 深色背景 */
+.initOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.initContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.logo {
+  margin-bottom: 24px;
+}
+
+.logo :global(.ant-spin-dot-item) {
+  background-color: #fff;
+}
+
+.initMessage {
+  font-size: 18px;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* 内联加载指示器 */
+.inlineIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--color-bg-container, #fff);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inlineText {
+  font-size: 13px;
+  color: var(--color-text-secondary, rgba(0, 0, 0, 0.45));
+}
+
+/* 暗色主题适配 */
+:global(.dark) .overlay {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+:global(.dark) .container {
+  background: var(--color-bg-container, #1f1f1f);
+}
+
+:global(.dark) .message {
+  color: var(--color-text, rgba(255, 255, 255, 0.88));
+}
+
+:global(.dark) .moduleTag {
+  background: var(--color-primary-bg, rgba(22, 119, 255, 0.2));
+}
+
+:global(.dark) .taskCount {
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.45));
+}

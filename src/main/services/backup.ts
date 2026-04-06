@@ -9,6 +9,7 @@ import * as zlib from 'zlib'
 import { promisify } from 'util'
 import { PROJECT_META_DIR, BACKUP_DIR } from '../types/project'
 import { projectSettingsService } from './projectSettings'
+import { createLogger } from '../utils/logger'
 
 const gzip = promisify(zlib.gzip)
 const gunzip = promisify(zlib.gunzip)
@@ -29,6 +30,7 @@ export interface BackupInfo {
  * 备份服务
  */
 class BackupService {
+  private logger = createLogger('BackupService')
   private projectPath: string | null = null
   private backupDir: string | null = null
 
@@ -166,7 +168,7 @@ class BackupService {
 
       return true
     } catch (error) {
-      console.error('Failed to restore backup:', error)
+      this.logger.error('Failed to restore backup', error)
       return false
     }
   }

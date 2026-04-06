@@ -7,6 +7,8 @@ directories:
   output: dist
 
 files:
+  - out/**/*
+  - node_modules/**/*
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
@@ -14,9 +16,30 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - '!docs/*'
+  - '!node_modules/*/{CHANGELOG.md,README.md,readme.md,readme,LICENSE,license,LICENSE.md,license.md}'
+  - '!node_modules/*/{test,__tests__,tests,powered-test,example,examples}'
+  - '!node_modules/.bin'
+  - '!node_modules/*/node_modules/.bin'
 
+# 启用 ASAR 打包，减少体积和提升启动速度
+asar: true
+
+# 需要解压的文件（原生模块需要真实文件路径）
 asarUnpack:
   - resources/**
+  - node_modules/sharp/**
+  - node_modules/node-pty/**
+  - node_modules/@electron/**
+  - node_modules/better-sqlite3/**
+
+# 最大压缩
+compression: maximum
+
+# 构建钩子
+afterPack: ./scripts/fix-deps.js
+
+# 跳过原生模块重建，使用预编译版本
+npmRebuild: false
 
 win:
   icon: resources/icon.ico

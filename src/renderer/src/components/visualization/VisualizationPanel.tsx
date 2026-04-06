@@ -17,6 +17,7 @@ import RelationshipPanel from './relationship/RelationshipPanel'
 import TimelinePanel from './timeline/TimelinePanel'
 import { SequenceChartPanel } from './sequence-chart'
 import { OrganizationPanel } from './organization'
+import { MapPanel } from './map'
 import styles from './VisualizationPanel.module.css'
 
 const { Text, Title } = Typography
@@ -63,7 +64,7 @@ const tools: ToolCard[] = [
     icon: <EnvironmentOutlined className={styles.toolIcon} />,
     title: '地图设计',
     description: '绘制故事地图和地点关系',
-    status: 'coming'
+    status: 'available'
   }
 ]
 
@@ -81,13 +82,15 @@ function VisualizationPanel(): JSX.Element {
         return <SequenceChartPanel />
       case 'organization':
         return <OrganizationPanel />
+      case 'map':
+        return <MapPanel />
       default:
         return null
     }
   }
 
   // 如果选中了某个工具，显示对应的工具面板
-  if (activeTool && ['relationship', 'timeline', 'sequenceChart', 'organization'].includes(activeTool)) {
+  if (activeTool && ['relationship', 'timeline', 'sequenceChart', 'organization', 'map'].includes(activeTool)) {
     return (
       <div className={styles.toolContainer}>
         <div className={styles.toolHeader}>

@@ -11,6 +11,8 @@ import RelationshipPanel from '@components/visualization/relationship/Relationsh
 import TimelinePanel from '@components/visualization/timeline/TimelinePanel'
 import { SequenceChartPanel } from '@components/visualization/sequence-chart'
 import { OrganizationPanel } from '@components/visualization/organization'
+import { AiAssistantPanel } from '@components/ai-assistant'
+import { MapPanel } from '@components/visualization/map'
 import { useSettingsStore } from '@stores/settingsStore'
 import styles from './Sidebar.module.css'
 
@@ -34,11 +36,13 @@ const PANEL_TITLES: Record<string, string> = {
   relationship: '关系图',
   timeline: '时间线',
   sequenceChart: '事序图',
-  organization: '组织架构'
+  organization: '组织架构',
+  aiAssistant: 'AI写作助手',
+  map: '地图'
 }
 
 // 全屏功能面板列表（这些面板需要返回按钮）
-const FULLSCREEN_PANELS = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization']
+const FULLSCREEN_PANELS = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'aiAssistant', 'map']
 
 function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Element {
   const sidebarWidth = useSettingsStore((state) => state.globalSettings.sidebarWidth)
@@ -88,6 +92,10 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
         return <SequenceChartPanel />
       case 'organization':
         return <OrganizationPanel />
+      case 'aiAssistant':
+        return <AiAssistantPanel />
+      case 'map':
+        return <MapPanel />
       default:
         return <div className={styles.panelContent}>未知面板</div>
     }
@@ -121,6 +129,7 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
       collapsed={collapsed}
       collapsedWidth={0}
       trigger={null}
+      aria-label="侧边栏"
     >
       {showBackButton && (
         <div className={styles.panelHeader}>
@@ -129,14 +138,21 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
             icon={<ArrowLeftOutlined />} 
             onClick={handleBackToFiles}
             className={styles.backButton}
+            aria-label="返回文件面板"
           />
           <Text strong className={styles.panelTitle}>{panelTitle}</Text>
         </div>
       )}
-      <div className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`}>
+      <div className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`} role="region" aria-label={`${panelTitle}面板`}>
         {renderContent()}
       </div>
-      <div className={styles.resizeHandle} onMouseDown={handleResizeStart} />
+      <div 
+        className={styles.resizeHandle} 
+        onMouseDown={handleResizeStart}
+        role="separator"
+        aria-label="调整侧边栏宽度"
+        tabIndex={0}
+      />
     </Sider>
   )
 }

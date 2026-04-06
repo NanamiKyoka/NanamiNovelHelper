@@ -187,3 +187,63 @@
   color: var(--ant-color-text-secondary);
   font-size: 13px;
 }
+
+/* 拖拽排序样式 */
+.typeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--ant-color-text-secondary);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.typeItem:hover .dragHandle {
+  opacity: 1;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.overlayItem {
+  background: var(--ant-color-bg-container);
+  border: 2px solid var(--ant-color-primary);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
+  cursor: grabbing;
+}
+
+/* 修复 tabContent 内部表格的空状态背景 */
+.tabContent :global(.ant-table-wrapper) {
+  background: transparent;
+}
+
+.tabContent :global(.ant-table-empty .ant-table-body) {
+  background: transparent !important;
+}
+
+.tabContent :global(.ant-empty) {
+  background: transparent;
+}
+
+.tabContent :global(.ant-table) {
+  background: transparent;
+}
+
+.tabContent :global(.ant-table-container) {
+  background: transparent;
+}
+
+.tabContent :global(.ant-table-content) {
+  background: transparent;
+}

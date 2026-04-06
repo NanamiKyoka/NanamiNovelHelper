@@ -25,9 +25,9 @@ export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: stri
 }
 
 /** 左侧边栏徽章类型（仅包含有全屏功能的） */
-export type SidebarBadgeType = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization'
+export type SidebarBadgeType = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'aiAssistant' | 'map'
 
-export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization']
+export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'aiAssistant', 'map']
 
 export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<SidebarBadgeType, { label: string; icon: string }> = {
   vocabulary: { label: '词汇查询', icon: 'TagOutlined' },
@@ -35,5 +35,7 @@ export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<SidebarBadgeType, { label: str
   relationship: { label: '关系图', icon: 'ApartmentOutlined' },
   timeline: { label: '时间线', icon: 'ClockCircleOutlined' },
   sequenceChart: { label: '事序图', icon: 'TableOutlined' },
-  organization: { label: '组织架构', icon: 'ClusterOutlined' }
+  organization: { label: '组织架构', icon: 'ClusterOutlined' },
+  aiAssistant: { label: 'AI写作助手', icon: 'RobotOutlined' },
+  map: { label: '地图', icon: 'EnvironmentOutlined' }
 }

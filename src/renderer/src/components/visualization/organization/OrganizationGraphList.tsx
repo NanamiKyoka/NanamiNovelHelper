@@ -1,6 +1,6 @@
 /**
  * 组织架构图列表组件
- * 展示所有组织架构图，支持创建、编辑、删除、导入导出
+ * 展示所有组织架构图，支持创建、编辑、删除、导入导出、拖拽排序
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -23,7 +23,25 @@ import {
   EditOutlined,
   TeamOutlined,
   ApartmentOutlined,
+  HolderOutlined,
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import type { OrganizationGraphMeta } from '@types/organization'
@@ -45,6 +63,84 @@ interface ContextMenuState {
   graph: OrganizationGraphMeta | null
 }
 
+// 可排序的卡片组件
+interface SortableCardProps {
+  graph: OrganizationGraphMeta
+  getLocalUrl: (filePath: string) => string
+  onContextMenu: (e: React.MouseEvent, graph: OrganizationGraphMeta) => void
+  onDoubleClick: (graphId: string) => void
+}
+
+function SortableCard({
+  graph,
+  getLocalUrl,
+  onContextMenu,
+  onDoubleClick,
+}: SortableCardProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: graph.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={styles.sortableCardWrapper}
+    >
+      <Card
+        className={styles.graphCard}
+        onContextMenu={(e) => onContextMenu(e, graph)}
+        onDoubleClick={() => onDoubleClick(graph.id)}
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className={styles.thumbnail}>
+          {graph.thumbnail ? (
+            <img
+              src={getLocalUrl(graph.thumbnail)}
+              alt={graph.name}
+              className={styles.thumbnailImage}
+            />
+          ) : (
+            <ApartmentOutlined className={styles.thumbnailPlaceholder} />
+          )}
+          {/* 拖拽手柄 */}
+          <div
+            className={styles.dragHandle}
+            {...attributes}
+            {...listeners}
+          >
+            <HolderOutlined />
+          </div>
+        </div>
+        <div className={styles.cardBody}>
+          <div className={styles.graphName}>{graph.name}</div>
+          {graph.description && (
+            <div className={styles.graphDescription}>{graph.description}</div>
+          )}
+          <div className={styles.graphStats}>
+            <span className={styles.stat}>
+              <TeamOutlined />
+              {graph.nodeCount} 节点
+            </span>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationGraphListProps): JSX.Element {
   const { modal, message } = App.useApp()
 
@@ -57,6 +153,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
     deleteGraph,
     exportGraph,
     importGraph,
+    reorderGraphs,
   } = useOrganizationStore()
 
   const { types: vocabularyTypes, loadTypes } = useVocabularyStore()
@@ -67,6 +164,18 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
   const [newGraphDescription, setNewGraphDescription] = useState('')
   const [newGraphVocabularyTypes, setNewGraphVocabularyTypes] = useState<string[]>([])
   const [isCreating, setIsCreating] = useState(false)
+
+  // 拖拽传感器配置
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 需要移动 5px 才开始拖拽，避免误触
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
@@ -201,6 +310,31 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
     onSelectGraph(graphId)
   }
 
+  // 处理拖拽结束
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id) {
+        const oldIndex = graphs.findIndex((g) => g.id === active.id)
+        const newIndex = graphs.findIndex((g) => g.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          // 乐观更新：先本地排序
+          const newGraphs = arrayMove(graphs, oldIndex, newIndex)
+          const graphIds = newGraphs.map((g) => g.id)
+
+          // 保存到后端
+          const success = await reorderGraphs(graphIds)
+          if (!success) {
+            message.error('排序保存失败')
+          }
+        }
+      }
+    },
+    [graphs, reorderGraphs, message]
+  )
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -233,41 +367,28 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
             <Text type="secondary">点击"新建"创建第一个组织架构图</Text>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {graphs.map((graph) => (
-              <Card
-                key={graph.id}
-                className={styles.graphCard}
-                onContextMenu={(e) => handleContextMenu(e, graph)}
-                onDoubleClick={() => handleDoubleClick(graph.id)}
-                styles={{ body: { padding: 0 } }}
-              >
-                <div className={styles.thumbnail}>
-                  {graph.thumbnail ? (
-                    <img
-                      src={getLocalUrl(graph.thumbnail)}
-                      alt={graph.name}
-                      className={styles.thumbnailImage}
-                    />
-                  ) : (
-                    <ApartmentOutlined className={styles.thumbnailPlaceholder} />
-                  )}
-                </div>
-                <div className={styles.cardBody}>
-                  <div className={styles.graphName}>{graph.name}</div>
-                  {graph.description && (
-                    <div className={styles.graphDescription}>{graph.description}</div>
-                  )}
-                  <div className={styles.graphStats}>
-                    <span className={styles.stat}>
-                      <TeamOutlined />
-                      {graph.nodeCount} 节点
-                    </span>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={graphs.map((g) => g.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className={styles.grid}>
+                {graphs.map((graph) => (
+                  <SortableCard
+                    key={graph.id}
+                    graph={graph}
+                    getLocalUrl={getLocalUrl}
+                    onContextMenu={handleContextMenu}
+                    onDoubleClick={handleDoubleClick}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 

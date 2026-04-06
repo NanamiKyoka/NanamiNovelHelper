@@ -36,8 +36,28 @@ import {
   CalendarOutlined,
   TagOutlined,
   SettingOutlined,
-  HighlightOutlined
+  HighlightOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
 import type { VocabularyType, VocabularyEntry, FieldDefinition } from '@types/vocabulary'
@@ -72,6 +92,106 @@ const BUILTIN_FIELDS_MAP: Record<string, FieldDefinition[]> = {
   'event': []
 }
 
+// 可排序的类型项组件
+interface SortableTypeItemProps {
+  type: VocabularyType
+  isSelected: boolean
+  entryCount: number
+  onSelect: () => void
+  onEdit: () => void
+  onDuplicate: () => void
+  onDelete: () => void
+  getTypeIcon: (type: VocabularyType) => React.ReactNode
+}
+
+function SortableTypeItem({
+  type,
+  isSelected,
+  entryCount,
+  onSelect,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  getTypeIcon
+}: SortableTypeItemProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: type.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${styles.typeItem} ${isSelected ? styles.active : ''}`}
+      onClick={onSelect}
+    >
+      <div className={styles.typeItemContent}>
+        <div
+          className={styles.dragHandle}
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <HolderOutlined />
+        </div>
+        <div className={styles.typeIcon} style={{ backgroundColor: type.color }}>
+          {getTypeIcon(type)}
+        </div>
+        <div className={styles.typeInfo}>
+          <div className={styles.typeName}>{type.name}</div>
+          <div className={styles.typeMeta}>
+            {entryCount} 条
+          </div>
+        </div>
+      </div>
+      <div className={styles.typeItemActions}>
+        <Tooltip title="复制">
+          <Button
+            type="text"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={(e) => { e.stopPropagation(); onDuplicate() }}
+          />
+        </Tooltip>
+        <Tooltip title="编辑">
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={(e) => { e.stopPropagation(); onEdit() }}
+          />
+        </Tooltip>
+        <Popconfirm
+          title="确定删除此类型？"
+          onConfirm={(e) => { e?.stopPropagation(); onDelete() }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="删除"
+          cancelText="取消"
+        >
+          <Button
+            type="text"
+            size="small"
+            icon={<DeleteOutlined />}
+            danger
+            onClick={(e) => e.stopPropagation()}
+          />
+        </Popconfirm>
+      </div>
+    </div>
+  )
+}
+
 interface VocabularyFullscreenProps {
   onBack: () => void
 }
@@ -88,6 +208,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     addType,
     updateType,
     deleteType,
+    reorderTypes,
     isLoaded
   } = useVocabularyStore()
   
@@ -98,6 +219,21 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   const [activeTab, setActiveTab] = useState<'entries' | 'typeSettings' | 'highlight'>('entries')
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+  
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
 
   // 设置全屏模式，卸载时退出
   useEffect(() => {
@@ -142,11 +278,40 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
 
   // 过滤类型列表
   const filteredTypes = useMemo(() => {
-    if (!searchText.trim()) return types
+    if (!searchText.trim()) return types.sort((a, b) => a.order - b.order)
     return types.filter(t => 
       t.name.toLowerCase().includes(searchText.toLowerCase())
-    )
+    ).sort((a, b) => a.order - b.order)
   }, [types, searchText])
+  
+  // 拖拽开始
+  const handleDragStart = (event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }
+  
+  // 拖拽结束
+  const handleDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = filteredTypes.findIndex(t => t.id === active.id)
+      const newIndex = filteredTypes.findIndex(t => t.id === over.id)
+      
+      const newTypes = arrayMove(filteredTypes, oldIndex, newIndex)
+      const newTypeIds = newTypes.map(t => t.id)
+      
+      // 调用 reorderTypes 更新顺序
+      reorderTypes(newTypeIds).catch((error) => {
+        console.error('Failed to reorder types:', error)
+        message.error('排序失败')
+      })
+    }
+    
+    setActiveId(null)
+  }
+  
+  // 当前拖拽的类型
+  const activeType = activeId ? types.find(t => t.id === activeId) : null
 
   // 打开创建弹窗
   const openCreateModal = (mode: CreateMode, template?: VocabularyType): void => {
@@ -364,60 +529,51 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             {filteredTypes.length === 0 ? (
               <Empty description="暂无类型" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
-              <List
-                dataSource={filteredTypes}
-                renderItem={(type) => (
-                  <List.Item
-                    className={`${styles.typeItem} ${selectedTypeId === type.id ? styles.active : ''}`}
-                    onClick={() => setSelectedTypeId(type.id)}
-                  >
-                    <div className={styles.typeItemContent}>
-                      <div className={styles.typeIcon} style={{ backgroundColor: type.color }}>
-                        {getTypeIcon(type)}
-                      </div>
-                      <div className={styles.typeInfo}>
-                        <div className={styles.typeName}>{type.name}</div>
-                        <div className={styles.typeMeta}>
-                          {entries.filter(e => e.typeId === type.id).length} 条
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={filteredTypes.map(t => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className={styles.typeList}>
+                    {filteredTypes.map((type) => (
+                      <SortableTypeItem
+                        key={type.id}
+                        type={type}
+                        isSelected={selectedTypeId === type.id}
+                        entryCount={entries.filter(e => e.typeId === type.id).length}
+                        onSelect={() => setSelectedTypeId(type.id)}
+                        onEdit={() => handleEditType(type)}
+                        onDuplicate={() => handleDuplicateType(type)}
+                        onDelete={() => handleDeleteType(type.id)}
+                        getTypeIcon={getTypeIcon}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+                
+                <DragOverlay>
+                  {activeType ? (
+                    <div className={styles.overlayItem}>
+                      <div className={styles.typeItemContent}>
+                        <div className={styles.typeIcon} style={{ backgroundColor: activeType.color }}>
+                          {getTypeIcon(activeType)}
+                        </div>
+                        <div className={styles.typeInfo}>
+                          <div className={styles.typeName}>{activeType.name}</div>
+                          <div className={styles.typeMeta}>
+                            {entries.filter(e => e.typeId === activeType.id).length} 条
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className={styles.typeItemActions}>
-                      <Tooltip title="复制">
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<CopyOutlined />}
-                          onClick={(e) => { e.stopPropagation(); handleDuplicateType(type) }}
-                        />
-                      </Tooltip>
-                      <Tooltip title="编辑">
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<EditOutlined />}
-                          onClick={(e) => { e.stopPropagation(); handleEditType(type) }}
-                        />
-                      </Tooltip>
-                      <Popconfirm
-                        title="确定删除此类型？"
-                        onConfirm={(e) => { e?.stopPropagation(); handleDeleteType(type.id) }}
-                        onCancel={(e) => e?.stopPropagation()}
-                        okText="删除"
-                        cancelText="取消"
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<DeleteOutlined />}
-                          danger
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </Popconfirm>
-                    </div>
-                  </List.Item>
-                )}
-              />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </div>
         </Sider>
@@ -444,6 +600,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     embedded 
                     currentTypeId={selectedTypeId || ''} 
                     onTypeChange={setSelectedTypeId}
+                    enableSorting={true}
                   />
                 )}
                 {activeTab === 'typeSettings' && (

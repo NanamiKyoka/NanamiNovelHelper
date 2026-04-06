@@ -1,0 +1,10 @@
+.container {
+  padding: var(--spacing-6, 24px);
+}
+
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}

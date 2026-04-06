@@ -1,0 +1,55 @@
+/* ============================================
+   地图全屏编辑器样式
+   使用 common.module.css 公共样式
+   ============================================ */
+
+/* 全屏容器 */
+.container {
+  composes: fullscreenContainer from '../common.module.css';
+}
+
+/* 工具栏 */
+.header {
+  composes: toolbar from '../common.module.css';
+}
+
+.headerLeft {
+  composes: toolbarLeft from '../common.module.css';
+}
+
+.headerRight {
+  composes: toolbarRight from '../common.module.css';
+}
+
+.title {
+  composes: toolbarTitle from '../common.module.css';
+}
+
+/* 主编辑区域 */
+.mainArea {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 画布区域 */
+.canvasArea {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 状态栏 */
+.statusBar {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}

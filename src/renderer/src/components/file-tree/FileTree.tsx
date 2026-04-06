@@ -108,11 +108,14 @@ const TreeNode = memo(function TreeNode({
   getContextMenu
 }: TreeNodeProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const isCanceling = useRef(false)
   
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
       inputRef.current.select()
+      // 开始新的编辑时重置取消标志
+      isCanceling.current = false
     }
   }, [isEditing])
   
@@ -154,12 +157,26 @@ const TreeNode = memo(function TreeNode({
             className={styles.editInput}
             value={editingName}
             onChange={(e) => onRenameChange(e.target.value)}
-            onBlur={onRenameFinish}
+            onBlur={() => {
+              // 如果是 Escape 取消触发的 blur，不执行 finish
+              if (isCanceling.current) {
+                return
+              }
+              onRenameFinish()
+            }}
             onKeyDown={(e) => {
-              e.stopPropagation()
+              // Ctrl+Space 用于切换输入法，不阻止事件传播
+              if (e.key === ' ' && (e.ctrlKey || e.metaKey)) {
+                return // 让事件正常冒泡，输入法可以捕获
+              }
+              
+              // 只对需要处理的按键阻止冒泡
               if (e.key === 'Enter') {
+                e.stopPropagation()
                 onRenameFinish()
               } else if (e.key === 'Escape') {
+                e.stopPropagation()
+                isCanceling.current = true // 标记正在取消，防止 blur 触发 finish
                 onRenameCancel()
               }
             }}
@@ -178,12 +195,13 @@ interface NewItemProps {
   depth: number
   name: string
   onChange: (name: string) => void
-  onFinish: () => void
+  onFinish: (isBlur?: boolean) => void
   onCancel: () => void
 }
 
 const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, onCancel }: NewItemProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const isCanceling = useRef(false)
   
   useEffect(() => {
     if (inputRef.current) {
@@ -206,12 +224,26 @@ const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, o
         className={styles.editInput}
         value={name}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={onFinish}
+        onBlur={() => {
+          // 如果是 Escape 取消触发的 blur，不执行 finish
+          if (isCanceling.current) {
+            return
+          }
+          onFinish(true)
+        }}
         onKeyDown={(e) => {
-          e.stopPropagation()
+          // Ctrl+Space 用于切换输入法，不阻止事件传播
+          if (e.key === ' ' && (e.ctrlKey || e.metaKey)) {
+            return // 让事件正常冒泡，输入法可以捕获
+          }
+          
+          // 只对需要处理的按键阻止冒泡
           if (e.key === 'Enter') {
-            onFinish()
+            e.stopPropagation()
+            onFinish(false) // Enter 触发，非 blur
           } else if (e.key === 'Escape') {
+            e.stopPropagation()
+            isCanceling.current = true // 标记正在取消，防止 blur 触发 finish
             onCancel()
           }
         }}
@@ -735,11 +767,14 @@ function FileTree(): JSX.Element {
                         depth={depth}
                         name={newItemName}
                         onChange={(name) => useFileTreeStore.setState({ newItemName: name })}
-                        onFinish={async () => {
+                        onFinish={async (isBlur = false) => {
                           const currentName = useFileTreeStore.getState().newItemName
                           try {
-                            await finishNewItem(currentName)
-                            message.success('创建成功')
+                            await finishNewItem(currentName, isBlur)
+                            // 只有成功创建时才显示消息
+                            if (currentName.trim() && !isBlur) {
+                              message.success('创建成功')
+                            }
                           } catch (error) {
                             const errorMessage = error instanceof Error ? error.message : '创建失败'
                             message.error(errorMessage)

@@ -56,12 +56,16 @@ function RelationshipGraphPreview({
     // 如果已经有图实例，不重复创建
     if (graphRef.current) return
 
-    // 使用 setTimeout 确保容器有尺寸
-    setTimeout(() => {
+    const tryInit = (retries: number) => {
       const width = container.clientWidth
       const height = container.clientHeight
 
-      if (width === 0 || height === 0) return
+      if (width === 0 || height === 0) {
+        if (retries > 0) {
+          requestAnimationFrame(() => tryInit(retries - 1))
+        }
+        return
+      }
 
       // 主题相关颜色
       const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333'
@@ -150,7 +154,10 @@ function RelationshipGraphPreview({
       }).catch(() => {
         // 忽略错误
       })
-    }, 100)
+    }
+
+    // 开始初始化尝试，最多重试 20 次
+    tryInit(20)
   }, [isDarkMode])
 
   // 清理

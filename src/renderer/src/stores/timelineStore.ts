@@ -81,6 +81,8 @@ interface TimelineState {
   clearData: () => void
   // 批量设置方法（用于聚合接口）
   setTimelines: (timelines: TimelineMeta[]) => void
+  // 排序方法
+  reorderTimelines: (timelineIds: string[]) => Promise<void>
 }
 
 export const useTimelineStore = create<TimelineState>((set, get) => ({
@@ -944,5 +946,28 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 批量设置数据（用于聚合接口）
   setTimelines: (timelines: TimelineMeta[]) => {
     set({ timelines, isLoading: false, error: null })
+  },
+
+  // 重新排序时间线列表
+  reorderTimelines: async (timelineIds: string[]) => {
+    try {
+      const success = await window.electron.timeline.reorder(timelineIds)
+      if (success) {
+        // 更新本地状态顺序
+        set((state) => ({
+          timelines: timelineIds.map((id, index) => {
+            const timeline = state.timelines.find(t => t.id === id)
+            if (timeline) {
+              return { ...timeline, order: index }
+            }
+            return null
+          }).filter((t): t is TimelineMeta => t !== null)
+        }))
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '重新排序时间线失败'
+      console.error('Failed to reorder timelines:', error)
+      set({ error: errorMessage })
+    }
   },
 }))

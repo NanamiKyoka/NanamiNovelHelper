@@ -47,8 +47,8 @@ function SequenceChartPanel(): JSX.Element {
     <div className={styles.container}>
       {viewMode === 'list' && (
         <SequenceChartList
-          onSelectChart={handleSelectChart}
-          onCreateAndEdit={handleCreateAndPreview}
+          onOpenChart={handleSelectChart}
+          onCreateChart={handleCreateAndPreview}
         />
       )}
       {viewMode === 'preview' && currentChartId && (

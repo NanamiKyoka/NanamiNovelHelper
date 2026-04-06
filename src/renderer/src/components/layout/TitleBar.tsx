@@ -48,6 +48,7 @@ function TitleBar(): JSX.Element {
           className={`${styles.controlButton} ${styles.minimize}`}
           onClick={handleMinimize}
           title="最小化"
+          aria-label="最小化窗口"
         >
           <MinusOutlined />
         </button>
@@ -55,6 +56,7 @@ function TitleBar(): JSX.Element {
           className={`${styles.controlButton} ${styles.maximize}`}
           onClick={handleMaximize}
           title={isMaximized ? "还原" : "最大化"}
+          aria-label={isMaximized ? "还原窗口" : "最大化窗口"}
         >
           {isMaximized ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
         </button>
@@ -62,6 +64,7 @@ function TitleBar(): JSX.Element {
           className={`${styles.controlButton} ${styles.close}`}
           onClick={handleClose}
           title="关闭"
+          aria-label="关闭窗口"
         >
           <CloseOutlined />
         </button>

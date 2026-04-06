@@ -675,6 +675,20 @@ interface ShellInfo {
 }
 
 /**
+ * 搜索相关类型定义
+ */
+interface SearchOptions {
+  query: string
+  caseSensitive?: boolean
+  wholeWord?: boolean
+  useRegex?: boolean
+  filesToInclude?: string
+  filesToExclude?: string
+  maxFileSize?: number
+  maxResults?: number
+}
+
+/**
  * 文件节点信息
  */
 interface FileNode {
@@ -1231,6 +1245,27 @@ const api = {
     showImportDialog: (): Promise<string | null> => 
       ipcRenderer.invoke('organization:showImportDialog')
   },
+  // 地图管理
+  map: {
+    // 地图管理
+    getList: () => ipcRenderer.invoke('map:getList'),
+    get: (mapId: string) => ipcRenderer.invoke('map:get', mapId),
+    create: (options: { name: string; description?: string; linkedVocabularyTypes?: string[] }) => 
+      ipcRenderer.invoke('map:create', options),
+    update: (mapId: string, updates: any) => ipcRenderer.invoke('map:update', mapId, updates),
+    delete: (mapId: string) => ipcRenderer.invoke('map:delete', mapId),
+    // 缩略图
+    saveThumbnail: (mapId: string, dataUrl: string) => 
+      ipcRenderer.invoke('map:saveThumbnail', mapId, dataUrl),
+    getThumbnailPath: (mapId: string) => ipcRenderer.invoke('map:getThumbnailPath', mapId),
+    // 导入导出
+    export: (mapId: string) => ipcRenderer.invoke('map:export', mapId),
+    import: (jsonContent: string) => ipcRenderer.invoke('map:import', jsonContent),
+    showExportDialog: (mapName: string) => ipcRenderer.invoke('map:showExportDialog', mapName),
+    showImportDialog: () => ipcRenderer.invoke('map:showImportDialog'),
+    // 排序
+    reorderMaps: (mapIds: string[]) => ipcRenderer.invoke('map:reorderMaps', mapIds)
+  },
   // 文件系统
   file: {
     exists: (path: string): Promise<boolean> => ipcRenderer.invoke('file:exists', path),
@@ -1394,6 +1429,25 @@ const api = {
     setMode: (mode: 'system' | 'isomorphic' | 'auto') => 
       ipcRenderer.invoke('git:setMode', mode),
     getMode: () => ipcRenderer.invoke('git:getMode')
+  },
+  // 搜索功能
+  search: {
+    // 执行搜索
+    search: (options: SearchOptions) => ipcRenderer.invoke('search:content', options),
+    // 替换内容
+    replace: (
+      filePath: string,
+      searchQuery: string,
+      replaceText: string,
+      options?: {
+        caseSensitive?: boolean
+        wholeWord?: boolean
+        useRegex?: boolean
+        replaceAll?: boolean
+        line?: number
+        column?: number
+      }
+    ) => ipcRenderer.invoke('search:replace', filePath, searchQuery, replaceText, options)
   },
   // 平台信息
   platform: process.platform

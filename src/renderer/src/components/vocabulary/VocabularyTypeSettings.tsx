@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
-  List,
   Button,
   Empty,
   Modal,
@@ -11,8 +10,7 @@ import {
   message,
   Popconfirm,
   Dropdown,
-  Tooltip,
-  Divider
+  Tooltip
 } from 'antd'
 import {
   PlusOutlined,
@@ -24,8 +22,28 @@ import {
   GiftOutlined,
   ThunderboltOutlined,
   CalendarOutlined,
-  TagOutlined
+  TagOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import IconPicker, { getIconPreview, type IconValue } from './IconPicker'
 import { v4 as uuidv4 } from 'uuid'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
@@ -71,6 +89,109 @@ const BUILTIN_FIELDS_MAP: Record<string, FieldDefinition[]> = {
 // 新建类型的方式
 type CreateMode = 'template' | 'custom' | null
 
+// 可排序的类型项组件
+interface SortableTypeItemProps {
+  type: VocabularyType
+  isSelected: boolean
+  onSelect: () => void
+  onEdit: () => void
+  onDuplicate: () => void
+  onDelete: () => void
+  getTypeIcon: (type: VocabularyType) => React.ReactNode
+  readOnly: boolean
+}
+
+function SortableTypeItem({
+  type,
+  isSelected,
+  onSelect,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  getTypeIcon,
+  readOnly
+}: SortableTypeItemProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: type.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${styles.typeItem} ${isSelected ? styles.active : ''} ${isDragging ? styles.dragging : ''}`}
+      onClick={onSelect}
+    >
+      <div className={styles.typeItemContent}>
+        <div
+          className={styles.dragHandle}
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <HolderOutlined />
+        </div>
+        <div className={styles.typeIcon} style={{ backgroundColor: type.color }}>
+          {getTypeIcon(type)}
+        </div>
+        <div className={styles.typeInfo}>
+          <div className={styles.typeName}>{type.name}</div>
+          <div className={styles.typeMeta}>{type.fields.length} 个字段</div>
+        </div>
+      </div>
+      <div className={styles.typeItemActions}>
+        <Tooltip title="复制">
+          <Button
+            type="text"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={(e) => { e.stopPropagation(); onDuplicate() }}
+            disabled={readOnly}
+          />
+        </Tooltip>
+        <Tooltip title="编辑">
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            disabled={readOnly}
+          />
+        </Tooltip>
+        <Popconfirm
+          title="确定删除此类型？相关的词汇数据将保留。"
+          onConfirm={(e) => { e?.stopPropagation(); onDelete() }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="删除"
+          cancelText="取消"
+        >
+          <Tooltip title="删除">
+            <Button
+              type="text"
+              size="small"
+              icon={<DeleteOutlined />}
+              danger
+              onClick={(e) => e.stopPropagation()}
+              disabled={readOnly}
+            />
+          </Tooltip>
+        </Popconfirm>
+      </div>
+    </div>
+  )
+}
+
 interface VocabularyTypeSettingsProps {
   readOnly?: boolean
   /** 隐藏左侧类型列表（用于外部控制选中类型时） */
@@ -94,10 +215,26 @@ function VocabularyTypeSettings({
     addType, 
     updateType, 
     deleteType,
+    reorderTypes,
     isLoaded 
   } = useVocabularyStore()
   
   const [internalSelectedTypeId, setInternalSelectedTypeId] = useState<string | null>(null)
+  
+  // 拖拽状态
+  const [activeId, setActiveId] = useState<string | null>(null)
+  
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
   
   // 使用外部或内部的选中类型
   const selectedTypeId = externalSelectedTypeId !== undefined ? externalSelectedTypeId : internalSelectedTypeId
@@ -134,6 +271,40 @@ function VocabularyTypeSettings({
 
   // 选中的类型
   const selectedType = types.find(t => t.id === selectedTypeId) || null
+
+  // 按 order 排序的类型列表
+  const sortedTypes = useMemo(() => {
+    return [...types].sort((a, b) => a.order - b.order)
+  }, [types])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+  
+  // 拖拽结束
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = sortedTypes.findIndex(t => t.id === active.id)
+      const newIndex = sortedTypes.findIndex(t => t.id === over.id)
+      
+      const newTypes = arrayMove(sortedTypes, oldIndex, newIndex)
+      const newTypeIds = newTypes.map(t => t.id)
+      
+      // 调用 reorderTypes 更新顺序
+      reorderTypes(newTypeIds).catch((error) => {
+        console.error('Failed to reorder types:', error)
+        message.error('排序失败')
+      })
+    }
+    
+    setActiveId(null)
+  }, [sortedTypes, reorderTypes])
+  
+  // 当前拖拽的类型
+  const activeType = activeId ? types.find(t => t.id === activeId) : null
 
   // 点击新建按钮 - 打开自定义类型创建
   const handleCreateClick = (): void => {
@@ -294,6 +465,23 @@ function VocabularyTypeSettings({
     await updateType(selectedTypeId, { tableConfig: columns })
   }, [selectedTypeId, readOnly, updateType])
 
+  // 处理类型项的操作
+  const handleTypeSelect = (typeId: string): void => {
+    setSelectedTypeId(typeId)
+  }
+
+  const handleTypeEdit = (type: VocabularyType): void => {
+    handleEditType(type)
+  }
+
+  const handleTypeDuplicate = (type: VocabularyType): void => {
+    handleDuplicateType(type)
+  }
+
+  const handleTypeDelete = (typeId: string): void => {
+    handleDeleteType(typeId)
+  }
+
   // 新建菜单
   const createMenuItems = [
     {
@@ -380,7 +568,7 @@ function VocabularyTypeSettings({
   // 如果隐藏类型列表，只显示配置面板
   if (hideTypeList) {
     return (
-      <div className={styles.container} style={{ display: 'block' }}>
+      <div className={`${styles.container} ${styles.containerHideTypeList}`}>
         {configPanel}
         
         {/* 类型基本信息弹窗 */}
@@ -483,63 +671,49 @@ function VocabularyTypeSettings({
           {types.length === 0 ? (
             <Empty description="暂无类型" image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
-            <List
-              dataSource={types}
-              renderItem={(type) => (
-                <List.Item
-                  className={`${styles.typeItem} ${selectedTypeId === type.id ? styles.active : ''}`}
-                  onClick={() => setSelectedTypeId(type.id)}
-                >
-                  <div className={styles.typeItemContent}>
-                    <div className={styles.typeIcon} style={{ backgroundColor: type.color }}>
-                      {getTypeIcon(type)}
-                    </div>
-                    <div className={styles.typeInfo}>
-                      <div className={styles.typeName}>{type.name}</div>
-                      <div className={styles.typeMeta}>{type.fields.length} 个字段</div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sortedTypes.map(t => t.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {sortedTypes.map((type) => (
+                    <SortableTypeItem
+                      key={type.id}
+                      type={type}
+                      isSelected={selectedTypeId === type.id}
+                      onSelect={() => handleTypeSelect(type.id)}
+                      onEdit={() => handleTypeEdit(type)}
+                      onDuplicate={() => handleTypeDuplicate(type)}
+                      onDelete={() => handleTypeDelete(type.id)}
+                      getTypeIcon={getTypeIcon}
+                      readOnly={readOnly}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+              
+              <DragOverlay>
+                {activeType ? (
+                  <div className={styles.overlayItem}>
+                    <div className={styles.typeItemContent}>
+                      <div className={styles.typeIcon} style={{ backgroundColor: activeType.color }}>
+                        {getTypeIcon(activeType)}
+                      </div>
+                      <div className={styles.typeInfo}>
+                        <div className={styles.typeName}>{activeType.name}</div>
+                        <div className={styles.typeMeta}>{activeType.fields.length} 个字段</div>
+                      </div>
                     </div>
                   </div>
-                  <div className={styles.typeItemActions}>
-                    <Tooltip title="复制">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CopyOutlined />}
-                        onClick={(e) => { e.stopPropagation(); handleDuplicateType(type) }}
-                        disabled={readOnly}
-                      />
-                    </Tooltip>
-                    <Tooltip title="编辑">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={(e) => { e.stopPropagation(); handleEditType(type) }}
-                        disabled={readOnly}
-                      />
-                    </Tooltip>
-                    <Popconfirm
-                      title="确定删除此类型？相关的词汇数据将保留。"
-                      onConfirm={(e) => { e?.stopPropagation(); handleDeleteType(type.id) }}
-                      onCancel={(e) => e?.stopPropagation()}
-                      okText="删除"
-                      cancelText="取消"
-                    >
-                      <Tooltip title="删除">
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<DeleteOutlined />}
-                          danger
-                          onClick={(e) => e.stopPropagation()}
-                          disabled={readOnly}
-                        />
-                      </Tooltip>
-                    </Popconfirm>
-                  </div>
-                </List.Item>
-              )}
-            />
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           )}
         </div>
       </div>

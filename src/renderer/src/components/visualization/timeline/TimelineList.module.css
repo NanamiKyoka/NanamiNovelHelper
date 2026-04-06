@@ -64,6 +64,43 @@
   composes: cardTag from '../common.module.css';
 }
 
+/* 拖拽排序卡片包装器 */
+.sortableCardWrapper {
+  width: 100%;
+}
+
+/* 拖拽手柄 */
+.dragHandle {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  z-index: 1;
+}
+
+.dragHandle:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+/* 卡片悬停时显示拖拽手柄 */
+.timelineCard:hover .dragHandle {
+  opacity: 1;
+}
+
 /* 空状态 */
 .emptyState {
   composes: emptyState from '../common.module.css';

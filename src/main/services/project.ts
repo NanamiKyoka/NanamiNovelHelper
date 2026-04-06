@@ -35,6 +35,7 @@ import { timelineService } from './timeline'
 import { sequenceChartService } from './sequence-chart'
 import { organizationService } from './organization'
 import { fileService } from './file'
+import { createLogger } from '../utils/logger'
 
 /**
  * 最近项目存储
@@ -56,6 +57,7 @@ const MAX_RECENT_PROJECTS = 10
  */
 class ProjectService {
   private currentProject: Project | null = null
+  private logger = createLogger('ProjectService')
 
   /**
    * 创建新项目
@@ -110,6 +112,9 @@ class ProjectService {
     // 创建默认设定文件（包含预设词汇类型）
     await this.createDefaultSettingsFiles(projectPath, presetVocabulary)
 
+    // 创建内置 SKILL
+    await this.createBuiltinSkills(projectPath)
+
     return project
   }
 
@@ -134,6 +139,9 @@ class ProjectService {
 
     // 备份目录
     mkdirSync(join(projectPath, PROJECT_META_DIR, BACKUP_DIR), { recursive: true })
+
+    // SKILL 目录: .novelhelper/data/ai-assistant/skills
+    mkdirSync(join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills'), { recursive: true })
 
     // 根据选择的目录类型创建目录
     const directoryMap: Record<ProjectDirectoryType, string> = {
@@ -795,10 +803,10 @@ ${project.name}/
       Promise.resolve(vocabularyService.loadVocabularyEntries()),
       Promise.resolve(vocabularyService.loadSensitiveWords()),
       Promise.resolve(highlightService.loadConfig()),
-      Promise.resolve(relationshipService.getGraphList()),
-      Promise.resolve(timelineService.getTimelineList()),
-      Promise.resolve(sequenceChartService.getChartList()),
-      Promise.resolve(organizationService.getGraphList())
+      Promise.resolve(relationshipService.getList()),
+      Promise.resolve(timelineService.getList()),
+      Promise.resolve(sequenceChartService.getList()),
+      Promise.resolve(organizationService.getList())
     ])
 
     // 获取文件树数据
@@ -824,6 +832,56 @@ ${project.name}/
         showHiddenFiles,
         hiddenItems
       }
+    }
+  }
+
+  /**
+   * 创建内置 SKILL
+   * 从 builtin-skills 目录复制到项目的 .novelhelper/data/ai-assistant/skills 目录
+   */
+  private async createBuiltinSkills(projectPath: string): Promise<void> {
+    const skillsDir = join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills')
+    
+    // 内置 SKILL 源目录（编译后位于 out/main/builtin-skills/）
+    const builtinSkillsSourceDir = join(__dirname, 'builtin-skills')
+    
+    if (!existsSync(builtinSkillsSourceDir)) {
+      this.logger.warn(`Builtin skills directory not found: ${builtinSkillsSourceDir}`)
+      return
+    }
+    
+    // 递归复制所有内置 SKILL
+    const copyDir = (src: string, dest: string): void => {
+      mkdirSync(dest, { recursive: true })
+      const entries = readdirSync(src, { withFileTypes: true })
+      
+      for (const entry of entries) {
+        const srcPath = join(src, entry.name)
+        const destPath = join(dest, entry.name)
+        
+        if (entry.isDirectory()) {
+          copyDir(srcPath, destPath)
+        } else {
+          // 复制文件
+          const content = readFileSync(srcPath)
+          writeFileSync(destPath, content)
+        }
+      }
+    }
+    
+    // 遍历 builtin-skills 目录下的每个子目录（每个子目录是一个 SKILL）
+    const skillDirs = readdirSync(builtinSkillsSourceDir, { withFileTypes: true })
+    
+    for (const dirent of skillDirs) {
+      if (!dirent.isDirectory()) continue
+      
+      const skillId = dirent.name
+      const srcPath = join(builtinSkillsSourceDir, skillId)
+      const destPath = join(skillsDir, skillId)
+      
+      // 复制整个 SKILL 目录
+      copyDir(srcPath, destPath)
+      this.logger.info(`Copied builtin skill: ${skillId}`)
     }
   }
 }

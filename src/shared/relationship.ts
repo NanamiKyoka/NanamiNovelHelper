@@ -79,6 +79,7 @@ export interface RelationshipGraphMeta {
   nodeCount: number
   edgeCount: number
   viewState?: GraphViewState
+  order: number // 排序序号
   createdAt: string
   updatedAt: string
 }

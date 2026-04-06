@@ -10,7 +10,9 @@ import {
   ApartmentOutlined,
   ClockCircleOutlined,
   TableOutlined,
-  TeamOutlined
+  TeamOutlined,
+  RobotOutlined,
+  EnvironmentOutlined
 } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import type { SidebarBadgeType } from '@types/badge'
@@ -40,7 +42,9 @@ const SIDEBAR_BADGE_CONFIG: Record<SidebarBadgeType, { icon: React.ComponentType
   relationship: { icon: ApartmentOutlined, tooltip: '关系图' },
   timeline: { icon: ClockCircleOutlined, tooltip: '时间线' },
   sequenceChart: { icon: TableOutlined, tooltip: '事序图' },
-  organization: { icon: TeamOutlined, tooltip: '组织架构' }
+  organization: { icon: TeamOutlined, tooltip: '组织架构' },
+  aiAssistant: { icon: RobotOutlined, tooltip: 'AI写作助手' },
+  map: { icon: EnvironmentOutlined, tooltip: '地图' }
 }
 
 // 拖拽数据类型
@@ -180,7 +184,7 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
   return (
     <div className={styles.container} ref={containerRef}>
       {/* 主要按钮区域（文件、搜索、Git） */}
-      <div className={styles.mainButtons}>
+      <div className={styles.mainButtons} role="navigation" aria-label="主导航">
         {MAIN_BUTTONS.map((button) => {
           const IconComponent = button.icon
           const isActive = activePanel === button.id
@@ -190,6 +194,10 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
               <div
                 className={`${styles.button} ${isActive ? styles.active : ''}`}
                 onClick={() => onPanelClick(button.id)}
+                role="button"
+                aria-label={button.tooltip}
+                aria-pressed={isActive}
+                tabIndex={0}
               >
                 <IconComponent className={styles.icon} />
               </div>
@@ -202,7 +210,7 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
       {visibleBadges.length > 0 && <div className={styles.divider} />}
 
       {/* 全屏功能入口区域 */}
-      <div className={styles.sidebarBadgeButtons}>
+      <div className={styles.sidebarBadgeButtons} role="navigation" aria-label="功能面板">
         {visibleBadges.map((badgeId, index) => {
           const config = SIDEBAR_BADGE_CONFIG[badgeId]
           if (!config) return null
@@ -218,6 +226,10 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
               <div
                 className={`${styles.button} ${isActive ? styles.active : ''} ${isDragging ? styles.dragging : ''} ${showTopIndicator ? styles.dragOverTop : ''} ${showBottomIndicator ? styles.dragOverBottom : ''}`}
                 onClick={() => onPanelClick(badgeId)}
+                role="button"
+                aria-label={config.tooltip}
+                aria-pressed={isActive}
+                tabIndex={0}
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
@@ -239,6 +251,10 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
           <div
             className={`${styles.button} ${activePanel === SETTINGS_BUTTON.id ? styles.active : ''}`}
             onClick={() => onPanelClick(SETTINGS_BUTTON.id)}
+            role="button"
+            aria-label={SETTINGS_BUTTON.tooltip}
+            aria-pressed={activePanel === SETTINGS_BUTTON.id}
+            tabIndex={0}
           >
             <SETTINGS_BUTTON.icon className={styles.icon} />
           </div>

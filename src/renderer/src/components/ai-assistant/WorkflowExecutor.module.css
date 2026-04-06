@@ -1,0 +1,140 @@
+.executorModal :global(.ant-modal-body) {
+  padding: 24px;
+}
+
+.inputPhase {
+  min-height: 200px;
+}
+
+.noVariables {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.variablesForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.variableItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.variableLabel {
+  font-weight: 500;
+}
+
+.previewSection {
+  margin-top: 16px;
+  border: 1px solid var(--ant-color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.previewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--ant-color-bg-text-hover);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.previewHeader:hover {
+  background: var(--ant-color-bg-text-active);
+}
+
+.previewContent {
+  padding: 16px;
+  background: var(--ant-color-bg-container);
+  border-top: 1px solid var(--ant-color-border);
+  max-height: 250px;
+  overflow: auto;
+  font-family: 'Fira Code', 'Consolas', monospace;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.executingPhase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.successPhase {
+  min-height: 300px;
+}
+
+.resultContent {
+  max-height: 300px;
+  overflow: auto;
+  padding: 16px;
+  background: var(--ant-color-bg-text-hover);
+  border-radius: 8px;
+}
+
+.promptContent {
+  max-height: 300px;
+  overflow: auto;
+  padding: 16px;
+  background: var(--ant-color-bg-text-hover);
+  border-radius: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+}
+
+.errorPhase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 300px;
+}
+
+/* SKILL 变量样式 */
+.skillVariableContainer {
+  border: 1px solid var(--ant-color-border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--ant-color-bg-container);
+}
+
+.skillHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.skillError {
+  padding: 12px;
+  background: var(--ant-color-error-bg);
+  border-radius: 8px;
+}
+
+.skillResult {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--ant-color-bg-text-hover);
+  border-radius: 8px;
+}
+
+.skillResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}

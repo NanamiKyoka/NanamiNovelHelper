@@ -4,34 +4,41 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Input, Button, Select, Typography, Empty, List, Tag, Space, Tooltip } from 'antd'
+import { Input, Button, Typography, Empty, Tag, Space, Tooltip, Spin, message } from 'antd'
 import {
   SearchOutlined,
   ReloadOutlined,
   CloseOutlined,
-  FileOutlined,
-  FolderOutlined
+  FileOutlined
 } from '@ant-design/icons'
+import { useEditorStore } from '@stores/editorStore'
 import styles from './SearchPanel.module.css'
 
 const { Text, Paragraph } = Typography
 
-interface SearchResult {
-  id: string
+// 搜索结果类型（与后端保持一致）
+interface SearchMatch {
+  line: number
+  column: number
+  matchText: string
+  lineText: string
+  contextBefore: string
+  contextAfter: string
+}
+
+interface FileSearchResult {
   filePath: string
   fileName: string
   matches: SearchMatch[]
 }
 
-interface SearchMatch {
-  line: number
-  column: number
-  text: string
-  highlightText: string
+interface SearchResult {
+  success: boolean
+  results: FileSearchResult[]
+  totalMatches: number
+  filesSearched: number
+  error?: string
 }
-
-// 模拟搜索结果
-const mockResults: SearchResult[] = []
 
 function SearchPanel(): JSX.Element {
   const [searchText, setSearchText] = useState('')
@@ -43,30 +50,135 @@ function SearchPanel(): JSX.Element {
   const [filesToInclude, setFilesToInclude] = useState('')
   const [filesToExclude, setFilesToExclude] = useState('')
   const [showFilters, setShowFilters] = useState(false)
-  const [results, setResults] = useState<SearchResult[]>(mockResults)
+  const [results, setResults] = useState<FileSearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [totalMatches, setTotalMatches] = useState(0)
+  const [filesSearched, setFilesSearched] = useState(0)
+  const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set())
 
-  const handleSearch = useCallback(() => {
+  const openFile = useEditorStore((state) => state.openFile)
+  const requestGoToPosition = useEditorStore((state) => state.requestGoToPosition)
+  const requestExternalRefresh = useEditorStore((state) => state.requestExternalRefresh)
+
+  // 执行搜索
+  const handleSearch = useCallback(async () => {
     if (!searchText.trim()) {
       setResults([])
+      setTotalMatches(0)
       return
     }
-    
-    setIsSearching(true)
-    // TODO: 实现实际搜索逻辑
-    setTimeout(() => {
-      setIsSearching(false)
-      setResults([])
-    }, 500)
-  }, [searchText])
 
+    setIsSearching(true)
+    setResults([])
+    setExpandedFiles(new Set())
+
+    try {
+      const result: SearchResult = await window.electron.search.search({
+        query: searchText,
+        caseSensitive,
+        wholeWord,
+        useRegex,
+        filesToInclude,
+        filesToExclude,
+        maxResults: 2000,
+      })
+
+      if (result.success) {
+        setResults(result.results)
+        setTotalMatches(result.totalMatches)
+        setFilesSearched(result.filesSearched)
+        // 默认展开所有有结果的文件
+        setExpandedFiles(new Set(result.results.map(r => r.filePath)))
+      } else {
+        message.error(result.error || '搜索失败')
+      }
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '搜索失败')
+    } finally {
+      setIsSearching(false)
+    }
+  }, [searchText, caseSensitive, wholeWord, useRegex, filesToInclude, filesToExclude])
+
+  // 处理键盘事件
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch()
     }
   }, [handleSearch])
 
-  const totalMatches = results.reduce((sum, r) => sum + r.matches.length, 0)
+  // 点击搜索结果跳转到编辑器
+  const handleMatchClick = useCallback(async (filePath: string, matchText: string) => {
+    console.log('[SearchPanel] handleMatchClick:', { filePath, matchText })
+    try {
+      // 从路径中提取文件名
+      const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath
+      console.log('[SearchPanel] 准备打开文件:', { filePath, fileName })
+      // 先打开文件
+      await openFile(filePath, fileName)
+      console.log('[SearchPanel] 文件已打开，准备触发跳转')
+      // 文件打开后，延迟触发跳转请求，确保编辑器内容已更新
+      setTimeout(() => {
+        console.log('[SearchPanel] 触发 requestGoToPosition:', { filePath, matchText })
+        requestGoToPosition(filePath, matchText)
+      }, 50)
+    } catch (error) {
+      console.error('[SearchPanel] 打开文件失败:', error)
+      message.error('打开文件失败')
+    }
+  }, [openFile, requestGoToPosition])
+
+  // 切换文件展开/折叠
+  const toggleFileExpand = (filePath: string) => {
+    setExpandedFiles(prev => {
+      const next = new Set(prev)
+      if (next.has(filePath)) {
+        next.delete(filePath)
+      } else {
+        next.add(filePath)
+      }
+      return next
+    })
+  }
+
+  // 替换全部
+  const handleReplaceAll = useCallback(async () => {
+    if (!searchText.trim() || results.length === 0) return
+
+    try {
+      let totalReplacements = 0
+      const replacedFiles: string[] = []
+
+      for (const file of results) {
+        const result = await window.electron.search.replace(
+          file.filePath,
+          searchText,
+          replaceText,
+          {
+            caseSensitive,
+            wholeWord,
+            useRegex,
+            replaceAll: true,
+          }
+        )
+        if (result.success && result.replacements) {
+          totalReplacements += result.replacements
+          replacedFiles.push(file.filePath)
+        }
+      }
+
+      message.success(`已替换 ${totalReplacements} 处`)
+
+      // 通知编辑器刷新已打开的文件
+      for (const filePath of replacedFiles) {
+        requestExternalRefresh(filePath)
+      }
+
+      // 重新搜索以更新结果
+      handleSearch()
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '替换失败')
+    }
+  }, [searchText, replaceText, results, caseSensitive, wholeWord, useRegex, handleSearch, requestExternalRefresh])
 
   return (
     <div className={styles.container}>
@@ -85,28 +197,31 @@ function SearchPanel(): JSX.Element {
                   <Button
                     type={caseSensitive ? 'primary' : 'text'}
                     size="small"
-                    icon="Aa"
                     className={styles.toggleBtn}
                     onClick={() => setCaseSensitive(!caseSensitive)}
-                  />
+                  >
+                    Aa
+                  </Button>
                 </Tooltip>
                 <Tooltip title="全词匹配">
                   <Button
                     type={wholeWord ? 'primary' : 'text'}
                     size="small"
-                    icon="ab|"
                     className={styles.toggleBtn}
                     onClick={() => setWholeWord(!wholeWord)}
-                  />
+                  >
+                    ab|
+                  </Button>
                 </Tooltip>
                 <Tooltip title="使用正则表达式">
                   <Button
                     type={useRegex ? 'primary' : 'text'}
                     size="small"
-                    icon=".*"
                     className={styles.toggleBtn}
                     onClick={() => setUseRegex(!useRegex)}
-                  />
+                  >
+                    .*
+                  </Button>
                 </Tooltip>
               </Space>
             }
@@ -125,10 +240,11 @@ function SearchPanel(): JSX.Element {
             <Button
               type="text"
               size="small"
-              icon="⋯"
               onClick={() => setShowFilters(!showFilters)}
               className={showFilters ? styles.activeBtn : ''}
-            />
+            >
+              ⋯
+            </Button>
           </Tooltip>
         </div>
 
@@ -136,13 +252,19 @@ function SearchPanel(): JSX.Element {
         {showReplace && (
           <div className={styles.inputRow}>
             <Input
-              placeholder="替换"
+              placeholder="替换为..."
               value={replaceText}
               onChange={(e) => setReplaceText(e.target.value)}
               className={styles.searchInput}
             />
             <Tooltip title="替换全部">
-              <Button type="text" size="small" icon={<ReloadOutlined />} />
+              <Button
+                type="text"
+                size="small"
+                icon={<ReloadOutlined />}
+                onClick={handleReplaceAll}
+                disabled={results.length === 0}
+              />
             </Tooltip>
           </div>
         )}
@@ -151,13 +273,13 @@ function SearchPanel(): JSX.Element {
         {showFilters && (
           <div className={styles.filtersSection}>
             <Input
-              placeholder="要包含的文件"
+              placeholder="要包含的文件 (例如: *.md, src/**)"
               value={filesToInclude}
               onChange={(e) => setFilesToInclude(e.target.value)}
               className={styles.filterInput}
             />
             <Input
-              placeholder="要排除的文件"
+              placeholder="要排除的文件 (例如: node_modules/**)"
               value={filesToExclude}
               onChange={(e) => setFilesToExclude(e.target.value)}
               className={styles.filterInput}
@@ -169,41 +291,58 @@ function SearchPanel(): JSX.Element {
       {/* 搜索结果 */}
       <div className={styles.resultsSection}>
         {isSearching ? (
-          <div className={styles.loading}>搜索中...</div>
+          <div className={styles.loading}>
+            <Spin size="small" />
+            <Text type="secondary" style={{ marginLeft: 8 }}>搜索中...</Text>
+          </div>
         ) : results.length > 0 ? (
           <>
             <div className={styles.resultsHeader}>
               <Text type="secondary">
-                {totalMatches} 个结果，在 {results.length} 个文件中
+                {totalMatches} 个结果，在 {results.length} 个文件中（已搜索 {filesSearched} 个文件）
               </Text>
             </div>
-            <List
-              dataSource={results}
-              renderItem={(item) => (
-                <List.Item className={styles.resultItem}>
-                  <div className={styles.fileHeader}>
-                    <FileOutlined />
+            <div className={styles.resultsList}>
+              {results.map((file) => (
+                <div key={file.filePath} className={styles.fileGroup}>
+                  <div
+                    className={styles.fileHeader}
+                    onClick={() => toggleFileExpand(file.filePath)}
+                  >
+                    <span className={styles.expandIcon}>
+                      {expandedFiles.has(file.filePath) ? '▼' : '▶'}
+                    </span>
+                    <FileOutlined className={styles.fileIcon} />
                     <Text ellipsis className={styles.fileName}>
-                      {item.fileName}
+                      {file.filePath}
                     </Text>
-                    <Tag>{item.matches.length}</Tag>
+                    <Tag className={styles.matchCount}>{file.matches.length}</Tag>
                   </div>
-                  {item.matches.map((match, idx) => (
-                    <div key={idx} className={styles.matchItem}>
-                      <Text type="secondary" className={styles.lineNumber}>
-                        {match.line}
-                      </Text>
-                      <Paragraph
-                        ellipsis={{ rows: 2 }}
-                        className={styles.matchText}
-                      >
-                        {match.text}
-                      </Paragraph>
+                  {expandedFiles.has(file.filePath) && (
+                    <div className={styles.matchesList}>
+                      {file.matches.map((match, idx) => (
+                        <div
+                          key={idx}
+                          className={styles.matchItem}
+                          onClick={() => handleMatchClick(file.filePath, match.matchText)}
+                        >
+                          <Text type="secondary" className={styles.lineNumber}>
+                            {match.line}
+                          </Text>
+                          <div className={styles.matchContent}>
+                            <Text className={styles.matchText}>
+                              {match.contextBefore}
+                              <span className={styles.matchHighlight}>{match.matchText}</span>
+                              {match.contextAfter}
+                            </Text>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </List.Item>
-              )}
-            />
+                  )}
+                </div>
+              ))}
+            </div>
           </>
         ) : searchText ? (
           <Empty

@@ -12,12 +12,18 @@
     "paths": {
       "@renderer/*": ["src/renderer/src/*"],
       "@components/*": ["src/renderer/src/components/*"],
+      "@components": ["src/renderer/src/components"],
       "@stores/*": ["src/renderer/src/stores/*"],
+      "@stores": ["src/renderer/src/stores"],
       "@services/*": ["src/renderer/src/services/*"],
       "@hooks/*": ["src/renderer/src/hooks/*"],
+      "@hooks": ["src/renderer/src/hooks"],
       "@utils/*": ["src/renderer/src/utils/*"],
+      "@utils": ["src/renderer/src/utils"],
       "@types/*": ["src/renderer/src/types/*"],
-      "@shared/*": ["src/shared/*"]
+      "@types": ["src/renderer/src/types"],
+      "@shared/*": ["src/shared/*"],
+      "@shared": ["src/shared"]
     },
     "outDir": "out/renderer",
     "jsx": "react-jsx",

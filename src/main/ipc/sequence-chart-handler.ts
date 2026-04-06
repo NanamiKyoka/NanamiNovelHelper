@@ -33,7 +33,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return []
     sequenceChartService.init(project.path)
-    return sequenceChartService.getChartList()
+    return sequenceChartService.getList()
   })
 
   /**
@@ -43,7 +43,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
-    return sequenceChartService.getChart(chartId)
+    return sequenceChartService.get(chartId)
   })
 
   /**
@@ -73,7 +73,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return false
     sequenceChartService.init(project.path)
-    return sequenceChartService.deleteChart(chartId)
+    return sequenceChartService.delete(chartId)
   })
 
   // ============================================
@@ -215,7 +215,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
-    return sequenceChartService.getThumbnailPath_(chartId)
+    return sequenceChartService.getThumbnailFullPath(chartId)
   })
 
   // ============================================
@@ -229,7 +229,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
-    return sequenceChartService.exportChart(chartId)
+    return sequenceChartService.exportItem(chartId)
   })
 
   /**
@@ -249,7 +249,7 @@ export function registerSequenceChartHandlers(): void {
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
-    return sequenceChartService.importChart(jsonContent)
+    return sequenceChartService.importItem(jsonContent)
   })
 
   /**
@@ -327,5 +327,15 @@ export function registerSequenceChartHandlers(): void {
       console.error('Failed to read import file:', error)
       return null
     }
+  })
+
+  /**
+   * 重新排序事序图
+   */
+  ipcMain.handle('sequenceChart:reorderCharts', (_, chartIds: string[]): boolean => {
+    const project = projectService.getCurrentProject()
+    if (!project) return false
+    sequenceChartService.init(project.path)
+    return sequenceChartService.reorderCharts(chartIds)
   })
 }
