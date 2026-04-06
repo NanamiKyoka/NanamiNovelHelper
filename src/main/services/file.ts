@@ -16,9 +16,10 @@ import {
   renameSync,
   copyFileSync,
   rmSync,
-  stat
+  stat,
+  realpathSync
 } from 'fs'
-import { join, relative, dirname, basename, extname, resolve } from 'path'
+import { join, relative, dirname, basename, extname, resolve, normalize, sep } from 'path'
 import { FileNode } from '../types/file'
 import { createLogger } from '../utils/logger'
 
@@ -53,33 +54,66 @@ class FileService {
 
   /**
    * 解析路径（支持相对路径和绝对路径）
+   * @deprecated 使用 safeResolvePath 替代
    */
   private resolvePath(path: string): string {
-    if (!this.currentProjectPath) {
-      throw new Error('没有打开的项目')
-    }
-
-    // 统一路径分隔符为当前平台的格式
-    const normalizedPath = path.replace(/[/\\]/g, require('path').sep)
-
-    // 如果是绝对路径，直接使用
-    // Windows: E:\... 或 E:/...
-    // Unix: /...
-    if (path.match(/^[A-Za-z]:/) || path.startsWith('/')) {
-      return normalizedPath
-    }
-
-    // 相对路径，相对于项目根目录
-    return join(this.currentProjectPath, normalizedPath)
+    return this.safeResolvePath(path)
   }
 
   /**
    * 检查路径是否在项目目录内（安全检查）
+   * 使用多层验证防止路径遍历攻击
    */
   private isPathInProject(absolutePath: string): boolean {
     if (!this.currentProjectPath) return false
-    const relativePath = relative(this.currentProjectPath, absolutePath)
-    return !relativePath.startsWith('..') && !relativePath.startsWith('/')
+
+    try {
+      const normalizedPath = normalize(absolutePath)
+      const normalizedProject = normalize(this.currentProjectPath)
+
+      if (!existsSync(normalizedPath)) {
+        const relativePath = relative(normalizedProject, normalizedPath)
+        return !relativePath.startsWith('..') && !relativePath.startsWith('/')
+      }
+
+      const realPath = realpathSync(normalizedPath)
+      const realProject = realpathSync(normalizedProject)
+
+      const relativePath = relative(realProject, realPath)
+      
+      return !relativePath.startsWith('..') && 
+             !relativePath.startsWith('/') && 
+             !relativePath.startsWith('\\')
+    } catch (error) {
+      this.logger.warn('Path validation failed', error)
+      return false
+    }
+  }
+
+  /**
+   * 安全解析路径，防止路径遍历攻击
+   */
+  private safeResolvePath(inputPath: string): string {
+    if (!this.currentProjectPath) {
+      throw new Error('没有打开的项目')
+    }
+
+    const normalizedInput = inputPath.replace(/[/\\]/g, sep)
+    
+    if (normalizedInput.match(/^[A-Za-z]:/) || normalizedInput.startsWith(sep)) {
+      const resolved = resolve(normalizedInput)
+      if (!this.isPathInProject(resolved)) {
+        throw new Error('路径不在项目目录内')
+      }
+      return resolved
+    }
+
+    const resolved = resolve(this.currentProjectPath, normalizedInput)
+    if (!this.isPathInProject(resolved)) {
+      throw new Error('路径不在项目目录内')
+    }
+    
+    return resolved
   }
 
   /**
