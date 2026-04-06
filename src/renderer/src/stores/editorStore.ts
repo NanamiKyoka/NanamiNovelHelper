@@ -16,37 +16,25 @@ import type {
   ToolbarMode
 } from '../types/editor'
 import { DEFAULT_EDITOR_SETTINGS as defaultSettings, DEFAULT_STATUS_BAR_CONFIG as defaultStatusBarConfig } from '../types/editor'
+import { LRUCache } from '../utils/lruCache'
+
+const FILE_CACHE_MAX = 20
+const FILE_CACHE_MAX_AGE = 30 * 60 * 1000
 
 interface EditorState {
-  // 标签页状态
   tabs: EditorTab[]
   activeTabId: string | null
-  /** 预览标签 ID（VSCode 风格：单击预览的标签，会被下一个预览替换） */
   previewTabId: string | null
-
-  // 文件内容缓存
-  fileContents: Map<string, EditorFileContent>
-
-  // 编辑器设置
+  fileContents: LRUCache<string, EditorFileContent>
   settings: EditorSettings
-
-  // 字数统计
   wordCount: WordCount
-
-  // 光标位置
   cursorPosition: CursorPosition
-
-  // 状态栏配置
   statusBarConfig: StatusBarConfig
-
-  // 编辑器状态
   isSaving: boolean
   isLoading: boolean
   lastSavedAt: number | null
 
-  // 标签页操作 - 预览模式（单击）
   openPreview: (path: string, name: string, type?: EditorTab['type']) => Promise<void>
-  // 兼容旧接口
   openFile: (path: string, name: string, type?: EditorTab['type']) => Promise<void>
   closeTab: (tabId: string) => void
   closeOtherTabs: (tabId: string) => void
@@ -55,41 +43,30 @@ interface EditorState {
   moveTab: (fromIndex: number, toIndex: number) => void
   markDirty: (tabId: string, isDirty: boolean) => void
 
-  // 文件内容操作
   loadFileContent: (path: string) => Promise<string>
   saveFileContent: (path: string, content: string) => Promise<void>
   updateContent: (content: string) => void
   getCurrentContent: () => string
 
-  // 编辑器状态操作（用于保存/恢复撤销历史）
   saveEditorState: (path: string, state: unknown) => void
   getEditorState: (path: string) => unknown
 
-  // 设置操作
   updateSettings: (settings: Partial<EditorSettings>) => void
   setViewMode: (mode: ViewMode) => void
   setToolbarMode: (mode: ToolbarMode) => void
 
-  // 字数统计
   updateWordCount: (content: string) => void
-
-  // 光标位置
   updateCursorPosition: (position: CursorPosition) => void
-
-  // 状态栏配置
   updateStatusBarConfig: (config: Partial<StatusBarConfig>) => void
 
-  // 跳转到指定行/列（包含文件路径和匹配文本，确保在正确文件上执行）
   goToPositionRequest: { filePath: string; matchText: string } | null
   requestGoToPosition: (filePath: string, matchText: string) => void
   clearGoToPositionRequest: () => void
 
-  // 外部刷新请求（如搜索替换后）
   externalRefreshRequest: string | null
   requestExternalRefresh: (filePath: string) => void
   clearExternalRefreshRequest: () => void
 
-  // 工具方法
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
   getTabByPath: (path: string) => EditorTab | null
@@ -245,14 +222,20 @@ function getFileType(name: string): EditorTab['type'] {
   }
 }
 
+function createFileCache(): LRUCache<string, EditorFileContent> {
+  return new LRUCache<string, EditorFileContent>({
+    max: FILE_CACHE_MAX,
+    maxAge: FILE_CACHE_MAX_AGE
+  })
+}
+
 export const useEditorStore = create<EditorState>()(
   persist(
     (set, get) => ({
-      // 初始状态
       tabs: [],
       activeTabId: null,
       previewTabId: null,
-      fileContents: new Map(),
+      fileContents: createFileCache(),
       settings: defaultSettings,
       wordCount: {
         cjkChars: 0,
@@ -451,7 +434,6 @@ export const useEditorStore = create<EditorState>()(
         }))
       },
 
-      // 加载文件内容
       loadFileContent: async (path: string) => {
         set({ isLoading: true })
         try {
@@ -463,12 +445,10 @@ export const useEditorStore = create<EditorState>()(
           }
           
           set(state => {
-            const newContents = new Map(state.fileContents)
-            newContents.set(path, fileContent)
-            return { fileContents: newContents }
+            state.fileContents.set(path, fileContent)
+            return { fileContents: state.fileContents }
           })
 
-          // 更新字数统计
           get().updateWordCount(content)
           
           return content
@@ -480,27 +460,23 @@ export const useEditorStore = create<EditorState>()(
         }
       },
 
-      // 保存文件内容
       saveFileContent: async (path: string, content: string) => {
         set({ isSaving: true })
         try {
           await window.electron.file.write(path, content)
           
-          // 更新缓存
           set(state => {
-            const newContents = new Map(state.fileContents)
-            newContents.set(path, {
+            state.fileContents.set(path, {
               path,
               content,
               loadedAt: Date.now()
             })
             return { 
-              fileContents: newContents,
+              fileContents: state.fileContents,
               lastSavedAt: Date.now()
             }
           })
 
-          // 清除 dirty 标记
           const tab = get().getTabByPath(path)
           if (tab) {
             get().markDirty(tab.id, false)
@@ -513,52 +489,43 @@ export const useEditorStore = create<EditorState>()(
         }
       },
 
-      // 更新内容
       updateContent: (content: string) => {
         const state = get()
         const activeTab = state.getActiveTab()
         
         if (!activeTab) return
 
-        // 更新缓存
         set(state => {
-          const newContents = new Map(state.fileContents)
-          newContents.set(activeTab.path, {
+          state.fileContents.set(activeTab.path, {
             path: activeTab.path,
             content,
             loadedAt: Date.now()
           })
-          return { fileContents: newContents }
+          return { fileContents: state.fileContents }
         })
 
-        // 标记为已修改
         get().markDirty(activeTab.id, true)
-        // 注意：字数统计在 MarkdownEditor 中单独调用，使用纯文本而非 HTML
       },
 
-      // 保存编辑器状态（包括撤销历史）
       saveEditorState: (path: string, editorState: unknown) => {
         set(state => {
-          const newContents = new Map(state.fileContents)
-          const existing = newContents.get(path)
+          const existing = state.fileContents.get(path)
           if (existing) {
-            newContents.set(path, {
+            state.fileContents.set(path, {
               ...existing,
               editorState
             })
           }
-          return { fileContents: newContents }
+          return { fileContents: state.fileContents }
         })
       },
 
-      // 获取编辑器状态
       getEditorState: (path: string) => {
         const state = get()
         const fileContent = state.fileContents.get(path)
         return fileContent?.editorState
       },
 
-      // 获取当前内容
       getCurrentContent: () => {
         const state = get()
         const activeTab = state.getActiveTab()
