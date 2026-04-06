@@ -36,6 +36,7 @@ import { sequenceChartService } from './sequence-chart'
 import { organizationService } from './organization'
 import { fileService } from './file'
 import { createLogger } from '../utils/logger'
+import { ServiceError, ErrorCode, Errors } from '../../shared/errors'
 
 /**
  * 最近项目存储
@@ -65,23 +66,19 @@ class ProjectService {
   async createProject(options: CreateProjectOptions): Promise<Project> {
     const { name, parentPath, description, author, tags, directories, templates, presetVocabulary } = options
 
-    // 验证项目名称
     if (!name || name.trim().length === 0) {
-      throw new Error('项目名称不能为空')
+      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称不能为空', { module: 'ProjectService' })
     }
 
-    // 验证名称是否包含非法字符
     const invalidChars = /[<>:"/\\|?*]/
     if (invalidChars.test(name)) {
-      throw new Error('项目名称包含非法字符')
+      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称包含非法字符', { module: 'ProjectService' })
     }
 
-    // 构建项目路径
     const projectPath = join(parentPath, name)
 
-    // 检查目录是否已存在
     if (existsSync(projectPath)) {
-      throw new Error(`目录 "${name}" 已存在`)
+      throw Errors.alreadyExists(`目录 "${name}"`, 'ProjectService')
     }
 
     // 创建项目 ID
@@ -499,30 +496,24 @@ ${project.name}/
    * 打开项目
    */
   async openProject(path: string): Promise<Project> {
-    // 验证路径是否存在
     if (!existsSync(path)) {
-      throw new Error('项目路径不存在')
+      throw Errors.projectInvalidPath('项目路径不存在', 'ProjectService')
     }
 
-    // 检查是否是目录
     const stats = statSync(path)
     if (!stats.isDirectory()) {
-      throw new Error('指定路径不是目录')
+      throw Errors.projectInvalidPath('指定路径不是目录', 'ProjectService')
     }
 
-    // 检查项目配置文件
     const configPath = join(path, PROJECT_CONFIG_FILE)
     if (!existsSync(configPath)) {
-      throw new Error('不是有效的项目目录：缺少项目配置文件')
+      throw Errors.projectInvalidPath('不是有效的项目目录：缺少项目配置文件', 'ProjectService')
     }
 
-    // 读取项目配置
     const project = await this.loadProjectConfig(path)
 
-    // 更新当前项目
     this.currentProject = project
 
-    // 添加到最近项目列表
     this.addRecentProject({
       path: project.path,
       name: project.name,
@@ -539,10 +530,9 @@ ${project.name}/
     const configPath = join(projectPath, PROJECT_CONFIG_FILE)
     const content = readFileSync(configPath, 'utf-8')
 
-    // 解析 YAML frontmatter
     const match = content.match(/^---\n([\s\S]*?)\n---/)
     if (!match) {
-      throw new Error('项目配置文件格式错误')
+      throw new ServiceError(ErrorCode.DATA_INVALID, '项目配置文件格式错误', { module: 'ProjectService' })
     }
 
     try {
@@ -562,7 +552,7 @@ ${project.name}/
 
       return project
     } catch (error) {
-      throw new Error(`解析项目配置失败: ${error}`)
+      throw new ServiceError(ErrorCode.FILE_PARSE_ERROR, `解析项目配置失败: ${error}`, { module: 'ProjectService', cause: error })
     }
   }
 
@@ -585,23 +575,20 @@ ${project.name}/
    */
   async updateProjectInfo(info: Partial<Project>): Promise<Project> {
     if (!this.currentProject) {
-      throw new Error('没有打开的项目')
+      throw Errors.projectNotOpen('ProjectService')
     }
 
-    // 更新项目信息
     this.currentProject = {
       ...this.currentProject,
       ...info,
-      path: this.currentProject.path, // 路径不允许修改
-      id: this.currentProject.id, // ID 不允许修改
-      createdAt: this.currentProject.createdAt, // 创建时间不允许修改
+      path: this.currentProject.path,
+      id: this.currentProject.id,
+      createdAt: this.currentProject.createdAt,
       updatedAt: new Date().toISOString()
     }
 
-    // 保存配置
     await this.saveProjectConfig(this.currentProject)
 
-    // 更新最近项目列表
     this.addRecentProject({
       path: this.currentProject.path,
       name: this.currentProject.name,
@@ -783,7 +770,7 @@ ${project.name}/
    */
   async getInitData(): Promise<import('../types/project').ProjectInitData> {
     if (!this.currentProject) {
-      throw new Error('没有打开的项目')
+      throw Errors.projectNotOpen('ProjectService')
     }
 
     // 并行获取所有数据
