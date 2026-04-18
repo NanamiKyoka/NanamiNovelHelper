@@ -90,7 +90,7 @@ function createTerminalWindow(): BrowserWindow {
     minHeight: 300,
     show: false,
     autoHideMenuBar: true,
-    title: '终端 - 七海小说助手',
+    title: '终端 - NanamiNovelHelper',
     // Windows/Linux 使用无边框窗口
     frame: process.platform === 'darwin',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',

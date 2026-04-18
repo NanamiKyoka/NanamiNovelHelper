@@ -32,7 +32,7 @@ function StatusBar(): JSX.Element {
   return (
     <div className={styles.statusBar}>
       <div className={styles.left}>
-        <span className={styles.item}>七海小说助手</span>
+        <span className={styles.item}>NanamiNovelHelper</span>
         <span className={styles.separator}>|</span>
         {activeTab && (
           <>

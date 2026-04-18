@@ -15,7 +15,7 @@ timeout: 30000
 
 # 数据管理 SKILL
 
-这是七海小说助手的内置数据管理 SKILL，提供对项目数据的完整 CRUD 操作能力。
+这是 NanamiNovelHelper 的内置数据管理 SKILL，提供对项目数据的完整 CRUD 操作能力。
 
 ## 功能模块
 

@@ -84,7 +84,7 @@ function WelcomePage(): JSX.Element {
         <div className={styles.header}>
           <BookOutlined className={styles.logo} />
           <Title level={2} style={{ margin: 0 }}>
-            七海小说助手
+            NanamiNovelHelper
           </Title>
           <Text type="secondary">
             像写代码一样写小说

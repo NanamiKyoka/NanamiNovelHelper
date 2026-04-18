@@ -1,7 +1,7 @@
 {
   "name": "nanami-novel-helper",
   "version": "0.1.0",
-  "description": "七海小说助手 - 面向小说创作者的专业写作辅助工具",
+  "description": "NanamiNovelHelper - 面向小说创作者的专业写作辅助工具",
   "main": "./out/main/index.js",
   "author": {
     "name": "NanamiNovelHelper Team"
