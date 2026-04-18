@@ -43,6 +43,8 @@ import styles from './FileTree.module.css'
 const { Text } = Typography
 import { Typography } from 'antd'
 
+const SEARCH_DEBOUNCE_MS = 200
+
 // 文件图标映射
 const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): React.ReactNode => {
   if (isDirectory) {
@@ -304,6 +306,17 @@ function FileTree(): JSX.Element {
   
   const treeRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // 防抖搜索
+  const debouncedSearch = useCallback((value: string) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      search(value)
+    }, SEARCH_DEBOUNCE_MS)
+  }, [search])
   
   // 扁平化的节点列表（用于虚拟滚动）
   const flattenedNodes = useMemo(() => getFlattenedNodes(), [roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName])
@@ -329,6 +342,15 @@ function FileTree(): JSX.Element {
       refreshTree()
     }
   }, [sortMode])
+  
+  // 清理搜索定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
   
   // 键盘导航
   useEffect(() => {
@@ -659,7 +681,7 @@ function FileTree(): JSX.Element {
         <Input
           placeholder="搜索文件"
           value={searchPattern}
-          onChange={(e) => search(e.target.value)}
+          onChange={(e) => debouncedSearch(e.target.value)}
           prefix={<SearchOutlined className={styles.searchIcon} />}
           allowClear
           size="small"
