@@ -3,7 +3,7 @@
  * 整合标签页、工具栏、编辑器和预览
  */
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback } from 'react'
 import { Empty, message, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -14,14 +14,12 @@ export function EditorPanel() {
   const {
     tabs,
     activeTabId,
-    settings,
     saveFileContent,
     isLoading,
     getCurrentContent,
     markDirty
   } = useEditorStore()
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const activeTab = tabs.find(tab => tab.id === activeTabId)
 
   // 保存文件
@@ -39,32 +37,12 @@ export function EditorPanel() {
     }
   }, [activeTab, saveFileContent, getCurrentContent, markDirty])
 
-  // 内容变更回调
+  // 内容变更回调（仅标记为已修改，自动保存在 MarkdownEditor 中处理）
   const handleChange = useCallback(() => {
-    // 标记为已修改
     if (activeTab && !activeTab.isDirty) {
       markDirty(activeTab.id, true)
     }
-
-    // 自动保存
-    if (settings.autoSaveInterval > 0) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-      saveTimeoutRef.current = setTimeout(() => {
-        handleSave()
-      }, settings.autoSaveInterval)
-    }
-  }, [activeTab, settings.autoSaveInterval, markDirty, handleSave])
-
-  // 清理
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-    }
-  }, [])
+  }, [activeTab, markDirty])
 
   // 没有打开的文件
   if (tabs.length === 0) {

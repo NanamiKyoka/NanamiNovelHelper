@@ -3,7 +3,7 @@
  * 基于 TipTap 实现，支持 WYSIWYG 和分栏预览两种模式
  */
 
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { EditorState } from '@tiptap/pm/state'
 import { DOMParser } from '@tiptap/pm/model'
@@ -18,6 +18,8 @@ import { HighlightHoverCard } from './HighlightHoverCard'
 import { EditorToolbar } from './EditorToolbar'
 import { SearchReplacePanel } from './SearchReplacePanel'
 import styles from './MarkdownEditor.module.css'
+
+const WORD_COUNT_DEBOUNCE_MS = 300
 
 interface MarkdownEditorProps {
   /** 内容变更回调 */
@@ -41,11 +43,13 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const updateCursorPosition = useEditorStore((state) => state.updateCursorPosition)
   const setSelectedText = useUIStore((state) => state.setSelectedText)
   const loadFileContent = useEditorStore((state) => state.loadFileContent)
+  const updateWordCount = useEditorStore((state) => state.updateWordCount)
   
   // Local state
   const [isComposing, setIsComposing] = useState(false)
   const [searchPanelVisible, setSearchPanelVisible] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const wordCountTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // 高亮服务
   const { config, patterns, buildPatterns, hoverCardConfig } = useHighlightService()
@@ -66,6 +70,16 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   useEffect(() => {
     currentFilePathRef.current = currentFilePath
   }, [currentFilePath])
+
+  // 防抖字数统计
+  const debouncedUpdateWordCount = useCallback((textContent: string) => {
+    if (wordCountTimeoutRef.current) {
+      clearTimeout(wordCountTimeoutRef.current)
+    }
+    wordCountTimeoutRef.current = setTimeout(() => {
+      updateWordCount(textContent)
+    }, WORD_COUNT_DEBOUNCE_MS)
+  }, [updateWordCount])
 
   // 检查当前文件是否应该被排除高亮
   const shouldHighlight = useMemo(() => {
@@ -134,12 +148,12 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       if (isComposing) return
 
       const htmlContent = editor.getHTML()
-      const textContent = editor.getText() // 纯文本用于字数统计
+      const textContent = editor.getText()
       updateContent(htmlContent)
       onChange?.(htmlContent)
 
-      // 更新字数统计（使用纯文本）
-      useEditorStore.getState().updateWordCount(textContent)
+      // 防抖更新字数统计
+      debouncedUpdateWordCount(textContent)
 
       // 实时保存编辑器状态（包括历史记录）到当前文件
       const filePath = currentFilePathRef.current
@@ -204,8 +218,8 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       const textContent = editor.getText()
       updateContent(htmlContent)
       onChange?.(htmlContent)
-      // 更新字数统计（使用纯文本）
-      useEditorStore.getState().updateWordCount(textContent)
+      // 防抖更新字数统计
+      debouncedUpdateWordCount(textContent)
     }
 
     editorElement.addEventListener('compositionstart', handleCompositionStart)
@@ -215,7 +229,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       editorElement.removeEventListener('compositionstart', handleCompositionStart)
       editorElement.removeEventListener('compositionend', handleCompositionEnd)
     }
-  }, [editor, updateContent, onChange])
+  }, [editor, updateContent, onChange, debouncedUpdateWordCount])
 
   // 同步内容（切换标签时保存/恢复编辑器状态）
   useEffect(() => {
@@ -247,12 +261,12 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       restoreEditorContent(editor, currentContent)
     }
 
-    // 切换标签后更新字数统计（使用纯文本）
+    // 切换标签后更新字数统计
     const textContent = editor.getText()
-    useEditorStore.getState().updateWordCount(textContent)
+    updateWordCount(textContent)
     
     prevFilePathRef.current = currentPath
-  }, [editor, getCurrentContent, activeTabId, currentFilePath, getEditorState, saveEditorState])
+  }, [editor, getCurrentContent, activeTabId, currentFilePath, getEditorState, saveEditorState, updateWordCount])
 
   // 更新编辑器设置
   useEffect(() => {
@@ -274,6 +288,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+      if (wordCountTimeoutRef.current) clearTimeout(wordCountTimeoutRef.current)
     }
   }, [])
   
@@ -400,16 +415,15 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   useEffect(() => {
     if (!editor || !externalRefreshRequest) return
 
-    // 检查是否是当前打开的文件
     if (externalRefreshRequest === currentFilePathRef.current) {
       loadFileContent(externalRefreshRequest).then(content => {
         restoreEditorContent(editor, content)
         const textContent = editor.getText()
-        useEditorStore.getState().updateWordCount(textContent)
+        updateWordCount(textContent)
       })
     }
     clearExternalRefreshRequest()
-  }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest])
+  }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest, updateWordCount])
 
   if (!editor) {
     return <div className={styles.loading}>加载编辑器...</div>
