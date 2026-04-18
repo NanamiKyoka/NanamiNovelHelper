@@ -1,18 +1,12 @@
 /**
  * 全局加载组件
- * 
- * 显示全局加载状态，支持：
- * - 全屏遮罩模式
- * - 进度展示
- * - 多任务状态
  */
 
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { Spin, Progress } from 'antd'
 import { useLoadingSummary, useLoadingModules } from '@stores/loadingStore'
 import styles from './GlobalLoading.module.css'
 
-/** 模块名称映射 */
 const MODULE_NAMES: Record<string, string> = {
   project: '项目',
   vocabulary: '词汇',
@@ -30,23 +24,19 @@ const MODULE_NAMES: Record<string, string> = {
   terminal: '终端'
 }
 
-/** 全局加载组件属性 */
+const ALL_MODULES = [
+  'project', 'vocabulary', 'sensitive', 'relationship',
+  'timeline', 'sequenceChart', 'organization', 'fileTree', 'highlight'
+] as const
+
 interface GlobalLoadingProps {
-  /** 最小显示时间（毫秒），避免闪烁 */
   minDisplayTime?: number
-  /** 是否显示进度条 */
   showProgress?: boolean
-  /** 是否显示加载模块列表 */
   showModules?: boolean
-  /** 自定义加载消息 */
   customMessage?: string
 }
 
-/**
- * 全局加载组件
- */
-export function GlobalLoading({
-  minDisplayTime: _minDisplayTime = 300,
+const GlobalLoadingInner = memo(function GlobalLoadingInner({
   showProgress = true,
   showModules = false,
   customMessage
@@ -54,7 +44,6 @@ export function GlobalLoading({
   const { isLoading, latestMessage, taskCount, showGlobalOverlay } = useLoadingSummary()
   const loadingModules = useLoadingModules()
 
-  // 生成加载消息
   const message = useMemo(() => {
     if (customMessage) return customMessage
     if (latestMessage) return latestMessage
@@ -71,18 +60,10 @@ export function GlobalLoading({
     return '加载中...'
   }, [customMessage, latestMessage, loadingModules])
 
-  // 计算进度百分比
   const progressPercent = useMemo(() => {
     if (!showProgress || loadingModules.length === 0) return undefined
-    
-    // 假设每个模块加载完成后进度增加
-    // 这里只是一个示意，实际可以根据加载完成的模块计算
-    const allModules = [
-      'project', 'vocabulary', 'sensitive', 'relationship',
-      'timeline', 'sequenceChart', 'organization', 'fileTree', 'highlight'
-    ]
-    const loadedCount = allModules.filter(m => !loadingModules.includes(m)).length
-    return Math.round((loadedCount / allModules.length) * 100)
+    const loadedCount = ALL_MODULES.filter(m => !loadingModules.includes(m)).length
+    return Math.round((loadedCount / ALL_MODULES.length) * 100)
   }, [showProgress, loadingModules])
 
   if (!isLoading && !showGlobalOverlay) {
@@ -130,12 +111,12 @@ export function GlobalLoading({
       </div>
     </div>
   )
+})
+
+export function GlobalLoading(props: GlobalLoadingProps) {
+  return <GlobalLoadingInner {...props} />
 }
 
-/**
- * 页面初始化加载组件
- * 专门用于应用启动时的全屏加载
- */
 export function AppInitLoading({ message = '正在初始化应用...' }: { message?: string }) {
   return (
     <div className={styles.initOverlay}>
@@ -149,10 +130,7 @@ export function AppInitLoading({ message = '正在初始化应用...' }: { messa
   )
 }
 
-/**
- * 简单的内联加载指示器
- */
-export function ModuleLoadingIndicator({ module }: { module: string }) {
+export const ModuleLoadingIndicator = memo(function ModuleLoadingIndicator({ module }: { module: string }) {
   const summary = useLoadingSummary()
   
   if (!summary.isLoading) return null
@@ -165,6 +143,6 @@ export function ModuleLoadingIndicator({ module }: { module: string }) {
       </span>
     </div>
   )
-}
+})
 
 export default GlobalLoading
