@@ -33,6 +33,8 @@ import { DEFAULT_BADGE_VISIBILITY } from '@types/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
+const BADGE_COUNT_THRESHOLD = 0
+
 const { Content } = Layout
 
 // 右侧面板类型
@@ -55,15 +57,15 @@ function App(): JSX.Element {
     clearError 
   } = useProjectActions()
 
-  // 词汇和敏感词状态
-  const entries = useVocabularyStore((state) => state.entries) || []
-  const words = useSensitiveStore((state) => state.words) || []
-  const graphs = useRelationshipStore((state) => state.graphs) || []
-  const timelines = useTimelineStore((state) => state.timelines) || []
-  const charts = useSequenceChartStore((state) => state.charts) || []
-  const organizations = useOrganizationStore((state) => state.graphs) || []
-  const maps = useMapStore((state) => state.maps) || []
-  const terminals = useTerminalStore((state) => state.terminals) || []
+  // 词汇和敏感词数量（只订阅数量，避免订阅整个数组导致不必要的重渲染）
+  const entriesCount = useVocabularyStore((state) => state.entries.length)
+  const wordsCount = useSensitiveStore((state) => state.words.length)
+  const graphsCount = useRelationshipStore((state) => state.graphs.length)
+  const timelinesCount = useTimelineStore((state) => state.timelines.length)
+  const chartsCount = useSequenceChartStore((state) => state.charts.length)
+  const organizationsCount = useOrganizationStore((state) => state.graphs.length)
+  const mapsCount = useMapStore((state) => state.maps.length)
+  const terminalsCount = useTerminalStore((state) => state.terminals.length)
   
   const selectedText = useUIStore((state) => state.selectedText)
   const createProjectModalOpen = useUIStore((state) => state.createProjectModalOpen)
@@ -197,8 +199,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('vocabulary')}
             >
               <TagOutlined />
-              {entries.length > 0 && (
-                <span className={styles.badge}>{entries.length}</span>
+              {entriesCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{entriesCount}</span>
               )}
             </div>
           </Tooltip>
@@ -214,8 +216,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('sensitive')}
             >
               <WarningOutlined />
-              {words.length > 0 && (
-                <span className={styles.badge}>{words.length}</span>
+              {wordsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{wordsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -244,8 +246,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('relationship')}
             >
               <ApartmentOutlined />
-              {graphs.length > 0 && (
-                <span className={styles.badge}>{graphs.length}</span>
+              {graphsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{graphsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -261,8 +263,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('timeline')}
             >
               <ClockCircleOutlined />
-              {timelines.length > 0 && (
-                <span className={styles.badge}>{timelines.length}</span>
+              {timelinesCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{timelinesCount}</span>
               )}
             </div>
           </Tooltip>
@@ -278,8 +280,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('sequenceChart')}
             >
               <TableOutlined />
-              {charts.length > 0 && (
-                <span className={styles.badge}>{charts.length}</span>
+              {chartsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{chartsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -295,8 +297,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('organization')}
             >
               <TeamOutlined />
-              {organizations.length > 0 && (
-                <span className={styles.badge}>{organizations.length}</span>
+              {organizationsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{organizationsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -312,8 +314,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('map')}
             >
               <EnvironmentOutlined />
-              {maps.length > 0 && (
-                <span className={styles.badge}>{maps.length}</span>
+              {mapsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{mapsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -329,8 +331,8 @@ function App(): JSX.Element {
               onClick={() => toggleRightPanel('terminal')}
             >
               <CodeOutlined />
-              {terminals.length > 0 && (
-                <span className={styles.badge}>{terminals.length}</span>
+              {terminalsCount > BADGE_COUNT_THRESHOLD && (
+                <span className={styles.badge}>{terminalsCount}</span>
               )}
             </div>
           </Tooltip>
@@ -339,7 +341,7 @@ function App(): JSX.Element {
     ]
     
     return items.filter(item => item.visible)
-  }, [entries.length, words.length, graphs.length, timelines.length, charts.length, organizations.length, maps.length, terminals.length, rightPanelKey, toggleRightPanel, badgeVisibility])
+  }, [entriesCount, wordsCount, graphsCount, timelinesCount, chartsCount, organizationsCount, mapsCount, terminalsCount, rightPanelKey, toggleRightPanel, badgeVisibility])
 
   // 如果没有打开项目，显示欢迎页面
   if (!currentProject) {
