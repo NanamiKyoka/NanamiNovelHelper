@@ -26,7 +26,8 @@ const MODULE_NAMES: Record<string, string> = {
 
 const ALL_MODULES = [
   'project', 'vocabulary', 'sensitive', 'relationship',
-  'timeline', 'sequenceChart', 'organization', 'fileTree', 'highlight'
+  'timeline', 'sequenceChart', 'organization', 'map',
+  'fileTree', 'highlight', 'settings', 'git', 'ai', 'terminal'
 ] as const
 
 interface GlobalLoadingProps {
