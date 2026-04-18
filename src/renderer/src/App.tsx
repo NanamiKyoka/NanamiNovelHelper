@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Layout, theme, Button, Tooltip } from 'antd'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { Layout, theme, Button, Tooltip, Spin } from 'antd'
 import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined } from '@ant-design/icons'
 import ActivityBar from '@components/layout/ActivityBar'
 import Sidebar from '@components/layout/Sidebar'
@@ -8,14 +8,7 @@ import StatusBar from '@components/layout/StatusBar'
 import TitleBar from '@components/layout/TitleBar'
 import { DraggableBadgeContainer } from '@components/layout'
 import { WelcomePage, CreateProjectModal, OpenProjectModal } from '@components/project'
-import { VocabularyPanel, SensitiveWordPanel } from '@components/vocabulary'
 import { RandomNamePanel } from '@components/random-name'
-import { RelationshipPanel } from '@components/visualization/relationship'
-import { TimelinePanel } from '@components/visualization/timeline'
-import { SequenceChartPanel } from '@components/visualization/sequence-chart'
-import { OrganizationPanel } from '@components/visualization/organization'
-import { MapPanel } from '@components/visualization/map'
-import { TerminalPanel } from '@components/terminal'
 import { ErrorBoundary, GlobalLoading } from '@components/common'
 import { useProjectActions, useShortcuts } from '@hooks'
 import { useVocabularyStore } from '@stores/vocabularyStore'
@@ -32,6 +25,15 @@ import { useLoadingStore } from '@stores/loadingStore'
 import { DEFAULT_BADGE_VISIBILITY } from '@types/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
+
+const VocabularyPanel = lazy(() => import('@components/vocabulary/VocabularyPanel').then(m => ({ default: m.VocabularyPanel })))
+const SensitiveWordPanel = lazy(() => import('@components/vocabulary/SensitiveWordPanel').then(m => ({ default: m.SensitiveWordPanel })))
+const RelationshipPanel = lazy(() => import('@components/visualization/relationship/RelationshipPanel'))
+const TimelinePanel = lazy(() => import('@components/visualization/timeline/TimelinePanel'))
+const SequenceChartPanel = lazy(() => import('@components/visualization/sequence-chart/SequenceChartPanel'))
+const OrganizationPanel = lazy(() => import('@components/visualization/organization/OrganizationPanel'))
+const MapPanel = lazy(() => import('@components/visualization/map/MapPanel'))
+const TerminalPanel = lazy(() => import('@components/terminal/TerminalPanel'))
 
 const BADGE_COUNT_THRESHOLD = 0
 
@@ -456,33 +458,35 @@ function App(): JSX.Element {
             aria-labelledby={`right-panel-title-${rightPanelKey}`}
           >
             <ErrorBoundary moduleName={rightPanelKey}>
-              {rightPanelKey === 'vocabulary' && (
-                <VocabularyPanel 
-                  readOnly={false} 
-                  externalSearchText={selectedText}
-                />
-              )}
-              {rightPanelKey === 'sensitive' && (
-                <SensitiveWordPanel readOnly={false} />
-              )}
-              {rightPanelKey === 'relationship' && (
-                <RelationshipPanel />
-              )}
-              {rightPanelKey === 'timeline' && (
-                <TimelinePanel />
-              )}
-              {rightPanelKey === 'sequenceChart' && (
-                <SequenceChartPanel />
-              )}
-              {rightPanelKey === 'organization' && (
-                <OrganizationPanel />
-              )}
-              {rightPanelKey === 'map' && (
-                <MapPanel />
-              )}
-              {rightPanelKey === 'terminal' && (
-                <TerminalPanel onClose={closeRightPanel} />
-              )}
+              <Suspense fallback={<div className={styles.panelLoading}><Spin /></div>}>
+                {rightPanelKey === 'vocabulary' && (
+                  <VocabularyPanel 
+                    readOnly={false} 
+                    externalSearchText={selectedText}
+                  />
+                )}
+                {rightPanelKey === 'sensitive' && (
+                  <SensitiveWordPanel readOnly={false} />
+                )}
+                {rightPanelKey === 'relationship' && (
+                  <RelationshipPanel />
+                )}
+                {rightPanelKey === 'timeline' && (
+                  <TimelinePanel />
+                )}
+                {rightPanelKey === 'sequenceChart' && (
+                  <SequenceChartPanel />
+                )}
+                {rightPanelKey === 'organization' && (
+                  <OrganizationPanel />
+                )}
+                {rightPanelKey === 'map' && (
+                  <MapPanel />
+                )}
+                {rightPanelKey === 'terminal' && (
+                  <TerminalPanel onClose={closeRightPanel} />
+                )}
+              </Suspense>
             </ErrorBoundary>
           </div>
         </aside>
