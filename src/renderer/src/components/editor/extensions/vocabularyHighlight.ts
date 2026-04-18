@@ -38,11 +38,15 @@ let globalStyleConfig: HighlightStyleConfig = {
   hoverDelay: 300
 }
 let globalEnabled = true
-let globalVersion = 0  // 版本号，用于强制刷新装饰器
+let globalVersion = 0
 
-// 装饰器缓存（模块级变量，用于跨插件实例共享）
-let moduleCachedDecorations: DecorationSet | null = null
-let moduleLastDocRef: any = null  // 用于追踪文档对象引用
+interface CacheEntry {
+  version: number
+  decorations: DecorationSet
+  docSize: number
+}
+
+const decorationCache = new WeakMap<any, CacheEntry>()
 
 /**
  * 分词器实例（使用 Intl.Segmenter 进行中文分词）
@@ -136,12 +140,9 @@ export function updateHighlightEnabled(enabled: boolean): void {
 
 /**
  * 清空高亮缓存（文件切换时调用）
- * 这是解决缓存 bug 的关键：强制清空模块级缓存
  */
 export function clearHighlightCache(): void {
-  moduleCachedDecorations = null
-  moduleLastDocRef = null
-  globalVersion++  // 同时增加版本号，确保刷新
+  globalVersion++
 }
 
 /**
@@ -260,11 +261,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
   addProseMirrorPlugins() {
     const extensionThis = this
 
-    // 存储上次计算的版本号（插件实例级别）
-    let lastComputedVersion = -1
-
     return [
-      // 自动高亮插件（装饰器方式，不修改文档内容）
       new Plugin({
         key: VocabularyHighlightPluginKey,
         state: {
@@ -272,58 +269,40 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             return DecorationSet.empty
           },
           apply(tr, oldSet, oldState, newState) {
-            // 直接从 store 获取最新状态
             const storeState = useHighlightService.getState()
             const patterns = storeState.patterns
             const automaton = storeState.automaton
             const enabled = storeState.config?.scope.enabled ?? true
             
-            // 使用全局状态
             if (!enabled || !globalEnabled || patterns.length === 0) {
-              // 清空缓存
-              moduleCachedDecorations = null
-              moduleLastDocRef = null
-              lastComputedVersion = globalVersion
               return DecorationSet.empty
             }
 
-            // 检查文档是否被直接替换（如文件切换时 updateState）
-            const docReplaced = oldState.doc !== newState.doc
+            const doc = newState.doc
+            const cached = decorationCache.get(doc)
             
-            // 额外检查：即使文档对象相同，但如果文档内容不同，也需要重新计算
-            // 这是解决缓存 bug 的关键
-            const docContentChanged = moduleLastDocRef !== null && 
-              moduleLastDocRef !== newState.doc &&
-              moduleCachedDecorations !== null
-
-            // 检查是否需要重新计算
             const needsRecompute = 
-              tr.docChanged ||           // 文档变化
-              docReplaced ||             // 文档被替换（文件切换）
-              docContentChanged ||       // 文档内容变化（额外的检查）
-              globalVersion !== lastComputedVersion  // patterns 或配置变化
+              tr.docChanged ||
+              !cached ||
+              cached.version !== globalVersion ||
+              cached.docSize !== doc.content.size
 
-            if (!needsRecompute && moduleCachedDecorations) {
-              return moduleCachedDecorations
+            if (!needsRecompute && cached) {
+              return cached.decorations
             }
 
-            // 文档替换或内容变化时，清空旧缓存
-            if (docReplaced || docContentChanged) {
-              moduleCachedDecorations = null
-            }
-
-            // 重新计算装饰
             const newDecorations = createHighlightDecorations(
-              newState.doc, 
+              doc, 
               automaton,
               patterns,
               globalStyleConfig
             )
             
-            // 更新缓存
-            moduleCachedDecorations = newDecorations
-            moduleLastDocRef = newState.doc
-            lastComputedVersion = globalVersion
+            decorationCache.set(doc, {
+              version: globalVersion,
+              decorations: newDecorations,
+              docSize: doc.content.size
+            })
             
             return newDecorations
           }
@@ -332,7 +311,6 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
           decorations(state) {
             return this.getState(state)
           },
-          // 处理点击事件
           handleClick(view, pos, event) {
             const target = event.target as HTMLElement
             const highlightEl = target.closest('[data-entry-id]')
@@ -345,7 +323,6 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             }
             return false
           },
-          // 处理 hover 事件
           handleDOMEvents: {
             mouseover(view, event) {
               if (!globalStyleConfig.showHoverTooltip) return false
