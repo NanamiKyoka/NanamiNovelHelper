@@ -135,21 +135,18 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
 
   // 构建模式列表
   buildPatterns: (entries, types, sensitiveWords) => {
-    const { config } = get()
+    const { config, automaton } = get()
     const patterns: HighlightPattern[] = []
     const typeMap = new Map(types.map(t => [t.id, t]))
 
-    // 处理普通词汇
     for (const entry of entries) {
       const type = typeMap.get(entry.typeId)
       const typeOverride = config.typeOverrides.find(o => o.typeId === entry.typeId)
       const entryOverride = config.entryOverrides.find(o => o.entryId === entry.id)
 
-      // 检查是否启用
       if (typeOverride && !typeOverride.enabled) continue
       if (entryOverride && entryOverride.enabled === false) continue
 
-      // 获取有效配置
       const effective = get().getEffectivePattern(entry.id, entry.typeId)
 
       patterns.push({
@@ -165,7 +162,6 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
       })
     }
 
-    // 处理敏感词
     if (config.match.sensitiveWordHighlight) {
       for (const word of sensitiveWords) {
         const color = config.match.sensitiveWordColors[word.severity] || '#f5222d'
@@ -180,9 +176,27 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
           caseSensitive: config.match.caseSensitive,
           isSensitive: true,
           severity: word.severity,
-          priority: 100 // 敏感词优先级最高
+          priority: 100
         })
       }
+    }
+
+    const prevPatterns = get().patterns
+    const prevPatternIds = new Set(prevPatterns.map(p => p.id))
+    const newPatternIds = new Set(patterns.map(p => p.id))
+
+    const hasChanges = 
+      prevPatternIds.size !== newPatternIds.size ||
+      patterns.some(p => {
+        const prev = prevPatterns.find(pp => pp.id === p.id)
+        return !prev || 
+          prev.name !== p.name ||
+          prev.color !== p.color ||
+          prev.matchMode !== p.matchMode
+      })
+
+    if (!hasChanges && automaton && automaton.isBuilt()) {
+      return
     }
 
     set({ patterns })
@@ -191,14 +205,20 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
 
   // 重建自动机
   rebuildAutomaton: () => {
-    const { patterns, config } = get()
+    const { patterns, config, automaton } = get()
     if (patterns.length === 0) {
       set({ automaton: null })
       return
     }
 
-    const automaton = createAhoCorasick(patterns, config.match.caseSensitive)
-    set({ automaton })
+    if (automaton && automaton.isBuilt()) {
+      automaton.clear()
+      automaton.addPatterns(patterns)
+      automaton.build()
+    } else {
+      const newAutomaton = createAhoCorasick(patterns, config.match.caseSensitive)
+      set({ automaton: newAutomaton })
+    }
   },
 
   // 清空模式
