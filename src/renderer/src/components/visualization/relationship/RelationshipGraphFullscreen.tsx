@@ -115,6 +115,7 @@ function RelationshipGraphFullscreen({
   const [graphReady, setGraphReady] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [selectFromVocabulary, setSelectFromVocabulary] = useState(false)
+  const isInitializedRef = useRef(false)
 
   const [nodeModal, setNodeModal] = useState<NodeModalState>({
     visible: false,
@@ -182,16 +183,21 @@ function RelationshipGraphFullscreen({
     }
   }, [currentGraph?.linkedVocabularyTypes, loadEntries])
 
-  // 使用 callback ref 初始化 G6
+  // 使用 callback ref 设置容器引用
   const containerRef = useCallback((container: HTMLDivElement | null) => {
     if (!container) return
     containerDomRef.current = container
-    if (graphRef.current) return
+  }, [])
 
-    setTimeout(() => {
+  // 初始化 G6 图形
+  useEffect(() => {
+    const container = containerDomRef.current
+    if (!container || isInitializedRef.current) return
+
+    const initGraph = () => {
       const width = container.clientWidth
       const height = container.clientHeight
-      if (width === 0 || height === 0) return
+      if (width === 0 || height === 0) return false
 
       const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333'
       const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
@@ -201,7 +207,6 @@ function RelationshipGraphFullscreen({
         container,
         width,
         height,
-        // 不使用 autoFit，避免拖拽节点后自动缩放
         data: { nodes: [], edges: [] },
 
         node: {
@@ -256,7 +261,6 @@ function RelationshipGraphFullscreen({
           },
         },
 
-        // 不使用自动布局，使用固定位置
         behaviors: [
           'drag-canvas',
           'zoom-canvas',
@@ -267,7 +271,6 @@ function RelationshipGraphFullscreen({
 
       graphRef.current = graph
 
-      // 事件绑定
       graph.on('node:click', (evt: any) => {
         setSelectedNodeId(evt.target.id)
         setSelectedEdgeId(null)
@@ -284,13 +287,11 @@ function RelationshipGraphFullscreen({
         setContextMenu(prev => ({ ...prev, visible: false }))
       })
 
-      // 右键菜单事件 - 使用 G6 v5 原生事件
       graph.on('node:contextmenu', (evt: any) => {
         evt.preventDefault?.()
         const nodeId = evt.target.id
         setSelectedNodeId(nodeId)
         setSelectedEdgeId(null)
-        // 获取浏览器坐标用于定位菜单
         const clientX = evt.client?.x ?? evt.canvasX
         const clientY = evt.client?.y ?? evt.canvasY
         setContextMenu({
@@ -335,14 +336,12 @@ function RelationshipGraphFullscreen({
         })
       })
 
-      // 节点拖拽结束后保存位置
       graph.on('node:dragend', async (evt: any) => {
         const nodeId = evt.target.id
         const nodeData = graph.getNodeData(nodeId)
         if (nodeData && nodeData.style) {
           const { x, y } = nodeData.style
           if (x !== undefined && y !== undefined) {
-            // 更新节点位置
             await updateNode(nodeId, { x, y })
           }
         }
@@ -350,45 +349,53 @@ function RelationshipGraphFullscreen({
 
       graph.render().then(() => {
         setGraphReady(true)
+        isInitializedRef.current = true
       }).catch((error) => {
         console.error('Failed to render relationship graph:', error)
         message.error('关系图渲染失败，请刷新重试')
         setGraphReady(false)
       })
+
+      return true
+    }
+
+    // 延迟初始化，确保容器尺寸正确
+    const timer = setTimeout(() => {
+      initGraph()
     }, 100)
-  }, [isDarkMode, token.colorPrimary, updateNode])
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [isDarkMode, token.colorPrimary, updateNode, message])
 
   // 清理 - 保存视图状态并销毁图形
   useEffect(() => {
     return () => {
-      if (graphRef.current && !graphRef.current.destroyed) {
-        // 保存视图状态
+      const graph = graphRef.current
+      if (graph && !graph.destroyed) {
         try {
-          const graph = graphRef.current
           const zoom = graph.getZoom()
-          // 获取 canvas 尺寸
           const canvas = graph.getCanvas()
           const width = canvas.getConfig().width || 800
           const height = canvas.getConfig().height || 600
-          // 获取容器位置
           const container = containerDomRef.current
           const rect = container?.getBoundingClientRect()
           if (rect) {
-            // 将视口中心转换为 graph 坐标 - 使用 getCanvasByClient
             const center = graph.getCanvasByClient([rect.left + width / 2, rect.top + height / 2])
             const viewState = {
               zoom,
               centerX: center[0],
               centerY: center[1],
             }
-            // 保存到 store
             useRelationshipStore.getState().updateGraph(graphId, { viewState })
           }
         } catch {
-          // 忽略错误
+          // 忽略销毁时的错误
         }
-        graphRef.current.destroy()
+        graph.destroy()
         graphRef.current = null
+        isInitializedRef.current = false
       }
     }
   }, [graphId])
