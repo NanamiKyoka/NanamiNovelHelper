@@ -1,0 +1,92 @@
+.innerCanvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-color);
+}
+
+.canvasContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.elementsLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptyState h3 {
+  margin-bottom: var(--spacing-2);
+  color: var(--text-color);
+}
+
+.emptyState p {
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-4);
+}
+
+.aiFillButton {
+  margin-top: var(--spacing-2);
+}
+
+.zoomControls {
+  position: absolute;
+  bottom: var(--spacing-4);
+  right: var(--spacing-4);
+  display: flex;
+  gap: var(--spacing-2);
+  background: var(--card-bg);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.zoomButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoomButton:hover {
+  background: var(--hover-bg);
+}
+
+.zoomLevel {
+  min-width: 50px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 32px;
+}

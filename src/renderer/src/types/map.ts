@@ -1,68 +1,60 @@
-/**
- * 地图相关类型定义（渲染进程）
- * 
- * 从共享类型重新导出
- */
-
 export type {
   Point,
+  Size,
   Rect,
-  MapRegion,
-  CreateRegionOptions,
-  UpdateRegionOptions,
-  ConnectionType,
-  LineStyle,
-  RegionConnection,
-  CreateConnectionOptions,
-  UpdateConnectionOptions,
-  MapAnnotation,
-  CreateAnnotationOptions,
-  UpdateAnnotationOptions,
+  ChunkType,
+  EdgePosition,
+  EdgeConnection,
+  Chunk,
+  ElementType,
+  MapElement,
+  ConnectionStyle,
+  ChunkConnection,
+  ViewLevel,
   MapData,
   MapMeta,
   Map,
+  EditorTool,
+  EditorState,
+  AiGenerateChunkRequest,
+  AiGenerateChunkResponse,
+  AiConnectionSuggestionRequest,
+  AiConnectionSuggestionResponse,
+  AiFillChunkRequest,
+  AiFillChunkResponse,
+  CreateChunkOptions,
+  UpdateChunkOptions,
+  CreateElementOptions,
+  UpdateElementOptions,
+  CreateConnectionOptions,
+  UpdateConnectionOptions,
   CreateMapOptions,
   UpdateMapOptions,
-  MapTool,
-  EditorState,
   HistoryEntry
-} from '@shared/map'
+} from '../../../shared/map'
 
 export {
-  DEFAULT_REGION_COLOR,
-  DEFAULT_REGION_BORDER_COLOR,
-  DEFAULT_REGION_BORDER_WIDTH,
-  DEFAULT_REGION_OPACITY,
-  DEFAULT_CONNECTION_COLOR,
-  DEFAULT_CONNECTION_LINE_WIDTH,
-  DEFAULT_CONNECTION_LINE_STYLE,
+  CHUNK_TYPE_CONFIG,
+  ELEMENT_TYPE_CONFIG,
+  DEFAULT_CHUNK_SIZE,
+  DEFAULT_ELEMENT_SIZE,
   DEFAULT_CANVAS_WIDTH,
   DEFAULT_CANVAS_HEIGHT,
   DEFAULT_BACKGROUND_COLOR,
   DEFAULT_GRID_SIZE,
-  DEFAULT_GRID_COLOR,
-  DEFAULT_ANNOTATION_FONT_SIZE,
-  DEFAULT_ANNOTATION_FONT_FAMILY,
-  DEFAULT_ANNOTATION_COLOR,
-  calculateCenter,
-  calculateBoundingBox,
-  isPointInPolygon,
+  DEFAULT_SNAP_THRESHOLD,
+  DEFAULT_CONNECTION_COLOR,
+  DEFAULT_CONNECTION_LINE_WIDTH,
   generateId,
-  createDefaultRegion,
+  createDefaultEdges,
+  createDefaultChunk,
+  createDefaultElement,
   createDefaultConnection,
-  createDefaultAnnotation,
-  createDefaultMapData
-} from '@shared/map'
-
-/**
- * 画布状态
- */
-export interface MapCanvasState {
-  scale: number
-  scrollX: number
-  scrollY: number
-  minScale: number
-  maxScale: number
-  canvasWidth: number
-  canvasHeight: number
-}
+  createDefaultMapData,
+  getEdgePosition,
+  checkEdgeCompatibility,
+  findElementById,
+  updateElementInTree,
+  deleteElementFromTree,
+  getParentPath
+} from '../../../shared/map'

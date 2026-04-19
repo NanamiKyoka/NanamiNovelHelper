@@ -1,74 +1,262 @@
-/**
- * 地图全屏编辑器
- * 
- * 新版：基于 PixiJS 的多边形板块编辑器
- */
-
-import { useEffect, useCallback } from 'react'
-import { Button, Typography, App } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
-import { useMapStore } from '@renderer/stores/mapStore'
-import { useUIStore } from '@renderer/stores/uiStore'
-import { MapCanvas } from './MapCanvas'
-import { MapToolbar } from './MapToolbar'
-import { MapEditPanel } from './MapEditPanel'
+import { useCallback, useState } from 'react'
+import { Button, Tooltip, Modal, App } from 'antd'
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  UndoOutlined,
+  RedoOutlined,
+  SelectOutlined,
+  DragOutlined,
+  LinkOutlined,
+  DeleteOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  SettingOutlined,
+  ThunderboltOutlined
+} from '@ant-design/icons'
+import { useMapStore } from '@stores/mapStore'
+import { useUIStore } from '@stores/uiStore'
+import { WorldCanvas } from './WorldCanvas'
+import { InnerCanvas } from './InnerCanvas'
+import { ChunkGallery } from './ChunkGallery'
+import { ElementGallery } from './ElementGallery'
+import { Breadcrumb } from './Breadcrumb'
+import type { ChunkType, Point } from '@renderer/types/map'
 import styles from './MapFullscreen.module.css'
 
-const { Title } = Typography
-
-interface MapFullscreenProps {
-  mapId: string
-  onBack: () => void
-}
-
-function MapFullscreen({ mapId, onBack }: MapFullscreenProps): JSX.Element {
+export function MapFullscreen() {
   const { message } = App.useApp()
   
   const currentMap = useMapStore(state => state.currentMap)
-  const loadMap = useMapStore(state => state.loadMap)
+  const viewStack = useMapStore(state => state.viewStack)
+  const tool = useMapStore(state => state.tool)
+  const setTool = useMapStore(state => state.setTool)
+  const canUndo = useMapStore(state => state.canUndo)
+  const canRedo = useMapStore(state => state.canRedo)
+  const undo = useMapStore(state => state.undo)
+  const redo = useMapStore(state => state.redo)
   const saveCurrentMap = useMapStore(state => state.saveCurrentMap)
-  const saveThumbnail = useMapStore(state => state.saveThumbnail)
+  const enterChunk = useMapStore(state => state.enterChunk)
+  const enterElement = useMapStore(state => state.enterElement)
+  const addChunk = useMapStore(state => state.addChunk)
+  const selectedChunkId = useMapStore(state => state.selectedChunkId)
+  const selectedElementId = useMapStore(state => state.selectedElementId)
+  const selectedConnectionId = useMapStore(state => state.selectedConnectionId)
+  const deleteChunk = useMapStore(state => state.deleteChunk)
+  const deleteElement = useMapStore(state => state.deleteElement)
+  const deleteConnection = useMapStore(state => state.deleteConnection)
+  const exportMap = useMapStore(state => state.exportMap)
+  const importMap = useMapStore(state => state.importMap)
+  const snapEnabled = useMapStore(state => state.snapEnabled)
+  const setSnapEnabled = useMapStore(state => state.setSnapEnabled)
   
-  const setFullscreenMode = useUIStore(state => state.setFullscreenMode)
-  const exitFullscreen = useUIStore(state => state.exitFullscreen)
+  const exitFullscreenMap = useUIStore(state => state.exitFullscreenMap)
   
-  // 设置全屏模式
-  useEffect(() => {
-    setFullscreenMode('map')
-    return () => exitFullscreen()
-  }, [setFullscreenMode, exitFullscreen])
+  const [showSuggestion, setShowSuggestion] = useState(false)
   
-  // 加载地图数据
-  useEffect(() => {
-    loadMap(mapId)
-  }, [mapId, loadMap])
+  const isWorldView = viewStack.length === 1
+  const currentLevel = viewStack[viewStack.length - 1]
   
-  // 保存地图
+  const handleBack = useCallback(() => {
+    exitFullscreenMap()
+  }, [exitFullscreenMap])
+  
   const handleSave = useCallback(async () => {
-    try {
-      await saveCurrentMap()
-      message.success('保存成功')
-    } catch (error) {
-      message.error('保存失败')
-    }
+    await saveCurrentMap()
+    message.success('地图已保存')
   }, [saveCurrentMap, message])
   
+  const handleChunkDoubleClick = useCallback((chunkId: string) => {
+    enterChunk(chunkId)
+  }, [enterChunk])
+  
+  const handleElementDoubleClick = useCallback((elementId: string, elementName: string) => {
+    enterElement(elementId, elementName)
+  }, [enterElement])
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    const chunkType = e.dataTransfer.getData('chunkType') as ChunkType
+    if (!chunkType) return
+    
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    
+    addChunk({
+      chunkType,
+      position: { x, y }
+    })
+  }, [addChunk])
+  
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+  }, [])
+  
+  const handleDelete = useCallback(() => {
+    if (selectedChunkId) {
+      Modal.confirm({
+        title: '确认删除',
+        content: '确定要删除选中的板块吗？相关的连接也会被删除。',
+        okText: '删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: () => {
+          deleteChunk(selectedChunkId)
+          message.success('板块已删除')
+        }
+      })
+    } else if (selectedElementId) {
+      Modal.confirm({
+        title: '确认删除',
+        content: '确定要删除选中的元素吗？',
+        okText: '删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: () => {
+          deleteElement(selectedElementId)
+          message.success('元素已删除')
+        }
+      })
+    } else if (selectedConnectionId) {
+      deleteConnection(selectedConnectionId)
+      message.success('连接已删除')
+    }
+  }, [selectedChunkId, selectedElementId, selectedConnectionId, deleteChunk, deleteElement, deleteConnection, message])
+  
+  const handleExport = useCallback(async () => {
+    if (!currentMap) return
+    const filePath = await exportMap(currentMap.id)
+    if (filePath) {
+      message.success(`已导出到: ${filePath}`)
+    }
+  }, [currentMap, exportMap, message])
+  
+  const handleImport = useCallback(async () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      
+      const reader = new FileReader()
+      reader.onload = async (event) => {
+        const content = event.target?.result as string
+        const map = await importMap(content)
+        if (map) {
+          message.success(`已导入: ${map.name}`)
+        }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }, [importMap, message])
+  
   return (
-    <div className={styles.container}>
-      {/* 顶部栏 */}
+    <div 
+      className={styles.mapFullscreen}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
-            onClick={onBack}
+          <Button
+            className={styles.backButton}
+            icon={<ArrowLeftOutlined />}
+            onClick={handleBack}
           >
             返回
           </Button>
-          <Title level={5} className={styles.title}>
-            {currentMap?.name || '地图编辑器'}
-          </Title>
+          <span className={styles.mapName}>{currentMap?.name || '未命名地图'}</span>
         </div>
+        
         <div className={styles.headerRight}>
+          <div className={styles.toolGroup}>
+            <Tooltip title="选择工具">
+              <button
+                className={`${styles.toolButton} ${tool === 'select' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('select')}
+              >
+                <SelectOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title="平移工具">
+              <button
+                className={`${styles.toolButton} ${tool === 'pan' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('pan')}
+              >
+                <DragOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title="连接工具">
+              <button
+                className={`${styles.toolButton} ${tool === 'connect' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('connect')}
+              >
+                <LinkOutlined />
+              </button>
+            </Tooltip>
+            <Tooltip title="删除工具">
+              <button
+                className={`${styles.toolButton} ${tool === 'delete' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('delete')}
+              >
+                <DeleteOutlined />
+              </button>
+            </Tooltip>
+          </div>
+          
+          <div className={styles.divider} />
+          
+          <Tooltip title={`吸附: ${snapEnabled ? '开启' : '关闭'}`}>
+            <Button
+              type={snapEnabled ? 'primary' : 'default'}
+              icon={<ThunderboltOutlined />}
+              onClick={() => setSnapEnabled(!snapEnabled)}
+            />
+          </Tooltip>
+          
+          <Tooltip title="撤销">
+            <Button
+              icon={<UndoOutlined />}
+              disabled={!canUndo}
+              onClick={undo}
+            />
+          </Tooltip>
+          <Tooltip title="重做">
+            <Button
+              icon={<RedoOutlined />}
+              disabled={!canRedo}
+              onClick={redo}
+            />
+          </Tooltip>
+          
+          <div className={styles.divider} />
+          
+          <Tooltip title="导入">
+            <Button
+              icon={<ImportOutlined />}
+              onClick={handleImport}
+            />
+          </Tooltip>
+          <Tooltip title="导出">
+            <Button
+              icon={<ExportOutlined />}
+              onClick={handleExport}
+            />
+          </Tooltip>
+          
+          <Tooltip title="删除选中">
+            <Button
+              icon={<DeleteOutlined />}
+              danger
+              disabled={!selectedChunkId && !selectedElementId && !selectedConnectionId}
+              onClick={handleDelete}
+            />
+          </Tooltip>
+          
           <Button
             type="primary"
             icon={<SaveOutlined />}
@@ -79,33 +267,42 @@ function MapFullscreen({ mapId, onBack }: MapFullscreenProps): JSX.Element {
         </div>
       </div>
       
-      {/* 主编辑区域 */}
+      <Breadcrumb />
+      
       <div className={styles.mainArea}>
-        {/* 左侧工具栏 */}
-        <MapToolbar onSave={handleSave} />
-        
-        {/* 画布区域 */}
         <div className={styles.canvasArea}>
-          <MapCanvas onSave={handleSave} />
+          {isWorldView ? (
+            <WorldCanvas onChunkDoubleClick={handleChunkDoubleClick} />
+          ) : (
+            <InnerCanvas onElementDoubleClick={handleElementDoubleClick} />
+          )}
         </div>
         
-        {/* 右侧编辑面板 */}
-        <MapEditPanel />
+        {isWorldView ? (
+          <ChunkGallery onChunkDrop={() => {}} />
+        ) : (
+          <ElementGallery />
+        )}
       </div>
       
-      {/* 底部状态栏 */}
       <div className={styles.statusBar}>
-        <span>
-          板块: {currentMap?.data?.regions?.length || 0} | 
-          连接: {currentMap?.data?.connections?.length || 0} | 
-          标注: {currentMap?.data?.annotations?.length || 0}
-        </span>
-        <span>
-          画布: {currentMap?.data?.canvasWidth || 1920} x {currentMap?.data?.canvasHeight || 1080}
-        </span>
+        <div className={styles.statusLeft}>
+          <span className={styles.statusItem}>
+            当前视图: {currentLevel.name}
+          </span>
+          <span className={styles.statusItem}>
+            板块: {currentMap?.data.chunks.length || 0}
+          </span>
+          <span className={styles.statusItem}>
+            连接: {currentMap?.data.connections.length || 0}
+          </span>
+        </div>
+        <div className={styles.statusRight}>
+          <span className={styles.statusItem}>
+            提示: 双击板块进入内部编辑
+          </span>
+        </div>
       </div>
     </div>
   )
 }
-
-export default MapFullscreen

@@ -2,7 +2,7 @@
  * 地图服务
  * 负责地图的 CRUD 操作和缩略图生成
  * 
- * 新版：支持多边形板块、连接、标注
+ * 新版：支持板块(Chunk)、内部元素(MapElement)、连接(Connection)
  */
 
 import JSON5 from 'json5'
@@ -43,7 +43,6 @@ class MapService extends BaseService<Map, MapMeta> {
   }
 
   protected toMetadata(item: Map): MapMeta {
-    // 获取缩略图完整路径
     let thumbnailPath: string | undefined = undefined
     if (item.thumbnail) {
       const fullPath = this.getThumbnailFullPath(item.id)
@@ -57,16 +56,14 @@ class MapService extends BaseService<Map, MapMeta> {
       name: item.name,
       description: item.description,
       thumbnail: thumbnailPath,
-      regionCount: item.data?.regions?.length || 0,
+      chunkCount: item.data?.chunks?.length || 0,
       connectionCount: item.data?.connections?.length || 0,
-      annotationCount: item.data?.annotations?.length || 0,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt
     }
   }
 
   protected sortItems(items: MapMeta[]): MapMeta[] {
-    // 按更新时间排序
     return items.sort((a, b) =>
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     )
@@ -83,10 +80,8 @@ class MapService extends BaseService<Map, MapMeta> {
     const now = this.getTimestamp()
     const mapId = this.generateId()
 
-    // 使用默认地图数据
     const mapData = createDefaultMapData()
     
-    // 应用用户选项
     if (options.canvasWidth) mapData.canvasWidth = options.canvasWidth
     if (options.canvasHeight) mapData.canvasHeight = options.canvasHeight
     if (options.backgroundColor) mapData.backgroundColor = options.backgroundColor
@@ -96,9 +91,8 @@ class MapService extends BaseService<Map, MapMeta> {
       name: options.name.trim(),
       description: options.description,
       thumbnail: undefined,
-      regionCount: 0,
+      chunkCount: 0,
       connectionCount: 0,
-      annotationCount: 0,
       data: mapData,
       createdAt: now,
       updatedAt: now
@@ -125,11 +119,9 @@ class MapService extends BaseService<Map, MapMeta> {
       updatedAt: now
     }
 
-    // 更新统计信息
     if (updates.data) {
-      updatedMap.regionCount = updates.data.regions?.length || 0
+      updatedMap.chunkCount = updates.data.chunks?.length || 0
       updatedMap.connectionCount = updates.data.connections?.length || 0
-      updatedMap.annotationCount = updates.data.annotations?.length || 0
     }
 
     this.save(updatedMap)
@@ -206,5 +198,4 @@ class MapService extends BaseService<Map, MapMeta> {
   }
 }
 
-// 单例导出
 export const mapService = new MapService()

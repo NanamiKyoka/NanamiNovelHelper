@@ -1,7 +1,14 @@
 /**
- * 地图状态管理
+ * 地图编辑器状态管理
  * 
- * 新版：支持多边形板块、连接、标注
+ * 功能：
+ * - 地图管理（CRUD）
+ * - 板块操作（CRUD、移动、吸附）
+ * - 内部元素操作（CRUD、嵌套）
+ * - 连接操作
+ * - 视图层级管理（钻取模式）
+ * - 历史记录（撤销/重做）
+ * - AI 辅助功能
  */
 
 import { create } from 'zustand'
@@ -10,27 +17,41 @@ import type {
   Map,
   MapMeta,
   MapData,
-  MapRegion,
-  RegionConnection,
-  MapAnnotation,
-  CreateMapOptions,
-  UpdateMapOptions,
-  CreateRegionOptions,
-  UpdateRegionOptions,
+  Chunk,
+  MapElement,
+  ChunkConnection,
+  ViewLevel,
+  EditorTool,
+  EdgePosition,
+  Point,
+  CreateChunkOptions,
+  UpdateChunkOptions,
+  CreateElementOptions,
+  UpdateElementOptions,
   CreateConnectionOptions,
   UpdateConnectionOptions,
-  CreateAnnotationOptions,
-  UpdateAnnotationOptions,
-  MapTool,
+  CreateMapOptions,
+  UpdateMapOptions,
   HistoryEntry,
-  Point
+  AiGenerateChunkResponse,
+  AiConnectionSuggestionResponse,
+  AiFillChunkResponse,
+  ChunkType,
+  ElementType
 } from '@renderer/types/map'
 import {
   generateId,
-  createDefaultRegion,
+  createDefaultChunk,
+  createDefaultElement,
   createDefaultConnection,
-  createDefaultAnnotation,
-  createDefaultMapData
+  createDefaultMapData,
+  checkEdgeCompatibility,
+  findElementById,
+  updateElementInTree,
+  deleteElementFromTree,
+  DEFAULT_CHUNK_SIZE,
+  DEFAULT_ELEMENT_SIZE,
+  DEFAULT_SNAP_THRESHOLD
 } from '@renderer/types/map'
 
 const handleError = createErrorHandler('[MapStore]')
@@ -44,21 +65,11 @@ const MAX_HISTORY_SIZE = 50
 interface HistoryManager {
   history: HistoryEntry[]
   index: number
-  
-  // 添加快照
   push: (action: string, description: string, snapshot: MapData) => void
-  
-  // 撤销
   undo: () => HistoryEntry | null
-  
-  // 重做
   redo: () => HistoryEntry | null
-  
-  // 是否可以撤销/重做
   canUndo: () => boolean
   canRedo: () => boolean
-  
-  // 清空
   clear: () => void
 }
 
@@ -69,28 +80,20 @@ const createHistoryManager = (): HistoryManager => {
   return {
     history,
     index,
-    
     push: (action: string, description: string, snapshot: MapData) => {
-      // 清除当前位置之后的历史
       history = history.slice(0, index + 1)
-      
-      // 添加新快照
       history.push({
         id: generateId(),
         timestamp: Date.now(),
         action,
         description,
-        snapshot: JSON.parse(JSON.stringify(snapshot)) // 深拷贝
+        snapshot: JSON.parse(JSON.stringify(snapshot))
       })
-      
-      // 限制历史大小
       if (history.length > MAX_HISTORY_SIZE) {
         history = history.slice(-MAX_HISTORY_SIZE)
       }
-      
       index = history.length - 1
     },
-    
     undo: () => {
       if (index > 0) {
         index--
@@ -98,7 +101,6 @@ const createHistoryManager = (): HistoryManager => {
       }
       return null
     },
-    
     redo: () => {
       if (index < history.length - 1) {
         index++
@@ -106,10 +108,8 @@ const createHistoryManager = (): HistoryManager => {
       }
       return null
     },
-    
     canUndo: () => index > 0,
     canRedo: () => index < history.length - 1,
-    
     clear: () => {
       history = []
       index = -1
@@ -122,93 +122,74 @@ const createHistoryManager = (): HistoryManager => {
 // ============================================
 
 interface MapState {
-  // ============================================
   // 地图数据
-  // ============================================
-  
-  // 地图列表
   maps: MapMeta[]
-  
-  // 当前编辑的地图
   currentMap: Map | null
-  
-  // 加载状态
   isLoading: boolean
   error: string | null
   
-  // ============================================
   // 编辑器状态
-  // ============================================
-  
-  // 当前工具
-  tool: MapTool
-  
-  // 选中的元素
-  selectedRegionId: string | null
+  tool: EditorTool
+  selectedChunkId: string | null
+  selectedElementId: string | null
   selectedConnectionId: string | null
-  selectedAnnotationId: string | null
   
   // 视图状态
   zoom: number
   panX: number
   panY: number
   
-  // 绘制状态
-  isDrawing: boolean
-  drawingVertices: Point[]
+  // 视图层级（钻取模式）
+  viewStack: ViewLevel[]
   
   // 连接绘制状态
-  connectingFromId: string | null
+  isConnecting: boolean
+  connectingFrom: { chunkId: string; edge: EdgePosition } | null
+  
+  // 吸附设置
+  snapEnabled: boolean
+  snapThreshold: number
   
   // 历史记录
   historyManager: HistoryManager
   canUndo: boolean
   canRedo: boolean
   
-  // ============================================
-  // 地图管理方法
-  // ============================================
+  // AI 状态
+  isAiGenerating: boolean
+  aiSuggestion: AiConnectionSuggestionResponse | null
   
+  // 地图管理方法
   loadList: () => Promise<void>
   loadMap: (mapId: string) => Promise<void>
   createMap: (options: CreateMapOptions) => Promise<Map | null>
   updateMap: (mapId: string, updates: UpdateMapOptions) => Promise<void>
-  deleteMap: (mapId: string) => Promise<void>
+  deleteMap: (mapId: string) => Promise<boolean>
   clearCurrentMap: () => void
   
-  // ============================================
   // 板块操作方法
-  // ============================================
+  addChunk: (options: CreateChunkOptions) => Chunk | null
+  updateChunk: (chunkId: string, updates: UpdateChunkOptions) => void
+  deleteChunk: (chunkId: string) => void
+  moveChunk: (chunkId: string, position: Point) => void
+  duplicateChunk: (chunkId: string) => Chunk | null
   
-  addRegion: (options: CreateRegionOptions) => MapRegion | null
-  updateRegion: (regionId: string, updates: UpdateRegionOptions) => void
-  deleteRegion: (regionId: string) => void
-  moveRegion: (regionId: string, deltaX: number, deltaY: number) => void
+  // 内部元素操作方法
+  addElement: (parentChunkId: string, parentElementId: string | null, options: CreateElementOptions) => MapElement | null
+  updateElement: (elementId: string, updates: UpdateElementOptions) => void
+  deleteElement: (elementId: string) => void
+  moveElement: (elementId: string, position: Point) => void
   
-  // ============================================
   // 连接操作方法
-  // ============================================
-  
-  addConnection: (options: CreateConnectionOptions) => RegionConnection | null
+  addConnection: (options: CreateConnectionOptions) => ChunkConnection | null
   updateConnection: (connectionId: string, updates: UpdateConnectionOptions) => void
   deleteConnection: (connectionId: string) => void
   
-  // ============================================
-  // 标注操作方法
-  // ============================================
-  
-  addAnnotation: (options: CreateAnnotationOptions) => MapAnnotation | null
-  updateAnnotation: (annotationId: string, updates: UpdateAnnotationOptions) => void
-  deleteAnnotation: (annotationId: string) => void
-  
-  // ============================================
   // 编辑器状态方法
-  // ============================================
-  
-  setTool: (tool: MapTool) => void
-  selectRegion: (regionId: string | null) => void
+  setTool: (tool: EditorTool) => void
+  selectChunk: (chunkId: string | null) => void
+  selectElement: (elementId: string | null) => void
   selectConnection: (connectionId: string | null) => void
-  selectAnnotation: (annotationId: string | null) => void
   clearSelection: () => void
   
   // 视图控制
@@ -216,37 +197,35 @@ interface MapState {
   setPan: (panX: number, panY: number) => void
   resetView: () => void
   
-  // 绘制状态
-  startDrawing: () => void
-  addDrawingVertex: (point: Point) => void
-  finishDrawing: () => MapRegion | null
-  cancelDrawing: () => void
+  // 视图层级方法
+  enterChunk: (chunkId: string) => void
+  enterElement: (elementId: string, elementName: string) => void
+  exitLevel: () => void
+  goToLevel: (levelIndex: number) => void
+  getCurrentElements: () => MapElement[]
   
-  // 连接绘制状态
-  startConnecting: (regionId: string) => void
-  finishConnecting: (targetId: string) => RegionConnection | null
+  // 连接绘制方法
+  startConnecting: (chunkId: string, edge: EdgePosition) => void
+  finishConnecting: (targetChunkId: string, targetEdge: EdgePosition) => ChunkConnection | null
   cancelConnecting: () => void
   
-  // ============================================
-  // 历史记录方法
-  // ============================================
+  // 吸附方法
+  setSnapEnabled: (enabled: boolean) => void
+  findSnapPoint: (position: Point, excludeChunkId?: string) => Point | null
   
+  // 历史记录方法
   undo: () => void
   redo: () => void
   saveToHistory: (action: string, description: string) => void
   
-  // ============================================
   // 保存与同步
-  // ============================================
-  
   saveCurrentMap: () => Promise<void>
   
-  // ============================================
   // 辅助方法
-  // ============================================
-  
   getMapById: (mapId: string) => MapMeta | undefined
-  getRegionById: (regionId: string) => MapRegion | undefined
+  getChunkById: (chunkId: string) => Chunk | undefined
+  getElementById: (elementId: string) => MapElement | null
+  getConnectionById: (connectionId: string) => ChunkConnection | undefined
   clearData: () => void
   setMaps: (maps: MapMeta[]) => void
   reorderMaps: (mapIds: string[]) => Promise<boolean>
@@ -257,6 +236,12 @@ interface MapState {
   // 导入导出
   exportMap: (mapId: string) => Promise<string | null>
   importMap: (jsonContent: string) => Promise<Map | null>
+  
+  // AI 方法
+  aiGenerateChunk: (description: string, position?: Point) => Promise<Chunk | null>
+  aiGetConnectionSuggestion: (sourceChunkId: string, sourceEdge: EdgePosition, targetChunkId: string, targetEdge: EdgePosition) => Promise<AiConnectionSuggestionResponse | null>
+  aiFillChunk: (chunkId: string) => Promise<MapElement[] | null>
+  clearAiSuggestion: () => void
 }
 
 // ============================================
@@ -266,31 +251,35 @@ interface MapState {
 const historyManager = createHistoryManager()
 
 export const useMapStore = create<MapState>((set, get) => ({
-  // ============================================
   // 初始状态
-  // ============================================
-  
   maps: [],
   currentMap: null,
   isLoading: false,
   error: null,
   
   tool: 'select',
-  selectedRegionId: null,
+  selectedChunkId: null,
+  selectedElementId: null,
   selectedConnectionId: null,
-  selectedAnnotationId: null,
   
   zoom: 1,
   panX: 0,
   panY: 0,
   
-  isDrawing: false,
-  drawingVertices: [],
-  connectingFromId: null,
+  viewStack: [{ type: 'world', id: 'world', name: '世界视图' }],
+  
+  isConnecting: false,
+  connectingFrom: null,
+  
+  snapEnabled: true,
+  snapThreshold: DEFAULT_SNAP_THRESHOLD,
   
   historyManager,
   canUndo: false,
   canRedo: false,
+  
+  isAiGenerating: false,
+  aiSuggestion: null,
   
   // ============================================
   // 地图管理方法
@@ -314,19 +303,17 @@ export const useMapStore = create<MapState>((set, get) => ({
       set({ 
         currentMap: map, 
         isLoading: false,
-        // 重置编辑器状态
         tool: 'select',
-        selectedRegionId: null,
+        selectedChunkId: null,
+        selectedElementId: null,
         selectedConnectionId: null,
-        selectedAnnotationId: null,
         zoom: 1,
         panX: 0,
         panY: 0,
-        isDrawing: false,
-        drawingVertices: [],
-        connectingFromId: null
+        viewStack: [{ type: 'world', id: 'world', name: '世界视图' }],
+        isConnecting: false,
+        connectingFrom: null
       })
-      // 清空历史记录
       historyManager.clear()
       set({ canUndo: false, canRedo: false })
     } catch (error) {
@@ -375,9 +362,11 @@ export const useMapStore = create<MapState>((set, get) => ({
         await get().loadList()
       }
       set({ isLoading: false })
+      return success
     } catch (error) {
       const message = handleError(error, { fallbackMessage: '删除地图失败' })
       set({ error: message, isLoading: false })
+      return false
     }
   },
   
@@ -385,12 +374,12 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ 
       currentMap: null,
       tool: 'select',
-      selectedRegionId: null,
+      selectedChunkId: null,
+      selectedElementId: null,
       selectedConnectionId: null,
-      selectedAnnotationId: null,
-      isDrawing: false,
-      drawingVertices: [],
-      connectingFromId: null
+      viewStack: [{ type: 'world', id: 'world', name: '世界视图' }],
+      isConnecting: false,
+      connectingFrom: null
     })
     historyManager.clear()
     set({ canUndo: false, canRedo: false })
@@ -400,138 +389,275 @@ export const useMapStore = create<MapState>((set, get) => ({
   // 板块操作方法
   // ============================================
   
-  addRegion: (options: CreateRegionOptions) => {
+  addChunk: (options: CreateChunkOptions) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
     
-    const region = createDefaultRegion(options)
+    const chunk = createDefaultChunk(options)
     const newData: MapData = {
       ...currentMap.data,
-      regions: [...currentMap.data.regions, region]
+      chunks: [...currentMap.data.chunks, chunk]
     }
     
-    // 保存到历史
-    get().saveToHistory('addRegion', `创建板块: ${region.name}`)
+    get().saveToHistory('addChunk', `创建板块: ${chunk.name}`)
     
     set({
       currentMap: {
         ...currentMap,
         data: newData,
-        regionCount: newData.regions.length,
+        chunkCount: newData.chunks.length,
         updatedAt: new Date().toISOString()
       }
     })
     
-    return region
+    return chunk
   },
   
-  updateRegion: (regionId: string, updates: UpdateRegionOptions) => {
+  updateChunk: (chunkId: string, updates: UpdateChunkOptions) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
-    const regionIndex = currentMap.data.regions.findIndex(r => r.id === regionId)
-    if (regionIndex === -1) return
+    const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === chunkId)
+    if (chunkIndex === -1) return
     
-    const oldRegion = currentMap.data.regions[regionIndex]
-    const updatedRegion: MapRegion = {
-      ...oldRegion,
+    const oldChunk = currentMap.data.chunks[chunkIndex]
+    const updatedChunk: Chunk = {
+      ...oldChunk,
       ...updates,
       updatedAt: Date.now()
     }
     
-    // 如果顶点改变，重新计算中心点
-    if (updates.vertices) {
-      const { calculateCenter } = require('@renderer/types/map')
-      updatedRegion.center = calculateCenter(updates.vertices)
-    }
+    const newChunks = [...currentMap.data.chunks]
+    newChunks[chunkIndex] = updatedChunk
     
-    const newRegions = [...currentMap.data.regions]
-    newRegions[regionIndex] = updatedRegion
-    
-    // 保存到历史
-    get().saveToHistory('updateRegion', `更新板块: ${updatedRegion.name}`)
+    get().saveToHistory('updateChunk', `更新板块: ${updatedChunk.name}`)
     
     set({
       currentMap: {
         ...currentMap,
         data: {
           ...currentMap.data,
-          regions: newRegions
+          chunks: newChunks
         },
         updatedAt: new Date().toISOString()
       }
     })
   },
   
-  deleteRegion: (regionId: string) => {
+  deleteChunk: (chunkId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
-    const region = currentMap.data.regions.find(r => r.id === regionId)
-    if (!region) return
+    const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
+    if (!chunk) return
     
-    // 同时删除相关的连接
     const remainingConnections = currentMap.data.connections.filter(
-      c => c.sourceId !== regionId && c.targetId !== regionId
+      c => c.sourceChunkId !== chunkId && c.targetChunkId !== chunkId
     )
     
-    const newRegions = currentMap.data.regions.filter(r => r.id !== regionId)
+    const newChunks = currentMap.data.chunks.filter(c => c.id !== chunkId)
     
-    // 保存到历史
-    get().saveToHistory('deleteRegion', `删除板块: ${region.name}`)
+    get().saveToHistory('deleteChunk', `删除板块: ${chunk.name}`)
     
     set({
       currentMap: {
         ...currentMap,
         data: {
           ...currentMap.data,
-          regions: newRegions,
+          chunks: newChunks,
           connections: remainingConnections
         },
-        regionCount: newRegions.length,
+        chunkCount: newChunks.length,
         connectionCount: remainingConnections.length,
         updatedAt: new Date().toISOString()
       },
-      selectedRegionId: null
+      selectedChunkId: null
     })
   },
   
-  moveRegion: (regionId: string, deltaX: number, deltaY: number) => {
+  moveChunk: (chunkId: string, position: Point) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
-    const regionIndex = currentMap.data.regions.findIndex(r => r.id === regionId)
-    if (regionIndex === -1) return
+    const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === chunkId)
+    if (chunkIndex === -1) return
     
-    const region = currentMap.data.regions[regionIndex]
-    const newVertices = region.vertices.map(v => ({
-      x: v.x + deltaX,
-      y: v.y + deltaY
-    }))
+    const chunk = currentMap.data.chunks[chunkIndex]
+    let finalPosition = position
     
-    const { calculateCenter } = require('@renderer/types/map')
-    const newCenter = calculateCenter(newVertices)
+    if (get().snapEnabled) {
+      const snapPoint = get().findSnapPoint(position, chunkId)
+      if (snapPoint) {
+        finalPosition = snapPoint
+      }
+    }
     
-    const updatedRegion: MapRegion = {
-      ...region,
-      vertices: newVertices,
-      center: newCenter,
+    const updatedChunk: Chunk = {
+      ...chunk,
+      position: finalPosition,
       updatedAt: Date.now()
     }
     
-    const newRegions = [...currentMap.data.regions]
-    newRegions[regionIndex] = updatedRegion
+    const newChunks = [...currentMap.data.chunks]
+    newChunks[chunkIndex] = updatedChunk
     
     set({
       currentMap: {
         ...currentMap,
         data: {
           ...currentMap.data,
-          regions: newRegions
+          chunks: newChunks
         },
         updatedAt: new Date().toISOString()
       }
     })
+  },
+  
+  duplicateChunk: (chunkId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    
+    const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
+    if (!chunk) return null
+    
+    const newChunk: Chunk = {
+      ...JSON.parse(JSON.stringify(chunk)),
+      id: generateId(),
+      name: `${chunk.name} (副本)`,
+      position: {
+        x: chunk.position.x + 20,
+        y: chunk.position.y + 20
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }
+    
+    const newData: MapData = {
+      ...currentMap.data,
+      chunks: [...currentMap.data.chunks, newChunk]
+    }
+    
+    get().saveToHistory('duplicateChunk', `复制板块: ${newChunk.name}`)
+    
+    set({
+      currentMap: {
+        ...currentMap,
+        data: newData,
+        chunkCount: newData.chunks.length,
+        updatedAt: new Date().toISOString()
+      }
+    })
+    
+    return newChunk
+  },
+  
+  // ============================================
+  // 内部元素操作方法
+  // ============================================
+  
+  addElement: (parentChunkId: string, parentElementId: string | null, options: CreateElementOptions) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    
+    const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === parentChunkId)
+    if (chunkIndex === -1) return null
+    
+    const element = createDefaultElement(options)
+    const chunk = currentMap.data.chunks[chunkIndex]
+    
+    if (parentElementId) {
+      const updatedChildren = [...chunk.children]
+      const addToParent = (elements: MapElement[]): MapElement[] => {
+        return elements.map(el => {
+          if (el.id === parentElementId) {
+            return { ...el, children: [...el.children, element] }
+          }
+          if (el.children.length > 0) {
+            return { ...el, children: addToParent(el.children) }
+          }
+          return el
+        })
+      }
+      chunk.children = addToParent(updatedChildren)
+    } else {
+      chunk.children = [...chunk.children, element]
+    }
+    
+    const newChunks = [...currentMap.data.chunks]
+    newChunks[chunkIndex] = { ...chunk, updatedAt: Date.now() }
+    
+    get().saveToHistory('addElement', `添加元素: ${element.name}`)
+    
+    set({
+      currentMap: {
+        ...currentMap,
+        data: {
+          ...currentMap.data,
+          chunks: newChunks
+        },
+        updatedAt: new Date().toISOString()
+      }
+    })
+    
+    return element
+  },
+  
+  updateElement: (elementId: string, updates: UpdateElementOptions) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return
+    
+    const newChunks = currentMap.data.chunks.map(chunk => {
+      const updatedChildren = updateElementInTree(chunk.children, elementId, updates)
+      if (updatedChildren !== chunk.children) {
+        return { ...chunk, children: updatedChildren, updatedAt: Date.now() }
+      }
+      return chunk
+    })
+    
+    get().saveToHistory('updateElement', `更新元素`)
+    
+    set({
+      currentMap: {
+        ...currentMap,
+        data: {
+          ...currentMap.data,
+          chunks: newChunks
+        },
+        updatedAt: new Date().toISOString()
+      }
+    })
+  },
+  
+  deleteElement: (elementId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return
+    
+    const newChunks = currentMap.data.chunks.map(chunk => {
+      const updatedChildren = deleteElementFromTree(chunk.children, elementId)
+      if (updatedChildren.length !== chunk.children.length || 
+          JSON.stringify(updatedChildren) !== JSON.stringify(chunk.children)) {
+        return { ...chunk, children: updatedChildren, updatedAt: Date.now() }
+      }
+      return chunk
+    })
+    
+    get().saveToHistory('deleteElement', `删除元素`)
+    
+    set({
+      currentMap: {
+        ...currentMap,
+        data: {
+          ...currentMap.data,
+          chunks: newChunks
+        },
+        updatedAt: new Date().toISOString()
+      },
+      selectedElementId: null
+    })
+  },
+  
+  moveElement: (elementId: string, position: Point) => {
+    get().updateElement(elementId, { position })
   },
   
   // ============================================
@@ -542,10 +668,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     const currentMap = get().currentMap
     if (!currentMap) return null
     
-    // 检查是否已存在相同连接
     const exists = currentMap.data.connections.some(
-      c => (c.sourceId === options.sourceId && c.targetId === options.targetId) ||
-           (c.sourceId === options.targetId && c.targetId === options.sourceId)
+      c => (c.sourceChunkId === options.sourceChunkId && c.targetChunkId === options.targetChunkId) ||
+           (c.sourceChunkId === options.targetChunkId && c.targetChunkId === options.sourceChunkId)
     )
     if (exists) return null
     
@@ -555,7 +680,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       connections: [...currentMap.data.connections, connection]
     }
     
-    // 保存到历史
     get().saveToHistory('addConnection', `创建连接`)
     
     set({
@@ -577,7 +701,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     const connectionIndex = currentMap.data.connections.findIndex(c => c.id === connectionId)
     if (connectionIndex === -1) return
     
-    const updatedConnection: RegionConnection = {
+    const updatedConnection: ChunkConnection = {
       ...currentMap.data.connections[connectionIndex],
       ...updates
     }
@@ -585,7 +709,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     const newConnections = [...currentMap.data.connections]
     newConnections[connectionIndex] = updatedConnection
     
-    // 保存到历史
     get().saveToHistory('updateConnection', `更新连接`)
     
     set({
@@ -606,7 +729,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     
     const newConnections = currentMap.data.connections.filter(c => c.id !== connectionId)
     
-    // 保存到历史
     get().saveToHistory('deleteConnection', `删除连接`)
     
     set({
@@ -624,134 +746,53 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   
   // ============================================
-  // 标注操作方法
-  // ============================================
-  
-  addAnnotation: (options: CreateAnnotationOptions) => {
-    const currentMap = get().currentMap
-    if (!currentMap) return null
-    
-    const annotation = createDefaultAnnotation(options)
-    const newData: MapData = {
-      ...currentMap.data,
-      annotations: [...currentMap.data.annotations, annotation]
-    }
-    
-    // 保存到历史
-    get().saveToHistory('addAnnotation', `创建标注`)
-    
-    set({
-      currentMap: {
-        ...currentMap,
-        data: newData,
-        annotationCount: newData.annotations.length,
-        updatedAt: new Date().toISOString()
-      }
-    })
-    
-    return annotation
-  },
-  
-  updateAnnotation: (annotationId: string, updates: UpdateAnnotationOptions) => {
-    const currentMap = get().currentMap
-    if (!currentMap) return
-    
-    const annotationIndex = currentMap.data.annotations.findIndex(a => a.id === annotationId)
-    if (annotationIndex === -1) return
-    
-    const updatedAnnotation: MapAnnotation = {
-      ...currentMap.data.annotations[annotationIndex],
-      ...updates
-    }
-    
-    const newAnnotations = [...currentMap.data.annotations]
-    newAnnotations[annotationIndex] = updatedAnnotation
-    
-    // 保存到历史
-    get().saveToHistory('updateAnnotation', `更新标注`)
-    
-    set({
-      currentMap: {
-        ...currentMap,
-        data: {
-          ...currentMap.data,
-          annotations: newAnnotations
-        },
-        updatedAt: new Date().toISOString()
-      }
-    })
-  },
-  
-  deleteAnnotation: (annotationId: string) => {
-    const currentMap = get().currentMap
-    if (!currentMap) return
-    
-    const newAnnotations = currentMap.data.annotations.filter(a => a.id !== annotationId)
-    
-    // 保存到历史
-    get().saveToHistory('deleteAnnotation', `删除标注`)
-    
-    set({
-      currentMap: {
-        ...currentMap,
-        data: {
-          ...currentMap.data,
-          annotations: newAnnotations
-        },
-        annotationCount: newAnnotations.length,
-        updatedAt: new Date().toISOString()
-      },
-      selectedAnnotationId: null
-    })
-  },
-  
-  // ============================================
   // 编辑器状态方法
   // ============================================
   
-  setTool: (tool: MapTool) => {
+  setTool: (tool: EditorTool) => {
     set({ 
       tool,
-      // 切换到绘制工具时自动开始绘制
-      isDrawing: tool === 'draw',
-      drawingVertices: [],
-      connectingFromId: null
+      isConnecting: tool === 'connect',
+      connectingFrom: null
     })
   },
   
-  selectRegion: (regionId: string | null) => {
+  selectChunk: (chunkId: string | null) => {
     set({ 
-      selectedRegionId: regionId,
-      selectedConnectionId: null,
-      selectedAnnotationId: null
+      selectedChunkId: chunkId,
+      selectedElementId: null,
+      selectedConnectionId: null
+    })
+  },
+  
+  selectElement: (elementId: string | null) => {
+    set({ 
+      selectedChunkId: null,
+      selectedElementId: elementId,
+      selectedConnectionId: null
     })
   },
   
   selectConnection: (connectionId: string | null) => {
     set({ 
-      selectedRegionId: null,
-      selectedConnectionId: connectionId,
-      selectedAnnotationId: null
-    })
-  },
-  
-  selectAnnotation: (annotationId: string | null) => {
-    set({ 
-      selectedRegionId: null,
-      selectedConnectionId: null,
-      selectedAnnotationId: annotationId
+      selectedChunkId: null,
+      selectedElementId: null,
+      selectedConnectionId: connectionId
     })
   },
   
   clearSelection: () => {
     set({
-      selectedRegionId: null,
-      selectedConnectionId: null,
-      selectedAnnotationId: null
+      selectedChunkId: null,
+      selectedElementId: null,
+      selectedConnectionId: null
     })
   },
   
+  // ============================================
   // 视图控制
+  // ============================================
+  
   setZoom: (zoom: number) => {
     const clampedZoom = Math.max(0.1, Math.min(5, zoom))
     set({ zoom: clampedZoom })
@@ -765,73 +806,190 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ zoom: 1, panX: 0, panY: 0 })
   },
   
-  // 绘制状态
-  startDrawing: () => {
-    set({ 
-      isDrawing: true, 
-      drawingVertices: [],
-      tool: 'draw'
-    })
-  },
+  // ============================================
+  // 视图层级方法
+  // ============================================
   
-  addDrawingVertex: (point: Point) => {
+  enterChunk: (chunkId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return
+    
+    const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
+    if (!chunk) return
+    
     set(state => ({
-      drawingVertices: [...state.drawingVertices, point]
+      viewStack: [...state.viewStack, { type: 'chunk', id: chunkId, name: chunk.name }],
+      selectedChunkId: null,
+      selectedElementId: null,
+      selectedConnectionId: null
     }))
   },
   
-  finishDrawing: () => {
-    const vertices = get().drawingVertices
-    if (vertices.length < 3) {
-      set({ isDrawing: false, drawingVertices: [] })
-      return null
-    }
-    
-    const region = get().addRegion({ vertices })
-    set({ isDrawing: false, drawingVertices: [] })
-    
-    if (region) {
-      get().selectRegion(region.id)
-    }
-    
-    return region
+  enterElement: (elementId: string, elementName: string) => {
+    set(state => ({
+      viewStack: [...state.viewStack, { type: 'element', id: elementId, name: elementName }],
+      selectedChunkId: null,
+      selectedElementId: null,
+      selectedConnectionId: null
+    }))
   },
   
-  cancelDrawing: () => {
-    set({ isDrawing: false, drawingVertices: [] })
+  exitLevel: () => {
+    set(state => {
+      if (state.viewStack.length <= 1) return state
+      const newStack = state.viewStack.slice(0, -1)
+      return {
+        viewStack: newStack,
+        selectedChunkId: null,
+        selectedElementId: null,
+        selectedConnectionId: null
+      }
+    })
   },
   
-  // 连接绘制状态
-  startConnecting: (regionId: string) => {
-    set({ 
-      connectingFromId: regionId,
+  goToLevel: (levelIndex: number) => {
+    set(state => {
+      if (levelIndex < 0 || levelIndex >= state.viewStack.length) return state
+      return {
+        viewStack: state.viewStack.slice(0, levelIndex + 1),
+        selectedChunkId: null,
+        selectedElementId: null,
+        selectedConnectionId: null
+      }
+    })
+  },
+  
+  getCurrentElements: () => {
+    const currentMap = get().currentMap
+    const viewStack = get().viewStack
+    
+    if (!currentMap) return []
+    
+    if (viewStack.length === 1) return []
+    
+    const currentLevel = viewStack[viewStack.length - 1]
+    
+    if (currentLevel.type === 'chunk') {
+      const chunk = currentMap.data.chunks.find(c => c.id === currentLevel.id)
+      return chunk?.children || []
+    }
+    
+    if (currentLevel.type === 'element') {
+      const element = findElementById(
+        currentMap.data.chunks.flatMap(c => c.children),
+        currentLevel.id
+      )
+      return element?.children || []
+    }
+    
+    return []
+  },
+  
+  // ============================================
+  // 连接绘制方法
+  // ============================================
+  
+  startConnecting: (chunkId: string, edge: EdgePosition) => {
+    set({
+      isConnecting: true,
+      connectingFrom: { chunkId, edge },
       tool: 'connect'
     })
   },
   
-  finishConnecting: (targetId: string) => {
-    const sourceId = get().connectingFromId
-    if (!sourceId || sourceId === targetId) {
-      set({ connectingFromId: null })
+  finishConnecting: (targetChunkId: string, targetEdge: EdgePosition) => {
+    const { connectingFrom, currentMap } = get()
+    if (!connectingFrom || !currentMap) {
+      set({ isConnecting: false, connectingFrom: null })
+      return null
+    }
+    
+    if (connectingFrom.chunkId === targetChunkId) {
+      set({ isConnecting: false, connectingFrom: null })
+      return null
+    }
+    
+    const sourceChunk = currentMap.data.chunks.find(c => c.id === connectingFrom.chunkId)
+    const targetChunk = currentMap.data.chunks.find(c => c.id === targetChunkId)
+    
+    if (!sourceChunk || !targetChunk) {
+      set({ isConnecting: false, connectingFrom: null })
+      return null
+    }
+    
+    const isCompatible = checkEdgeCompatibility(
+      sourceChunk, connectingFrom.edge,
+      targetChunk, targetEdge
+    )
+    
+    if (!isCompatible) {
+      set({ isConnecting: false, connectingFrom: null })
       return null
     }
     
     const connection = get().addConnection({
-      sourceId,
-      targetId
+      sourceChunkId: connectingFrom.chunkId,
+      sourceEdge: connectingFrom.edge,
+      targetChunkId,
+      targetEdge
     })
     
-    set({ connectingFromId: null })
-    
-    if (connection) {
-      get().selectConnection(connection.id)
-    }
-    
+    set({ isConnecting: false, connectingFrom: null })
     return connection
   },
   
   cancelConnecting: () => {
-    set({ connectingFromId: null })
+    set({ isConnecting: false, connectingFrom: null })
+  },
+  
+  // ============================================
+  // 吸附方法
+  // ============================================
+  
+  setSnapEnabled: (enabled: boolean) => {
+    set({ snapEnabled: enabled })
+  },
+  
+  findSnapPoint: (position: Point, excludeChunkId?: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    
+    const threshold = get().snapThreshold
+    const chunks = currentMap.data.chunks.filter(c => c.id !== excludeChunkId)
+    
+    for (const chunk of chunks) {
+      const edges: EdgePosition[] = ['top', 'right', 'bottom', 'left']
+      
+      for (const edge of edges) {
+        let snapPoint: Point
+        
+        switch (edge) {
+          case 'top':
+            snapPoint = { x: chunk.position.x + chunk.size.width / 2, y: chunk.position.y }
+            break
+          case 'right':
+            snapPoint = { x: chunk.position.x + chunk.size.width, y: chunk.position.y + chunk.size.height / 2 }
+            break
+          case 'bottom':
+            snapPoint = { x: chunk.position.x + chunk.size.width / 2, y: chunk.position.y + chunk.size.height }
+            break
+          case 'left':
+            snapPoint = { x: chunk.position.x, y: chunk.position.y + chunk.size.height / 2 }
+            break
+        }
+        
+        const distance = Math.sqrt(
+          Math.pow(position.x - snapPoint.x, 2) + 
+          Math.pow(position.y - snapPoint.y, 2)
+        )
+        
+        if (distance < threshold) {
+          return snapPoint
+        }
+      }
+    }
+    
+    return null
   },
   
   // ============================================
@@ -840,37 +998,31 @@ export const useMapStore = create<MapState>((set, get) => ({
   
   undo: () => {
     const entry = historyManager.undo()
-    if (entry) {
-      const currentMap = get().currentMap
-      if (currentMap) {
-        set({
-          currentMap: {
-            ...currentMap,
-            data: JSON.parse(JSON.stringify(entry.snapshot)),
-            updatedAt: new Date().toISOString()
-          },
-          canUndo: historyManager.canUndo(),
-          canRedo: historyManager.canRedo()
-        })
-      }
+    if (entry && get().currentMap) {
+      set(state => ({
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          data: entry.snapshot,
+          updatedAt: new Date().toISOString()
+        } : null,
+        canUndo: historyManager.canUndo(),
+        canRedo: historyManager.canRedo()
+      }))
     }
   },
   
   redo: () => {
     const entry = historyManager.redo()
-    if (entry) {
-      const currentMap = get().currentMap
-      if (currentMap) {
-        set({
-          currentMap: {
-            ...currentMap,
-            data: JSON.parse(JSON.stringify(entry.snapshot)),
-            updatedAt: new Date().toISOString()
-          },
-          canUndo: historyManager.canUndo(),
-          canRedo: historyManager.canRedo()
-        })
-      }
+    if (entry && get().currentMap) {
+      set(state => ({
+        currentMap: state.currentMap ? {
+          ...state.currentMap,
+          data: entry.snapshot,
+          updatedAt: new Date().toISOString()
+        } : null,
+        canUndo: historyManager.canUndo(),
+        canRedo: historyManager.canRedo()
+      }))
     }
   },
   
@@ -879,10 +1031,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (!currentMap) return
     
     historyManager.push(action, description, currentMap.data)
-    set({
-      canUndo: historyManager.canUndo(),
-      canRedo: historyManager.canRedo()
-    })
+    set({ canUndo: historyManager.canUndo(), canRedo: historyManager.canRedo() })
   },
   
   // ============================================
@@ -895,7 +1044,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     
     try {
       await window.electron.map.update(currentMap.id, { data: currentMap.data })
-      await get().loadList()
     } catch (error) {
       handleError(error, { fallbackMessage: '保存地图失败' })
     }
@@ -909,26 +1057,38 @@ export const useMapStore = create<MapState>((set, get) => ({
     return get().maps.find(m => m.id === mapId)
   },
   
-  getRegionById: (regionId: string) => {
-    return get().currentMap?.data.regions.find(r => r.id === regionId)
+  getChunkById: (chunkId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return undefined
+    return currentMap.data.chunks.find(c => c.id === chunkId)
+  },
+  
+  getElementById: (elementId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    return findElementById(
+      currentMap.data.chunks.flatMap(c => c.children),
+      elementId
+    )
+  },
+  
+  getConnectionById: (connectionId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return undefined
+    return currentMap.data.connections.find(c => c.id === connectionId)
   },
   
   clearData: () => {
-    set({ 
-      maps: [], 
-      currentMap: null, 
-      isLoading: false, 
-      error: null,
+    set({
+      maps: [],
+      currentMap: null,
       tool: 'select',
-      selectedRegionId: null,
+      selectedChunkId: null,
+      selectedElementId: null,
       selectedConnectionId: null,
-      selectedAnnotationId: null,
-      zoom: 1,
-      panX: 0,
-      panY: 0,
-      isDrawing: false,
-      drawingVertices: [],
-      connectingFromId: null
+      viewStack: [{ type: 'world', id: 'world', name: '世界视图' }],
+      isConnecting: false,
+      connectingFrom: null
     })
     historyManager.clear()
     set({ canUndo: false, canRedo: false })
@@ -939,29 +1099,53 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   
   reorderMaps: async (mapIds: string[]) => {
+    set({ isLoading: true })
     try {
-      return await window.electron.map.reorderMaps(mapIds)
+      const reorderedMaps = mapIds
+        .map(id => get().maps.find(m => m.id === id))
+        .filter((m): m is MapMeta => m !== undefined)
+      
+      set({ maps: reorderedMaps, isLoading: false })
+      return true
     } catch (error) {
-      handleError(error, { fallbackMessage: '重新排序地图失败' })
+      handleError(error, { fallbackMessage: '重排序失败' })
+      set({ isLoading: false })
       return false
     }
   },
+  
+  // ============================================
+  // 缩略图
+  // ============================================
   
   saveThumbnail: async (dataUrl: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
     try {
-      await window.electron.map.saveThumbnail(currentMap.id, dataUrl)
-      await get().loadList()
+      const thumbnailPath = await window.electron.map.saveThumbnail(currentMap.id, dataUrl)
+      if (thumbnailPath) {
+        set(state => ({
+          currentMap: state.currentMap ? {
+            ...state.currentMap,
+            thumbnail: thumbnailPath
+          } : null
+        }))
+        await get().loadList()
+      }
     } catch (error) {
       handleError(error, { fallbackMessage: '保存缩略图失败' })
     }
   },
   
+  // ============================================
+  // 导入导出
+  // ============================================
+  
   exportMap: async (mapId: string) => {
     try {
-      return await window.electron.map.export(mapId)
+      const filePath = await window.electron.map.exportMap(mapId)
+      return filePath
     } catch (error) {
       handleError(error, { fallbackMessage: '导出地图失败' })
       return null
@@ -970,14 +1154,103 @@ export const useMapStore = create<MapState>((set, get) => ({
   
   importMap: async (jsonContent: string) => {
     try {
-      const importedMap = await window.electron.map.import(jsonContent)
-      if (importedMap) {
+      const map = await window.electron.map.importMap(jsonContent)
+      if (map) {
         await get().loadList()
       }
-      return importedMap
+      return map
     } catch (error) {
       handleError(error, { fallbackMessage: '导入地图失败' })
       return null
     }
+  },
+  
+  // ============================================
+  // AI 方法
+  // ============================================
+  
+  aiGenerateChunk: async (description: string, position?: Point) => {
+    set({ isAiGenerating: true })
+    
+    try {
+      const response = await window.electron.ai.generateChunk({ description })
+      
+      const chunk = get().addChunk({
+        name: response.name,
+        description: response.description,
+        chunkType: response.chunkType,
+        position: position || { x: 400, y: 300 },
+        edges: {
+          top: { edge: 'top', allowedTypes: response.edges.top },
+          right: { edge: 'right', allowedTypes: response.edges.right },
+          bottom: { edge: 'bottom', allowedTypes: response.edges.bottom },
+          left: { edge: 'left', allowedTypes: response.edges.left }
+        }
+      })
+      
+      set({ isAiGenerating: false })
+      return chunk
+    } catch (error) {
+      handleError(error, { fallbackMessage: 'AI 生成板块失败' })
+      set({ isAiGenerating: false })
+      return null
+    }
+  },
+  
+  aiGetConnectionSuggestion: async (
+    sourceChunkId: string,
+    sourceEdge: EdgePosition,
+    targetChunkId: string,
+    targetEdge: EdgePosition
+  ) => {
+    set({ isAiGenerating: true })
+    
+    try {
+      const response = await window.electron.ai.connectionSuggestion({
+        sourceChunkId,
+        sourceEdge,
+        targetChunkId,
+        targetEdge
+      })
+      
+      set({ isAiGenerating: false, aiSuggestion: response })
+      return response
+    } catch (error) {
+      handleError(error, { fallbackMessage: 'AI 获取连接建议失败' })
+      set({ isAiGenerating: false })
+      return null
+    }
+  },
+  
+  aiFillChunk: async (chunkId: string) => {
+    set({ isAiGenerating: true })
+    
+    try {
+      const response = await window.electron.ai.fillChunk({ chunkId })
+      
+      const elements: MapElement[] = []
+      
+      for (const elem of response.elements) {
+        const element = get().addElement(chunkId, null, {
+          name: elem.name,
+          description: elem.description,
+          elementType: elem.elementType,
+          position: elem.position,
+          size: elem.size
+        })
+        if (element) elements.push(element)
+      }
+      
+      set({ isAiGenerating: false })
+      return elements
+    } catch (error) {
+      handleError(error, { fallbackMessage: 'AI 填充板块失败' })
+      set({ isAiGenerating: false })
+      return null
+    }
+  },
+  
+  clearAiSuggestion: () => {
+    set({ aiSuggestion: null })
   }
 }))
