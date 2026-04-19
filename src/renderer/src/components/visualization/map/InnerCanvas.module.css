@@ -49,10 +49,6 @@
   margin-bottom: var(--spacing-4);
 }
 
-.aiFillButton {
-  margin-top: var(--spacing-2);
-}
-
 .zoomControls {
   position: absolute;
   bottom: var(--spacing-4);

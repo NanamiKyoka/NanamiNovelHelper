@@ -2,9 +2,8 @@
  * 地图编辑器类型定义
  * 
  * 设计理念：
- * - 世界视图：板块（Chunk）宏观编辑，支持拖拽、吸附、连接
+ * - 世界视图：板块（Chunk）宏观编辑，六边形网格布局（类似文明六）
  * - 钻取模式：板块内部编辑，支持无限嵌套
- * - AI 辅助：自然语言生成、智能建议
  */
 
 // ============================================
@@ -16,12 +15,83 @@ export interface Point {
   y: number
 }
 
+export interface HexPoint {
+  q: number
+  r: number
+}
+
 export interface Size {
   width: number
   height: number
 }
 
 export interface Rect extends Point, Size {}
+
+// ============================================
+// 六边形工具函数
+// ============================================
+
+export const HEX_SIZE = 50
+
+export function hexToPixel(hex: HexPoint, size: number = HEX_SIZE): Point {
+  const x = size * (Math.sqrt(3) * hex.q + Math.sqrt(3) / 2 * hex.r)
+  const y = size * (3 / 2 * hex.r)
+  return { x, y }
+}
+
+export function pixelToHex(point: Point, size: number = HEX_SIZE): HexPoint {
+  const q = (Math.sqrt(3) / 3 * point.x - 1 / 3 * point.y) / size
+  const r = (2 / 3 * point.y) / size
+  return hexRound({ q, r })
+}
+
+export function hexRound(hex: HexPoint): HexPoint {
+  const s = -hex.q - hex.r
+  let rq = Math.round(hex.q)
+  let rr = Math.round(hex.r)
+  let rs = Math.round(s)
+  
+  const qDiff = Math.abs(rq - hex.q)
+  const rDiff = Math.abs(rr - hex.r)
+  const sDiff = Math.abs(rs - s)
+  
+  if (qDiff > rDiff && qDiff > sDiff) {
+    rq = -rr - rs
+  } else if (rDiff > sDiff) {
+    rr = -rq - rs
+  }
+  
+  return { q: rq, r: rr }
+}
+
+export function hexDistance(a: HexPoint, b: HexPoint): number {
+  return (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2
+}
+
+export function getHexNeighbors(hex: HexPoint): HexPoint[] {
+  const directions = [
+    { q: 1, r: 0 },
+    { q: 1, r: -1 },
+    { q: 0, r: -1 },
+    { q: -1, r: 0 },
+    { q: -1, r: 1 },
+    { q: 0, r: 1 }
+  ]
+  return directions.map(d => ({ q: hex.q + d.q, r: hex.r + d.r }))
+}
+
+export function getHexCorners(center: Point, size: number): Point[] {
+  const corners: Point[] = []
+  for (let i = 0; i < 6; i++) {
+    const angleDeg = 60 * i - 30
+    const angleRad = (Math.PI / 180) * angleDeg
+    corners.push({
+      x: center.x + size * Math.cos(angleRad),
+      y: center.y + size * Math.sin(angleRad)
+    })
+  }
+  return corners
+}
 
 // ============================================
 // 板块类型定义
@@ -82,13 +152,22 @@ export const CHUNK_TYPE_CONFIG: Record<ChunkType, {
 }
 
 // ============================================
-// 边缘连接类型
+// 边缘连接类型（六边形有6个边）
 // ============================================
 
-export type EdgePosition = 'top' | 'right' | 'bottom' | 'left'
+export type HexEdge = 0 | 1 | 2 | 3 | 4 | 5
 
-export interface EdgeConnection {
-  edge: EdgePosition
+export const HEX_EDGE_NAMES: Record<HexEdge, string> = {
+  0: '东',
+  1: '东北',
+  2: '西北',
+  3: '西',
+  4: '西南',
+  5: '东南'
+}
+
+export interface HexEdgeConnection {
+  edge: HexEdge
   allowedTypes: ChunkType[]
 }
 
@@ -105,17 +184,18 @@ export interface Chunk {
   chunkType: ChunkType
   customTypeName?: string
   
-  position: Point
-  size: Size
+  hexPosition: HexPoint
   
   icon: string
   color: string
   
   edges: {
-    top: EdgeConnection
-    right: EdgeConnection
-    bottom: EdgeConnection
-    left: EdgeConnection
+    0: HexEdgeConnection
+    1: HexEdgeConnection
+    2: HexEdgeConnection
+    3: HexEdgeConnection
+    4: HexEdgeConnection
+    5: HexEdgeConnection
   }
   
   children: MapElement[]
@@ -209,9 +289,9 @@ export interface ChunkConnection {
   type: 'connection'
   
   sourceChunkId: string
-  sourceEdge: EdgePosition
+  sourceEdge: HexEdge
   targetChunkId: string
-  targetEdge: EdgePosition
+  targetEdge: HexEdge
   
   style: ConnectionStyle
   color: string
@@ -219,8 +299,6 @@ export interface ChunkConnection {
   
   label?: string
   description?: string
-  
-  isAiSuggested: boolean
 }
 
 // ============================================
@@ -285,61 +363,7 @@ export interface EditorState {
   
   isDragging: boolean
   isConnecting: boolean
-  connectingFrom: { chunkId: string; edge: EdgePosition } | null
-  
-  snapEnabled: boolean
-  snapThreshold: number
-}
-
-// ============================================
-// AI 相关类型
-// ============================================
-
-export interface AiGenerateChunkRequest {
-  description: string
-  position?: Point
-}
-
-export interface AiGenerateChunkResponse {
-  name: string
-  chunkType: ChunkType
-  description: string
-  edges: {
-    top: ChunkType[]
-    right: ChunkType[]
-    bottom: ChunkType[]
-    left: ChunkType[]
-  }
-}
-
-export interface AiConnectionSuggestionRequest {
-  sourceChunkId: string
-  sourceEdge: EdgePosition
-  targetChunkId: string
-  targetEdge: EdgePosition
-}
-
-export interface AiConnectionSuggestionResponse {
-  canConnect: boolean
-  suggestion?: {
-    type: 'direct' | 'transition'
-    transitionChunk?: AiGenerateChunkResponse
-    reason: string
-  }
-}
-
-export interface AiFillChunkRequest {
-  chunkId: string
-}
-
-export interface AiFillChunkResponse {
-  elements: Array<{
-    name: string
-    elementType: ElementType
-    position: Point
-    size: Size
-    description: string
-  }>
+  connectingFrom: { chunkId: string; edge: HexEdge } | null
 }
 
 // ============================================
@@ -351,8 +375,7 @@ export interface CreateChunkOptions {
   description?: string
   chunkType: ChunkType
   customTypeName?: string
-  position: Point
-  size?: Size
+  hexPosition: HexPoint
   icon?: string
   color?: string
   edges?: Partial<Chunk['edges']>
@@ -363,8 +386,7 @@ export interface UpdateChunkOptions {
   description?: string
   chunkType?: ChunkType
   customTypeName?: string
-  position?: Point
-  size?: Size
+  hexPosition?: HexPoint
   icon?: string
   color?: string
   edges?: Partial<Chunk['edges']>
@@ -394,9 +416,9 @@ export interface UpdateElementOptions {
 
 export interface CreateConnectionOptions {
   sourceChunkId: string
-  sourceEdge: EdgePosition
+  sourceEdge: HexEdge
   targetChunkId: string
-  targetEdge: EdgePosition
+  targetEdge: HexEdge
   style?: ConnectionStyle
   color?: string
   lineWidth?: number
@@ -444,13 +466,10 @@ export interface HistoryEntry {
 // 默认值
 // ============================================
 
-export const DEFAULT_CHUNK_SIZE: Size = { width: 120, height: 100 }
 export const DEFAULT_ELEMENT_SIZE: Size = { width: 60, height: 60 }
 export const DEFAULT_CANVAS_WIDTH = 2000
 export const DEFAULT_CANVAS_HEIGHT = 1500
 export const DEFAULT_BACKGROUND_COLOR = '#1a1a2e'
-export const DEFAULT_GRID_SIZE = 20
-export const DEFAULT_SNAP_THRESHOLD = 15
 export const DEFAULT_CONNECTION_COLOR = '#ffffff'
 export const DEFAULT_CONNECTION_LINE_WIDTH = 2
 
@@ -462,7 +481,7 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
-export function createDefaultEdges(chunkType: ChunkType): Chunk['edges'] {
+export function createDefaultHexEdges(chunkType: ChunkType): Chunk['edges'] {
   const allTypes: ChunkType[] = [
     'city', 'village', 'forest', 'desert', 'mountain', 'ocean', 'river', 'lake',
     'swamp', 'grassland', 'snowland', 'volcano', 'cave', 'dungeon', 'ruins',
@@ -470,12 +489,15 @@ export function createDefaultEdges(chunkType: ChunkType): Chunk['edges'] {
   ]
   
   const compatibleTypes = getCompatibleTypes(chunkType)
+  const allowedTypes = compatibleTypes || allTypes
   
   return {
-    top: { edge: 'top', allowedTypes: compatibleTypes || allTypes },
-    right: { edge: 'right', allowedTypes: compatibleTypes || allTypes },
-    bottom: { edge: 'bottom', allowedTypes: compatibleTypes || allTypes },
-    left: { edge: 'left', allowedTypes: compatibleTypes || allTypes }
+    0: { edge: 0, allowedTypes },
+    1: { edge: 1, allowedTypes },
+    2: { edge: 2, allowedTypes },
+    3: { edge: 3, allowedTypes },
+    4: { edge: 4, allowedTypes },
+    5: { edge: 5, allowedTypes }
   }
 }
 
@@ -486,7 +508,7 @@ function getCompatibleTypes(chunkType: ChunkType): ChunkType[] | null {
     forest: ['city', 'village', 'forest', 'mountain', 'river', 'lake', 'grassland', 'cave'],
     desert: ['desert', 'mountain', 'ruins', 'cave', 'grassland'],
     mountain: ['city', 'village', 'forest', 'desert', 'mountain', 'cave', 'dungeon', 'snowland'],
-    ocean: ['ocean', 'island', 'river', 'coast'],
+    ocean: ['ocean', 'island', 'river'],
     river: ['city', 'village', 'forest', 'mountain', 'ocean', 'lake', 'grassland'],
     lake: ['city', 'village', 'forest', 'mountain', 'river', 'grassland'],
     grassland: ['city', 'village', 'forest', 'desert', 'mountain', 'river', 'lake'],
@@ -495,7 +517,7 @@ function getCompatibleTypes(chunkType: ChunkType): ChunkType[] | null {
     ruins: ['desert', 'forest', 'grassland', 'dungeon', 'cave'],
     underground: ['cave', 'dungeon', 'mountain'],
     sky: ['sky', 'mountain', 'tower'],
-    island: ['ocean', 'beach'],
+    island: ['ocean'],
   }
   
   return compatibilityMap[chunkType] || null
@@ -512,16 +534,17 @@ export function createDefaultChunk(options: CreateChunkOptions): Chunk {
     description: options.description || config.description,
     chunkType: options.chunkType,
     customTypeName: options.customTypeName,
-    position: options.position,
-    size: options.size || DEFAULT_CHUNK_SIZE,
+    hexPosition: options.hexPosition,
     icon: options.icon || config.icon,
     color: options.color || config.defaultColor,
     edges: options.edges ? {
-      top: { ...createDefaultEdges(options.chunkType).top, ...options.edges.top },
-      right: { ...createDefaultEdges(options.chunkType).right, ...options.edges.right },
-      bottom: { ...createDefaultEdges(options.chunkType).bottom, ...options.edges.bottom },
-      left: { ...createDefaultEdges(options.chunkType).left, ...options.edges.left }
-    } : createDefaultEdges(options.chunkType),
+      0: { ...createDefaultHexEdges(options.chunkType)[0], ...options.edges[0] },
+      1: { ...createDefaultHexEdges(options.chunkType)[1], ...options.edges[1] },
+      2: { ...createDefaultHexEdges(options.chunkType)[2], ...options.edges[2] },
+      3: { ...createDefaultHexEdges(options.chunkType)[3], ...options.edges[3] },
+      4: { ...createDefaultHexEdges(options.chunkType)[4], ...options.edges[4] },
+      5: { ...createDefaultHexEdges(options.chunkType)[5], ...options.edges[5] }
+    } : createDefaultHexEdges(options.chunkType),
     children: [],
     createdAt: now,
     updatedAt: now
@@ -561,8 +584,7 @@ export function createDefaultConnection(options: CreateConnectionOptions): Chunk
     color: options.color || DEFAULT_CONNECTION_COLOR,
     lineWidth: options.lineWidth ?? DEFAULT_CONNECTION_LINE_WIDTH,
     label: options.label,
-    description: options.description,
-    isAiSuggested: options.isAiSuggested || false
+    description: options.description
   }
 }
 
@@ -573,30 +595,27 @@ export function createDefaultMapData(): MapData {
     canvasWidth: DEFAULT_CANVAS_WIDTH,
     canvasHeight: DEFAULT_CANVAS_HEIGHT,
     backgroundColor: DEFAULT_BACKGROUND_COLOR,
-    gridSize: DEFAULT_GRID_SIZE,
-    showGrid: true
+    gridSize: HEX_SIZE,
+    showGrid: false
   }
 }
 
-export function getEdgePosition(chunk: Chunk, edge: EdgePosition): Point {
-  const { position, size } = chunk
-  switch (edge) {
-    case 'top':
-      return { x: position.x + size.width / 2, y: position.y }
-    case 'right':
-      return { x: position.x + size.width, y: position.y + size.height / 2 }
-    case 'bottom':
-      return { x: position.x + size.width / 2, y: position.y + size.height }
-    case 'left':
-      return { x: position.x, y: position.y + size.height / 2 }
+export function getHexEdgeCenter(chunk: Chunk, edge: HexEdge): Point {
+  const center = hexToPixel(chunk.hexPosition)
+  const corners = getHexCorners(center, HEX_SIZE)
+  const corner1 = corners[edge]
+  const corner2 = corners[(edge + 1) % 6]
+  return {
+    x: (corner1.x + corner2.x) / 2,
+    y: (corner1.y + corner2.y) / 2
   }
 }
 
-export function checkEdgeCompatibility(
+export function checkHexEdgeCompatibility(
   sourceChunk: Chunk,
-  sourceEdge: EdgePosition,
+  sourceEdge: HexEdge,
   targetChunk: Chunk,
-  targetEdge: EdgePosition
+  targetEdge: HexEdge
 ): boolean {
   const sourceAllowed = sourceChunk.edges[sourceEdge].allowedTypes
   const targetAllowed = targetChunk.edges[targetEdge].allowedTypes

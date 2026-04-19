@@ -1,12 +1,10 @@
 import { useState, useMemo } from 'react'
-import { Input, Button, Spin, message } from 'antd'
-import { StarOutlined, SearchOutlined } from '@ant-design/icons'
+import { Input, message } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
 import * as Icons from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { CHUNK_TYPE_CONFIG, type ChunkType } from '@renderer/types/map'
 import styles from './ChunkGallery.module.css'
-
-const { TextArea } = Input
 
 const CHUNK_CATEGORIES: Record<string, ChunkType[]> = {
   '聚居地': ['city', 'village', 'castle', 'tower'],
@@ -17,16 +15,14 @@ const CHUNK_CATEGORIES: Record<string, ChunkType[]> = {
 }
 
 interface ChunkGalleryProps {
-  onChunkDrop: (chunkType: ChunkType, position: { x: number; y: number }) => void
+  onChunkDrop: (chunkType: ChunkType, hexPosition: { q: number; r: number }) => void
 }
 
 export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
   const [searchText, setSearchText] = useState('')
-  const [aiDescription, setAiDescription] = useState('')
   
-  const isAiGenerating = useMapStore(state => state.isAiGenerating)
-  const aiGenerateChunk = useMapStore(state => state.aiGenerateChunk)
   const addChunk = useMapStore(state => state.addChunk)
+  const findNearestEmptyHex = useMapStore(state => state.findNearestEmptyHex)
   
   const filteredCategories = useMemo(() => {
     if (!searchText) return CHUNK_CATEGORIES
@@ -52,27 +48,18 @@ export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
     e.dataTransfer.effectAllowed = 'copy'
   }
   
-  const handleAiGenerate = async () => {
-    if (!aiDescription.trim()) {
-      message.warning('请输入板块描述')
+  const handleQuickAdd = (chunkType: ChunkType) => {
+    const config = CHUNK_TYPE_CONFIG[chunkType]
+    const hexPosition = findNearestEmptyHex({ q: 0, r: 0 })
+    
+    if (!hexPosition) {
+      message.warning('没有可用的空位')
       return
     }
     
-    const chunk = await aiGenerateChunk(aiDescription, { x: 400, y: 300 })
-    if (chunk) {
-      message.success(`已创建板块: ${chunk.name}`)
-      setAiDescription('')
-    }
-  }
-  
-  const handleQuickAdd = (chunkType: ChunkType) => {
-    const config = CHUNK_TYPE_CONFIG[chunkType]
     addChunk({
       chunkType,
-      position: { 
-        x: 200 + Math.random() * 400, 
-        y: 150 + Math.random() * 300 
-      }
+      hexPosition
     })
     message.success(`已添加${config.label}`)
   }
@@ -119,31 +106,6 @@ export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
             </div>
           </div>
         ))}
-      </div>
-      
-      <div className={styles.aiSection}>
-        <h4>
-          <StarOutlined />
-          AI 生成板块
-        </h4>
-        <TextArea
-          className={styles.aiInput}
-          placeholder="描述你想要的板块，例如：一个被迷雾环绕的精灵村庄，北边连接森林，东边连接山丘"
-          value={aiDescription}
-          onChange={(e) => setAiDescription(e.target.value)}
-          rows={3}
-          disabled={isAiGenerating}
-        />
-        <Button
-          type="primary"
-          className={styles.aiButton}
-          icon={<StarOutlined />}
-          onClick={handleAiGenerate}
-          loading={isAiGenerating}
-          disabled={!aiDescription.trim()}
-        >
-          AI 生成
-        </Button>
       </div>
     </div>
   )

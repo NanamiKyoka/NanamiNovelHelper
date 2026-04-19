@@ -3,12 +3,11 @@
  * 
  * 功能：
  * - 地图管理（CRUD）
- * - 板块操作（CRUD、移动、吸附）
+ * - 板块操作（CRUD、六边形网格布局）
  * - 内部元素操作（CRUD、嵌套）
  * - 连接操作
  * - 视图层级管理（钻取模式）
  * - 历史记录（撤销/重做）
- * - AI 辅助功能
  */
 
 import { create } from 'zustand'
@@ -22,7 +21,8 @@ import type {
   ChunkConnection,
   ViewLevel,
   EditorTool,
-  EdgePosition,
+  HexEdge,
+  HexPoint,
   Point,
   CreateChunkOptions,
   UpdateChunkOptions,
@@ -32,12 +32,7 @@ import type {
   UpdateConnectionOptions,
   CreateMapOptions,
   UpdateMapOptions,
-  HistoryEntry,
-  AiGenerateChunkResponse,
-  AiConnectionSuggestionResponse,
-  AiFillChunkResponse,
-  ChunkType,
-  ElementType
+  HistoryEntry
 } from '@renderer/types/map'
 import {
   generateId,
@@ -45,13 +40,15 @@ import {
   createDefaultElement,
   createDefaultConnection,
   createDefaultMapData,
-  checkEdgeCompatibility,
+  hexToPixel,
+  pixelToHex,
+  hexDistance,
+  getHexNeighbors,
+  checkHexEdgeCompatibility,
   findElementById,
   updateElementInTree,
   deleteElementFromTree,
-  DEFAULT_CHUNK_SIZE,
-  DEFAULT_ELEMENT_SIZE,
-  DEFAULT_SNAP_THRESHOLD
+  HEX_SIZE
 } from '@renderer/types/map'
 
 const handleError = createErrorHandler('[MapStore]')
@@ -122,44 +119,29 @@ const createHistoryManager = (): HistoryManager => {
 // ============================================
 
 interface MapState {
-  // 地图数据
   maps: MapMeta[]
   currentMap: Map | null
   isLoading: boolean
   error: string | null
   
-  // 编辑器状态
   tool: EditorTool
   selectedChunkId: string | null
   selectedElementId: string | null
   selectedConnectionId: string | null
   
-  // 视图状态
   zoom: number
   panX: number
   panY: number
   
-  // 视图层级（钻取模式）
   viewStack: ViewLevel[]
   
-  // 连接绘制状态
   isConnecting: boolean
-  connectingFrom: { chunkId: string; edge: EdgePosition } | null
+  connectingFrom: { chunkId: string; edge: HexEdge } | null
   
-  // 吸附设置
-  snapEnabled: boolean
-  snapThreshold: number
-  
-  // 历史记录
   historyManager: HistoryManager
   canUndo: boolean
   canRedo: boolean
   
-  // AI 状态
-  isAiGenerating: boolean
-  aiSuggestion: AiConnectionSuggestionResponse | null
-  
-  // 地图管理方法
   loadList: () => Promise<void>
   loadMap: (mapId: string) => Promise<void>
   createMap: (options: CreateMapOptions) => Promise<Map | null>
@@ -167,61 +149,50 @@ interface MapState {
   deleteMap: (mapId: string) => Promise<boolean>
   clearCurrentMap: () => void
   
-  // 板块操作方法
   addChunk: (options: CreateChunkOptions) => Chunk | null
   updateChunk: (chunkId: string, updates: UpdateChunkOptions) => void
   deleteChunk: (chunkId: string) => void
-  moveChunk: (chunkId: string, position: Point) => void
+  moveChunkToHex: (chunkId: string, hexPosition: HexPoint) => void
   duplicateChunk: (chunkId: string) => Chunk | null
   
-  // 内部元素操作方法
   addElement: (parentChunkId: string, parentElementId: string | null, options: CreateElementOptions) => MapElement | null
   updateElement: (elementId: string, updates: UpdateElementOptions) => void
   deleteElement: (elementId: string) => void
   moveElement: (elementId: string, position: Point) => void
   
-  // 连接操作方法
   addConnection: (options: CreateConnectionOptions) => ChunkConnection | null
   updateConnection: (connectionId: string, updates: UpdateConnectionOptions) => void
   deleteConnection: (connectionId: string) => void
   
-  // 编辑器状态方法
   setTool: (tool: EditorTool) => void
   selectChunk: (chunkId: string | null) => void
   selectElement: (elementId: string | null) => void
   selectConnection: (connectionId: string | null) => void
   clearSelection: () => void
   
-  // 视图控制
   setZoom: (zoom: number) => void
   setPan: (panX: number, panY: number) => void
   resetView: () => void
   
-  // 视图层级方法
   enterChunk: (chunkId: string) => void
   enterElement: (elementId: string, elementName: string) => void
   exitLevel: () => void
   goToLevel: (levelIndex: number) => void
   getCurrentElements: () => MapElement[]
   
-  // 连接绘制方法
-  startConnecting: (chunkId: string, edge: EdgePosition) => void
-  finishConnecting: (targetChunkId: string, targetEdge: EdgePosition) => ChunkConnection | null
+  startConnecting: (chunkId: string, edge: HexEdge) => void
+  finishConnecting: (targetChunkId: string, targetEdge: HexEdge) => ChunkConnection | null
   cancelConnecting: () => void
   
-  // 吸附方法
-  setSnapEnabled: (enabled: boolean) => void
-  findSnapPoint: (position: Point, excludeChunkId?: string) => Point | null
+  findNearestEmptyHex: (around: HexPoint) => HexPoint | null
+  isHexOccupied: (hex: HexPoint) => boolean
   
-  // 历史记录方法
   undo: () => void
   redo: () => void
   saveToHistory: (action: string, description: string) => void
   
-  // 保存与同步
   saveCurrentMap: () => Promise<void>
   
-  // 辅助方法
   getMapById: (mapId: string) => MapMeta | undefined
   getChunkById: (chunkId: string) => Chunk | undefined
   getElementById: (elementId: string) => MapElement | null
@@ -230,18 +201,10 @@ interface MapState {
   setMaps: (maps: MapMeta[]) => void
   reorderMaps: (mapIds: string[]) => Promise<boolean>
   
-  // 缩略图
   saveThumbnail: (dataUrl: string) => Promise<void>
   
-  // 导入导出
   exportMap: (mapId: string) => Promise<string | null>
   importMap: (jsonContent: string) => Promise<Map | null>
-  
-  // AI 方法
-  aiGenerateChunk: (description: string, position?: Point) => Promise<Chunk | null>
-  aiGetConnectionSuggestion: (sourceChunkId: string, sourceEdge: EdgePosition, targetChunkId: string, targetEdge: EdgePosition) => Promise<AiConnectionSuggestionResponse | null>
-  aiFillChunk: (chunkId: string) => Promise<MapElement[] | null>
-  clearAiSuggestion: () => void
 }
 
 // ============================================
@@ -251,7 +214,6 @@ interface MapState {
 const historyManager = createHistoryManager()
 
 export const useMapStore = create<MapState>((set, get) => ({
-  // 初始状态
   maps: [],
   currentMap: null,
   isLoading: false,
@@ -271,19 +233,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   isConnecting: false,
   connectingFrom: null,
   
-  snapEnabled: true,
-  snapThreshold: DEFAULT_SNAP_THRESHOLD,
-  
   historyManager,
   canUndo: false,
   canRedo: false,
-  
-  isAiGenerating: false,
-  aiSuggestion: null,
-  
-  // ============================================
-  // 地图管理方法
-  // ============================================
   
   loadList: async () => {
     set({ isLoading: true, error: null })
@@ -385,10 +337,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ canUndo: false, canRedo: false })
   },
   
-  // ============================================
-  // 板块操作方法
-  // ============================================
-  
   addChunk: (options: CreateChunkOptions) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
@@ -475,7 +423,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     })
   },
   
-  moveChunk: (chunkId: string, position: Point) => {
+  moveChunkToHex: (chunkId: string, hexPosition: HexPoint) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
@@ -483,18 +431,15 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (chunkIndex === -1) return
     
     const chunk = currentMap.data.chunks[chunkIndex]
-    let finalPosition = position
     
-    if (get().snapEnabled) {
-      const snapPoint = get().findSnapPoint(position, chunkId)
-      if (snapPoint) {
-        finalPosition = snapPoint
-      }
-    }
+    const existingChunk = currentMap.data.chunks.find(
+      c => c.id !== chunkId && c.hexPosition.q === hexPosition.q && c.hexPosition.r === hexPosition.r
+    )
+    if (existingChunk) return
     
     const updatedChunk: Chunk = {
       ...chunk,
-      position: finalPosition,
+      hexPosition,
       updatedAt: Date.now()
     }
     
@@ -520,14 +465,14 @@ export const useMapStore = create<MapState>((set, get) => ({
     const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
     if (!chunk) return null
     
+    const newHexPosition = get().findNearestEmptyHex(chunk.hexPosition)
+    if (!newHexPosition) return null
+    
     const newChunk: Chunk = {
       ...JSON.parse(JSON.stringify(chunk)),
       id: generateId(),
       name: `${chunk.name} (副本)`,
-      position: {
-        x: chunk.position.x + 20,
-        y: chunk.position.y + 20
-      },
+      hexPosition: newHexPosition,
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -550,10 +495,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     
     return newChunk
   },
-  
-  // ============================================
-  // 内部元素操作方法
-  // ============================================
   
   addElement: (parentChunkId: string, parentElementId: string | null, options: CreateElementOptions) => {
     const currentMap = get().currentMap
@@ -660,10 +601,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     get().updateElement(elementId, { position })
   },
   
-  // ============================================
-  // 连接操作方法
-  // ============================================
-  
   addConnection: (options: CreateConnectionOptions) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
@@ -745,57 +682,47 @@ export const useMapStore = create<MapState>((set, get) => ({
     })
   },
   
-  // ============================================
-  // 编辑器状态方法
-  // ============================================
-  
   setTool: (tool: EditorTool) => {
-    set({ 
-      tool,
-      isConnecting: tool === 'connect',
-      connectingFrom: null
-    })
+    set({ tool })
+    if (tool !== 'connect') {
+      set({ isConnecting: false, connectingFrom: null })
+    }
   },
   
   selectChunk: (chunkId: string | null) => {
     set({ 
-      selectedChunkId: chunkId,
-      selectedElementId: null,
-      selectedConnectionId: null
+      selectedChunkId: chunkId, 
+      selectedElementId: null, 
+      selectedConnectionId: null 
     })
   },
   
   selectElement: (elementId: string | null) => {
     set({ 
-      selectedChunkId: null,
-      selectedElementId: elementId,
-      selectedConnectionId: null
+      selectedElementId: elementId, 
+      selectedChunkId: null, 
+      selectedConnectionId: null 
     })
   },
   
   selectConnection: (connectionId: string | null) => {
     set({ 
-      selectedChunkId: null,
-      selectedElementId: null,
-      selectedConnectionId: connectionId
+      selectedConnectionId: connectionId, 
+      selectedChunkId: null, 
+      selectedElementId: null 
     })
   },
   
   clearSelection: () => {
-    set({
-      selectedChunkId: null,
-      selectedElementId: null,
-      selectedConnectionId: null
+    set({ 
+      selectedChunkId: null, 
+      selectedElementId: null, 
+      selectedConnectionId: null 
     })
   },
   
-  // ============================================
-  // 视图控制
-  // ============================================
-  
   setZoom: (zoom: number) => {
-    const clampedZoom = Math.max(0.1, Math.min(5, zoom))
-    set({ zoom: clampedZoom })
+    set({ zoom: Math.max(0.1, Math.min(3, zoom)) })
   },
   
   setPan: (panX: number, panY: number) => {
@@ -806,10 +733,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({ zoom: 1, panX: 0, panY: 0 })
   },
   
-  // ============================================
-  // 视图层级方法
-  // ============================================
-  
   enterChunk: (chunkId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
@@ -817,61 +740,58 @@ export const useMapStore = create<MapState>((set, get) => ({
     const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
     if (!chunk) return
     
-    set(state => ({
-      viewStack: [...state.viewStack, { type: 'chunk', id: chunkId, name: chunk.name }],
-      selectedChunkId: null,
-      selectedElementId: null,
-      selectedConnectionId: null
-    }))
+    const viewStack = get().viewStack
+    set({
+      viewStack: [...viewStack, { type: 'chunk', id: chunkId, name: chunk.name }],
+      selectedElementId: null
+    })
   },
   
   enterElement: (elementId: string, elementName: string) => {
-    set(state => ({
-      viewStack: [...state.viewStack, { type: 'element', id: elementId, name: elementName }],
-      selectedChunkId: null,
-      selectedElementId: null,
-      selectedConnectionId: null
-    }))
+    const viewStack = get().viewStack
+    set({
+      viewStack: [...viewStack, { type: 'element', id: elementId, name: elementName }],
+      selectedElementId: null
+    })
   },
   
   exitLevel: () => {
-    set(state => {
-      if (state.viewStack.length <= 1) return state
-      const newStack = state.viewStack.slice(0, -1)
-      return {
-        viewStack: newStack,
-        selectedChunkId: null,
+    const viewStack = get().viewStack
+    if (viewStack.length > 1) {
+      set({ 
+        viewStack: viewStack.slice(0, -1),
         selectedElementId: null,
-        selectedConnectionId: null
-      }
-    })
+        selectedChunkId: null
+      })
+    }
   },
   
   goToLevel: (levelIndex: number) => {
-    set(state => {
-      if (levelIndex < 0 || levelIndex >= state.viewStack.length) return state
-      return {
-        viewStack: state.viewStack.slice(0, levelIndex + 1),
-        selectedChunkId: null,
+    const viewStack = get().viewStack
+    if (levelIndex >= 0 && levelIndex < viewStack.length) {
+      set({ 
+        viewStack: viewStack.slice(0, levelIndex + 1),
         selectedElementId: null,
-        selectedConnectionId: null
-      }
-    })
+        selectedChunkId: null
+      })
+    }
   },
   
   getCurrentElements: () => {
     const currentMap = get().currentMap
     const viewStack = get().viewStack
     
-    if (!currentMap) return []
-    
-    if (viewStack.length === 1) return []
+    if (!currentMap || viewStack.length === 0) return []
     
     const currentLevel = viewStack[viewStack.length - 1]
     
+    if (currentLevel.type === 'world') {
+      return []
+    }
+    
     if (currentLevel.type === 'chunk') {
       const chunk = currentMap.data.chunks.find(c => c.id === currentLevel.id)
-      return chunk?.children || []
+      return chunk ? chunk.children : []
     }
     
     if (currentLevel.type === 'element') {
@@ -879,33 +799,30 @@ export const useMapStore = create<MapState>((set, get) => ({
         currentMap.data.chunks.flatMap(c => c.children),
         currentLevel.id
       )
-      return element?.children || []
+      return element ? element.children : []
     }
     
     return []
   },
   
-  // ============================================
-  // 连接绘制方法
-  // ============================================
-  
-  startConnecting: (chunkId: string, edge: EdgePosition) => {
-    set({
-      isConnecting: true,
+  startConnecting: (chunkId: string, edge: HexEdge) => {
+    set({ 
+      isConnecting: true, 
       connectingFrom: { chunkId, edge },
       tool: 'connect'
     })
   },
   
-  finishConnecting: (targetChunkId: string, targetEdge: EdgePosition) => {
+  finishConnecting: (targetChunkId: string, targetEdge: HexEdge) => {
     const { connectingFrom, currentMap } = get()
+    
     if (!connectingFrom || !currentMap) {
-      set({ isConnecting: false, connectingFrom: null })
+      get().cancelConnecting()
       return null
     }
     
     if (connectingFrom.chunkId === targetChunkId) {
-      set({ isConnecting: false, connectingFrom: null })
+      get().cancelConnecting()
       return null
     }
     
@@ -913,17 +830,19 @@ export const useMapStore = create<MapState>((set, get) => ({
     const targetChunk = currentMap.data.chunks.find(c => c.id === targetChunkId)
     
     if (!sourceChunk || !targetChunk) {
-      set({ isConnecting: false, connectingFrom: null })
+      get().cancelConnecting()
       return null
     }
     
-    const isCompatible = checkEdgeCompatibility(
-      sourceChunk, connectingFrom.edge,
-      targetChunk, targetEdge
+    const isCompatible = checkHexEdgeCompatibility(
+      sourceChunk,
+      connectingFrom.edge,
+      targetChunk,
+      targetEdge
     )
     
     if (!isCompatible) {
-      set({ isConnecting: false, connectingFrom: null })
+      get().cancelConnecting()
       return null
     }
     
@@ -934,57 +853,32 @@ export const useMapStore = create<MapState>((set, get) => ({
       targetEdge
     })
     
-    set({ isConnecting: false, connectingFrom: null })
+    set({ isConnecting: false, connectingFrom: null, tool: 'select' })
+    
     return connection
   },
   
   cancelConnecting: () => {
-    set({ isConnecting: false, connectingFrom: null })
+    set({ isConnecting: false, connectingFrom: null, tool: 'select' })
   },
   
-  // ============================================
-  // 吸附方法
-  // ============================================
-  
-  setSnapEnabled: (enabled: boolean) => {
-    set({ snapEnabled: enabled })
-  },
-  
-  findSnapPoint: (position: Point, excludeChunkId?: string) => {
+  findNearestEmptyHex: (around: HexPoint) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
     
-    const threshold = get().snapThreshold
-    const chunks = currentMap.data.chunks.filter(c => c.id !== excludeChunkId)
+    const occupiedHexes = new Set(
+      currentMap.data.chunks.map(c => `${c.hexPosition.q},${c.hexPosition.r}`)
+    )
     
-    for (const chunk of chunks) {
-      const edges: EdgePosition[] = ['top', 'right', 'bottom', 'left']
-      
-      for (const edge of edges) {
-        let snapPoint: Point
-        
-        switch (edge) {
-          case 'top':
-            snapPoint = { x: chunk.position.x + chunk.size.width / 2, y: chunk.position.y }
-            break
-          case 'right':
-            snapPoint = { x: chunk.position.x + chunk.size.width, y: chunk.position.y + chunk.size.height / 2 }
-            break
-          case 'bottom':
-            snapPoint = { x: chunk.position.x + chunk.size.width / 2, y: chunk.position.y + chunk.size.height }
-            break
-          case 'left':
-            snapPoint = { x: chunk.position.x, y: chunk.position.y + chunk.size.height / 2 }
-            break
-        }
-        
-        const distance = Math.sqrt(
-          Math.pow(position.x - snapPoint.x, 2) + 
-          Math.pow(position.y - snapPoint.y, 2)
-        )
-        
-        if (distance < threshold) {
-          return snapPoint
+    if (!occupiedHexes.has(`${around.q},${around.r}`)) {
+      return around
+    }
+    
+    for (let distance = 1; distance <= 10; distance++) {
+      const neighbors = getHexNeighbors(around)
+      for (const neighbor of neighbors) {
+        if (!occupiedHexes.has(`${neighbor.q},${neighbor.r}`)) {
+          return neighbor
         }
       }
     }
@@ -992,66 +886,69 @@ export const useMapStore = create<MapState>((set, get) => ({
     return null
   },
   
-  // ============================================
-  // 历史记录方法
-  // ============================================
+  isHexOccupied: (hex: HexPoint) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return false
+    
+    return currentMap.data.chunks.some(
+      c => c.hexPosition.q === hex.q && c.hexPosition.r === hex.r
+    )
+  },
   
   undo: () => {
     const entry = historyManager.undo()
     if (entry && get().currentMap) {
-      set(state => ({
-        currentMap: state.currentMap ? {
-          ...state.currentMap,
+      set({
+        currentMap: {
+          ...get().currentMap!,
           data: entry.snapshot,
           updatedAt: new Date().toISOString()
-        } : null,
+        },
         canUndo: historyManager.canUndo(),
         canRedo: historyManager.canRedo()
-      }))
+      })
     }
   },
   
   redo: () => {
     const entry = historyManager.redo()
     if (entry && get().currentMap) {
-      set(state => ({
-        currentMap: state.currentMap ? {
-          ...state.currentMap,
+      set({
+        currentMap: {
+          ...get().currentMap!,
           data: entry.snapshot,
           updatedAt: new Date().toISOString()
-        } : null,
+        },
         canUndo: historyManager.canUndo(),
         canRedo: historyManager.canRedo()
-      }))
+      })
     }
   },
   
   saveToHistory: (action: string, description: string) => {
     const currentMap = get().currentMap
-    if (!currentMap) return
-    
-    historyManager.push(action, description, currentMap.data)
-    set({ canUndo: historyManager.canUndo(), canRedo: historyManager.canRedo() })
+    if (currentMap) {
+      historyManager.push(action, description, currentMap.data)
+      set({ 
+        canUndo: historyManager.canUndo(), 
+        canRedo: historyManager.canRedo() 
+      })
+    }
   },
-  
-  // ============================================
-  // 保存与同步
-  // ============================================
   
   saveCurrentMap: async () => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
     try {
-      await window.electron.map.update(currentMap.id, { data: currentMap.data })
+      await window.electron.map.update(currentMap.id, {
+        data: currentMap.data,
+        updatedAt: new Date().toISOString()
+      })
     } catch (error) {
       handleError(error, { fallbackMessage: '保存地图失败' })
     }
   },
-  
-  // ============================================
-  // 辅助方法
-  // ============================================
   
   getMapById: (mapId: string) => {
     return get().maps.find(m => m.id === mapId)
@@ -1066,10 +963,13 @@ export const useMapStore = create<MapState>((set, get) => ({
   getElementById: (elementId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
-    return findElementById(
-      currentMap.data.chunks.flatMap(c => c.children),
-      elementId
-    )
+    
+    for (const chunk of currentMap.data.chunks) {
+      const element = findElementById(chunk.children, elementId)
+      if (element) return element
+    }
+    
+    return null
   },
   
   getConnectionById: (connectionId: string) => {
@@ -1082,10 +982,15 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({
       maps: [],
       currentMap: null,
+      isLoading: false,
+      error: null,
       tool: 'select',
       selectedChunkId: null,
       selectedElementId: null,
       selectedConnectionId: null,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
       viewStack: [{ type: 'world', id: 'world', name: '世界视图' }],
       isConnecting: false,
       connectingFrom: null
@@ -1099,53 +1004,46 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   
   reorderMaps: async (mapIds: string[]) => {
-    set({ isLoading: true })
     try {
-      const reorderedMaps = mapIds
-        .map(id => get().maps.find(m => m.id === id))
-        .filter((m): m is MapMeta => m !== undefined)
-      
-      set({ maps: reorderedMaps, isLoading: false })
-      return true
+      const success = await window.electron.map.reorder(mapIds)
+      if (success) {
+        const reorderedMaps = mapIds
+          .map(id => get().maps.find(m => m.id === id))
+          .filter((m): m is MapMeta => m !== undefined)
+        set({ maps: reorderedMaps })
+      }
+      return success
     } catch (error) {
-      handleError(error, { fallbackMessage: '重排序失败' })
-      set({ isLoading: false })
+      handleError(error, { fallbackMessage: '重新排序失败' })
       return false
     }
   },
-  
-  // ============================================
-  // 缩略图
-  // ============================================
   
   saveThumbnail: async (dataUrl: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
     try {
-      const thumbnailPath = await window.electron.map.saveThumbnail(currentMap.id, dataUrl)
-      if (thumbnailPath) {
-        set(state => ({
-          currentMap: state.currentMap ? {
-            ...state.currentMap,
-            thumbnail: thumbnailPath
-          } : null
-        }))
-        await get().loadList()
-      }
+      await window.electron.map.update(currentMap.id, { thumbnail: dataUrl })
+      set({
+        currentMap: {
+          ...currentMap,
+          thumbnail: dataUrl
+        }
+      })
+      await get().loadList()
     } catch (error) {
       handleError(error, { fallbackMessage: '保存缩略图失败' })
     }
   },
   
-  // ============================================
-  // 导入导出
-  // ============================================
-  
   exportMap: async (mapId: string) => {
     try {
-      const filePath = await window.electron.map.exportMap(mapId)
-      return filePath
+      const map = await window.electron.map.get(mapId)
+      if (map) {
+        return JSON.stringify(map, null, 2)
+      }
+      return null
     } catch (error) {
       handleError(error, { fallbackMessage: '导出地图失败' })
       return null
@@ -1154,103 +1052,27 @@ export const useMapStore = create<MapState>((set, get) => ({
   
   importMap: async (jsonContent: string) => {
     try {
-      const map = await window.electron.map.importMap(jsonContent)
-      if (map) {
+      const mapData = JSON.parse(jsonContent)
+      const newMap = await window.electron.map.create({
+        name: mapData.name,
+        description: mapData.description,
+        canvasWidth: mapData.data?.canvasWidth,
+        canvasHeight: mapData.data?.canvasHeight,
+        backgroundColor: mapData.data?.backgroundColor
+      })
+      
+      if (newMap && mapData.data) {
+        const updatedMap = await window.electron.map.update(newMap.id, {
+          data: mapData.data
+        })
         await get().loadList()
+        return updatedMap
       }
-      return map
+      
+      return newMap
     } catch (error) {
       handleError(error, { fallbackMessage: '导入地图失败' })
       return null
     }
-  },
-  
-  // ============================================
-  // AI 方法
-  // ============================================
-  
-  aiGenerateChunk: async (description: string, position?: Point) => {
-    set({ isAiGenerating: true })
-    
-    try {
-      const response = await window.electron.ai.generateChunk({ description })
-      
-      const chunk = get().addChunk({
-        name: response.name,
-        description: response.description,
-        chunkType: response.chunkType,
-        position: position || { x: 400, y: 300 },
-        edges: {
-          top: { edge: 'top', allowedTypes: response.edges.top },
-          right: { edge: 'right', allowedTypes: response.edges.right },
-          bottom: { edge: 'bottom', allowedTypes: response.edges.bottom },
-          left: { edge: 'left', allowedTypes: response.edges.left }
-        }
-      })
-      
-      set({ isAiGenerating: false })
-      return chunk
-    } catch (error) {
-      handleError(error, { fallbackMessage: 'AI 生成板块失败' })
-      set({ isAiGenerating: false })
-      return null
-    }
-  },
-  
-  aiGetConnectionSuggestion: async (
-    sourceChunkId: string,
-    sourceEdge: EdgePosition,
-    targetChunkId: string,
-    targetEdge: EdgePosition
-  ) => {
-    set({ isAiGenerating: true })
-    
-    try {
-      const response = await window.electron.ai.connectionSuggestion({
-        sourceChunkId,
-        sourceEdge,
-        targetChunkId,
-        targetEdge
-      })
-      
-      set({ isAiGenerating: false, aiSuggestion: response })
-      return response
-    } catch (error) {
-      handleError(error, { fallbackMessage: 'AI 获取连接建议失败' })
-      set({ isAiGenerating: false })
-      return null
-    }
-  },
-  
-  aiFillChunk: async (chunkId: string) => {
-    set({ isAiGenerating: true })
-    
-    try {
-      const response = await window.electron.ai.fillChunk({ chunkId })
-      
-      const elements: MapElement[] = []
-      
-      for (const elem of response.elements) {
-        const element = get().addElement(chunkId, null, {
-          name: elem.name,
-          description: elem.description,
-          elementType: elem.elementType,
-          position: elem.position,
-          size: elem.size
-        })
-        if (element) elements.push(element)
-      }
-      
-      set({ isAiGenerating: false })
-      return elements
-    } catch (error) {
-      handleError(error, { fallbackMessage: 'AI 填充板块失败' })
-      set({ isAiGenerating: false })
-      return null
-    }
-  },
-  
-  clearAiSuggestion: () => {
-    set({ aiSuggestion: null })
   }
 }))

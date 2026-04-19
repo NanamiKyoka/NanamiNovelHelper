@@ -164,3 +164,13 @@
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}

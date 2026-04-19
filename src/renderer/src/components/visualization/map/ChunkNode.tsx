@@ -1,17 +1,17 @@
 import { useMemo } from 'react'
 import * as Icons from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
-import { CHUNK_TYPE_CONFIG, checkEdgeCompatibility } from '@renderer/types/map'
-import type { Chunk, EdgePosition } from '@renderer/types/map'
+import { CHUNK_TYPE_CONFIG, checkHexEdgeCompatibility, hexToPixel, getHexCorners, HEX_SIZE, HEX_EDGE_NAMES } from '@renderer/types/map'
+import type { Chunk, HexEdge, Point } from '@renderer/types/map'
 import styles from './ChunkNode.module.css'
 
 interface ChunkNodeProps {
   chunk: Chunk
   isSelected: boolean
   isConnecting: boolean
-  connectingFrom: { chunkId: string; edge: EdgePosition } | null
+  connectingFrom: { chunkId: string; edge: HexEdge } | null
   onDragStart: (e: React.MouseEvent) => void
-  onEdgeClick: (chunkId: string, edge: EdgePosition) => void
+  onEdgeClick: (chunkId: string, edge: HexEdge) => void
   onDoubleClick: () => void
 }
 
@@ -33,15 +33,38 @@ export function ChunkNode({
     return (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] || Icons.QuestionCircleOutlined
   }, [chunk.icon, config.icon])
   
-  const getEdgeCompatibility = (edge: EdgePosition): 'compatible' | 'incompatible' | 'neutral' => {
+  const centerPosition = useMemo(() => {
+    return hexToPixel(chunk.hexPosition)
+  }, [chunk.hexPosition])
+  
+  const hexCorners = useMemo(() => {
+    return getHexCorners(centerPosition, HEX_SIZE)
+  }, [centerPosition])
+  
+  const hexPath = useMemo(() => {
+    return hexCorners
+      .map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`)
+      .join(' ') + ' Z'
+  }, [hexCorners])
+  
+  const getEdgeCompatibility = (edge: HexEdge): 'compatible' | 'incompatible' | 'neutral' => {
     if (!isConnecting || !connectingFrom) return 'neutral'
     if (connectingFrom.chunkId === chunk.id) return 'neutral'
     
     const sourceChunk = currentMap?.data.chunks.find(c => c.id === connectingFrom.chunkId)
     if (!sourceChunk) return 'neutral'
     
-    const isCompatible = checkEdgeCompatibility(sourceChunk, connectingFrom.edge, chunk, edge)
+    const isCompatible = checkHexEdgeCompatibility(sourceChunk, connectingFrom.edge, chunk, edge)
     return isCompatible ? 'compatible' : 'incompatible'
+  }
+  
+  const getEdgeHandlePosition = (edge: HexEdge): Point => {
+    const corner1 = hexCorners[edge]
+    const corner2 = hexCorners[(edge + 1) % 6]
+    return {
+      x: (corner1.x + corner2.x) / 2,
+      y: (corner1.y + corner2.y) / 2
+    }
   }
   
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -49,82 +72,81 @@ export function ChunkNode({
     onDragStart(e)
   }
   
-  const handleEdgeMouseDown = (edge: EdgePosition, e: React.MouseEvent) => {
+  const handleEdgeMouseDown = (edge: HexEdge, e: React.MouseEvent) => {
     e.stopPropagation()
     onEdgeClick(chunk.id, edge)
   }
+  
+  const edgeHandles = [0, 1, 2, 3, 4, 5] as HexEdge[]
   
   return (
     <div
       className={`${styles.chunkNode} ${isSelected ? styles.chunkNodeSelected : ''} ${isConnecting ? styles.isConnecting : ''}`}
       style={{
-        left: chunk.position.x,
-        top: chunk.position.y,
-        width: chunk.size.width,
-        height: chunk.size.height,
-        backgroundColor: chunk.color,
-        color: getContrastColor(chunk.color)
+        left: centerPosition.x - HEX_SIZE,
+        top: centerPosition.y - HEX_SIZE,
+        width: HEX_SIZE * 2,
+        height: HEX_SIZE * 2
       }}
       onMouseDown={handleMouseDown}
       onDoubleClick={onDoubleClick}
     >
-      <div className={styles.chunkIcon}>
-        <IconComponent style={{ fontSize: 32 }} />
+      <svg
+        className={styles.hexShape}
+        viewBox={`${centerPosition.x - HEX_SIZE} ${centerPosition.y - HEX_SIZE} ${HEX_SIZE * 2} ${HEX_SIZE * 2}`}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: HEX_SIZE * 2,
+          height: HEX_SIZE * 2
+        }}
+      >
+        <path
+          d={hexPath}
+          fill={chunk.color}
+          stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+          strokeWidth={isSelected ? 3 : 1}
+        />
+      </svg>
+      
+      <div 
+        className={styles.chunkContent}
+        style={{ color: getContrastColor(chunk.color) }}
+      >
+        <div className={styles.chunkIcon}>
+          <IconComponent style={{ fontSize: 24 }} />
+        </div>
+        <div className={styles.chunkName}>{chunk.name}</div>
       </div>
-      <div className={styles.chunkName}>{chunk.name}</div>
-      {chunk.chunkType !== 'custom' && (
-        <div className={styles.chunkType}>{config.label}</div>
-      )}
       
       <div className={styles.edgeHandles}>
-        <div
-          className={`${styles.edgeHandle} ${styles.edgeHandleTop} ${
-            connectingFrom?.chunkId === chunk.id && connectingFrom?.edge === 'top' 
-              ? styles.edgeHandleActive 
-              : getEdgeCompatibility('top') === 'compatible' 
-                ? styles.edgeHandleCompatible 
-                : getEdgeCompatibility('top') === 'incompatible' 
-                  ? styles.edgeHandleIncompatible 
-                  : ''
-          }`}
-          onMouseDown={(e) => handleEdgeMouseDown('top', e)}
-        />
-        <div
-          className={`${styles.edgeHandle} ${styles.edgeHandleRight} ${
-            connectingFrom?.chunkId === chunk.id && connectingFrom?.edge === 'right' 
-              ? styles.edgeHandleActive 
-              : getEdgeCompatibility('right') === 'compatible' 
-                ? styles.edgeHandleCompatible 
-                : getEdgeCompatibility('right') === 'incompatible' 
-                  ? styles.edgeHandleIncompatible 
-                  : ''
-          }`}
-          onMouseDown={(e) => handleEdgeMouseDown('right', e)}
-        />
-        <div
-          className={`${styles.edgeHandle} ${styles.edgeHandleBottom} ${
-            connectingFrom?.chunkId === chunk.id && connectingFrom?.edge === 'bottom' 
-              ? styles.edgeHandleActive 
-              : getEdgeCompatibility('bottom') === 'compatible' 
-                ? styles.edgeHandleCompatible 
-                : getEdgeCompatibility('bottom') === 'incompatible' 
-                  ? styles.edgeHandleIncompatible 
-                  : ''
-          }`}
-          onMouseDown={(e) => handleEdgeMouseDown('bottom', e)}
-        />
-        <div
-          className={`${styles.edgeHandle} ${styles.edgeHandleLeft} ${
-            connectingFrom?.chunkId === chunk.id && connectingFrom?.edge === 'left' 
-              ? styles.edgeHandleActive 
-              : getEdgeCompatibility('left') === 'compatible' 
-                ? styles.edgeHandleCompatible 
-                : getEdgeCompatibility('left') === 'incompatible' 
-                  ? styles.edgeHandleIncompatible 
-                  : ''
-          }`}
-          onMouseDown={(e) => handleEdgeMouseDown('left', e)}
-        />
+        {edgeHandles.map(edge => {
+          const pos = getEdgeHandlePosition(edge)
+          const isActive = connectingFrom?.chunkId === chunk.id && connectingFrom?.edge === edge
+          const compatibility = getEdgeCompatibility(edge)
+          
+          return (
+            <div
+              key={edge}
+              className={`${styles.edgeHandle} ${
+                isActive 
+                  ? styles.edgeHandleActive 
+                  : compatibility === 'compatible' 
+                    ? styles.edgeHandleCompatible 
+                    : compatibility === 'incompatible' 
+                      ? styles.edgeHandleIncompatible 
+                      : ''
+              }`}
+              style={{
+                left: pos.x - (centerPosition.x - HEX_SIZE) - 6,
+                top: pos.y - (centerPosition.y - HEX_SIZE) - 6
+              }}
+              onMouseDown={(e) => handleEdgeMouseDown(edge, e)}
+              title={HEX_EDGE_NAMES[edge]}
+            />
+          )
+        })}
       </div>
     </div>
   )

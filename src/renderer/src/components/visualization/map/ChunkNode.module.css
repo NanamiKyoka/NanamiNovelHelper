@@ -1,24 +1,16 @@
 .chunkNode {
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-2);
-  border-radius: var(--radius-md);
   cursor: grab;
   user-select: none;
-  transition: box-shadow 0.2s ease;
-  border: 2px solid transparent;
+  transition: transform 0.1s ease;
 }
 
 .chunkNode:hover {
-  box-shadow: var(--shadow-lg);
+  z-index: 10;
 }
 
 .chunkNodeSelected {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.3);
+  z-index: 20;
 }
 
 .chunkNodeDragging {
@@ -27,25 +19,48 @@
   z-index: 100;
 }
 
+.hexShape {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: filter 0.2s ease;
+}
+
+.chunkNode:hover .hexShape {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.chunkContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  z-index: 1;
+}
+
 .chunkIcon {
-  font-size: 32px;
-  margin-bottom: var(--spacing-1);
+  font-size: 24px;
+  margin-bottom: 2px;
 }
 
 .chunkName {
-  font-size: var(--font-size-sm);
+  font-size: 11px;
   font-weight: var(--font-weight-medium);
-  text-align: center;
-  max-width: 100px;
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .chunkType {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  margin-top: var(--spacing-1);
+  font-size: 9px;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 .edgeHandles {
@@ -59,16 +74,17 @@
 
 .edgeHandle {
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   background: var(--primary-color);
   border: 2px solid white;
   border-radius: 50%;
   cursor: crosshair;
   pointer-events: auto;
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
   z-index: 10;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .chunkNode:hover .edgeHandle,
@@ -78,46 +94,7 @@
 
 .edgeHandle:hover {
   transform: scale(1.3);
-}
-
-.edgeHandleTop {
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.edgeHandleTop:hover {
-  transform: translateX(-50%) scale(1.3);
-}
-
-.edgeHandleRight {
-  right: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.edgeHandleRight:hover {
-  transform: translateY(-50%) scale(1.3);
-}
-
-.edgeHandleBottom {
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.edgeHandleBottom:hover {
-  transform: translateX(-50%) scale(1.3);
-}
-
-.edgeHandleLeft {
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.edgeHandleLeft:hover {
-  transform: translateY(-50%) scale(1.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .edgeHandleActive {
@@ -135,10 +112,10 @@
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb), 0.4);
+    box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(var(--primary-color-rgb), 0);
+    box-shadow: 0 0 0 8px rgba(82, 196, 26, 0);
   }
 }
 
@@ -151,15 +128,4 @@
   background: var(--success-color);
   border-radius: 50%;
   border: 2px solid white;
-}
-
-.aiSuggestedBadge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  background: var(--primary-color);
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
 }

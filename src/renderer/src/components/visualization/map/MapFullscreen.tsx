@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Tooltip, Modal, App } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -10,21 +10,24 @@ import {
   LinkOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ImportOutlined,
-  SettingOutlined,
-  ThunderboltOutlined
+  ImportOutlined
 } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
-import { useUIStore } from '@stores/uiStore'
 import { WorldCanvas } from './WorldCanvas'
 import { InnerCanvas } from './InnerCanvas'
 import { ChunkGallery } from './ChunkGallery'
 import { ElementGallery } from './ElementGallery'
 import { Breadcrumb } from './Breadcrumb'
-import type { ChunkType, Point } from '@renderer/types/map'
+import type { ChunkType } from '@renderer/types/map'
+import { pixelToHex, HEX_SIZE } from '@renderer/types/map'
 import styles from './MapFullscreen.module.css'
 
-export function MapFullscreen() {
+interface MapFullscreenProps {
+  mapId: string
+  onBack: () => void
+}
+
+export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const { message } = App.useApp()
   
   const currentMap = useMapStore(state => state.currentMap)
@@ -36,6 +39,7 @@ export function MapFullscreen() {
   const undo = useMapStore(state => state.undo)
   const redo = useMapStore(state => state.redo)
   const saveCurrentMap = useMapStore(state => state.saveCurrentMap)
+  const loadMap = useMapStore(state => state.loadMap)
   const enterChunk = useMapStore(state => state.enterChunk)
   const enterElement = useMapStore(state => state.enterElement)
   const addChunk = useMapStore(state => state.addChunk)
@@ -47,19 +51,25 @@ export function MapFullscreen() {
   const deleteConnection = useMapStore(state => state.deleteConnection)
   const exportMap = useMapStore(state => state.exportMap)
   const importMap = useMapStore(state => state.importMap)
-  const snapEnabled = useMapStore(state => state.snapEnabled)
-  const setSnapEnabled = useMapStore(state => state.setSnapEnabled)
+  const isHexOccupied = useMapStore(state => state.isHexOccupied)
+  const findNearestEmptyHex = useMapStore(state => state.findNearestEmptyHex)
+  const panX = useMapStore(state => state.panX)
+  const panY = useMapStore(state => state.panY)
+  const zoom = useMapStore(state => state.zoom)
   
-  const exitFullscreen = useUIStore(state => state.exitFullscreen)
+  const [isLoading, setIsLoading] = useState(true)
   
-  const [showSuggestion, setShowSuggestion] = useState(false)
+  useEffect(() => {
+    const loadMapData = async () => {
+      setIsLoading(true)
+      await loadMap(mapId)
+      setIsLoading(false)
+    }
+    loadMapData()
+  }, [mapId, loadMap])
   
   const isWorldView = viewStack.length === 1
   const currentLevel = viewStack[viewStack.length - 1]
-  
-  const handleBack = useCallback(() => {
-    exitFullscreen()
-  }, [exitFullscreen])
   
   const handleSave = useCallback(async () => {
     await saveCurrentMap()
@@ -80,14 +90,28 @@ export function MapFullscreen() {
     if (!chunkType) return
     
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const x = (e.clientX - rect.left - panX) / zoom
+    const y = (e.clientY - rect.top - panY) / zoom
     
-    addChunk({
-      chunkType,
-      position: { x, y }
-    })
-  }, [addChunk])
+    const hexPosition = pixelToHex({ x, y })
+    
+    if (isHexOccupied(hexPosition)) {
+      const nearestEmpty = findNearestEmptyHex(hexPosition)
+      if (nearestEmpty) {
+        addChunk({
+          chunkType,
+          hexPosition: nearestEmpty
+        })
+      } else {
+        message.warning('没有可用的空位')
+      }
+    } else {
+      addChunk({
+        chunkType,
+        hexPosition
+      })
+    }
+  }, [addChunk, isHexOccupied, findNearestEmptyHex, panX, panY, zoom, message])
   
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -154,6 +178,14 @@ export function MapFullscreen() {
     input.click()
   }, [importMap, message])
   
+  if (isLoading || !currentMap) {
+    return (
+      <div className={styles.mapFullscreen}>
+        <div className={styles.loadingState}>加载中...</div>
+      </div>
+    )
+  }
+  
   return (
     <div 
       className={styles.mapFullscreen}
@@ -165,11 +197,11 @@ export function MapFullscreen() {
           <Button
             className={styles.backButton}
             icon={<ArrowLeftOutlined />}
-            onClick={handleBack}
+            onClick={onBack}
           >
             返回
           </Button>
-          <span className={styles.mapName}>{currentMap?.name || '未命名地图'}</span>
+          <span className={styles.mapName}>{currentMap.name}</span>
         </div>
         
         <div className={styles.headerRight}>
@@ -209,14 +241,6 @@ export function MapFullscreen() {
           </div>
           
           <div className={styles.divider} />
-          
-          <Tooltip title={`吸附: ${snapEnabled ? '开启' : '关闭'}`}>
-            <Button
-              type={snapEnabled ? 'primary' : 'default'}
-              icon={<ThunderboltOutlined />}
-              onClick={() => setSnapEnabled(!snapEnabled)}
-            />
-          </Tooltip>
           
           <Tooltip title="撤销">
             <Button
@@ -291,15 +315,15 @@ export function MapFullscreen() {
             当前视图: {currentLevel.name}
           </span>
           <span className={styles.statusItem}>
-            板块: {currentMap?.data.chunks.length || 0}
+            板块: {currentMap.data.chunks.length || 0}
           </span>
           <span className={styles.statusItem}>
-            连接: {currentMap?.data.connections.length || 0}
+            连接: {currentMap.data.connections.length || 0}
           </span>
         </div>
         <div className={styles.statusRight}>
           <span className={styles.statusItem}>
-            提示: 双击板块进入内部编辑
+            提示: 双击板块进入内部编辑，拖拽板块移动到六边形网格
           </span>
         </div>
       </div>

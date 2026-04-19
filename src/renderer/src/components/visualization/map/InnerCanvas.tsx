@@ -1,10 +1,10 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { Button, Empty, Spin } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined, StarOutlined } from '@ant-design/icons'
+import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
 import { ElementNode } from './ElementNode'
-import type { Point, MapElement } from '@renderer/types/map'
+import type { Point } from '@renderer/types/map'
 import styles from './InnerCanvas.module.css'
 
 interface InnerCanvasProps {
@@ -28,8 +28,6 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   const selectedElementId = useMapStore(state => state.selectedElementId)
   const selectElement = useMapStore(state => state.selectElement)
   const moveElement = useMapStore(state => state.moveElement)
-  const isAiGenerating = useMapStore(state => state.isAiGenerating)
-  const aiFillChunk = useMapStore(state => state.aiFillChunk)
   
   const { isDark } = useThemeStore()
   
@@ -38,8 +36,8 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   
   const elements = getCurrentElements()
   const currentLevel = viewStack[viewStack.length - 1]
-  const gridSize = currentMap?.data.gridSize || 20
-  const showGrid = currentMap?.data.showGrid ?? true
+  const gridSize = 20
+  const showGrid = true
   
   const handleWheel = useCallback((e: WheelEvent) => {
     if (e.ctrlKey) {
@@ -100,12 +98,6 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   const handleCanvasClick = useCallback(() => {
     selectElement(null)
   }, [selectElement])
-  
-  const handleAiFill = async () => {
-    if (currentLevel.type === 'chunk') {
-      await aiFillChunk(currentLevel.id)
-    }
-  }
   
   const renderGrid = () => {
     if (!showGrid) return null
@@ -198,18 +190,7 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
               description={
                 <>
                   <h3>空的区域</h3>
-                  <p>从右侧面板添加元素，或使用 AI 自动填充</p>
-                  {currentLevel.type === 'chunk' && (
-                    <Button
-                      type="primary"
-                      icon={<StarOutlined />}
-                      onClick={handleAiFill}
-                      loading={isAiGenerating}
-                      className={styles.aiFillButton}
-                    >
-                      AI 自动填充
-                    </Button>
-                  )}
+                  <p>从右侧面板添加元素</p>
                 </>
               }
             />
