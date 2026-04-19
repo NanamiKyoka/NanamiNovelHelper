@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { Button, Empty, Spin } from 'antd'
+import { Button, Empty, Spin, Modal, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
@@ -10,9 +10,11 @@ import styles from './WorldCanvas.module.css'
 
 interface WorldCanvasProps {
   onChunkDoubleClick: (chunkId: string) => void
+  onChunkEdit?: (chunkId: string) => void
 }
 
-export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
+export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProps) {
+  const { message } = App.useApp()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState<Point>({ x: 0, y: 0 })
@@ -32,6 +34,8 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
   const selectChunk = useMapStore(state => state.selectChunk)
   const isLoading = useMapStore(state => state.isLoading)
   const isHexOccupied = useMapStore(state => state.isHexOccupied)
+  const deleteChunk = useMapStore(state => state.deleteChunk)
+  const duplicateChunk = useMapStore(state => state.duplicateChunk)
   
   const { isDark } = useThemeStore()
   
@@ -144,6 +148,33 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
     selectChunk(null)
     selectConnection(null)
   }, [selectChunk, selectConnection])
+  
+  const handleChunkDelete = useCallback((chunkId: string) => {
+    const chunk = chunks.find(c => c.id === chunkId)
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除板块「${chunk?.name || ''}」吗？相关的连接也会被删除。`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        deleteChunk(chunkId)
+        message.success('板块已删除')
+      }
+    })
+  }, [chunks, deleteChunk, message])
+  
+  const handleChunkDuplicate = useCallback((chunkId: string) => {
+    const newChunk = duplicateChunk(chunkId)
+    if (newChunk) {
+      message.success(`已复制为「${newChunk.name}」`)
+    }
+  }, [duplicateChunk, message])
+  
+  const handleChunkEdit = useCallback((chunkId: string) => {
+    selectChunk(chunkId)
+    onChunkEdit?.(chunkId)
+  }, [selectChunk, onChunkEdit])
   
   const renderConnection = (connection: ChunkConnection) => {
     const sourceChunk = chunks.find(c => c.id === connection.sourceChunkId)
@@ -278,6 +309,9 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
               isSelected={useMapStore.getState().selectedChunkId === chunk.id}
               onDragStart={(e) => handleChunkDragStart(chunk.id, e)}
               onDoubleClick={() => onChunkDoubleClick(chunk.id)}
+              onDelete={() => handleChunkDelete(chunk.id)}
+              onEdit={() => handleChunkEdit(chunk.id)}
+              onDuplicate={() => handleChunkDuplicate(chunk.id)}
             />
           ))}
         </div>

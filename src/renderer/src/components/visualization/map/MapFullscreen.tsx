@@ -187,15 +187,27 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
   }, [selectedChunkId, selectedElementId, selectedConnectionId, deleteChunk, deleteElement, deleteConnection, message])
   
-  const handleEdit = useCallback(() => {
-    if (selectedChunkId) {
-      setEditingItem({ type: 'chunk', id: selectedChunkId })
-      setEditModalOpen(true)
-    } else if (selectedElementId) {
-      setEditingItem({ type: 'element', id: selectedElementId })
-      setEditModalOpen(true)
+  const handleEdit = useCallback((id?: string) => {
+    const targetId = id || selectedChunkId || selectedElementId
+    if (!targetId) return
+    
+    if (selectedChunkId || id) {
+      const chunk = getChunkById(targetId)
+      if (chunk) {
+        setEditingItem({ type: 'chunk', id: targetId })
+        setEditModalOpen(true)
+        return
+      }
     }
-  }, [selectedChunkId, selectedElementId])
+    
+    if (selectedElementId || id) {
+      const element = getElementById(targetId)
+      if (element) {
+        setEditingItem({ type: 'element', id: targetId })
+        setEditModalOpen(true)
+      }
+    }
+  }, [selectedChunkId, selectedElementId, getChunkById, getElementById])
   
   const handleExport = useCallback(async () => {
     if (!currentMap) return
@@ -346,9 +358,15 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       <div className={styles.mainArea}>
         <div className={styles.canvasArea}>
           {isWorldView ? (
-            <WorldCanvas onChunkDoubleClick={handleChunkDoubleClick} />
+            <WorldCanvas 
+              onChunkDoubleClick={handleChunkDoubleClick} 
+              onChunkEdit={handleEdit}
+            />
           ) : (
-            <InnerCanvas onElementDoubleClick={handleElementDoubleClick} />
+            <InnerCanvas 
+              onElementDoubleClick={handleElementDoubleClick}
+              onElementEdit={handleEdit}
+            />
           )}
         </div>
         

@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import * as Icons from '@ant-design/icons'
 import { CHUNK_TYPE_CONFIG, hexToPixel, getHexCorners, HEX_SIZE } from '@renderer/types/map'
 import type { Chunk } from '@renderer/types/map'
@@ -9,13 +11,19 @@ interface ChunkNodeProps {
   isSelected: boolean
   onDragStart: (e: React.MouseEvent) => void
   onDoubleClick: () => void
+  onDelete?: () => void
+  onEdit?: () => void
+  onDuplicate?: () => void
 }
 
 export function ChunkNode({
   chunk,
   isSelected,
   onDragStart,
-  onDoubleClick
+  onDoubleClick,
+  onDelete,
+  onEdit,
+  onDuplicate
 }: ChunkNodeProps) {
   const config = CHUNK_TYPE_CONFIG[chunk.chunkType]
   
@@ -43,47 +51,81 @@ export function ChunkNode({
     onDragStart(e)
   }
   
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+  
+  const contextMenuItems: MenuProps['items'] = [
+    {
+      key: 'edit',
+      label: '编辑',
+      icon: <Icons.EditOutlined />,
+      onClick: onEdit
+    },
+    {
+      key: 'duplicate',
+      label: '复制',
+      icon: <Icons.CopyOutlined />,
+      onClick: onDuplicate
+    },
+    { type: 'divider' },
+    {
+      key: 'delete',
+      label: '删除',
+      icon: <Icons.DeleteOutlined />,
+      danger: true,
+      onClick: onDelete
+    }
+  ]
+  
   return (
-    <div
-      className={`${styles.chunkNode} ${isSelected ? styles.chunkNodeSelected : ''}`}
-      style={{
-        left: centerPosition.x - HEX_SIZE,
-        top: centerPosition.y - HEX_SIZE,
-        width: HEX_SIZE * 2,
-        height: HEX_SIZE * 2
-      }}
-      onMouseDown={handleMouseDown}
-      onDoubleClick={onDoubleClick}
+    <Dropdown
+      menu={{ items: contextMenuItems }}
+      trigger={['contextMenu']}
     >
-      <svg
-        className={styles.hexShape}
-        viewBox={`${centerPosition.x - HEX_SIZE} ${centerPosition.y - HEX_SIZE} ${HEX_SIZE * 2} ${HEX_SIZE * 2}`}
+      <div
+        className={`${styles.chunkNode} ${isSelected ? styles.chunkNodeSelected : ''}`}
         style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
+          left: centerPosition.x - HEX_SIZE,
+          top: centerPosition.y - HEX_SIZE,
           width: HEX_SIZE * 2,
           height: HEX_SIZE * 2
         }}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={onDoubleClick}
+        onContextMenu={handleContextMenu}
       >
-        <path
-          d={hexPath}
-          fill={chunk.color}
-          stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
-          strokeWidth={isSelected ? 3 : 1}
-        />
-      </svg>
-      
-      <div 
-        className={styles.chunkContent}
-        style={{ color: getContrastColor(chunk.color) }}
-      >
-        <div className={styles.chunkIcon}>
-          <IconComponent style={{ fontSize: 24 }} />
+        <svg
+          className={styles.hexShape}
+          viewBox={`${centerPosition.x - HEX_SIZE} ${centerPosition.y - HEX_SIZE} ${HEX_SIZE * 2} ${HEX_SIZE * 2}`}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: HEX_SIZE * 2,
+            height: HEX_SIZE * 2
+          }}
+        >
+          <path
+            d={hexPath}
+            fill={chunk.color}
+            stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+            strokeWidth={isSelected ? 3 : 1}
+          />
+        </svg>
+        
+        <div 
+          className={styles.chunkContent}
+          style={{ color: getContrastColor(chunk.color) }}
+        >
+          <div className={styles.chunkIcon}>
+            <IconComponent style={{ fontSize: 24 }} />
+          </div>
+          <div className={styles.chunkName}>{chunk.name}</div>
         </div>
-        <div className={styles.chunkName}>{chunk.name}</div>
       </div>
-    </div>
+    </Dropdown>
   )
 }
 

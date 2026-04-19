@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import { Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import * as Icons from '@ant-design/icons'
 import { 
   ELEMENT_TYPE_CONFIG, 
@@ -15,6 +17,8 @@ interface ElementNodeProps {
   onSelect: () => void
   onDragStart: () => void
   onDoubleClick: () => void
+  onDelete?: () => void
+  onEdit?: () => void
 }
 
 export function ElementNode({
@@ -22,7 +26,9 @@ export function ElementNode({
   isSelected,
   onSelect,
   onDragStart,
-  onDoubleClick
+  onDoubleClick,
+  onDelete,
+  onEdit
 }: ElementNodeProps) {
   const config = ELEMENT_TYPE_CONFIG[element.elementType]
   
@@ -51,57 +57,85 @@ export function ElementNode({
     onDragStart()
   }
   
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+  
+  const contextMenuItems: MenuProps['items'] = [
+    {
+      key: 'edit',
+      label: '编辑',
+      icon: <Icons.EditOutlined />,
+      onClick: onEdit
+    },
+    { type: 'divider' },
+    {
+      key: 'delete',
+      label: '删除',
+      icon: <Icons.DeleteOutlined />,
+      danger: true,
+      onClick: onDelete
+    }
+  ]
+  
   return (
-    <div
-      className={`${styles.elementNode} ${isSelected ? styles.elementNodeSelected : ''}`}
-      style={{
-        left: centerPosition.x - HEX_SIZE,
-        top: centerPosition.y - HEX_SIZE,
-        width: HEX_SIZE * 2,
-        height: HEX_SIZE * 2
-      }}
-      onMouseDown={handleMouseDown}
-      onDoubleClick={onDoubleClick}
+    <Dropdown
+      menu={{ items: contextMenuItems }}
+      trigger={['contextMenu']}
     >
-      <svg
-        className={styles.hexShape}
-        viewBox={`${centerPosition.x - HEX_SIZE} ${centerPosition.y - HEX_SIZE} ${HEX_SIZE * 2} ${HEX_SIZE * 2}`}
+      <div
+        className={`${styles.elementNode} ${isSelected ? styles.elementNodeSelected : ''}`}
         style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
+          left: centerPosition.x - HEX_SIZE,
+          top: centerPosition.y - HEX_SIZE,
           width: HEX_SIZE * 2,
           height: HEX_SIZE * 2
         }}
+        onMouseDown={handleMouseDown}
+        onDoubleClick={onDoubleClick}
+        onContextMenu={handleContextMenu}
       >
-        <path
-          d={hexPath}
-          fill={element.color}
-          stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
-          strokeWidth={isSelected ? 3 : 1}
-        />
-      </svg>
-      
-      <div 
-        className={styles.elementContent}
-        style={{ color: getContrastColor(element.color) }}
-      >
-        <div className={styles.elementIcon}>
-          <IconComponent style={{ fontSize: 20 }} />
+        <svg
+          className={styles.hexShape}
+          viewBox={`${centerPosition.x - HEX_SIZE} ${centerPosition.y - HEX_SIZE} ${HEX_SIZE * 2} ${HEX_SIZE * 2}`}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: HEX_SIZE * 2,
+            height: HEX_SIZE * 2
+          }}
+        >
+          <path
+            d={hexPath}
+            fill={element.color}
+            stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+            strokeWidth={isSelected ? 3 : 1}
+          />
+        </svg>
+        
+        <div 
+          className={styles.elementContent}
+          style={{ color: getContrastColor(element.color) }}
+        >
+          <div className={styles.elementIcon}>
+            <IconComponent style={{ fontSize: 20 }} />
+          </div>
+          <div className={styles.elementName}>{element.name}</div>
         </div>
-        <div className={styles.elementName}>{element.name}</div>
+        
+        {element.children.length > 0 && (
+          <div className={styles.hasChildrenBadge}>
+            {element.children.length}
+          </div>
+        )}
+        
+        {config.canHaveChildren && (
+          <div className={styles.enterHint}>双击进入</div>
+        )}
       </div>
-      
-      {element.children.length > 0 && (
-        <div className={styles.hasChildrenBadge}>
-          {element.children.length}
-        </div>
-      )}
-      
-      {config.canHaveChildren && (
-        <div className={styles.enterHint}>双击进入</div>
-      )}
-    </div>
+    </Dropdown>
   )
 }
 

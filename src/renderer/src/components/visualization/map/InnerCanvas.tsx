@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
-import { Button, Empty, Spin } from 'antd'
+import { Button, Empty, Spin, Modal, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
@@ -15,9 +15,11 @@ import styles from './InnerCanvas.module.css'
 
 interface InnerCanvasProps {
   onElementDoubleClick: (elementId: string, elementName: string) => void
+  onElementEdit?: (elementId: string) => void
 }
 
-export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
+export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvasProps) {
+  const { message } = App.useApp()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
@@ -35,6 +37,7 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   const selectedElementId = useMapStore(state => state.selectedElementId)
   const selectElement = useMapStore(state => state.selectElement)
   const moveElementToHex = useMapStore(state => state.moveElementToHex)
+  const deleteElement = useMapStore(state => state.deleteElement)
   
   const { isDark } = useThemeStore()
   
@@ -122,6 +125,26 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
     selectElement(null)
   }, [selectElement])
   
+  const handleElementDelete = useCallback((elementId: string) => {
+    const element = elements.find(e => e.id === elementId)
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除元素「${element?.name || ''}」吗？`,
+      okText: '删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        deleteElement(elementId)
+        message.success('元素已删除')
+      }
+    })
+  }, [elements, deleteElement, message])
+  
+  const handleElementEdit = useCallback((elementId: string) => {
+    selectElement(elementId)
+    onElementEdit?.(elementId)
+  }, [selectElement, onElementEdit])
+  
   const renderHexGrid = useMemo(() => {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
     const hexes: JSX.Element[] = []
@@ -198,6 +221,8 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
               onSelect={() => selectElement(element.id)}
               onDragStart={() => handleElementDragStart(element.id)}
               onDoubleClick={() => onElementDoubleClick(element.id, element.name)}
+              onDelete={() => handleElementDelete(element.id)}
+              onEdit={() => handleElementEdit(element.id)}
             />
           ))}
         </div>
