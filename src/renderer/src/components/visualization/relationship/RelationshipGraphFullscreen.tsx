@@ -199,6 +199,12 @@ function RelationshipGraphFullscreen({
         return
       }
 
+      // 确保容器内没有残留的 canvas 元素
+      const existingCanvas = container.querySelector('canvas')
+      if (existingCanvas) {
+        existingCanvas.remove()
+      }
+
       const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333'
       const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
       const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff'
@@ -355,33 +361,38 @@ function RelationshipGraphFullscreen({
       })
     }
 
-    // 开始初始化尝试，最多重试 20 次
-    tryInit(20)
+    // 延迟初始化，确保预览组件的清理完成
+    setTimeout(() => {
+      tryInit(20)
+    }, 50)
   }, [isDarkMode, token.colorPrimary, updateNode, message])
 
   // 清理 - 保存视图状态并销毁图形
   useEffect(() => {
     return () => {
-      const graph = graphRef.current
-      if (graph && !graph.destroyed) {
-        try {
-          const zoom = graph.getZoom()
-          const canvas = graph.getCanvas()
-          const width = canvas.getConfig().width || 800
-          const height = canvas.getConfig().height || 600
-          const center = graph.getCoordinateByCanvas([width / 2, height / 2])
-          const viewState = {
-            zoom,
-            centerX: center[0],
-            centerY: center[1],
+      // 延迟销毁，让新组件有时间初始化
+      setTimeout(() => {
+        const graph = graphRef.current
+        if (graph && !graph.destroyed) {
+          try {
+            const zoom = graph.getZoom()
+            const canvas = graph.getCanvas()
+            const width = canvas.getConfig().width || 800
+            const height = canvas.getConfig().height || 600
+            const center = graph.getCoordinateByCanvas([width / 2, height / 2])
+            const viewState = {
+              zoom,
+              centerX: center[0],
+              centerY: center[1],
+            }
+            useRelationshipStore.getState().updateGraph(graphId, { viewState })
+          } catch {
+            // 忽略销毁时的错误
           }
-          useRelationshipStore.getState().updateGraph(graphId, { viewState })
-        } catch {
-          // 忽略销毁时的错误
+          graph.destroy()
+          graphRef.current = null
         }
-        graph.destroy()
-        graphRef.current = null
-      }
+      }, 0)
     }
   }, [graphId])
 

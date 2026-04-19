@@ -163,10 +163,13 @@ function RelationshipGraphPreview({
   // 清理
   useEffect(() => {
     return () => {
-      if (graphRef.current && !graphRef.current.destroyed) {
-        graphRef.current.destroy()
-        graphRef.current = null
-      }
+      // 延迟销毁，让新组件有时间初始化
+      setTimeout(() => {
+        if (graphRef.current && !graphRef.current.destroyed) {
+          graphRef.current.destroy()
+          graphRef.current = null
+        }
+      }, 0)
     }
   }, [])
 
