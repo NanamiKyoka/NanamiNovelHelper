@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Modal, Form, Input, Select, App } from 'antd'
+import { Modal, Form, Input, ColorPicker, App } from 'antd'
+import { Color } from 'antd/es/color-picker'
 import * as Icons from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { IconPicker } from './IconPicker'
 import { CHUNK_TYPE_CONFIG, ELEMENT_TYPE_CONFIG } from '@renderer/types/map'
-import type { Chunk, MapElement, ChunkType, ElementType } from '@renderer/types/map'
+import type { Chunk, MapElement } from '@renderer/types/map'
 import styles from './EditModal.module.css'
 
 interface EditModalProps {
@@ -22,7 +23,6 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
   
   const [selectedIcon, setSelectedIcon] = useState<string>('')
   const [selectedColor, setSelectedColor] = useState<string>('')
-  const [customTypeName, setCustomTypeName] = useState<string>('')
   
   const isChunk = type === 'chunk'
   const config = isChunk ? CHUNK_TYPE_CONFIG : ELEMENT_TYPE_CONFIG
@@ -42,10 +42,6 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
       })
       setSelectedIcon(item.icon || '')
       setSelectedColor(item.color || '')
-      setCustomTypeName(isChunk 
-        ? (item as Chunk).customTypeName || '' 
-        : (item as MapElement).customTypeName || ''
-      )
     }
   }, [item, form, isChunk])
   
@@ -60,6 +56,10 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
     const iconName = selectedIcon || (currentType ? config[currentType as keyof typeof config]?.icon : '')
     return (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] || Icons.QuestionCircleOutlined
   }, [selectedIcon, currentType, config])
+  
+  const handleColorChange = (color: Color) => {
+    setSelectedColor(color.toHexString())
+  }
   
   const handleSave = async () => {
     try {
@@ -144,12 +144,12 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
         </Form.Item>
         
         <Form.Item label="颜色">
-          <div className={styles.colorPicker}>
-            <input
-              type="color"
+          <div className={styles.colorPickerRow}>
+            <ColorPicker
               value={selectedColor}
-              onChange={(e) => setSelectedColor(e.target.value)}
-              className={styles.colorInput}
+              onChange={handleColorChange}
+              showText
+              format="hex"
             />
             <div 
               className={styles.colorPreview}
@@ -157,7 +157,6 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
             >
               <IconComponent style={{ fontSize: 20, color: getContrastColor(selectedColor) }} />
             </div>
-            <span className={styles.colorValue}>{selectedColor}</span>
           </div>
         </Form.Item>
       </Form>
