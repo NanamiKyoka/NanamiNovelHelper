@@ -82,7 +82,7 @@ interface TimelineState {
   // 批量设置方法（用于聚合接口）
   setTimelines: (timelines: TimelineMeta[]) => void
   // 排序方法
-  reorderTimelines: (timelineIds: string[]) => Promise<void>
+  reorderTimelines: (timelineIds: string[]) => Promise<boolean>
 }
 
 export const useTimelineStore = create<TimelineState>((set, get) => ({
@@ -964,10 +964,12 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           }).filter((t): t is TimelineMeta => t !== null)
         }))
       }
+      return success
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '重新排序时间线失败'
       console.error('Failed to reorder timelines:', error)
       set({ error: errorMessage })
+      return false
     }
   },
 }))
