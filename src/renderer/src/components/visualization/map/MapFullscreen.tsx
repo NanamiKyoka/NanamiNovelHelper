@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Button, Tooltip, Modal, App } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -59,6 +59,26 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const panX = useMapStore(state => state.panX)
   const panY = useMapStore(state => state.panY)
   const zoom = useMapStore(state => state.zoom)
+  const isConnecting = useMapStore(state => state.isConnecting)
+  const connectingFrom = useMapStore(state => state.connectingFrom)
+  const cancelConnecting = useMapStore(state => state.cancelConnecting)
+  
+  const toolInfo = useMemo(() => {
+    switch (tool) {
+      case 'select': return { name: '选择', hint: '点击选择，拖拽移动，Delete 删除' }
+      case 'draw': return { name: '绘制', hint: '点击空白区域创建新板块' }
+      case 'connect': return { name: '连接', hint: '点击两个板块创建连接' }
+      default: return { name: '未知', hint: '' }
+    }
+  }, [tool])
+  
+  const operationHint = useMemo(() => {
+    if (isConnecting && connectingFrom) {
+      const chunk = getChunkById(connectingFrom.chunkId)
+      return `正在连接「${chunk?.name || ''}」，请点击目标板块`
+    }
+    return null
+  }, [isConnecting, connectingFrom, getChunkById])
   
   const [isLoading, setIsLoading] = useState(true)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -380,7 +400,10 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       <div className={styles.statusBar}>
         <div className={styles.statusLeft}>
           <span className={styles.statusItem}>
-            当前视图: {currentLevel.name}
+            工具: {toolInfo.name}
+          </span>
+          <span className={styles.statusItem}>
+            视图: {currentLevel.name}
           </span>
           <span className={styles.statusItem}>
             板块: {currentMap.data.chunks.length || 0}
@@ -390,9 +413,16 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
           </span>
         </div>
         <div className={styles.statusRight}>
-          <span className={styles.statusItem}>
-            提示: 双击板块进入内部编辑，拖拽板块移动到六边形网格
-          </span>
+          {operationHint ? (
+            <span className={styles.statusHint}>
+              {operationHint}
+              <Button size="small" type="link" onClick={cancelConnecting}>取消</Button>
+            </span>
+          ) : (
+            <span className={styles.statusItem}>
+              {toolInfo.hint}
+            </span>
+          )}
         </div>
       </div>
       
