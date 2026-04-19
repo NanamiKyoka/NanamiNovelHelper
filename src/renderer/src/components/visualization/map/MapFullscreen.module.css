@@ -1,25 +1,19 @@
+/* 引入公共样式 */
 .mapFullscreen {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  background: var(--bg-color);
+  composes: fullscreenContainer from '../common.module.css';
 }
 
+.loadingState {
+  composes: loading from '../common.module.css';
+}
+
+/* 顶部工具栏 */
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-2) var(--spacing-4);
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  composes: toolbar from '../common.module.css';
 }
 
 .headerLeft {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
+  composes: toolbarLeft from '../common.module.css';
 }
 
 .backButton {
@@ -35,9 +29,7 @@
 }
 
 .headerRight {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
+  composes: toolbarRight from '../common.module.css';
 }
 
 .toolGroup {
@@ -93,11 +85,7 @@
 }
 
 .canvasArea {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  composes: canvasContainer from '../common.module.css';
 }
 
 .statusBar {
@@ -122,55 +110,4 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-1);
-}
-
-.suggestionModal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-6);
-  box-shadow: var(--shadow-xl);
-  z-index: 1000;
-  max-width: 400px;
-  width: 90%;
-}
-
-.suggestionModal h3 {
-  margin: 0 0 var(--spacing-3) 0;
-  font-size: var(--font-size-lg);
-  color: var(--text-color);
-}
-
-.suggestionModal p {
-  margin: 0 0 var(--spacing-4) 0;
-  color: var(--text-secondary);
-}
-
-.suggestionActions {
-  display: flex;
-  gap: var(--spacing-2);
-  justify-content: flex-end;
-}
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-}
-
-.loadingState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
 }
