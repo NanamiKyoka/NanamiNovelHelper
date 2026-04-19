@@ -1251,6 +1251,17 @@ declare global {
       terminal: TerminalAPI
       terminalWindow: TerminalWindowAPI
       git: GitAPI
+      shell: {
+        openExternal: (url: string) => Promise<boolean>
+      }
+      updater: {
+        checkForUpdates: () => Promise<boolean>
+        downloadUpdate: () => Promise<boolean>
+        quitAndInstall: () => void
+        onUpdateAvailable: (callback: (info: unknown) => void) => void
+        onUpdateDownloaded: (callback: () => void) => void
+        removeUpdateListeners: () => void
+      }
       platform: NodeJS.Platform
     }
   }

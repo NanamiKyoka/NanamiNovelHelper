@@ -1533,6 +1533,26 @@ const api = {
       ipcRenderer.removeAllListeners('dynamicSkill:execution-output')
     }
   },
+  // Shell API
+  shell: {
+    openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url)
+  },
+  // 自动更新 API
+  updater: {
+    checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),
+    downloadUpdate: () => ipcRenderer.invoke('updater:download-update'),
+    quitAndInstall: () => ipcRenderer.send('updater:quit-and-install'),
+    onUpdateAvailable: (callback: (info: unknown) => void) => {
+      ipcRenderer.on('updater:update-available', (_, info) => callback(info))
+    },
+    onUpdateDownloaded: (callback: () => void) => {
+      ipcRenderer.on('updater:update-downloaded', () => callback())
+    },
+    removeUpdateListeners: () => {
+      ipcRenderer.removeAllListeners('updater:update-available')
+      ipcRenderer.removeAllListeners('updater:update-downloaded')
+    }
+  },
   // 平台信息
   platform: process.platform
 }

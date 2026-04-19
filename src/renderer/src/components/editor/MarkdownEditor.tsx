@@ -425,6 +425,55 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     clearExternalRefreshRequest()
   }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest, updateWordCount])
 
+  useEffect(() => {
+    if (!editor) return
+
+    const handleUndo = () => {
+      editor.chain().focus().undo().run()
+    }
+    const handleRedo = () => {
+      editor.chain().focus().redo().run()
+    }
+    const handleCut = () => {
+      document.execCommand('cut')
+    }
+    const handleCopy = () => {
+      document.execCommand('copy')
+    }
+    const handlePaste = async () => {
+      try {
+        const text = await navigator.clipboard.readText()
+        editor.chain().focus().insertContent(text).run()
+      } catch {
+        document.execCommand('paste')
+      }
+    }
+    const handleSelectAll = () => {
+      editor.chain().focus().selectAll().run()
+    }
+    const handleOpenSearch = () => {
+      setSearchPanelVisible(true)
+    }
+
+    window.addEventListener('editor:undo', handleUndo)
+    window.addEventListener('editor:redo', handleRedo)
+    window.addEventListener('editor:cut', handleCut)
+    window.addEventListener('editor:copy', handleCopy)
+    window.addEventListener('editor:paste', handlePaste)
+    window.addEventListener('editor:selectAll', handleSelectAll)
+    window.addEventListener('editor:openSearch', handleOpenSearch)
+
+    return () => {
+      window.removeEventListener('editor:undo', handleUndo)
+      window.removeEventListener('editor:redo', handleRedo)
+      window.removeEventListener('editor:cut', handleCut)
+      window.removeEventListener('editor:copy', handleCopy)
+      window.removeEventListener('editor:paste', handlePaste)
+      window.removeEventListener('editor:selectAll', handleSelectAll)
+      window.removeEventListener('editor:openSearch', handleOpenSearch)
+    }
+  }, [editor, setSearchPanelVisible])
+
   if (!editor) {
     return <div className={styles.loading}>加载编辑器...</div>
   }

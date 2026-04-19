@@ -23,3 +23,6 @@ export { ErrorBoundary, ModuleErrorBoundary } from './ErrorBoundary'
 // 确认对话框组件
 export { ConfirmDialog, DeleteConfirmDialog, UnsavedConfirmDialog } from './ConfirmDialog'
 export type { ConfirmDialogProps } from './ConfirmDialog'
+
+// 关于对话框组件
+export { AboutModal } from './AboutModal'

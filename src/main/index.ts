@@ -214,6 +214,26 @@ ipcMain.handle('terminal-window:is-maximized', () => {
   return terminalWindow?.isMaximized() ?? false
 })
 
+ipcMain.handle('shell:open-external', async (_event, url: string) => {
+  try {
+    await shell.openExternal(url)
+    return true
+  } catch {
+    return false
+  }
+})
+
+ipcMain.handle('updater:check-for-updates', async () => {
+  return false
+})
+
+ipcMain.handle('updater:download-update', async () => {
+  return false
+})
+
+ipcMain.on('updater:quit-and-install', () => {
+})
+
 // 注册 local:// 协议为特权协议（必须在 app.ready 之前）
 protocol.registerSchemesAsPrivileged([
   {

@@ -9,7 +9,7 @@ import TitleBar from '@components/layout/TitleBar'
 import { DraggableBadgeContainer } from '@components/layout'
 import { WelcomePage, CreateProjectModal, OpenProjectModal } from '@components/project'
 import { RandomNamePanel } from '@components/random-name'
-import { ErrorBoundary, GlobalLoading } from '@components/common'
+import { ErrorBoundary, GlobalLoading, AboutModal } from '@components/common'
 import { useProjectActions, useShortcuts } from '@hooks'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
@@ -166,6 +166,25 @@ function App(): JSX.Element {
   ], [])
 
   useShortcuts(shortcuts, [])
+
+  useEffect(() => {
+    const handleOpenSettings = () => {
+      setActivePanel('settings')
+      setSidebarCollapsed(false)
+    }
+    
+    const handleToggleSidebar = () => {
+      setSidebarCollapsed(prev => !prev)
+    }
+
+    window.addEventListener('menu:openSettings', handleOpenSettings)
+    window.addEventListener('menu:toggleSidebar', handleToggleSidebar)
+    
+    return () => {
+      window.removeEventListener('menu:openSettings', handleOpenSettings)
+      window.removeEventListener('menu:toggleSidebar', handleToggleSidebar)
+    }
+  }, [])
 
   const handleActivityBarClick = (panelId: string): void => {
     if (activePanel === panelId) {
@@ -508,6 +527,7 @@ function App(): JSX.Element {
         onCancel={closeOpenProjectModal}
         onSuccess={closeOpenProjectModal}
       />
+      <AboutModal />
     </div>
   )
 }

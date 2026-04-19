@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { message } from 'antd'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
 import { useProjectActions } from '@hooks/useProjectActions'
@@ -11,6 +12,7 @@ interface MenuItem {
   disabled?: boolean
   separator?: boolean
   children?: MenuItem[]
+  checked?: boolean
 }
 
 interface MenuConfig {
@@ -18,6 +20,9 @@ interface MenuConfig {
   label: string
   items: MenuItem[]
 }
+
+const DOCS_URL = 'https://github.com/nanami-novel-helper/nanami-novel-helper/wiki'
+const GITHUB_URL = 'https://github.com/nanami-novel-helper/nanami-novel-helper'
 
 function MenuBar(): JSX.Element {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
@@ -29,27 +34,48 @@ function MenuBar(): JSX.Element {
     loadRecentProjects
   } = useProjectStore()
 
-  // 使用 useProjectActions 获取完整的项目操作，确保正确清除旧数据
   const { openProject, closeProject } = useProjectActions()
 
   const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
   const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
   const fullscreenMode = useUIStore((state) => state.fullscreenMode)
+  const openAboutModal = useUIStore((state) => state.openAboutModal)
+  const focusMode = useUIStore((state) => state.focusMode)
+  const toggleFocusMode = useUIStore((state) => state.toggleFocusMode)
+  const outlineVisible = useUIStore((state) => state.outlineVisible)
+  const toggleOutline = useUIStore((state) => state.toggleOutline)
+  const charCountVisible = useUIStore((state) => state.charCountVisible)
+  const toggleCharCount = useUIStore((state) => state.toggleCharCount)
+  const setSearchReplaceVisible = useUIStore((state) => state.setSearchReplaceVisible)
 
-  // 加载最近项目列表 - hooks 必须在条件返回之前
   useEffect(() => {
     loadRecentProjects()
   }, [loadRecentProjects])
 
-  // 处理菜单点击
   const handleMenuClick = useCallback((menuId: string) => {
     setActiveMenu(prev => prev === menuId ? null : menuId)
   }, [])
 
-  // 处理菜单项点击
+  const handleOpenExternal = useCallback((url: string) => {
+    window.electron?.shell?.openExternal?.(url)
+  }, [])
+
+  const handleCheckUpdate = useCallback(async () => {
+    message.info('正在检查更新...')
+    try {
+      const result = await window.electron?.updater?.checkForUpdates?.()
+      if (result) {
+        message.success('发现新版本，正在下载...')
+      } else {
+        message.success('当前已是最新版本')
+      }
+    } catch {
+      message.warning('检查更新失败，请稍后重试')
+    }
+  }, [])
+
   const handleMenuItemClick = useCallback(async (menuId: string, itemId: string, label?: string) => {
     switch (itemId) {
-      // 文件菜单
       case 'newProject':
         openCreateProjectModal()
         break
@@ -64,10 +90,55 @@ function MenuBar(): JSX.Element {
         }
         break
       case 'projectSettings':
-        // TODO: 打开项目设置
+        window.dispatchEvent(new CustomEvent('menu:openSettings'))
         break
       
-      // 最近项目
+      case 'undo':
+        window.dispatchEvent(new CustomEvent('editor:undo'))
+        break
+      case 'redo':
+        window.dispatchEvent(new CustomEvent('editor:redo'))
+        break
+      case 'cut':
+        window.dispatchEvent(new CustomEvent('editor:cut'))
+        break
+      case 'copy':
+        window.dispatchEvent(new CustomEvent('editor:copy'))
+        break
+      case 'paste':
+        window.dispatchEvent(new CustomEvent('editor:paste'))
+        break
+      case 'selectAll':
+        window.dispatchEvent(new CustomEvent('editor:selectAll'))
+        break
+      case 'findReplace':
+        setSearchReplaceVisible(true)
+        window.dispatchEvent(new CustomEvent('editor:openSearch'))
+        break
+      
+      case 'toggleSidebar':
+        window.dispatchEvent(new CustomEvent('menu:toggleSidebar'))
+        break
+      case 'toggleOutline':
+        toggleOutline()
+        break
+      case 'charCount':
+        toggleCharCount()
+        break
+      case 'focusMode':
+        toggleFocusMode()
+        break
+      
+      case 'about':
+        openAboutModal()
+        break
+      case 'docs':
+        handleOpenExternal(DOCS_URL)
+        break
+      case 'checkUpdate':
+        handleCheckUpdate()
+        break
+      
       default:
         if (itemId.startsWith('recent-')) {
           const projectPath = itemId.replace('recent-', '')
@@ -80,7 +151,7 @@ function MenuBar(): JSX.Element {
     }
     
     setActiveMenu(null)
-  }, [openCreateProjectModal, openOpenProjectModal, openProject, closeProject])
+  }, [openCreateProjectModal, openOpenProjectModal, openProject, closeProject, openAboutModal, toggleFocusMode, toggleOutline, toggleCharCount, setSearchReplaceVisible, handleOpenExternal, handleCheckUpdate])
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -113,12 +184,10 @@ function MenuBar(): JSX.Element {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [activeMenu])
 
-  // 全屏编辑模式下隐藏菜单栏 - 在所有 hooks 之后判断
-  if (fullscreenMode) {
+  if (fullscreenMode || focusMode) {
     return <></>
   }
 
-  // 菜单配置
   const menuConfig: MenuConfig[] = [
     {
       id: 'file',
@@ -162,10 +231,10 @@ function MenuBar(): JSX.Element {
       label: '视图',
       items: [
         { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' },
-        { id: 'toggleOutline', label: '大纲视图' },
-        { id: 'charCount', label: '字符统计' },
+        { id: 'toggleOutline', label: '大纲视图', checked: outlineVisible },
+        { id: 'charCount', label: '字符统计', checked: charCountVisible },
         { id: 'separator1', label: '', separator: true },
-        { id: 'focusMode', label: '专注模式' }
+        { id: 'focusMode', label: '专注模式', checked: focusMode }
       ]
     },
     {
@@ -203,7 +272,6 @@ function MenuBar(): JSX.Element {
     )
   }
 
-  // 渲染下拉菜单
   const renderDropdown = (menu: MenuConfig) => {
     return (
       <div className={styles.dropdown}>
@@ -215,11 +283,16 @@ function MenuBar(): JSX.Element {
           return (
             <div key={item.id} className={styles.dropdownItemWrapper}>
               <button
-                className={`${styles.dropdownItem} ${item.disabled ? styles.disabled : ''}`}
+                className={`${styles.dropdownItem} ${item.disabled ? styles.disabled : ''} ${item.checked ? styles.checked : ''}`}
                 onClick={() => !item.disabled && handleMenuItemClick(menu.id, item.id)}
                 disabled={item.disabled}
               >
-                <span className={styles.menuItemLabel}>{item.label}</span>
+                <span className={styles.menuItemLabel}>
+                  {item.checked !== undefined && (
+                    <span className={styles.checkMark}>{item.checked ? '✓' : ''}</span>
+                  )}
+                  {item.label}
+                </span>
                 {item.shortcut && (
                   <span className={styles.shortcut}>{item.shortcut}</span>
                 )}
