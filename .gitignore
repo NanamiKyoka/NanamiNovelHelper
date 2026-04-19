@@ -5,6 +5,21 @@ node_modules/
 out/
 dist/
 
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/captures/
+android/local.properties
+android/gradle.properties
+android/.externalNativeBuild/
+
+# Capacitor
+capacitor.config.json
+
 # Cache
 .cache/
 *.tsbuildinfo

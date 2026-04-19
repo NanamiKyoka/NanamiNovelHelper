@@ -33,7 +33,7 @@ const TimelinePanel = lazy(() => import('@components/visualization/timeline/Time
 const SequenceChartPanel = lazy(() => import('@components/visualization/sequence-chart/SequenceChartPanel'))
 const OrganizationPanel = lazy(() => import('@components/visualization/organization/OrganizationPanel'))
 const MapPanel = lazy(() => import('@components/visualization/map/MapPanel'))
-const TerminalPanel = lazy(() => import('@components/terminal/TerminalPanel'))
+const TerminalPanel = lazy(() => import('@components/terminal/TerminalPanel').then(m => ({ default: m.TerminalPanel })))
 
 const BADGE_COUNT_THRESHOLD = 0
 

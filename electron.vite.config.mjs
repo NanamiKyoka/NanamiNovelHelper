@@ -1,12 +1,12 @@
 import { resolve } from 'path'
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
+import { defineConfig } from 'electron-vite' // ⚠️ 移除了 externalizeDepsPlugin
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 
 export default defineConfig({
   main: {
     plugins: [
-      externalizeDepsPlugin(),
+      // ⚠️ 这里不再使用 externalizeDepsPlugin()，强制 Vite 打包所有 JS 依赖！
       // 复制 builtin-skills 到输出目录
       {
         name: 'copy-builtin-skills',
@@ -15,7 +15,6 @@ export default defineConfig({
           const destDir = resolve(__dirname, 'out/main/builtin-skills')
           
           if (fs.existsSync(srcDir)) {
-            // 递归复制目录
             const copyDir = (src, dest) => {
               if (!fs.existsSync(dest)) {
                 fs.mkdirSync(dest, { recursive: true })
@@ -48,12 +47,19 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/main/index.ts')
         },
-        external: ['chokidar']
+        // ⚠️ 只有 C++ 原生模块和 Electron 核心模块保持外部化，其余全量打包！
+        external: [
+          'electron',
+          'chokidar',
+          'node-pty',
+          'sharp',
+          'electron-updater'
+        ]
       }
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [], // ⚠️ 同样移除 externalizeDepsPlugin
     resolve: {
       alias: {
         '@preload': resolve('src/preload'),
@@ -64,7 +70,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.ts')
-        }
+        },
+        external: ['electron']
       }
     }
   },

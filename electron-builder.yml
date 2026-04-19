@@ -35,11 +35,8 @@ asarUnpack:
 # 最大压缩
 compression: maximum
 
-# 构建钩子
-afterPack: ./scripts/fix-deps.js
-
 # 跳过原生模块重建，使用预编译版本
-npmRebuild: false
+npmRebuild: true
 
 win:
   icon: resources/icon.ico
