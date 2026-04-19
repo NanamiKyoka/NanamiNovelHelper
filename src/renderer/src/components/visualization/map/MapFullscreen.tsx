@@ -50,7 +50,7 @@ export function MapFullscreen() {
   const snapEnabled = useMapStore(state => state.snapEnabled)
   const setSnapEnabled = useMapStore(state => state.setSnapEnabled)
   
-  const exitFullscreenMap = useUIStore(state => state.exitFullscreenMap)
+  const exitFullscreen = useUIStore(state => state.exitFullscreen)
   
   const [showSuggestion, setShowSuggestion] = useState(false)
   
@@ -58,8 +58,8 @@ export function MapFullscreen() {
   const currentLevel = viewStack[viewStack.length - 1]
   
   const handleBack = useCallback(() => {
-    exitFullscreenMap()
-  }, [exitFullscreenMap])
+    exitFullscreen()
+  }, [exitFullscreen])
   
   const handleSave = useCallback(async () => {
     await saveCurrentMap()

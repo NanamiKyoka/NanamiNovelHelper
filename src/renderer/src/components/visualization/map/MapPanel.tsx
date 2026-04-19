@@ -1,69 +1,54 @@
-/**
- * 地图面板入口
- * 管理列表、预览和全屏编辑器之间的切换
- */
-
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import MapList from './MapList'
 import MapPreview from './MapPreview'
-import MapFullscreen from './MapFullscreen'
+import { MapFullscreen } from './MapFullscreen'
+import { useMapStore } from '@stores/mapStore'
+import { useUIStore } from '@stores/uiStore'
 import styles from './MapPanel.module.css'
 
-type ViewMode = 'list' | 'preview' | 'editor'
-
 function MapPanel(): JSX.Element {
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [currentMapId, setCurrentMapId] = useState<string | null>(null)
-
-  // 选择地图（进入预览）
-  const handleSelectMap = useCallback((mapId: string) => {
-    setCurrentMapId(mapId)
-    setViewMode('preview')
-  }, [])
-
-  // 创建新地图并进入编辑
-  const handleCreateAndEdit = useCallback((mapId: string) => {
-    setCurrentMapId(mapId)
-    setViewMode('editor')
-  }, [])
-
-  // 从预览进入编辑模式
+  const currentMap = useMapStore(state => state.currentMap)
+  const loadMap = useMapStore(state => state.loadMap)
+  const fullscreenMode = useUIStore(state => state.fullscreenMode)
+  const setFullscreenMode = useUIStore(state => state.setFullscreenMode)
+  
+  const handleSelectMap = useCallback(async (mapId: string) => {
+    await loadMap(mapId)
+  }, [loadMap])
+  
+  const handleCreateAndEdit = useCallback(async (mapId: string) => {
+    await loadMap(mapId)
+    setFullscreenMode('map')
+  }, [loadMap, setFullscreenMode])
+  
   const handleEnterEditMode = useCallback(() => {
-    setViewMode('editor')
-  }, [])
-
-  // 返回列表
+    setFullscreenMode('map')
+  }, [setFullscreenMode])
+  
   const handleBackToList = useCallback(() => {
-    setViewMode('list')
-    setCurrentMapId(null)
-  }, [])
-
-  // 从编辑器返回预览（与其他可视化工具行为一致）
-  const handleExitEditor = useCallback(() => {
-    setViewMode('preview')
-  }, [])
-
+    setFullscreenMode(null)
+  }, [setFullscreenMode])
+  
+  if (fullscreenMode === 'map' && currentMap) {
+    return <MapFullscreen />
+  }
+  
+  if (currentMap) {
+    return (
+      <MapPreview
+        mapId={currentMap.id}
+        onClose={handleBackToList}
+        onEnterEditMode={handleEnterEditMode}
+      />
+    )
+  }
+  
   return (
     <div className={styles.container}>
-      {viewMode === 'list' && (
-        <MapList 
-          onSelectMap={handleSelectMap}
-          onCreateAndEdit={handleCreateAndEdit}
-        />
-      )}
-      {viewMode === 'preview' && currentMapId && (
-        <MapPreview
-          mapId={currentMapId}
-          onClose={handleBackToList}
-          onEnterEditMode={handleEnterEditMode}
-        />
-      )}
-      {viewMode === 'editor' && currentMapId && (
-        <MapFullscreen
-          mapId={currentMapId}
-          onBack={handleExitEditor}
-        />
-      )}
+      <MapList 
+        onSelectMap={handleSelectMap}
+        onCreateAndEdit={handleCreateAndEdit}
+      />
     </div>
   )
 }
