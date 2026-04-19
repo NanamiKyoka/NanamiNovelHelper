@@ -66,6 +66,7 @@ interface FileTreeState {
   getFlattenedNodes: () => FlattenedNode[]
   // 批量设置方法（用于聚合接口）
   setData: (roots: FileNodeData[], expandedFolders: string[], showHiddenFiles: boolean, hiddenItems: string[]) => void
+  clearFileTreeData: () => void
 }
 
 /**
@@ -582,6 +583,25 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     set({ 
       roots, 
       expandedKeys,
+      loading: false,
+      error: null
+    })
+  },
+  
+  clearFileTreeData: () => {
+    set({
+      roots: [],
+      expandedKeys: new Set(),
+      selectedKeys: new Set(),
+      focusedKey: null,
+      editingKey: null,
+      editingName: '',
+      newItemParent: undefined,
+      newItemType: 'file',
+      newItemName: '',
+      clipboard: null,
+      searchPattern: '',
+      filteredKeys: null,
       loading: false,
       error: null
     })

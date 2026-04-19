@@ -84,7 +84,7 @@ export function useProjectActions() {
   const setOrganizationGraphs = useOrganizationStore((s) => s.setGraphs)
   const clearOrganizationData = useOrganizationStore((s) => s.clearData)
   const setFileTreeData = useFileTreeStore((s) => s.setData)
-  const clearFileTreeData = useFileTreeStore((s) => s.clearData)
+  const clearFileTreeData = useFileTreeStore((s) => s.clearFileTreeData)
   const setHighlightConfig = useHighlightService((s) => s.setConfig)
 
   /**
