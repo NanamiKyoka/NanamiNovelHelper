@@ -158,7 +158,8 @@ interface MapState {
   addElement: (parentChunkId: string, parentElementId: string | null, options: CreateElementOptions) => MapElement | null
   updateElement: (elementId: string, updates: UpdateElementOptions) => void
   deleteElement: (elementId: string) => void
-  moveElement: (elementId: string, position: Point) => void
+  moveElementToHex: (elementId: string, hexPosition: HexPoint) => void
+  findNearestEmptyHexForElement: (parentChunkId: string, parentElementId: string | null) => HexPoint | null
   
   addConnection: (options: CreateConnectionOptions) => ChunkConnection | null
   updateConnection: (connectionId: string, updates: UpdateConnectionOptions) => void
@@ -597,8 +598,44 @@ export const useMapStore = create<MapState>((set, get) => ({
     })
   },
   
-  moveElement: (elementId: string, position: Point) => {
-    get().updateElement(elementId, { position })
+  moveElementToHex: (elementId: string, hexPosition: HexPoint) => {
+    get().updateElement(elementId, { hexPosition })
+  },
+  
+  findNearestEmptyHexForElement: (parentChunkId: string, parentElementId: string | null) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    
+    const chunk = currentMap.data.chunks.find(c => c.id === parentChunkId)
+    if (!chunk) return null
+    
+    let elements: MapElement[]
+    if (parentElementId) {
+      const parentElement = findElementById(chunk.children, parentElementId)
+      elements = parentElement?.children || []
+    } else {
+      elements = chunk.children
+    }
+    
+    const occupiedHexes = new Set(
+      elements.map(e => `${e.hexPosition.q},${e.hexPosition.r}`)
+    )
+    
+    const startHex: HexPoint = { q: 0, r: 0 }
+    if (!occupiedHexes.has(`${startHex.q},${startHex.r}`)) {
+      return startHex
+    }
+    
+    for (let distance = 1; distance <= 10; distance++) {
+      const neighbors = getHexNeighbors(startHex)
+      for (const neighbor of neighbors) {
+        if (!occupiedHexes.has(`${neighbor.q},${neighbor.r}`)) {
+          return neighbor
+        }
+      }
+    }
+    
+    return null
   },
   
   addConnection: (options: CreateConnectionOptions) => {

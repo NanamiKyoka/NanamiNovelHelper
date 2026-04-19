@@ -266,8 +266,8 @@ export interface MapElement {
   elementType: ElementType
   customTypeName?: string
   
-  position: Point
-  size: Size
+  hexPosition: HexPoint
+  position?: Point
   
   icon: string
   color: string
@@ -397,8 +397,7 @@ export interface CreateElementOptions {
   description?: string
   elementType: ElementType
   customTypeName?: string
-  position: Point
-  size?: Size
+  hexPosition: HexPoint
   icon?: string
   color?: string
 }
@@ -408,8 +407,7 @@ export interface UpdateElementOptions {
   description?: string
   elementType?: ElementType
   customTypeName?: string
-  position?: Point
-  size?: Size
+  hexPosition?: HexPoint
   icon?: string
   color?: string
 }
@@ -466,7 +464,6 @@ export interface HistoryEntry {
 // 默认值
 // ============================================
 
-export const DEFAULT_ELEMENT_SIZE: Size = { width: 60, height: 60 }
 export const DEFAULT_CANVAS_WIDTH = 2000
 export const DEFAULT_CANVAS_HEIGHT = 1500
 export const DEFAULT_BACKGROUND_COLOR = '#1a1a2e'
@@ -562,8 +559,7 @@ export function createDefaultElement(options: CreateElementOptions): MapElement 
     description: options.description || config.description,
     elementType: options.elementType,
     customTypeName: options.customTypeName,
-    position: options.position,
-    size: options.size || DEFAULT_ELEMENT_SIZE,
+    hexPosition: options.hexPosition,
     icon: options.icon || config.icon,
     color: options.color || config.defaultColor,
     children: [],

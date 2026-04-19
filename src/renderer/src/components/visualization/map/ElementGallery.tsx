@@ -19,6 +19,7 @@ export function ElementGallery() {
   
   const viewStack = useMapStore(state => state.viewStack)
   const addElement = useMapStore(state => state.addElement)
+  const findNearestEmptyHexForElement = useMapStore(state => state.findNearestEmptyHexForElement)
   
   const currentLevel = viewStack[viewStack.length - 1]
   const parentChunkId = viewStack.find(v => v.type === 'chunk')?.id
@@ -51,12 +52,16 @@ export function ElementGallery() {
     
     const config = ELEMENT_TYPE_CONFIG[elementType]
     
+    const hexPosition = findNearestEmptyHexForElement(parentChunkId, parentElementId)
+    
+    if (!hexPosition) {
+      message.warning('没有可用的空位')
+      return
+    }
+    
     addElement(parentChunkId, parentElementId, {
       elementType,
-      position: { 
-        x: 100 + Math.random() * 300, 
-        y: 80 + Math.random() * 200 
-      }
+      hexPosition
     })
     
     message.success(`已添加${config.label}`)

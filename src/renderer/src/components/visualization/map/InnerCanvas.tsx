@@ -1,10 +1,16 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Button, Empty, Spin } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
 import { ElementNode } from './ElementNode'
-import type { Point } from '@renderer/types/map'
+import { 
+  hexToPixel, 
+  pixelToHex, 
+  getHexCorners, 
+  HEX_SIZE,
+  type HexPoint 
+} from '@renderer/types/map'
 import styles from './InnerCanvas.module.css'
 
 interface InnerCanvasProps {
@@ -14,7 +20,7 @@ interface InnerCanvasProps {
 export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPanning, setIsPanning] = useState(false)
-  const [panStart, setPanStart] = useState<Point>({ x: 0, y: 0 })
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   
   const currentMap = useMapStore(state => state.currentMap)
   const viewStack = useMapStore(state => state.viewStack)
@@ -27,17 +33,14 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
   const resetView = useMapStore(state => state.resetView)
   const selectedElementId = useMapStore(state => state.selectedElementId)
   const selectElement = useMapStore(state => state.selectElement)
-  const moveElement = useMapStore(state => state.moveElement)
+  const moveElementToHex = useMapStore(state => state.moveElementToHex)
   
   const { isDark } = useThemeStore()
   
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null)
-  const [dragOffset, setDragOffset] = useState<Point>({ x: 0, y: 0 })
   
   const elements = getCurrentElements()
   const currentLevel = viewStack[viewStack.length - 1]
-  const gridSize = 20
-  const showGrid = true
   
   const handleWheel = useCallback((e: WheelEvent) => {
     if (e.ctrlKey) {
@@ -72,74 +75,63 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
     if (draggingElementId) {
       const rect = containerRef.current?.getBoundingClientRect()
       if (rect) {
-        const x = (e.clientX - rect.left - panX) / zoom - dragOffset.x
-        const y = (e.clientY - rect.top - panY) / zoom - dragOffset.y
-        moveElement(draggingElementId, { x, y })
+        const x = (e.clientX - rect.left - panX) / zoom
+        const y = (e.clientY - rect.top - panY) / zoom
+        const hexPosition = pixelToHex({ x, y })
+        moveElementToHex(draggingElementId, hexPosition)
       }
     }
-  }, [isPanning, panStart, setPan, draggingElementId, dragOffset, moveElement, zoom, panX, panY])
+  }, [isPanning, panStart, setPan, draggingElementId, moveElementToHex, zoom, panX, panY])
   
   const handleMouseUp = useCallback(() => {
     setIsPanning(false)
     setDraggingElementId(null)
   }, [])
   
-  const handleElementDragStart = useCallback((elementId: string, e: React.MouseEvent, elementPosition: Point) => {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    
-    const mouseX = (e.clientX - rect.left - panX) / zoom
-    const mouseY = (e.clientY - rect.top - panY) / zoom
-    
+  const handleElementDragStart = useCallback((elementId: string) => {
     setDraggingElementId(elementId)
-    setDragOffset({ x: mouseX - elementPosition.x, y: mouseY - elementPosition.y })
-  }, [panX, panY, zoom])
+  }, [])
   
   const handleCanvasClick = useCallback(() => {
     selectElement(null)
   }, [selectElement])
   
-  const renderGrid = () => {
-    if (!showGrid) return null
+  const renderHexGrid = useMemo(() => {
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+    const hexes: JSX.Element[] = []
     
-    const gridColor = isDark ? '#333' : '#ddd'
-    const width = 800
-    const height = 600
+    const minQ = Math.min(...elements.map(e => e.hexPosition.q), -5) - 2
+    const maxQ = Math.max(...elements.map(e => e.hexPosition.q), 5) + 2
+    const minR = Math.min(...elements.map(e => e.hexPosition.r), -5) - 2
+    const maxR = Math.max(...elements.map(e => e.hexPosition.r), 5) + 2
     
-    const lines = []
-    for (let x = 0; x <= width; x += gridSize) {
-      lines.push(
-        <line
-          key={`v-${x}`}
-          x1={x}
-          y1={0}
-          x2={x}
-          y2={height}
-          stroke={gridColor}
-          strokeWidth={0.5}
-        />
-      )
-    }
-    for (let y = 0; y <= height; y += gridSize) {
-      lines.push(
-        <line
-          key={`h-${y}`}
-          x1={0}
-          y1={y}
-          x2={width}
-          y2={y}
-          stroke={gridColor}
-          strokeWidth={0.5}
-        />
-      )
+    for (let q = minQ; q <= maxQ; q++) {
+      for (let r = minR; r <= maxR; r++) {
+        const center = hexToPixel({ q, r })
+        const corners = getHexCorners(center, HEX_SIZE)
+        
+        const pathD = corners
+          .map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`)
+          .join(' ') + ' Z'
+        
+        hexes.push(
+          <path
+            key={`hex-${q}-${r}`}
+            d={pathD}
+            fill="none"
+            stroke={gridColor}
+            strokeWidth={1}
+          />
+        )
+      }
     }
     
     return (
-      <svg className={styles.grid} width={width} height={height}>
-        {lines}
+      <svg className={styles.grid} style={{ width: '100%', height: '100%' }}>
+        {hexes}
       </svg>
     )
-  }
+  }, [isDark, elements])
   
   if (!currentMap) {
     return (
@@ -169,7 +161,7 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
           transformOrigin: '0 0'
         }}
       >
-        {renderGrid()}
+        {renderHexGrid}
         
         <div className={styles.elementsLayer}>
           {elements.map(element => (
@@ -178,7 +170,7 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
               element={element}
               isSelected={selectedElementId === element.id}
               onSelect={() => selectElement(element.id)}
-              onDragStart={(e) => handleElementDragStart(element.id, e, element.position)}
+              onDragStart={() => handleElementDragStart(element.id)}
               onDoubleClick={() => onElementDoubleClick(element.id, element.name)}
             />
           ))}
