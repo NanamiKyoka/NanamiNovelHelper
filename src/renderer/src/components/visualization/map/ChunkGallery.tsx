@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Input, Button, Spin, message } from 'antd'
-import { SparklesOutlined, SearchOutlined } from '@ant-design/icons'
+import { StarOutlined, SearchOutlined } from '@ant-design/icons'
 import * as Icons from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { CHUNK_TYPE_CONFIG, type ChunkType } from '@renderer/types/map'
@@ -123,7 +123,7 @@ export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
       
       <div className={styles.aiSection}>
         <h4>
-          <SparklesOutlined />
+          <StarOutlined />
           AI 生成板块
         </h4>
         <TextArea
@@ -137,7 +137,7 @@ export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
         <Button
           type="primary"
           className={styles.aiButton}
-          icon={<SparklesOutlined />}
+          icon={<StarOutlined />}
           onClick={handleAiGenerate}
           loading={isAiGenerating}
           disabled={!aiDescription.trim()}

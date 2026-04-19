@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { Button, Empty, Spin } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined, SparklesOutlined } from '@ant-design/icons'
+import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined, StarOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
 import { ElementNode } from './ElementNode'
@@ -202,7 +202,7 @@ export function InnerCanvas({ onElementDoubleClick }: InnerCanvasProps) {
                   {currentLevel.type === 'chunk' && (
                     <Button
                       type="primary"
-                      icon={<SparklesOutlined />}
+                      icon={<StarOutlined />}
                       onClick={handleAiFill}
                       loading={isAiGenerating}
                       className={styles.aiFillButton}
