@@ -1,8 +1,9 @@
-import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Modal, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
+import { useCanvasInteraction } from '@hooks/useCanvasInteraction'
 import { ElementNode } from './ElementNode'
 import { 
   hexToPixel, 
@@ -20,10 +21,6 @@ interface InnerCanvasProps {
 
 export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvasProps) {
   const { message } = App.useApp()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [isPanning, setIsPanning] = useState(false)
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
   
   const currentMap = useMapStore(state => state.currentMap)
   const viewStack = useMapStore(state => state.viewStack)
@@ -39,6 +36,14 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
   const moveElementToHex = useMapStore(state => state.moveElementToHex)
   const deleteElement = useMapStore(state => state.deleteElement)
   
+  const { containerRef, isPanning, isSpacePressed } = useCanvasInteraction({
+    zoom,
+    panX,
+    panY,
+    setZoom,
+    setPan
+  })
+  
   const { isDark } = useThemeStore()
   
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null)
@@ -46,61 +51,7 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
   const elements = getCurrentElements()
   const currentLevel = viewStack[viewStack.length - 1]
   
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (e.ctrlKey) {
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      setZoom(zoom + delta)
-    } else {
-      setPan(panX - e.deltaX, panY - e.deltaY)
-    }
-  }, [zoom, panX, panY, setZoom, setPan])
-  
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    
-    container.addEventListener('wheel', handleWheel, { passive: false })
-    return () => container.removeEventListener('wheel', handleWheel)
-  }, [handleWheel])
-  
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat) {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault()
-          setIsSpacePressed(true)
-        }
-      }
-    }
-    
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false)
-        setIsPanning(false)
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [])
-  
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
-      setIsPanning(true)
-      setPanStart({ x: e.clientX - panX, y: e.clientY - panY })
-    }
-  }, [panX, panY, isSpacePressed])
-  
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan(e.clientX - panStart.x, e.clientY - panStart.y)
-    }
-    
     if (draggingElementId) {
       const rect = containerRef.current?.getBoundingClientRect()
       if (rect) {
@@ -110,16 +61,16 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
         moveElementToHex(draggingElementId, hexPosition)
       }
     }
-  }, [isPanning, panStart, setPan, draggingElementId, moveElementToHex, zoom, panX, panY])
+  }, [draggingElementId, moveElementToHex, zoom, panX, panY])
   
   const handleMouseUp = useCallback(() => {
-    setIsPanning(false)
     setDraggingElementId(null)
   }, [])
   
   const handleElementDragStart = useCallback((elementId: string) => {
+    if (isPanning) return
     setDraggingElementId(elementId)
-  }, [])
+  }, [isPanning])
   
   const handleCanvasClick = useCallback(() => {
     selectElement(null)
@@ -196,7 +147,6 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
     <div
       ref={containerRef}
       className={styles.innerCanvas}
-      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}

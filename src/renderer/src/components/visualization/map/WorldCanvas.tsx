@@ -3,6 +3,7 @@ import { Button, Empty, Spin, Modal, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
+import { useCanvasInteraction } from '@hooks/useCanvasInteraction'
 import { ChunkNode } from './ChunkNode'
 import type { Chunk, ChunkConnection, Point, HexPoint } from '@renderer/types/map'
 import { hexToPixel, pixelToHex, getHexCorners, getHexEdgeCenter, HEX_SIZE } from '@renderer/types/map'
@@ -15,10 +16,6 @@ interface WorldCanvasProps {
 
 export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProps) {
   const { message } = App.useApp()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [isPanning, setIsPanning] = useState(false)
-  const [panStart, setPanStart] = useState<Point>({ x: 0, y: 0 })
-  const [isSpacePressed, setIsSpacePressed] = useState(false)
   
   const currentMap = useMapStore(state => state.currentMap)
   const zoom = useMapStore(state => state.zoom)
@@ -42,6 +39,14 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const connectChunks = useMapStore(state => state.connectChunks)
   const cancelConnecting = useMapStore(state => state.cancelConnecting)
   
+  const { containerRef, isPanning, isSpacePressed } = useCanvasInteraction({
+    zoom,
+    panX,
+    panY,
+    setZoom,
+    setPan
+  })
+  
   const { isDark } = useThemeStore()
   
   const [draggingChunkId, setDraggingChunkId] = useState<string | null>(null)
@@ -50,74 +55,19 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const chunks = currentMap?.data.chunks || []
   const connections = currentMap?.data.connections || []
   
-  const handleWheel = useCallback((e: WheelEvent) => {
-    if (e.ctrlKey) {
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      setZoom(zoom + delta)
-    } else {
-      setPan(panX - e.deltaX, panY - e.deltaY)
-    }
-  }, [zoom, panX, panY, setZoom, setPan])
-  
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    
-    container.addEventListener('wheel', handleWheel, { passive: false })
-    return () => container.removeEventListener('wheel', handleWheel)
-  }, [handleWheel])
-  
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat) {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault()
-          setIsSpacePressed(true)
-        }
-      }
-    }
-    
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false)
-        setIsPanning(false)
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [])
-  
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
-      setIsPanning(true)
-      setPanStart({ x: e.clientX - panX, y: e.clientY - panY })
-    }
-  }, [panX, panY, isSpacePressed])
-  
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isPanning) {
-      setPan(e.clientX - panStart.x, e.clientY - panStart.y)
-    }
-    
     if (draggingChunkId) {
       handleChunkDrag(e)
     }
-  }, [isPanning, panStart, setPan, draggingChunkId])
+  }, [draggingChunkId])
   
   const handleMouseUp = useCallback(() => {
-    setIsPanning(false)
     setDraggingChunkId(null)
     setDragStartHex(null)
   }, [])
   
   const handleChunkDragStart = useCallback((chunkId: string, e: React.MouseEvent) => {
-    if (tool !== 'select') return
+    if (tool !== 'select' || isPanning) return
     
     const chunk = chunks.find(c => c.id === chunkId)
     if (!chunk) return
@@ -125,7 +75,7 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
     setDraggingChunkId(chunkId)
     setDragStartHex(chunk.hexPosition)
     selectChunk(chunkId)
-  }, [tool, chunks, selectChunk])
+  }, [tool, chunks, selectChunk, isPanning])
   
   const handleChunkDrag = useCallback((e: React.MouseEvent) => {
     if (!draggingChunkId) return
@@ -309,7 +259,6 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
     <div
       ref={containerRef}
       className={styles.worldCanvas}
-      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
