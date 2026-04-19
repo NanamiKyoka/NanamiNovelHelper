@@ -1084,7 +1084,10 @@ const api = {
     showExportDialog: (graphName: string): Promise<string | null> => 
       ipcRenderer.invoke('relationship:showExportDialog', graphName),
     showImportDialog: (): Promise<string | null> => 
-      ipcRenderer.invoke('relationship:showImportDialog')
+      ipcRenderer.invoke('relationship:showImportDialog'),
+    // 排序
+    reorderGraphs: (graphIds: string[]): Promise<boolean> => 
+      ipcRenderer.invoke('relationship:reorderGraphs', graphIds)
   },
   // 时间线管理
   timeline: {
@@ -1142,7 +1145,10 @@ const api = {
     saveExportFile: (filePath: string, content: string): Promise<boolean> => 
       ipcRenderer.invoke('timeline:saveExportFile', filePath, content),
     readImportFile: (filePath: string): Promise<string | null> => 
-      ipcRenderer.invoke('timeline:readImportFile', filePath)
+      ipcRenderer.invoke('timeline:readImportFile', filePath),
+    // 排序
+    reorder: (timelineIds: string[]): Promise<boolean> => 
+      ipcRenderer.invoke('timeline:reorder', timelineIds)
   },
   // 事序图管理
   sequenceChart: {
@@ -1200,7 +1206,10 @@ const api = {
     saveExportFile: (filePath: string, content: string): Promise<boolean> => 
       ipcRenderer.invoke('sequenceChart:saveExportFile', filePath, content),
     readImportFile: (filePath: string): Promise<string | null> => 
-      ipcRenderer.invoke('sequenceChart:readImportFile', filePath)
+      ipcRenderer.invoke('sequenceChart:readImportFile', filePath),
+    // 排序
+    reorderCharts: (chartIds: string[]): Promise<boolean> => 
+      ipcRenderer.invoke('sequenceChart:reorderCharts', chartIds)
   },
   // 组织架构图管理
   organization: {
@@ -1243,7 +1252,10 @@ const api = {
     showExportDialog: (graphName: string): Promise<string | null> => 
       ipcRenderer.invoke('organization:showExportDialog', graphName),
     showImportDialog: (): Promise<string | null> => 
-      ipcRenderer.invoke('organization:showImportDialog')
+      ipcRenderer.invoke('organization:showImportDialog'),
+    // 排序
+    reorderGraphs: (graphIds: string[]): Promise<boolean> => 
+      ipcRenderer.invoke('organization:reorderGraphs', graphIds)
   },
   // 地图管理
   map: {

@@ -45,8 +45,8 @@ export function MapEditPanel() {
   const selectRegion = useMapStore(state => state.selectRegion)
   
   // 获取选中的元素
-  const selectedRegion = currentMap?.data.regions.find(r => r.id === selectedRegionId)
-  const selectedConnection = currentMap?.data.connections.find(c => c.id === selectedConnectionId)
+  const selectedRegion = currentMap?.data?.regions?.find(r => r.id === selectedRegionId)
+  const selectedConnection = currentMap?.data?.connections?.find(c => c.id === selectedConnectionId)
   
   // 板块编辑状态
   const [regionForm, setRegionForm] = useState<{
@@ -133,10 +133,10 @@ export function MapEditPanel() {
   
   // 获取连接的板块名称
   const getConnectionRegionNames = () => {
-    if (!selectedConnection || !currentMap) return { source: '', target: '' }
+    if (!selectedConnection || !currentMap?.data) return { source: '', target: '' }
     
-    const sourceRegion = currentMap.data.regions.find(r => r.id === selectedConnection.sourceId)
-    const targetRegion = currentMap.data.regions.find(r => r.id === selectedConnection.targetId)
+    const sourceRegion = currentMap.data.regions?.find(r => r.id === selectedConnection.sourceId)
+    const targetRegion = currentMap.data.regions?.find(r => r.id === selectedConnection.targetId)
     
     return {
       source: sourceRegion?.name || '未知',
@@ -224,13 +224,13 @@ export function MapEditPanel() {
           <Divider>连接</Divider>
           
           <div className={styles.connectionsList}>
-            {currentMap?.data.connections
-              .filter(c => c.sourceId === selectedRegionId || c.targetId === selectedRegionId)
+            {currentMap?.data?.connections
+              ?.filter(c => c.sourceId === selectedRegionId || c.targetId === selectedRegionId)
               .map(connection => {
                 const otherRegionId = connection.sourceId === selectedRegionId 
                   ? connection.targetId 
                   : connection.sourceId
-                const otherRegion = currentMap?.data.regions.find(r => r.id === otherRegionId)
+                const otherRegion = currentMap?.data?.regions?.find(r => r.id === otherRegionId)
                 
                 return (
                   <div 
@@ -251,7 +251,7 @@ export function MapEditPanel() {
                   </div>
                 )
               })}
-            {currentMap?.data.connections.filter(
+            {currentMap?.data?.connections?.filter(
               c => c.sourceId === selectedRegionId || c.targetId === selectedRegionId
             ).length === 0 && (
               <div className={styles.emptyConnections}>暂无连接</div>
