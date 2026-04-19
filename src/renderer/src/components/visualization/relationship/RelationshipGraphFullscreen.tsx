@@ -109,13 +109,11 @@ function RelationshipGraphFullscreen({
   }, [setFullscreenMode, exitFullscreen])
 
   const graphRef = useRef<Graph | null>(null)
-  const containerDomRef = useRef<HTMLDivElement | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [graphReady, setGraphReady] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [selectFromVocabulary, setSelectFromVocabulary] = useState(false)
-  const isInitializedRef = useRef(false)
 
   const [nodeModal, setNodeModal] = useState<NodeModalState>({
     visible: false,
@@ -183,21 +181,23 @@ function RelationshipGraphFullscreen({
     }
   }, [currentGraph?.linkedVocabularyTypes, loadEntries])
 
-  // 使用 callback ref 设置容器引用
+  // 使用 callback ref 来初始化图
   const containerRef = useCallback((container: HTMLDivElement | null) => {
     if (!container) return
-    containerDomRef.current = container
-  }, [])
 
-  // 初始化 G6 图形
-  useEffect(() => {
-    const container = containerDomRef.current
-    if (!container || isInitializedRef.current) return
+    // 如果已经有图实例，不重复创建
+    if (graphRef.current) return
 
-    const initGraph = () => {
+    const tryInit = (retries: number) => {
       const width = container.clientWidth
       const height = container.clientHeight
-      if (width === 0 || height === 0) return false
+
+      if (width === 0 || height === 0) {
+        if (retries > 0) {
+          requestAnimationFrame(() => tryInit(retries - 1))
+        }
+        return
+      }
 
       const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333'
       const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
@@ -349,24 +349,14 @@ function RelationshipGraphFullscreen({
 
       graph.render().then(() => {
         setGraphReady(true)
-        isInitializedRef.current = true
       }).catch((error) => {
         console.error('Failed to render relationship graph:', error)
         message.error('关系图渲染失败，请刷新重试')
-        setGraphReady(false)
       })
-
-      return true
     }
 
-    // 延迟初始化，确保容器尺寸正确
-    const timer = setTimeout(() => {
-      initGraph()
-    }, 100)
-
-    return () => {
-      clearTimeout(timer)
-    }
+    // 开始初始化尝试，最多重试 20 次
+    tryInit(20)
   }, [isDarkMode, token.colorPrimary, updateNode, message])
 
   // 清理 - 保存视图状态并销毁图形
@@ -379,23 +369,18 @@ function RelationshipGraphFullscreen({
           const canvas = graph.getCanvas()
           const width = canvas.getConfig().width || 800
           const height = canvas.getConfig().height || 600
-          const container = containerDomRef.current
-          const rect = container?.getBoundingClientRect()
-          if (rect) {
-            const center = graph.getCanvasByClient([rect.left + width / 2, rect.top + height / 2])
-            const viewState = {
-              zoom,
-              centerX: center[0],
-              centerY: center[1],
-            }
-            useRelationshipStore.getState().updateGraph(graphId, { viewState })
+          const center = graph.getCoordinateByCanvas([width / 2, height / 2])
+          const viewState = {
+            zoom,
+            centerX: center[0],
+            centerY: center[1],
           }
+          useRelationshipStore.getState().updateGraph(graphId, { viewState })
         } catch {
           // 忽略销毁时的错误
         }
         graph.destroy()
         graphRef.current = null
-        isInitializedRef.current = false
       }
     }
   }, [graphId])
