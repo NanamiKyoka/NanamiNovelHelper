@@ -93,39 +93,6 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     loadMapData()
   }, [mapId, loadMap])
   
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
-          return
-        }
-        if (selectedChunkId || selectedElementId || selectedConnectionId) {
-          e.preventDefault()
-          handleDelete()
-        }
-      }
-      
-      if (e.key === 'v' || e.key === 'V') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          setTool('select')
-        }
-      }
-      if (e.key === 'd' || e.key === 'D') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          setTool('draw')
-        }
-      }
-      if (e.key === 'c' || e.key === 'C') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          setTool('connect')
-        }
-      }
-    }
-    
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedChunkId, selectedElementId, selectedConnectionId, handleDelete, setTool])
-  
   const isWorldView = viewStack.length === 1
   const currentLevel = viewStack[viewStack.length - 1]
   
@@ -206,6 +173,39 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       message.success('连接已删除')
     }
   }, [selectedChunkId, selectedElementId, selectedConnectionId, deleteChunk, deleteElement, deleteConnection, message])
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+          return
+        }
+        if (selectedChunkId || selectedElementId || selectedConnectionId) {
+          e.preventDefault()
+          handleDelete()
+        }
+      }
+      
+      if (e.key === 'v' || e.key === 'V') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('select')
+        }
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('draw')
+        }
+      }
+      if (e.key === 'c' || e.key === 'C') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('connect')
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedChunkId, selectedElementId, selectedConnectionId, handleDelete, setTool])
   
   const handleEdit = useCallback((id?: string) => {
     const targetId = id || selectedChunkId || selectedElementId
