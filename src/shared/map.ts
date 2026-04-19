@@ -347,7 +347,7 @@ export interface Map extends MapMeta {
 // 编辑器状态
 // ============================================
 
-export type EditorTool = 'select' | 'pan' | 'delete'
+export type EditorTool = 'select' | 'draw' | 'connect'
 
 export interface EditorState {
   tool: EditorTool

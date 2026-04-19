@@ -5,10 +5,8 @@
 import { Button, Tooltip, Divider } from 'antd'
 import { 
   SelectOutlined, 
-  DragOutlined, 
   EditOutlined,
   LinkOutlined,
-  DeleteOutlined,
   UndoOutlined,
   RedoOutlined,
   SaveOutlined
@@ -30,10 +28,8 @@ interface ToolConfig {
 
 const TOOLS: ToolConfig[] = [
   { key: 'select', icon: <SelectOutlined />, label: '选择', shortcut: 'V' },
-  { key: 'pan', icon: <DragOutlined />, label: '平移', shortcut: 'H' },
   { key: 'draw', icon: <EditOutlined />, label: '绘制', shortcut: 'D' },
-  { key: 'connect', icon: <LinkOutlined />, label: '连接', shortcut: 'C' },
-  { key: 'delete', icon: <DeleteOutlined />, label: '删除', shortcut: 'X' }
+  { key: 'connect', icon: <LinkOutlined />, label: '连接', shortcut: 'C' }
 ]
 
 export function MapToolbar({ onSave }: MapToolbarProps) {

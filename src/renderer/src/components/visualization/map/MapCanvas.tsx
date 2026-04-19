@@ -9,7 +9,7 @@
  * - 支持多边形绘制
  */
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Application, Container, Graphics, Text, FederatedPointerEvent, Color } from 'pixi.js'
 // 导入 unsafe-eval 支持以解决 Electron 环境下的 CSP 限制
 import 'pixi.js/unsafe-eval'
@@ -39,6 +39,9 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
     drawing: Graphics
   } | null>(null)
   const isInitializedRef = useRef(false)
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const isPanningRef = useRef(false)
+  const panStartRef = useRef<Point>({ x: 0, y: 0 })
   
   // 从 store 获取状态
   const currentMap = useMapStore(state => state.currentMap)
@@ -295,8 +298,8 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
           } else if (connectingFromId !== region.id) {
             finishConnecting(region.id)
           }
-        } else if (tool === 'delete') {
-          deleteRegion(region.id)
+        } else if (tool === 'draw') {
+          // 绘制模式下不处理板块点击
         }
       })
       
@@ -494,8 +497,12 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
         
         // 否则添加新顶点
         addDrawingVertex(localPos)
-      } else if (tool === 'pan') {
-        // 开始平移
+      }
+      
+      // 空格键拖拽平移
+      if (isSpacePressed) {
+        isPanningRef.current = true
+        panStartRef.current = { x: e.globalX, y: e.globalY }
         if (appRef.current) {
           appRef.current.stage.cursor = 'grabbing'
         }
@@ -504,10 +511,18 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
     
     // 鼠标移动
     const handlePointerMove = (e: FederatedPointerEvent) => {
-      if (tool === 'pan' && e.buttons === 1) {
+      if (isPanningRef.current) {
         const newPanX = panX + e.movementX
         const newPanY = panY + e.movementY
         setPan(newPanX, newPanY)
+      }
+    }
+    
+    // 鼠标释放
+    const handlePointerUp = () => {
+      isPanningRef.current = false
+      if (appRef.current && !isSpacePressed) {
+        appRef.current.stage.cursor = 'default'
       }
     }
     
@@ -520,6 +535,16 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
     
     // 键盘事件
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 空格键 - 开始平移
+      if (e.code === 'Space' && !e.repeat) {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault()
+          setIsSpacePressed(true)
+          if (appRef.current) {
+            appRef.current.stage.cursor = 'grab'
+          }
+        }
+      }
       // Enter - 完成绘制
       if (e.key === 'Enter' && tool === 'draw' && drawingVertices.length >= 3) {
         finishDrawing()
@@ -547,12 +572,25 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
       }
     }
     
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false)
+        isPanningRef.current = false
+        if (appRef.current) {
+          appRef.current.stage.cursor = 'default'
+        }
+      }
+    }
+    
     // 绑定事件
     canvas.addEventListener('wheel', handleWheel, { passive: false })
     app.stage.on('pointerdown', handlePointerDown)
     app.stage.on('pointermove', handlePointerMove)
+    app.stage.on('pointerup', handlePointerUp)
+    app.stage.on('pointerupoutside', handlePointerUp)
     canvas.addEventListener('dblclick', handleDoubleClick)
     window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
     
     return () => {
       // 检查 canvas 是否仍然存在
@@ -563,10 +601,13 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
       if (appRef.current) {
         appRef.current.stage.off('pointerdown', handlePointerDown)
         appRef.current.stage.off('pointermove', handlePointerMove)
+        appRef.current.stage.off('pointerup', handlePointerUp)
+        appRef.current.stage.off('pointerupoutside', handlePointerUp)
       }
       window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [tool, zoom, panX, panY, isDrawing, connectingFromId, selectedRegionId, drawingVertices, setZoom, setPan, addDrawingVertex, finishDrawing, cancelDrawing, startConnecting, finishConnecting, cancelConnecting, deleteRegion, saveCurrentMap, onSave])
+  }, [tool, zoom, panX, panY, isDrawing, connectingFromId, selectedRegionId, drawingVertices, isSpacePressed, setZoom, setPan, addDrawingVertex, finishDrawing, cancelDrawing, startConnecting, finishConnecting, cancelConnecting, deleteRegion, saveCurrentMap, onSave])
   
   return (
     <div ref={canvasRef} className={styles.canvasContainer} />

@@ -16,6 +16,7 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState<Point>({ x: 0, y: 0 })
+  const [isSpacePressed, setIsSpacePressed] = useState(false)
   
   const currentMap = useMapStore(state => state.currentMap)
   const zoom = useMapStore(state => state.zoom)
@@ -58,12 +59,37 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
     return () => container.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
   
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault()
+          setIsSpacePressed(true)
+        }
+      }
+    }
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false)
+        setIsPanning(false)
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+  
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && tool === 'pan')) {
+    if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
       setIsPanning(true)
       setPanStart({ x: e.clientX - panX, y: e.clientY - panY })
     }
-  }, [panX, panY, tool])
+  }, [panX, panY, isSpacePressed])
   
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
@@ -229,7 +255,7 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleCanvasClick}
-      style={{ cursor: isPanning ? 'grabbing' : tool === 'pan' ? 'grab' : 'default' }}
+      style={{ cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default' }}
     >
       <div
         className={styles.canvasContainer}

@@ -28,6 +28,8 @@ export type {
   HistoryEntry
 } from '../../../shared/map'
 
+export type MapTool = EditorTool
+
 export {
   CHUNK_TYPE_CONFIG,
   ELEMENT_TYPE_CONFIG,

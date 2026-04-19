@@ -6,11 +6,11 @@ import {
   UndoOutlined,
   RedoOutlined,
   SelectOutlined,
-  DragOutlined,
   DeleteOutlined,
   ExportOutlined,
   ImportOutlined,
-  EditOutlined
+  EditOutlined,
+  LinkOutlined
 } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { WorldCanvas } from './WorldCanvas'
@@ -72,6 +72,39 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
     loadMapData()
   }, [mapId, loadMap])
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+          return
+        }
+        if (selectedChunkId || selectedElementId || selectedConnectionId) {
+          e.preventDefault()
+          handleDelete()
+        }
+      }
+      
+      if (e.key === 'v' || e.key === 'V') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('select')
+        }
+      }
+      if (e.key === 'd' || e.key === 'D') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('draw')
+        }
+      }
+      if (e.key === 'c' || e.key === 'C') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setTool('connect')
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedChunkId, selectedElementId, selectedConnectionId, handleDelete, setTool])
   
   const isWorldView = viewStack.length === 1
   const currentLevel = viewStack[viewStack.length - 1]
@@ -221,7 +254,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
         
         <div className={styles.headerRight}>
           <div className={styles.toolGroup}>
-            <Tooltip title="选择工具">
+            <Tooltip title="选择工具 (V)">
               <button
                 className={`${styles.toolButton} ${tool === 'select' ? styles.toolButtonActive : ''}`}
                 onClick={() => setTool('select')}
@@ -229,20 +262,20 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
                 <SelectOutlined />
               </button>
             </Tooltip>
-            <Tooltip title="平移工具">
+            <Tooltip title="绘制工具 (D)">
               <button
-                className={`${styles.toolButton} ${tool === 'pan' ? styles.toolButtonActive : ''}`}
-                onClick={() => setTool('pan')}
+                className={`${styles.toolButton} ${tool === 'draw' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('draw')}
               >
-                <DragOutlined />
+                <EditOutlined />
               </button>
             </Tooltip>
-            <Tooltip title="删除工具">
+            <Tooltip title="连接工具 (C)">
               <button
-                className={`${styles.toolButton} ${tool === 'delete' ? styles.toolButtonActive : ''}`}
-                onClick={() => setTool('delete')}
+                className={`${styles.toolButton} ${tool === 'connect' ? styles.toolButtonActive : ''}`}
+                onClick={() => setTool('connect')}
               >
-                <DeleteOutlined />
+                <LinkOutlined />
               </button>
             </Tooltip>
           </div>
