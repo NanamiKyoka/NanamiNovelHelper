@@ -721,9 +721,6 @@ export const useMapStore = create<MapState>((set, get) => ({
   
   setTool: (tool: EditorTool) => {
     set({ tool })
-    if (tool !== 'connect') {
-      set({ isConnecting: false, connectingFrom: null })
-    }
   },
   
   selectChunk: (chunkId: string | null) => {

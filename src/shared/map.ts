@@ -127,28 +127,28 @@ export const CHUNK_TYPE_CONFIG: Record<ChunkType, {
   defaultColor: string
   description: string
 }> = {
-  city: { label: '城市', icon: 'City', defaultColor: '#4a9eff', description: '繁华的城市' },
-  village: { label: '村庄', icon: 'Home', defaultColor: '#8bc34a', description: '宁静的村庄' },
-  forest: { label: '森林', icon: 'Tree', defaultColor: '#2e7d32', description: '茂密的森林' },
-  desert: { label: '沙漠', icon: 'Sun', defaultColor: '#ff9800', description: '广袤的沙漠' },
-  mountain: { label: '山脉', icon: 'Terrain', defaultColor: '#795548', description: '巍峨的山脉' },
-  ocean: { label: '海洋', icon: 'Waves', defaultColor: '#1565c0', description: '辽阔的海洋' },
-  river: { label: '河流', icon: 'Water', defaultColor: '#29b6f6', description: '蜿蜒的河流' },
-  lake: { label: '湖泊', icon: 'WaterDrop', defaultColor: '#4fc3f7', description: '平静的湖泊' },
-  swamp: { label: '沼泽', icon: 'Grass', defaultColor: '#558b2f', description: '危险的沼泽' },
-  grassland: { label: '草原', icon: 'Landscape', defaultColor: '#81c784', description: '广阔的草原' },
-  snowland: { label: '雪原', icon: 'AcUnit', defaultColor: '#e3f2fd', description: '寒冷的雪原' },
-  volcano: { label: '火山', icon: 'LocalFireDepartment', defaultColor: '#d32f2f', description: '活跃的火山' },
-  cave: { label: '洞穴', icon: 'DarkMode', defaultColor: '#424242', description: '神秘的洞穴' },
-  dungeon: { label: '地下城', icon: 'Castle', defaultColor: '#6a1b9a', description: '危险的地下城' },
-  ruins: { label: '遗迹', icon: 'AccountBalance', defaultColor: '#8d6e63', description: '古老的遗迹' },
-  castle: { label: '城堡', icon: 'Fort', defaultColor: '#5d4037', description: '宏伟的城堡' },
-  temple: { label: '神殿', icon: 'TempleBuddhist', defaultColor: '#ffd54f', description: '神圣的神殿' },
-  tower: { label: '塔楼', icon: 'Tower', defaultColor: '#78909c', description: '高耸的塔楼' },
-  island: { label: '岛屿', icon: 'Island', defaultColor: '#26a69a', description: '孤立的岛屿' },
-  underground: { label: '地下世界', icon: 'ExpandMore', defaultColor: '#37474f', description: '黑暗的地下世界' },
-  sky: { label: '天空', icon: 'Cloud', defaultColor: '#90caf9', description: '漂浮的天空领域' },
-  custom: { label: '自定义', icon: 'HelpOutline', defaultColor: '#9e9e9e', description: '自定义类型' }
+  city: { label: '城市', icon: 'BankOutlined', defaultColor: '#4a9eff', description: '繁华的城市' },
+  village: { label: '村庄', icon: 'HomeOutlined', defaultColor: '#8bc34a', description: '宁静的村庄' },
+  forest: { label: '森林', icon: 'AimOutlined', defaultColor: '#2e7d32', description: '茂密的森林' },
+  desert: { label: '沙漠', icon: 'SunOutlined', defaultColor: '#ff9800', description: '广袤的沙漠' },
+  mountain: { label: '山脉', icon: 'VerticalAlignTopOutlined', defaultColor: '#795548', description: '巍峨的山脉' },
+  ocean: { label: '海洋', icon: 'CloudOutlined', defaultColor: '#1565c0', description: '辽阔的海洋' },
+  river: { label: '河流', icon: 'LineOutlined', defaultColor: '#29b6f6', description: '蜿蜒的河流' },
+  lake: { label: '湖泊', icon: 'RadiusSettingOutlined', defaultColor: '#4fc3f7', description: '平静的湖泊' },
+  swamp: { label: '沼泽', icon: 'BulbOutlined', defaultColor: '#558b2f', description: '危险的沼泽' },
+  grassland: { label: '草原', icon: 'BorderOutlined', defaultColor: '#81c784', description: '广阔的草原' },
+  snowland: { label: '雪原', icon: 'CloudOutlined', defaultColor: '#e3f2fd', description: '寒冷的雪原' },
+  volcano: { label: '火山', icon: 'FireOutlined', defaultColor: '#d32f2f', description: '活跃的火山' },
+  cave: { label: '洞穴', icon: 'CompassOutlined', defaultColor: '#424242', description: '神秘的洞穴' },
+  dungeon: { label: '地下城', icon: 'AlertOutlined', defaultColor: '#6a1b9a', description: '危险的地下城' },
+  ruins: { label: '遗迹', icon: 'HistoryOutlined', defaultColor: '#8d6e63', description: '古老的遗迹' },
+  castle: { label: '城堡', icon: 'CrownOutlined', defaultColor: '#5d4037', description: '宏伟的城堡' },
+  temple: { label: '神殿', icon: 'AlertTwoTone', defaultColor: '#ffd54f', description: '神圣的神殿' },
+  tower: { label: '塔楼', icon: 'VerticalAlignTopOutlined', defaultColor: '#78909c', description: '高耸的塔楼' },
+  island: { label: '岛屿', icon: 'GlobalOutlined', defaultColor: '#26a69a', description: '孤立的岛屿' },
+  underground: { label: '地下世界', icon: 'DownOutlined', defaultColor: '#37474f', description: '黑暗的地下世界' },
+  sky: { label: '天空', icon: 'CloudOutlined', defaultColor: '#90caf9', description: '漂浮的天空领域' },
+  custom: { label: '自定义', icon: 'SettingOutlined', defaultColor: '#9e9e9e', description: '自定义类型' }
 }
 
 // ============================================
@@ -236,25 +236,25 @@ export const ELEMENT_TYPE_CONFIG: Record<ElementType, {
   description: string
   canHaveChildren: boolean
 }> = {
-  building: { label: '建筑', icon: 'Apartment', defaultColor: '#607d8b', description: '大型建筑', canHaveChildren: true },
-  shop: { label: '商店', icon: 'Store', defaultColor: '#ff9800', description: '商店', canHaveChildren: true },
-  house: { label: '房屋', icon: 'Home', defaultColor: '#8d6e63', description: '普通房屋', canHaveChildren: true },
-  inn: { label: '旅馆', icon: 'Hotel', defaultColor: '#795548', description: '旅馆', canHaveChildren: true },
-  tavern: { label: '酒馆', icon: 'LocalBar', defaultColor: '#a1887f', description: '酒馆', canHaveChildren: true },
-  temple: { label: '神殿', icon: 'TempleBuddhist', defaultColor: '#ffd54f', description: '神殿', canHaveChildren: true },
-  gate: { label: '大门', icon: 'DoorFront', defaultColor: '#5d4037', description: '大门', canHaveChildren: false },
-  road: { label: '道路', icon: 'AltRoute', defaultColor: '#9e9e9e', description: '道路', canHaveChildren: false },
-  bridge: { label: '桥梁', icon: 'Bridge', defaultColor: '#78909c', description: '桥梁', canHaveChildren: false },
-  tree: { label: '树木', icon: 'Park', defaultColor: '#4caf50', description: '树木', canHaveChildren: false },
-  rock: { label: '岩石', icon: 'Landscape', defaultColor: '#795548', description: '岩石', canHaveChildren: false },
-  water: { label: '水域', icon: 'Water', defaultColor: '#2196f3', description: '水域', canHaveChildren: false },
-  npc: { label: 'NPC', icon: 'Person', defaultColor: '#9c27b0', description: 'NPC角色', canHaveChildren: false },
-  monster: { label: '怪物', icon: 'Pets', defaultColor: '#f44336', description: '怪物', canHaveChildren: false },
-  treasure: { label: '宝箱', icon: 'Inventory', defaultColor: '#ffc107', description: '宝箱', canHaveChildren: false },
-  trap: { label: '陷阱', icon: 'Warning', defaultColor: '#ff5722', description: '陷阱', canHaveChildren: false },
-  portal: { label: '传送门', icon: 'TripOrigin', defaultColor: '#e91e63', description: '传送门', canHaveChildren: false },
-  landmark: { label: '地标', icon: 'Place', defaultColor: '#00bcd4', description: '地标', canHaveChildren: false },
-  custom: { label: '自定义', icon: 'HelpOutline', defaultColor: '#9e9e9e', description: '自定义元素', canHaveChildren: true }
+  building: { label: '建筑', icon: 'BankOutlined', defaultColor: '#607d8b', description: '大型建筑', canHaveChildren: true },
+  shop: { label: '商店', icon: 'ShopOutlined', defaultColor: '#ff9800', description: '商店', canHaveChildren: true },
+  house: { label: '房屋', icon: 'HomeOutlined', defaultColor: '#8d6e63', description: '普通房屋', canHaveChildren: true },
+  inn: { label: '旅馆', icon: 'HomeOutlined', defaultColor: '#795548', description: '旅馆', canHaveChildren: true },
+  tavern: { label: '酒馆', icon: 'CoffeeOutlined', defaultColor: '#a1887f', description: '酒馆', canHaveChildren: true },
+  temple: { label: '神殿', icon: 'AlertTwoTone', defaultColor: '#ffd54f', description: '神殿', canHaveChildren: true },
+  gate: { label: '大门', icon: 'LoginOutlined', defaultColor: '#5d4037', description: '大门', canHaveChildren: false },
+  road: { label: '道路', icon: 'LineOutlined', defaultColor: '#9e9e9e', description: '道路', canHaveChildren: false },
+  bridge: { label: '桥梁', icon: 'ColumnWidthOutlined', defaultColor: '#78909c', description: '桥梁', canHaveChildren: false },
+  tree: { label: '树木', icon: 'AimOutlined', defaultColor: '#4caf50', description: '树木', canHaveChildren: false },
+  rock: { label: '岩石', icon: 'BorderOutlined', defaultColor: '#795548', description: '岩石', canHaveChildren: false },
+  water: { label: '水域', icon: 'RadiusSettingOutlined', defaultColor: '#2196f3', description: '水域', canHaveChildren: false },
+  npc: { label: 'NPC', icon: 'UserOutlined', defaultColor: '#9c27b0', description: 'NPC角色', canHaveChildren: false },
+  monster: { label: '怪物', icon: 'BugOutlined', defaultColor: '#f44336', description: '怪物', canHaveChildren: false },
+  treasure: { label: '宝箱', icon: 'GiftOutlined', defaultColor: '#ffc107', description: '宝箱', canHaveChildren: false },
+  trap: { label: '陷阱', icon: 'WarningOutlined', defaultColor: '#ff5722', description: '陷阱', canHaveChildren: false },
+  portal: { label: '传送门', icon: 'ApiOutlined', defaultColor: '#e91e63', description: '传送门', canHaveChildren: false },
+  landmark: { label: '地标', icon: 'EnvironmentOutlined', defaultColor: '#00bcd4', description: '地标', canHaveChildren: false },
+  custom: { label: '自定义', icon: 'SettingOutlined', defaultColor: '#9e9e9e', description: '自定义元素', canHaveChildren: true }
 }
 
 export interface MapElement {
@@ -347,7 +347,7 @@ export interface Map extends MapMeta {
 // 编辑器状态
 // ============================================
 
-export type EditorTool = 'select' | 'pan' | 'connect' | 'delete'
+export type EditorTool = 'select' | 'pan' | 'delete'
 
 export interface EditorState {
   tool: EditorTool

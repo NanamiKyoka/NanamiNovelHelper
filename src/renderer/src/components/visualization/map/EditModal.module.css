@@ -1,0 +1,64 @@
+.editModal {
+  :global {
+    .ant-modal-content {
+      background: var(--background-primary);
+    }
+    .ant-modal-header {
+      background: var(--background-primary);
+      border-bottom-color: var(--border-color);
+    }
+    .ant-modal-title {
+      color: var(--text-primary);
+    }
+    .ant-modal-close {
+      color: var(--text-secondary);
+    }
+    .ant-modal-close:hover {
+      color: var(--text-primary);
+    }
+    .ant-modal-body {
+      padding: 24px;
+    }
+    .ant-modal-footer {
+      border-top-color: var(--border-color);
+    }
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.colorPicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colorInput {
+  width: 60px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.colorPreview {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+}
+
+.colorValue {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}

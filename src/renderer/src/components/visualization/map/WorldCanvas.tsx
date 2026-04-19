@@ -4,7 +4,7 @@ import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/ico
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
 import { ChunkNode } from './ChunkNode'
-import type { Chunk, ChunkConnection, Point, HexEdge, HexPoint } from '@renderer/types/map'
+import type { Chunk, ChunkConnection, Point, HexPoint } from '@renderer/types/map'
 import { hexToPixel, pixelToHex, getHexCorners, getHexEdgeCenter, HEX_SIZE } from '@renderer/types/map'
 import styles from './WorldCanvas.module.css'
 
@@ -24,10 +24,6 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
   const setZoom = useMapStore(state => state.setZoom)
   const setPan = useMapStore(state => state.setPan)
   const resetView = useMapStore(state => state.resetView)
-  const isConnecting = useMapStore(state => state.isConnecting)
-  const connectingFrom = useMapStore(state => state.connectingFrom)
-  const finishConnecting = useMapStore(state => state.finishConnecting)
-  const cancelConnecting = useMapStore(state => state.cancelConnecting)
   const selectedConnectionId = useMapStore(state => state.selectedConnectionId)
   const selectConnection = useMapStore(state => state.selectConnection)
   const tool = useMapStore(state => state.tool)
@@ -38,7 +34,6 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
   
   const { isDark } = useThemeStore()
   
-  const [tempConnectionEnd, setTempConnectionEnd] = useState<Point | null>(null)
   const [draggingChunkId, setDraggingChunkId] = useState<string | null>(null)
   const [dragStartHex, setDragStartHex] = useState<HexPoint | null>(null)
   
@@ -75,25 +70,16 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
       setPan(e.clientX - panStart.x, e.clientY - panStart.y)
     }
     
-    if (isConnecting && connectingFrom) {
-      const rect = containerRef.current?.getBoundingClientRect()
-      if (rect) {
-        const x = (e.clientX - rect.left - panX) / zoom
-        const y = (e.clientY - rect.top - panY) / zoom
-        setTempConnectionEnd({ x, y })
-      }
+    if (draggingChunkId) {
+      handleChunkDrag(e)
     }
-  }, [isPanning, panStart, setPan, isConnecting, connectingFrom, zoom, panX, panY])
+  }, [isPanning, panStart, setPan, draggingChunkId])
   
   const handleMouseUp = useCallback(() => {
     setIsPanning(false)
-    if (isConnecting) {
-      cancelConnecting()
-      setTempConnectionEnd(null)
-    }
     setDraggingChunkId(null)
     setDragStartHex(null)
-  }, [isConnecting, cancelConnecting])
+  }, [])
   
   const handleChunkDragStart = useCallback((chunkId: string, e: React.MouseEvent) => {
     if (tool !== 'select') return
@@ -122,17 +108,6 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
       moveChunkToHex(draggingChunkId, hexPosition)
     }
   }, [draggingChunkId, dragStartHex, panX, panY, zoom, moveChunkToHex, isHexOccupied])
-  
-  const handleEdgeClick = useCallback((chunkId: string, edge: HexEdge) => {
-    if (!isConnecting) {
-      useMapStore.getState().startConnecting(chunkId, edge)
-    } else if (connectingFrom) {
-      if (connectingFrom.chunkId !== chunkId) {
-        finishConnecting(chunkId, edge)
-      }
-      setTempConnectionEnd(null)
-    }
-  }, [isConnecting, connectingFrom, finishConnecting])
   
   const handleConnectionClick = useCallback((connectionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -198,23 +173,6 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
     )
   }
   
-  const renderTempConnection = () => {
-    if (!isConnecting || !connectingFrom || !tempConnectionEnd) return null
-    
-    const sourceChunk = chunks.find(c => c.id === connectingFrom.chunkId)
-    if (!sourceChunk) return null
-    
-    const startPoint = getHexEdgeCenter(sourceChunk, connectingFrom.edge)
-    
-    return (
-      <path
-        d={`M ${startPoint.x} ${startPoint.y} L ${tempConnectionEnd.x} ${tempConnectionEnd.y}`}
-        className={`${styles.connectionLine} ${styles.tempConnection}`}
-        strokeWidth={2}
-      />
-    )
-  }
-  
   const renderHexGrid = () => {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
     const hexes: JSX.Element[] = []
@@ -267,12 +225,7 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
       ref={containerRef}
       className={styles.worldCanvas}
       onMouseDown={handleMouseDown}
-      onMouseMove={(e) => {
-        handleMouseMove(e)
-        if (draggingChunkId) {
-          handleChunkDrag(e)
-        }
-      }}
+      onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onClick={handleCanvasClick}
@@ -289,7 +242,6 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
         
         <svg className={styles.connectionsLayer}>
           {connections.map(renderConnection)}
-          {renderTempConnection()}
         </svg>
         
         <div className={styles.chunksLayer}>
@@ -298,10 +250,7 @@ export function WorldCanvas({ onChunkDoubleClick }: WorldCanvasProps) {
               key={chunk.id}
               chunk={chunk}
               isSelected={useMapStore.getState().selectedChunkId === chunk.id}
-              isConnecting={isConnecting}
-              connectingFrom={connectingFrom}
               onDragStart={(e) => handleChunkDragStart(chunk.id, e)}
-              onEdgeClick={handleEdgeClick}
               onDoubleClick={() => onChunkDoubleClick(chunk.id)}
             />
           ))}

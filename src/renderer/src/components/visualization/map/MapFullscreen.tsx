@@ -7,10 +7,10 @@ import {
   RedoOutlined,
   SelectOutlined,
   DragOutlined,
-  LinkOutlined,
   DeleteOutlined,
   ExportOutlined,
-  ImportOutlined
+  ImportOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { WorldCanvas } from './WorldCanvas'
@@ -18,8 +18,9 @@ import { InnerCanvas } from './InnerCanvas'
 import { ChunkGallery } from './ChunkGallery'
 import { ElementGallery } from './ElementGallery'
 import { Breadcrumb } from './Breadcrumb'
+import { EditModal } from './EditModal'
 import type { ChunkType } from '@renderer/types/map'
-import { pixelToHex, HEX_SIZE } from '@renderer/types/map'
+import { pixelToHex } from '@renderer/types/map'
 import styles from './MapFullscreen.module.css'
 
 interface MapFullscreenProps {
@@ -53,11 +54,15 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const importMap = useMapStore(state => state.importMap)
   const isHexOccupied = useMapStore(state => state.isHexOccupied)
   const findNearestEmptyHex = useMapStore(state => state.findNearestEmptyHex)
+  const getChunkById = useMapStore(state => state.getChunkById)
+  const getElementById = useMapStore(state => state.getElementById)
   const panX = useMapStore(state => state.panX)
   const panY = useMapStore(state => state.panY)
   const zoom = useMapStore(state => state.zoom)
   
   const [isLoading, setIsLoading] = useState(true)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<{type: 'chunk' | 'element', id: string} | null>(null)
   
   useEffect(() => {
     const loadMapData = async () => {
@@ -149,6 +154,16 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
   }, [selectedChunkId, selectedElementId, selectedConnectionId, deleteChunk, deleteElement, deleteConnection, message])
   
+  const handleEdit = useCallback(() => {
+    if (selectedChunkId) {
+      setEditingItem({ type: 'chunk', id: selectedChunkId })
+      setEditModalOpen(true)
+    } else if (selectedElementId) {
+      setEditingItem({ type: 'element', id: selectedElementId })
+      setEditModalOpen(true)
+    }
+  }, [selectedChunkId, selectedElementId])
+  
   const handleExport = useCallback(async () => {
     if (!currentMap) return
     const filePath = await exportMap(currentMap.id)
@@ -222,14 +237,6 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
                 <DragOutlined />
               </button>
             </Tooltip>
-            <Tooltip title="连接工具">
-              <button
-                className={`${styles.toolButton} ${tool === 'connect' ? styles.toolButtonActive : ''}`}
-                onClick={() => setTool('connect')}
-              >
-                <LinkOutlined />
-              </button>
-            </Tooltip>
             <Tooltip title="删除工具">
               <button
                 className={`${styles.toolButton} ${tool === 'delete' ? styles.toolButtonActive : ''}`}
@@ -258,6 +265,16 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
           </Tooltip>
           
           <div className={styles.divider} />
+          
+          <Tooltip title="编辑选中">
+            <Button
+              icon={<EditOutlined />}
+              disabled={!selectedChunkId && !selectedElementId}
+              onClick={handleEdit}
+            >
+              编辑
+            </Button>
+          </Tooltip>
           
           <Tooltip title="导入">
             <Button
@@ -327,6 +344,20 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
           </span>
         </div>
       </div>
+      
+      {editModalOpen && editingItem && (
+        <EditModal
+          type={editingItem.type}
+          item={editingItem.type === 'chunk' 
+            ? getChunkById(editingItem.id) 
+            : getElementById(editingItem.id)
+          }
+          onClose={() => {
+            setEditModalOpen(false)
+            setEditingItem(null)
+          }}
+        />
+      )}
     </div>
   )
 }
