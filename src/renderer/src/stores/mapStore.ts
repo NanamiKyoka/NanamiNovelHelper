@@ -45,6 +45,7 @@ import {
   hexDistance,
   getHexNeighbors,
   checkHexEdgeCompatibility,
+  findBestEdges,
   findElementById,
   updateElementInTree,
   deleteElementFromTree,
@@ -162,6 +163,7 @@ interface MapState {
   findNearestEmptyHexForElement: (parentChunkId: string, parentElementId: string | null) => HexPoint | null
   
   addConnection: (options: CreateConnectionOptions) => ChunkConnection | null
+  connectChunks: (sourceChunkId: string, targetChunkId: string) => ChunkConnection | null
   updateConnection: (connectionId: string, updates: UpdateConnectionOptions) => void
   deleteConnection: (connectionId: string) => void
   
@@ -666,6 +668,34 @@ export const useMapStore = create<MapState>((set, get) => ({
     })
     
     return connection
+  },
+  
+  connectChunks: (sourceChunkId: string, targetChunkId: string) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+    
+    if (sourceChunkId === targetChunkId) return null
+    
+    const exists = currentMap.data.connections.some(
+      c => (c.sourceChunkId === sourceChunkId && c.targetChunkId === targetChunkId) ||
+           (c.sourceChunkId === targetChunkId && c.targetChunkId === sourceChunkId)
+    )
+    if (exists) return null
+    
+    const sourceChunk = currentMap.data.chunks.find(c => c.id === sourceChunkId)
+    const targetChunk = currentMap.data.chunks.find(c => c.id === targetChunkId)
+    
+    if (!sourceChunk || !targetChunk) return null
+    
+    const bestEdges = findBestEdges(sourceChunk, targetChunk)
+    if (!bestEdges) return null
+    
+    return get().addConnection({
+      sourceChunkId,
+      sourceEdge: bestEdges.sourceEdge,
+      targetChunkId,
+      targetEdge: bestEdges.targetEdge
+    })
   },
   
   updateConnection: (connectionId: string, updates: UpdateConnectionOptions) => {

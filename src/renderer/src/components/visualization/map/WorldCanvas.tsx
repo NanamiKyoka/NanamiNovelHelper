@@ -36,6 +36,11 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const isHexOccupied = useMapStore(state => state.isHexOccupied)
   const deleteChunk = useMapStore(state => state.deleteChunk)
   const duplicateChunk = useMapStore(state => state.duplicateChunk)
+  const isConnecting = useMapStore(state => state.isConnecting)
+  const connectingFrom = useMapStore(state => state.connectingFrom)
+  const startConnecting = useMapStore(state => state.startConnecting)
+  const connectChunks = useMapStore(state => state.connectChunks)
+  const cancelConnecting = useMapStore(state => state.cancelConnecting)
   
   const { isDark } = useThemeStore()
   
@@ -176,6 +181,29 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
     onChunkEdit?.(chunkId)
   }, [selectChunk, onChunkEdit])
   
+  const handleStartConnecting = useCallback((chunkId: string) => {
+    if (isConnecting && connectingFrom?.chunkId === chunkId) {
+      cancelConnecting()
+      return
+    }
+    
+    if (isConnecting && connectingFrom && connectingFrom.chunkId !== chunkId) {
+      const connection = connectChunks(connectingFrom.chunkId, chunkId)
+      if (connection) {
+        message.success('连接已创建')
+      } else {
+        message.warning('无法创建连接')
+      }
+      return
+    }
+    
+    const chunk = chunks.find(c => c.id === chunkId)
+    if (chunk) {
+      startConnecting(chunkId, 0)
+      message.info('请点击另一个板块完成连接')
+    }
+  }, [isConnecting, connectingFrom, startConnecting, connectChunks, cancelConnecting, chunks, message])
+  
   const renderConnection = (connection: ChunkConnection) => {
     const sourceChunk = chunks.find(c => c.id === connection.sourceChunkId)
     const targetChunk = chunks.find(c => c.id === connection.targetChunkId)
@@ -312,6 +340,9 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
               onDelete={() => handleChunkDelete(chunk.id)}
               onEdit={() => handleChunkEdit(chunk.id)}
               onDuplicate={() => handleChunkDuplicate(chunk.id)}
+              onStartConnecting={() => handleStartConnecting(chunk.id)}
+              isConnectingMode={isConnecting}
+              isConnectingFrom={connectingFrom?.chunkId === chunk.id}
             />
           ))}
         </div>

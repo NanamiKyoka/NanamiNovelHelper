@@ -620,6 +620,57 @@ export function checkHexEdgeCompatibility(
          targetAllowed.includes(sourceChunk.chunkType)
 }
 
+export function findBestEdges(
+  sourceChunk: Chunk,
+  targetChunk: Chunk
+): { sourceEdge: HexEdge; targetEdge: HexEdge } | null {
+  const sourceCenter = hexToPixel(sourceChunk.hexPosition)
+  const targetCenter = hexToPixel(targetChunk.hexPosition)
+  
+  const dx = targetCenter.x - sourceCenter.x
+  const dy = targetCenter.y - sourceCenter.y
+  const angle = Math.atan2(dy, dx)
+  
+  const edgeAngle = (edge: HexEdge): number => {
+    return (edge * Math.PI / 3) + Math.PI / 6
+  }
+  
+  let bestSourceEdge: HexEdge = 0
+  let minDiff = Infinity
+  
+  for (let e = 0; e < 6; e++) {
+    const diff = Math.abs(normalizeAngle(angle - edgeAngle(e as HexEdge)))
+    if (diff < minDiff) {
+      minDiff = diff
+      bestSourceEdge = e as HexEdge
+    }
+  }
+  
+  const oppositeEdge = ((bestSourceEdge + 3) % 6) as HexEdge
+  
+  for (const targetEdge of [oppositeEdge, ((oppositeEdge + 1) % 6) as HexEdge, ((oppositeEdge + 5) % 6) as HexEdge] as HexEdge[]) {
+    if (checkHexEdgeCompatibility(sourceChunk, bestSourceEdge, targetChunk, targetEdge)) {
+      return { sourceEdge: bestSourceEdge, targetEdge }
+    }
+  }
+  
+  for (let se = 0; se < 6; se++) {
+    for (let te = 0; te < 6; te++) {
+      if (checkHexEdgeCompatibility(sourceChunk, se as HexEdge, targetChunk, te as HexEdge)) {
+        return { sourceEdge: se as HexEdge, targetEdge: te as HexEdge }
+      }
+    }
+  }
+  
+  return null
+}
+
+function normalizeAngle(angle: number): number {
+  while (angle > Math.PI) angle -= 2 * Math.PI
+  while (angle < -Math.PI) angle += 2 * Math.PI
+  return Math.abs(angle)
+}
+
 export function findElementById(
   elements: MapElement[],
   id: string

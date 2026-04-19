@@ -54,6 +54,7 @@ export {
   createDefaultMapData,
   getHexEdgeCenter,
   checkHexEdgeCompatibility,
+  findBestEdges,
   findElementById,
   updateElementInTree,
   deleteElementFromTree,

@@ -14,6 +14,9 @@ interface ChunkNodeProps {
   onDelete?: () => void
   onEdit?: () => void
   onDuplicate?: () => void
+  onStartConnecting?: () => void
+  isConnectingMode?: boolean
+  isConnectingFrom?: boolean
 }
 
 export function ChunkNode({
@@ -23,7 +26,10 @@ export function ChunkNode({
   onDoubleClick,
   onDelete,
   onEdit,
-  onDuplicate
+  onDuplicate,
+  onStartConnecting,
+  isConnectingMode,
+  isConnectingFrom
 }: ChunkNodeProps) {
   const config = CHUNK_TYPE_CONFIG[chunk.chunkType]
   
@@ -48,7 +54,29 @@ export function ChunkNode({
   
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    if (isConnectingMode && isConnectingFrom) {
+      return
+    }
+    
+    if (isConnectingMode && onStartConnecting) {
+      onStartConnecting()
+      return
+    }
+    
     onDragStart(e)
+  }
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (isConnectingMode && isConnectingFrom) {
+      return
+    }
+    
+    if (isConnectingMode && onStartConnecting) {
+      onStartConnecting()
+    }
   }
   
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -69,6 +97,12 @@ export function ChunkNode({
       icon: <Icons.CopyOutlined />,
       onClick: onDuplicate
     },
+    {
+      key: 'connect',
+      label: '创建连接',
+      icon: <Icons.LinkOutlined />,
+      onClick: onStartConnecting
+    },
     { type: 'divider' },
     {
       key: 'delete',
@@ -79,20 +113,29 @@ export function ChunkNode({
     }
   ]
   
+  const nodeClassName = [
+    styles.chunkNode,
+    isSelected ? styles.chunkNodeSelected : '',
+    isConnectingFrom ? styles.chunkNodeConnecting : '',
+    isConnectingMode && !isConnectingFrom ? styles.chunkNodeConnectTarget : ''
+  ].filter(Boolean).join(' ')
+  
   return (
     <Dropdown
       menu={{ items: contextMenuItems }}
       trigger={['contextMenu']}
     >
       <div
-        className={`${styles.chunkNode} ${isSelected ? styles.chunkNodeSelected : ''}`}
+        className={nodeClassName}
         style={{
           left: centerPosition.x - HEX_SIZE,
           top: centerPosition.y - HEX_SIZE,
           width: HEX_SIZE * 2,
-          height: HEX_SIZE * 2
+          height: HEX_SIZE * 2,
+          cursor: isConnectingMode ? (isConnectingFrom ? 'not-allowed' : 'pointer') : undefined
         }}
         onMouseDown={handleMouseDown}
+        onClick={handleClick}
         onDoubleClick={onDoubleClick}
         onContextMenu={handleContextMenu}
       >
@@ -110,8 +153,8 @@ export function ChunkNode({
           <path
             d={hexPath}
             fill={chunk.color}
-            stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
-            strokeWidth={isSelected ? 3 : 1}
+            stroke={isConnectingFrom ? '#52c41a' : isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+            strokeWidth={isConnectingFrom ? 4 : isSelected ? 3 : 1}
           />
         </svg>
         

@@ -62,3 +62,29 @@
   opacity: 0.8;
   margin-top: 2px;
 }
+
+.chunkNodeConnecting {
+  animation: pulse 1s infinite;
+}
+
+.chunkNodeConnectTarget {
+  animation: glow 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
