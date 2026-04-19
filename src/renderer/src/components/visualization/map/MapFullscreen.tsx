@@ -96,12 +96,12 @@ function MapFullscreen({ mapId, onBack }: MapFullscreenProps): JSX.Element {
       {/* 底部状态栏 */}
       <div className={styles.statusBar}>
         <span>
-          板块: {currentMap?.data.regions.length || 0} | 
-          连接: {currentMap?.data.connections.length || 0} | 
-          标注: {currentMap?.data.annotations.length || 0}
+          板块: {currentMap?.data?.regions?.length || 0} | 
+          连接: {currentMap?.data?.connections?.length || 0} | 
+          标注: {currentMap?.data?.annotations?.length || 0}
         </span>
         <span>
-          画布: {currentMap?.data.canvasWidth || 1920} x {currentMap?.data.canvasHeight || 1080}
+          画布: {currentMap?.data?.canvasWidth || 1920} x {currentMap?.data?.canvasHeight || 1080}
         </span>
       </div>
     </div>
