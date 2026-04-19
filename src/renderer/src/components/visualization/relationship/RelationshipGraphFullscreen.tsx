@@ -359,17 +359,9 @@ function RelationshipGraphFullscreen({
       return true
     }
 
-    // 带重试机制的初始化
-    const tryInit = (retries: number) => {
-      const success = initGraph()
-      if (!success && retries > 0) {
-        requestAnimationFrame(() => tryInit(retries - 1))
-      }
-    }
-
     // 延迟初始化，确保容器尺寸正确
     const timer = setTimeout(() => {
-      tryInit(20)
+      initGraph()
     }, 100)
 
     return () => {
