@@ -21,9 +21,6 @@ interface MenuConfig {
   items: MenuItem[]
 }
 
-const DOCS_URL = 'https://github.com/nanami-novel-helper/nanami-novel-helper/wiki'
-const GITHUB_URL = 'https://github.com/nanami-novel-helper/nanami-novel-helper'
-
 function MenuBar(): JSX.Element {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const menuBarRef = useRef<HTMLDivElement>(null)
@@ -40,12 +37,6 @@ function MenuBar(): JSX.Element {
   const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
   const fullscreenMode = useUIStore((state) => state.fullscreenMode)
   const openAboutModal = useUIStore((state) => state.openAboutModal)
-  const focusMode = useUIStore((state) => state.focusMode)
-  const toggleFocusMode = useUIStore((state) => state.toggleFocusMode)
-  const outlineVisible = useUIStore((state) => state.outlineVisible)
-  const toggleOutline = useUIStore((state) => state.toggleOutline)
-  const charCountVisible = useUIStore((state) => state.charCountVisible)
-  const toggleCharCount = useUIStore((state) => state.toggleCharCount)
   const setSearchReplaceVisible = useUIStore((state) => state.setSearchReplaceVisible)
 
   useEffect(() => {
@@ -54,10 +45,6 @@ function MenuBar(): JSX.Element {
 
   const handleMenuClick = useCallback((menuId: string) => {
     setActiveMenu(prev => prev === menuId ? null : menuId)
-  }, [])
-
-  const handleOpenExternal = useCallback((url: string) => {
-    window.electron?.shell?.openExternal?.(url)
   }, [])
 
   const handleCheckUpdate = useCallback(async () => {
@@ -119,21 +106,9 @@ function MenuBar(): JSX.Element {
       case 'toggleSidebar':
         window.dispatchEvent(new CustomEvent('menu:toggleSidebar'))
         break
-      case 'toggleOutline':
-        toggleOutline()
-        break
-      case 'charCount':
-        toggleCharCount()
-        break
-      case 'focusMode':
-        toggleFocusMode()
-        break
       
       case 'about':
         openAboutModal()
-        break
-      case 'docs':
-        handleOpenExternal(DOCS_URL)
         break
       case 'checkUpdate':
         handleCheckUpdate()
@@ -151,7 +126,7 @@ function MenuBar(): JSX.Element {
     }
     
     setActiveMenu(null)
-  }, [openCreateProjectModal, openOpenProjectModal, openProject, closeProject, openAboutModal, toggleFocusMode, toggleOutline, toggleCharCount, setSearchReplaceVisible, handleOpenExternal, handleCheckUpdate])
+  }, [openCreateProjectModal, openOpenProjectModal, openProject, closeProject, openAboutModal, setSearchReplaceVisible, handleCheckUpdate])
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -184,7 +159,7 @@ function MenuBar(): JSX.Element {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [activeMenu])
 
-  if (fullscreenMode || focusMode) {
+  if (fullscreenMode) {
     return <></>
   }
 
@@ -230,11 +205,7 @@ function MenuBar(): JSX.Element {
       id: 'view',
       label: '视图',
       items: [
-        { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' },
-        { id: 'toggleOutline', label: '大纲视图', checked: outlineVisible },
-        { id: 'charCount', label: '字符统计', checked: charCountVisible },
-        { id: 'separator1', label: '', separator: true },
-        { id: 'focusMode', label: '专注模式', checked: focusMode }
+        { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' }
       ]
     },
     {
@@ -242,7 +213,6 @@ function MenuBar(): JSX.Element {
       label: '帮助',
       items: [
         { id: 'about', label: '关于' },
-        { id: 'docs', label: '查看文档' },
         { id: 'separator1', label: '', separator: true },
         { id: 'checkUpdate', label: '检查更新' }
       ]
