@@ -5,9 +5,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  min-width: var(--activitybar-width);
-  width: fit-content;
-  max-width: calc(var(--activitybar-width) * 3);
+  width: var(--activitybar-width);
   height: 100%;
   background: var(--activitybar-bg);
   border-right: 1px solid var(--activitybar-border);
@@ -17,20 +15,16 @@
 .mainButtons {
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  align-items: center;
   padding: var(--spacing-1) 0;
-  max-height: calc(var(--activitybar-width) * 2);
 }
 
 /* 全屏功能入口区域 */
 .sidebarBadgeButtons {
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  align-items: center;
   padding: var(--spacing-1) 0;
-  max-height: calc(var(--activitybar-width) * 3);
 }
 
 /* 设置按钮区域（底部） */
