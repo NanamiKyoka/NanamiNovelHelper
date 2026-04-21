@@ -26,8 +26,8 @@ import { DEFAULT_BADGE_VISIBILITY } from '@types/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
-const VocabularyPanel = lazy(() => import('@components/vocabulary/VocabularyPanel').then(m => ({ default: m.VocabularyPanel })))
-const SensitiveWordPanel = lazy(() => import('@components/vocabulary/SensitiveWordPanel').then(m => ({ default: m.SensitiveWordPanel })))
+const VocabularyPanel = lazy(() => import('@components/vocabulary/VocabularyPanel'))
+const SensitiveWordPanel = lazy(() => import('@components/vocabulary/SensitiveWordPanel'))
 const RelationshipPanel = lazy(() => import('@components/visualization/relationship/RelationshipPanel'))
 const TimelinePanel = lazy(() => import('@components/visualization/timeline/TimelinePanel'))
 const SequenceChartPanel = lazy(() => import('@components/visualization/sequence-chart/SequenceChartPanel'))
