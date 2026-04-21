@@ -161,6 +161,10 @@ function VocabularyPanel({
   const [filterHasLinkedFile, setFilterHasLinkedFile] = useState<boolean | null>(null)
   const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   
+  // 快速创建状态
+  const [quickAddMode, setQuickAddMode] = useState(false)
+  const [quickAddName, setQuickAddName] = useState('')
+  
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
   
@@ -588,6 +592,47 @@ function VocabularyPanel({
     setDrawerOpen(true)
   }
 
+  // 快速创建词汇
+  const handleQuickAdd = async (): Promise<void> => {
+    if (readOnly || !quickAddName.trim() || !currentType) return
+    
+    try {
+      setLoading(true)
+      const typeName = types.find(t => t.id === currentType)?.name || '未知'
+      const color = currentTypeDefinition?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
+      
+      await addEntry({
+        name: quickAddName.trim(),
+        aliases: [],
+        color,
+        typeId: currentType,
+        typeName,
+        fields: {},
+        tags: [],
+        description: ''
+      })
+      
+      message.success('创建成功')
+      setQuickAddName('')
+      setQuickAddMode(false)
+    } catch (error) {
+      console.error('快速创建失败:', error)
+      message.error('创建失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 快速创建按键处理
+  const handleQuickAddKeyDown = (e: React.KeyboardEvent): void => {
+    if (e.key === 'Enter') {
+      handleQuickAdd()
+    } else if (e.key === 'Escape') {
+      setQuickAddMode(false)
+      setQuickAddName('')
+    }
+  }
+
   // 打开编辑抽屉
   const handleEdit = (entry: VocabularyEntry): void => {
     if (readOnly) return
@@ -940,27 +985,94 @@ function VocabularyPanel({
             >
               编辑
             </Button>
+            <Dropdown
+              menu={{
+                items: [
+                  { 
+                    key: 'create', 
+                    label: '新建（完整）', 
+                    icon: <PlusOutlined />,
+                    onClick: handleCreate 
+                  },
+                  { 
+                    key: 'quickAdd', 
+                    label: '快速添加', 
+                    icon: <TagOutlined />,
+                    onClick: () => setQuickAddMode(true) 
+                  },
+                ] as MenuProps['items']
+              }}
+            >
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                disabled={readOnly || !currentType}
+              >
+                新建
+              </Button>
+            </Dropdown>
+          </Space>
+        )}
+        {embedded && (
+          <Dropdown
+            menu={{
+              items: [
+                { 
+                  key: 'create', 
+                  label: '新建（完整）', 
+                  icon: <PlusOutlined />,
+                  onClick: handleCreate 
+                },
+                { 
+                  key: 'quickAdd', 
+                  label: '快速添加', 
+                  icon: <TagOutlined />,
+                  onClick: () => setQuickAddMode(true) 
+                },
+              ] as MenuProps['items']
+            }}
+          >
             <Button 
               type="primary" 
               icon={<PlusOutlined />} 
-              onClick={handleCreate} 
               disabled={readOnly || !currentType}
             >
               新建
             </Button>
-          </Space>
-        )}
-        {embedded && (
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handleCreate} 
-            disabled={readOnly || !currentType}
-          >
-            新建
-          </Button>
+          </Dropdown>
         )}
       </div>
+      
+      {/* 快速添加输入框 */}
+      {quickAddMode && !embedded && (
+        <div className={styles.quickAddBar}>
+          <Space>
+            <span className={styles.quickAddLabel}>快速添加：</span>
+            <Input
+              placeholder="输入词汇名称，按 Enter 保存，Esc 取消"
+              value={quickAddName}
+              onChange={(e) => setQuickAddName(e.target.value)}
+              onKeyDown={handleQuickAddKeyDown}
+              style={{ width: 300 }}
+              autoFocus
+              disabled={loading}
+            />
+            <Button 
+              type="primary" 
+              onClick={handleQuickAdd}
+              loading={loading}
+              disabled={!quickAddName.trim()}
+            >
+              保存
+            </Button>
+            <Button 
+              onClick={() => { setQuickAddMode(false); setQuickAddName('') }}
+            >
+              取消
+            </Button>
+          </Space>
+        </div>
+      )}
       
       {/* 高级筛选面板 */}
       {filterPanelOpen && !embedded && (
