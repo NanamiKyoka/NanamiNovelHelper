@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Table,
   Button,
@@ -43,6 +43,25 @@ import {
   FileAddOutlined,
   FolderOpenOutlined
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
 import type { 
   VocabularyEntry, 
@@ -55,6 +74,39 @@ import VocabularyTypeSettings from './VocabularyTypeSettings'
 import VocabularyFullscreen from './VocabularyFullscreen'
 import { getIconPreview } from './IconPicker'
 import styles from './VocabularyPanel.module.css'
+
+// 可排序的表格行组件
+interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  'data-row-key': string
+}
+
+function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id })
+
+  const style: React.CSSProperties = {
+    ...props.style,
+    transform: CSS.Transform.toString(transform),
+    transition
+  }
+
+  return (
+    <tr
+      {...props}
+      ref={setNodeRef}
+      style={style}
+      className={`${props.className || ''} ${isDragging ? 'dragging' : ''}`}
+      {...attributes}
+      {...listeners}
+    />
+  )
+}
 
 interface VocabularyPanelProps {
   readOnly?: boolean
@@ -84,6 +136,7 @@ function VocabularyPanel({
     updateEntry,
     deleteEntry,
     createLinkedFile,
+    reorderEntries,
     updateType,
     isLoaded
   } = useVocabularyStore()
@@ -120,8 +173,21 @@ function VocabularyPanel({
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
   const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
   
-  // 列拖拽排序状态（已移除）
+  // 拖拽排序状态
+  const [activeId, setActiveId] = useState<string | null>(null)
   
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5
+      }
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
+
   // 嵌入模式下使用外部传入的 currentTypeId，否则使用内部状态
   const currentType = embedded ? (currentTypeId || '') : internalCurrentType
   const setCurrentType = embedded 
@@ -200,6 +266,39 @@ function VocabularyPanel({
       return true
     })
   }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile, filterDateRange])
+
+  // 按 order 字段排序的条目（用于拖拽排序）
+  const sortedEntries = useMemo(() => {
+    return [...filteredEntries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  }, [filteredEntries])
+
+  // 拖拽开始
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveId(event.active.id as string)
+  }, [])
+  
+  // 拖拽结束
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id && currentType) {
+      const oldIndex = sortedEntries.findIndex(e => e.id === active.id)
+      const newIndex = sortedEntries.findIndex(e => e.id === over.id)
+      
+      const newEntries = arrayMove(sortedEntries, oldIndex, newIndex)
+      const newEntryIds = newEntries.map(e => e.id)
+      
+      reorderEntries(currentType, newEntryIds).catch((error) => {
+        console.error('Failed to reorder entries:', error)
+        message.error('排序失败')
+      })
+    }
+    
+    setActiveId(null)
+  }, [sortedEntries, currentType, reorderEntries])
+  
+  // 当前拖拽的条目
+  const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
 
   // 获取当前类型所有标签（用于筛选）
   const allTags = useMemo(() => {
@@ -1246,20 +1345,52 @@ function VocabularyPanel({
             <Skeleton active paragraph={{ rows: 8 }} />
           </div>
         ) : (
-          <Table
-            dataSource={filteredEntries}
-            columns={columns as unknown[]}
-            rowKey="id"
-            size="small"
-            scroll={{ x: 'max-content' }}
-            pagination={{ pageSize: 10, align: 'center' }}
-            locale={{ emptyText: renderEmptyState() }}
-            rowSelection={batchMode ? {
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-              selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-            } : undefined}
-          />
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sortedEntries.map(e => e.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Table
+                dataSource={sortedEntries}
+                columns={columns as unknown[]}
+                rowKey="id"
+                size="small"
+                scroll={{ x: 'max-content' }}
+                pagination={{ pageSize: 10, align: 'center' }}
+                locale={{ emptyText: renderEmptyState() }}
+                rowSelection={batchMode ? {
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
+                  selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+                } : undefined}
+                components={{
+                  body: {
+                    row: SortableRow
+                  }
+                }}
+              />
+            </SortableContext>
+            
+            <DragOverlay>
+              {activeEntry ? (
+                <div className={styles.overlayRow}>
+                  <Table
+                    dataSource={[activeEntry]}
+                    columns={columns as unknown[]}
+                    rowKey="id"
+                    size="small"
+                    pagination={false}
+                    showHeader={false}
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         )}
       </div>
 
