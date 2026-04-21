@@ -169,6 +169,10 @@ function VocabularyPanel({
   const [deletedEntry, setDeletedEntry] = useState<VocabularyEntry | null>(null)
   const [undoMessageKey, setUndoMessageKey] = useState<string>('')
   
+  // 列可见性状态
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
+  const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
+  
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
   
@@ -404,6 +408,9 @@ function VocabularyPanel({
       fieldColumns = visibleConfig.map(config => {
         const field = fieldMap.get(config.fieldId)
         if (!field) return null
+        
+        // 检查列可见性
+        if (columnVisibility[field.id] === false) return null
 
         return {
           title: field.name,
@@ -435,29 +442,34 @@ function VocabularyPanel({
       fieldColumns = fields
         .filter(f => f.id !== 'name')
         .slice(0, 4)
-        .map(field => ({
-          title: field.name,
-          dataIndex: ['fields', field.id],
-          key: field.id,
-          width: 120,
-          ellipsis: field.type === 'textarea',
-          render: (value: string | string[]) => {
-            if (value === undefined || value === null || value === '') return '-'
-            // 图片类型显示图标
-            if (field.type === 'image') {
-              return <PictureOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+        .map(field => {
+          // 检查列可见性
+          if (columnVisibility[field.id] === false) return null
+          
+          return {
+            title: field.name,
+            dataIndex: ['fields', field.id],
+            key: field.id,
+            width: 120,
+            ellipsis: field.type === 'textarea',
+            render: (value: string | string[]) => {
+              if (value === undefined || value === null || value === '') return '-'
+              // 图片类型显示图标
+              if (field.type === 'image') {
+                return <PictureOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+              }
+              if (Array.isArray(value)) {
+                return value.length > 0
+                  ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}</Tag>)
+                  : '-'
+              }
+              if (field.type === 'select') {
+                return <Tag>{value}</Tag>
+              }
+              return String(value)
             }
-            if (Array.isArray(value)) {
-              return value.length > 0
-                ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}</Tag>)
-                : '-'
-            }
-            if (field.type === 'select') {
-              return <Tag>{value}</Tag>
-            }
-            return String(value)
           }
-        }))
+        }).filter(Boolean)
     }
 
     // 操作列
@@ -492,7 +504,26 @@ function VocabularyPanel({
     }
 
     return [dragHandleColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
-  }, [currentTypeDefinition, readOnly, enableSorting])
+  }, [currentTypeDefinition, readOnly, enableSorting, columnVisibility])
+
+  // 获取所有可选列
+  const allFieldColumns = useMemo(() => {
+    if (!currentTypeDefinition?.fields) return []
+    return currentTypeDefinition.fields.filter(f => f.id !== 'name')
+  }, [currentTypeDefinition])
+
+  // 切换列可见性
+  const toggleColumnVisibility = (fieldId: string): void => {
+    setColumnVisibility(prev => ({
+      ...prev,
+      [fieldId]: prev[fieldId] === false ? true : false
+    }))
+  }
+
+  // 重置列可见性
+  const resetColumnVisibility = (): void => {
+    setColumnVisibility({})
+  }
 
   // 默认列定义
   function getDefaultColumns() {
@@ -1108,6 +1139,12 @@ function VocabularyPanel({
                     icon: batchMode ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
                     onClick: toggleBatchMode 
                   },
+                  { 
+                    key: 'columns', 
+                    label: '列设置', 
+                    icon: <ColumnHeightOutlined />,
+                    onClick: () => setColumnSettingsOpen(true) 
+                  },
                 ] as MenuProps['items']
               }}
             >
@@ -1460,6 +1497,46 @@ function VocabularyPanel({
       >
         <VocabularyTypeSettings />
       </Drawer>
+
+      {/* 列设置弹窗 */}
+      <Modal
+        title="列设置"
+        open={columnSettingsOpen}
+        onCancel={() => setColumnSettingsOpen(false)}
+        footer={[
+          <Button key="reset" onClick={resetColumnVisibility}>
+            重置
+          </Button>,
+          <Button key="close" type="primary" onClick={() => setColumnSettingsOpen(false)}>
+            关闭
+          </Button>
+        ]}
+        width={400}
+      >
+        {allFieldColumns.length === 0 ? (
+          <Empty description="没有可设置的列" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <div className={styles.columnSettingsList}>
+            {allFieldColumns.map(field => (
+              <div key={field.id} className={styles.columnSettingsItem}>
+                <Checkbox
+                  checked={columnVisibility[field.id] !== false}
+                  onChange={() => toggleColumnVisibility(field.id)}
+                >
+                  {field.name}
+                </Checkbox>
+                <span className={styles.columnTypeLabel}>
+                  {field.type === 'text' ? '文本' : 
+                   field.type === 'textarea' ? '多行文本' :
+                   field.type === 'select' ? '选择' :
+                   field.type === 'tags' ? '标签' :
+                   field.type === 'image' ? '图片' : field.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
