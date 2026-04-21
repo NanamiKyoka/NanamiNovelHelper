@@ -32,6 +32,7 @@ import {
   PictureOutlined,
   SettingOutlined,
   FullscreenOutlined,
+  HolderOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -238,8 +239,19 @@ function VocabularyPanel({
 
   // 根据配置生成表格列
   const columns = useMemo(() => {
+    // 拖拽手柄列
+    const dragHandleColumn = {
+      title: '',
+      key: 'dragHandle',
+      width: 40,
+      fixed: 'left' as const,
+      render: () => (
+        <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+      )
+    }
+
     if (!currentTypeDefinition) {
-      return getDefaultColumns()
+      return [dragHandleColumn, ...getDefaultColumns()]
     }
 
     const fields = currentTypeDefinition.fields
@@ -247,7 +259,7 @@ function VocabularyPanel({
 
     // 如果没有字段，使用默认列
     if (!fields || fields.length === 0) {
-      return getDefaultColumns()
+      return [dragHandleColumn, ...getDefaultColumns()]
     }
 
     // 创建字段映射便于查找
@@ -393,7 +405,7 @@ function VocabularyPanel({
       )
     }
 
-    return [nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
+    return [dragHandleColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
   }, [currentTypeDefinition, readOnly, columnVisibility])
 
   // 获取所有可选列
