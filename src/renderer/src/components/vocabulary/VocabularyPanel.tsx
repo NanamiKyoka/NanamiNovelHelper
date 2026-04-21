@@ -549,7 +549,7 @@ function VocabularyPanel({
               }
               if (Array.isArray(value)) {
                 return value.length > 0
-                  ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}}</Tag>)
+                  ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}</Tag>)
                   : '-'
               }
               if (field.type === 'select') {
