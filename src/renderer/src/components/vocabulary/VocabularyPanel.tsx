@@ -39,7 +39,9 @@ import {
   ExportOutlined,
   FilterOutlined,
   ClearOutlined,
-  ColumnHeightOutlined
+  ColumnHeightOutlined,
+  FileAddOutlined,
+  FolderOpenOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
