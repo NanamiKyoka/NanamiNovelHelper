@@ -82,6 +82,11 @@
   background: var(--ant-color-bg-container);
 }
 
+.skeletonContainer {
+  padding: 16px;
+  background: var(--ant-color-bg-container);
+}
+
 .dragHandle {
   cursor: grab;
   padding: 4px;

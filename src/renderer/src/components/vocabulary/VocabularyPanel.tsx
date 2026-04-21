@@ -1329,7 +1329,11 @@ function VocabularyPanel({
       
       {/* 表格 */}
       <div className={styles.tableContainer}>
-        {enableSorting ? (
+        {!isLoaded ? (
+          <div className={styles.skeletonContainer}>
+            <Skeleton active paragraph={{ rows: 8 }} />
+          </div>
+        ) : enableSorting ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
