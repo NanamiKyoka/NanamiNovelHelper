@@ -101,15 +101,30 @@
 
 .overlayRow {
   background: var(--ant-color-bg-container);
-  border: 1px solid var(--ant-color-primary);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--ant-color-primary);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   pointer-events: none;
+  opacity: 0.95;
+  transform: scale(1.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* 拖拽中的行样式 */
 .tableContainer :global(.ant-table-tbody > tr) {
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* 拖拽时被拖拽行的原始位置样式 */
+.tableContainer :global(.ant-table-tbody > tr.dragging) {
+  opacity: 0.3;
+  background: var(--ant-color-primary-bg);
+}
+
+/* 拖拽时目标位置的样式 */
+.tableContainer :global(.ant-table-tbody > tr.drag-over) {
+  background: var(--ant-color-primary-bg);
+  border-top: 2px solid var(--ant-color-primary);
 }
 
 /* 空表格背景修复 */

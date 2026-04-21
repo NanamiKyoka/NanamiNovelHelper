@@ -88,11 +88,7 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
   const style: React.CSSProperties = {
     ...props.style,
     transform: CSS.Transform.toString(transform),
-    transition,
-    ...(isDragging ? {
-      opacity: 0.5,
-      background: 'var(--ant-color-bg-text-hover)'
-    } : {})
+    transition
   }
 
   return (
@@ -100,6 +96,7 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
       {...props}
       ref={setNodeRef}
       style={style}
+      className={`${props.className || ''} ${isDragging ? 'dragging' : ''}`}
       {...attributes}
       {...listeners}
     />
