@@ -1690,3 +1690,4 @@ function VocabularyPanel({
 }
 
 export default VocabularyPanel
+export { VocabularyPanel }

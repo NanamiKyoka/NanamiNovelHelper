@@ -400,3 +400,4 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
 }
 
 export default SensitiveWordPanel
+export { SensitiveWordPanel }
