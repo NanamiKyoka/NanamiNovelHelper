@@ -12,8 +12,11 @@ import {
   Tag,
   Popconfirm,
   Empty,
-  Tabs
+  Tabs,
+  Dropdown,
+  Modal
 } from 'antd'
+import type { MenuProps, TableProps } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
@@ -23,7 +26,11 @@ import {
   PictureOutlined,
   SettingOutlined,
   FullscreenOutlined,
-  HolderOutlined
+  HolderOutlined,
+  DownloadOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExportOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -136,6 +143,10 @@ function VocabularyPanel({
   const [searchText, setSearchText] = useState('')
   const [typeSettingsOpen, setTypeSettingsOpen] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
+  
+  // 批量操作状态
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
+  const [batchMode, setBatchMode] = useState(false)
   
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -566,6 +577,119 @@ function VocabularyPanel({
     message.success('删除成功')
   }
 
+  // 批量删除
+  const handleBatchDelete = (): void => {
+    if (readOnly || selectedRowKeys.length === 0) return
+    
+    Modal.confirm({
+      title: '确认批量删除',
+      content: `确定要删除选中的 ${selectedRowKeys.length} 个词汇吗？此操作不可撤销。`,
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          setLoading(true)
+          for (const id of selectedRowKeys) {
+            await deleteEntry(id as string)
+          }
+          message.success(`成功删除 ${selectedRowKeys.length} 个词汇`)
+          setSelectedRowKeys([])
+          setBatchMode(false)
+        } catch (error) {
+          console.error('批量删除失败:', error)
+          message.error('批量删除失败')
+        } finally {
+          setLoading(false)
+        }
+      }
+    })
+  }
+
+  // 批量导出
+  const handleBatchExport = (): void => {
+    if (selectedRowKeys.length === 0) return
+    
+    const selectedEntries = filteredEntries.filter(e => selectedRowKeys.includes(e.id))
+    const typeName = currentTypeDefinition?.name || '词汇'
+    
+    const exportData = selectedEntries.map(entry => ({
+      名称: entry.name,
+      别名: entry.aliases.join('、'),
+      颜色: entry.color,
+      标签: entry.tags.join('、'),
+      备注: entry.description || '',
+      ...Object.fromEntries(
+        currentTypeDefinition?.fields
+          .filter(f => f.id !== 'name')
+          .map(f => {
+            const value = entry.fields[f.id]
+            return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
+          }) || []
+      )
+    }))
+    
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${typeName}_导出_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    message.success(`成功导出 ${selectedEntries.length} 个词汇`)
+  }
+
+  // 导出全部
+  const handleExportAll = (): void => {
+    if (filteredEntries.length === 0) {
+      message.warning('没有可导出的数据')
+      return
+    }
+    
+    const typeName = currentTypeDefinition?.name || '词汇'
+    
+    const exportData = filteredEntries.map(entry => ({
+      名称: entry.name,
+      别名: entry.aliases.join('、'),
+      颜色: entry.color,
+      标签: entry.tags.join('、'),
+      备注: entry.description || '',
+      ...Object.fromEntries(
+        currentTypeDefinition?.fields
+          .filter(f => f.id !== 'name')
+          .map(f => {
+            const value = entry.fields[f.id]
+            return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
+          }) || []
+      )
+    }))
+    
+    const jsonString = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonString], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${typeName}_全部导出_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    message.success(`成功导出 ${filteredEntries.length} 个词汇`)
+  }
+
+  // 切换批量模式
+  const toggleBatchMode = (): void => {
+    setBatchMode(!batchMode)
+    if (batchMode) {
+      setSelectedRowKeys([])
+    }
+  }
+
   // 创建关联文件
   const handleCreateLinkedFile = async (): Promise<void> => {
     const currentEntryId = editingEntry?.id
@@ -675,6 +799,46 @@ function VocabularyPanel({
         />
         {!embedded && (
           <Space>
+            {batchMode && selectedRowKeys.length > 0 && (
+              <Tag color="blue" style={{ marginRight: 8 }}>
+                已选 {selectedRowKeys.length} 项
+              </Tag>
+            )}
+            {batchMode && (
+              <>
+                <Button 
+                  danger 
+                  icon={<DeleteOutlined />}
+                  onClick={handleBatchDelete}
+                  disabled={selectedRowKeys.length === 0}
+                >
+                  批量删除
+                </Button>
+                <Button 
+                  icon={<DownloadOutlined />}
+                  onClick={handleBatchExport}
+                  disabled={selectedRowKeys.length === 0}
+                >
+                  导出选中
+                </Button>
+              </>
+            )}
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'export', label: '导出全部', icon: <ExportOutlined />, onClick: handleExportAll },
+                  { type: 'divider' as const },
+                  { 
+                    key: 'batch', 
+                    label: batchMode ? '退出批量模式' : '批量操作', 
+                    icon: batchMode ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
+                    onClick: toggleBatchMode 
+                  },
+                ] as MenuProps['items']
+              }}
+            >
+              <Button icon={<SettingOutlined />}>更多</Button>
+            </Dropdown>
             <Button 
               icon={<FullscreenOutlined />} 
               onClick={() => setFullscreen(true)}
@@ -724,6 +888,11 @@ function VocabularyPanel({
                 scroll={{ x: 'max-content' }}
                 pagination={{ pageSize: 10, align: 'center' }}
                 locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                rowSelection={batchMode ? {
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
+                  selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+                } : undefined}
                 components={{
                   body: {
                     row: SortableRow
@@ -756,6 +925,11 @@ function VocabularyPanel({
             scroll={{ x: 'max-content' }}
             pagination={{ pageSize: 10, align: 'center' }}
             locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+            rowSelection={batchMode ? {
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+            } : undefined}
           />
         )}
       </div>
