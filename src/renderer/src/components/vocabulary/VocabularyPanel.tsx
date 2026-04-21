@@ -165,6 +165,10 @@ function VocabularyPanel({
   const [quickAddMode, setQuickAddMode] = useState(false)
   const [quickAddName, setQuickAddName] = useState('')
   
+  // 撤销删除状态
+  const [deletedEntry, setDeletedEntry] = useState<VocabularyEntry | null>(null)
+  const [undoMessageKey, setUndoMessageKey] = useState<string>('')
+  
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
   
@@ -700,8 +704,73 @@ function VocabularyPanel({
   // 删除条目
   const handleDelete = async (id: string): Promise<void> => {
     if (readOnly) return
+    
+    // 保存被删除的条目用于撤销
+    const entryToDelete = entries.find(e => e.id === id)
+    if (!entryToDelete) return
+    
+    // 清除之前的撤销状态
+    if (undoMessageKey) {
+      message.destroy(undoMessageKey)
+    }
+    
     await deleteEntry(id)
-    message.success('删除成功')
+    setDeletedEntry(entryToDelete)
+    
+    // 显示带撤销按钮的消息
+    const key = `delete-${id}-${Date.now()}`
+    setUndoMessageKey(key)
+    
+    message.open({
+      type: 'success',
+      content: (
+        <span>
+          已删除「{entryToDelete.name}」
+          <Button 
+            type="link" 
+            size="small" 
+            style={{ marginLeft: 8, padding: 0 }}
+            onClick={() => handleUndoDelete(key)}
+          >
+            撤销
+          </Button>
+        </span>
+      ),
+      duration: 5,
+      key,
+      onClose: () => {
+        setDeletedEntry(null)
+        setUndoMessageKey('')
+      }
+    })
+  }
+
+  // 撤销删除
+  const handleUndoDelete = async (key: string): Promise<void> => {
+    if (!deletedEntry) return
+    
+    try {
+      // 重新添加被删除的条目
+      await addEntry({
+        name: deletedEntry.name,
+        aliases: deletedEntry.aliases,
+        color: deletedEntry.color,
+        typeId: deletedEntry.typeId,
+        typeName: deletedEntry.typeName,
+        fields: deletedEntry.fields,
+        tags: deletedEntry.tags,
+        description: deletedEntry.description,
+        linkedFilePath: deletedEntry.linkedFilePath
+      })
+      
+      message.destroy(key)
+      message.success('已撤销删除')
+      setDeletedEntry(null)
+      setUndoMessageKey('')
+    } catch (error) {
+      console.error('撤销删除失败:', error)
+      message.error('撤销失败')
+    }
   }
 
   // 批量删除
