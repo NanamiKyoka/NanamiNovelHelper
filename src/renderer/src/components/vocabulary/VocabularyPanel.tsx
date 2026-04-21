@@ -773,6 +773,71 @@ function VocabularyPanel({
     }
   }
 
+  // 渲染空状态
+  const renderEmptyState = (): React.ReactNode => {
+    const hasFilters = activeFilterCount > 0 || searchText
+    
+    if (hasFilters) {
+      return (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <Space direction="vertical" size="small">
+              <span>没有找到匹配的词汇</span>
+              <Button 
+                type="link" 
+                size="small"
+                onClick={() => {
+                  setSearchText('')
+                  clearAllFilters()
+                }}
+              >
+                清除筛选条件
+              </Button>
+            </Space>
+          }
+        />
+      )
+    }
+    
+    if (!currentType) {
+      return (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="请先选择或创建词汇类型"
+        />
+      )
+    }
+    
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={
+          <Space direction="vertical" size="middle">
+            <span>还没有词汇，开始添加吧</span>
+            {!readOnly && (
+              <Space>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={handleCreate}
+                >
+                  新建词汇
+                </Button>
+                <Button 
+                  icon={<TagOutlined />}
+                  onClick={() => setQuickAddMode(true)}
+                >
+                  快速添加
+                </Button>
+              </Space>
+            )}
+          </Space>
+        }
+      />
+    )
+  }
+
   // 批量删除
   const handleBatchDelete = (): void => {
     if (readOnly || selectedRowKeys.length === 0) return
@@ -1245,7 +1310,7 @@ function VocabularyPanel({
                 size="small"
                 scroll={{ x: 'max-content' }}
                 pagination={{ pageSize: 10, align: 'center' }}
-                locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                locale={{ emptyText: renderEmptyState() }}
                 rowSelection={batchMode ? {
                   selectedRowKeys,
                   onChange: setSelectedRowKeys,
@@ -1282,7 +1347,7 @@ function VocabularyPanel({
             size="small"
             scroll={{ x: 'max-content' }}
             pagination={{ pageSize: 10, align: 'center' }}
-            locale={{ emptyText: <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+            locale={{ emptyText: renderEmptyState() }}
             rowSelection={batchMode ? {
               selectedRowKeys,
               onChange: setSelectedRowKeys,
