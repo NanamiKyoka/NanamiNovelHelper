@@ -131,3 +131,101 @@
   align-items: center;
   justify-content: center;
 }
+
+/* 响应式适配 */
+@media screen and (max-width: 768px) {
+  .toolbar {
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .filterPanel {
+    padding: 8px 12px;
+  }
+
+  .filterItem {
+    flex-wrap: wrap;
+  }
+
+  .filterLabel {
+    display: none;
+  }
+
+  .quickAddBar {
+    padding: 8px 12px;
+  }
+
+  .quickAddBar :global(.ant-input) {
+    width: 100% !important;
+  }
+
+  .tableContainer {
+    padding: 8px;
+  }
+
+  .tableContainer :global(.ant-table) {
+    font-size: 13px;
+  }
+
+  .tableContainer :global(.ant-table-thead > tr > th) {
+    padding: 8px 4px;
+  }
+
+  .tableContainer :global(.ant-table-tbody > tr > td) {
+    padding: 8px 4px;
+  }
+
+  .columnSettingsItem {
+    padding: 6px 8px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .toolbar {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .toolbar :global(.ant-input-search) {
+    width: 100% !important;
+  }
+
+  .toolbar :global(.ant-btn) {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .filterPanel {
+    padding: 6px 8px;
+  }
+
+  .quickAddBar {
+    padding: 6px 8px;
+  }
+
+  .quickAddLabel {
+    display: none;
+  }
+
+  .tableContainer {
+    padding: 4px;
+  }
+
+  .tableContainer :global(.ant-table) {
+    font-size: 12px;
+  }
+
+  .tableContainer :global(.ant-table-thead > tr > th) {
+    padding: 6px 2px;
+  }
+
+  .tableContainer :global(.ant-table-tbody > tr > td) {
+    padding: 6px 2px;
+  }
+
+  .tableContainer :global(.ant-tag) {
+    font-size: 11px;
+    padding: 0 4px;
+  }
+}
