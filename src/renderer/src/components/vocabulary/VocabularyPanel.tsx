@@ -105,12 +105,13 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
   )
 }
 
-// 可排序的表头单元格组件
-interface SortableHeaderCellProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
-  id?: string
+// 可拖拽的列标题组件
+interface DraggableColumnHeaderProps {
+  fieldId: string
+  title: string
 }
 
-function SortableHeaderCell({ id, children, className, style, ...props }: SortableHeaderCellProps): JSX.Element {
+function DraggableColumnHeader({ fieldId, title }: DraggableColumnHeaderProps): JSX.Element {
   const {
     attributes,
     listeners,
@@ -118,35 +119,23 @@ function SortableHeaderCell({ id, children, className, style, ...props }: Sortab
     transform,
     transition,
     isDragging
-  } = useSortable({ id: id || '' })
+  } = useSortable({ id: fieldId })
 
-  const combinedStyle: React.CSSProperties = {
-    ...style,
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    cursor: id ? 'grab' : undefined
-  }
-
-  if (!id) {
-    return (
-      <th className={className} style={style} {...props}>
-        {children}
-      </th>
-    )
+    cursor: 'grab',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4
   }
 
   return (
-    <th
-      ref={setNodeRef}
-      className={className}
-      style={combinedStyle}
-      {...props}
-      {...attributes}
-      {...listeners}
-    >
-      {children}
-    </th>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
+      <span>{title}</span>
+    </div>
   )
 }
 
@@ -513,12 +502,7 @@ function VocabularyPanel({
         if (columnVisibility[field.id] === false) return null
 
         return {
-          title: (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'grab' }}>
-              <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
-              <span>{field.name}</span>
-            </div>
-          ),
+          title: <DraggableColumnHeader fieldId={field.id} title={field.name} />,
           dataIndex: ['fields', field.id],
           key: field.id,
           width: config.width || 120,
@@ -552,12 +536,7 @@ function VocabularyPanel({
           if (columnVisibility[field.id] === false) return null
           
           return {
-            title: (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'grab' }}>
-                <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
-                <span>{field.name}</span>
-              </div>
-            ),
+            title: <DraggableColumnHeader fieldId={field.id} title={field.name} />,
             dataIndex: ['fields', field.id],
             key: field.id,
             width: 120,
@@ -570,7 +549,7 @@ function VocabularyPanel({
               }
               if (Array.isArray(value)) {
                 return value.length > 0
-                  ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}</Tag>)
+                  ? value.slice(0, 2).map((v, i) => <Tag key={i} style={{ margin: '2px' }}>{v}}</Tag>)
                   : '-'
               }
               if (field.type === 'select') {
@@ -1499,9 +1478,6 @@ function VocabularyPanel({
                     components={{
                       body: {
                         row: SortableRow
-                      },
-                      header: {
-                        cell: SortableHeaderCell
                       }
                     }}
                   />
@@ -1548,11 +1524,6 @@ function VocabularyPanel({
                   onChange: setSelectedRowKeys,
                   selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
                 } : undefined}
-                components={{
-                  header: {
-                    cell: SortableHeaderCell
-                  }
-                }}
               />
             </SortableContext>
           </DndContext>
