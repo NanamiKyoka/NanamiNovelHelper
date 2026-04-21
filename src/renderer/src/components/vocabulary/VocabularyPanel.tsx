@@ -36,7 +36,8 @@ import {
   CloseCircleOutlined,
   ExportOutlined,
   FilterOutlined,
-  ClearOutlined
+  ClearOutlined,
+  ColumnHeightOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
