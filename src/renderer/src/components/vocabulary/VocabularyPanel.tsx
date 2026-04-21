@@ -14,9 +14,13 @@ import {
   Empty,
   Tabs,
   Dropdown,
-  Modal
+  Modal,
+  DatePicker,
+  Collapse,
+  Badge
 } from 'antd'
 import type { MenuProps, TableProps } from 'antd'
+import dayjs from 'dayjs'
 import {
   PlusOutlined,
   EditOutlined,
@@ -30,7 +34,9 @@ import {
   DownloadOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ExportOutlined
+  ExportOutlined,
+  FilterOutlined,
+  ClearOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -148,6 +154,13 @@ function VocabularyPanel({
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchMode, setBatchMode] = useState(false)
   
+  // 高级筛选状态
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
+  const [filterTags, setFilterTags] = useState<string[]>([])
+  const [filterColor, setFilterColor] = useState<string>('')
+  const [filterHasLinkedFile, setFilterHasLinkedFile] = useState<boolean | null>(null)
+  const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
+  
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
   
@@ -202,12 +215,81 @@ function VocabularyPanel({
   const currentEntries = entries.filter(item => item.typeId === currentType)
   
   // 搜索过滤
-  const filteredEntries = currentEntries.filter(item => 
-    !searchText || 
-    item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.aliases.some(a => a.toLowerCase().includes(searchText.toLowerCase()))
-  )
+  const filteredEntries = useMemo(() => {
+    return currentEntries.filter(item => {
+      // 关键词搜索
+      if (searchText) {
+        const keywordMatch = 
+          item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.aliases.some(a => a.toLowerCase().includes(searchText.toLowerCase()))
+        if (!keywordMatch) return false
+      }
+      
+      // 标签筛选
+      if (filterTags.length > 0) {
+        const hasAllTags = filterTags.every(tag => item.tags.includes(tag))
+        if (!hasAllTags) return false
+      }
+      
+      // 颜色筛选
+      if (filterColor) {
+        if (item.color !== filterColor) return false
+      }
+      
+      // 关联文件筛选
+      if (filterHasLinkedFile !== null) {
+        const hasLinkedFile = !!item.linkedFilePath
+        if (filterHasLinkedFile !== hasLinkedFile) return false
+      }
+      
+      // 日期范围筛选
+      if (filterDateRange && filterDateRange[0] && filterDateRange[1]) {
+        const itemDate = dayjs(item.updatedAt)
+        if (itemDate.isBefore(filterDateRange[0], 'day') || itemDate.isAfter(filterDateRange[1], 'day')) {
+          return false
+        }
+      }
+      
+      return true
+    })
+  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile, filterDateRange])
+
+  // 获取当前类型所有标签（用于筛选）
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>()
+    currentEntries.forEach(item => {
+      item.tags.forEach(tag => tagSet.add(tag))
+    })
+    return Array.from(tagSet).sort()
+  }, [currentEntries])
+
+  // 获取当前类型所有颜色（用于筛选）
+  const allColors = useMemo(() => {
+    const colorSet = new Set<string>()
+    currentEntries.forEach(item => {
+      colorSet.add(item.color)
+    })
+    return Array.from(colorSet)
+  }, [currentEntries])
+
+  // 筛选条件数量
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (filterTags.length > 0) count++
+    if (filterColor) count++
+    if (filterHasLinkedFile !== null) count++
+    if (filterDateRange) count++
+    return count
+  }, [filterTags, filterColor, filterHasLinkedFile, filterDateRange])
+
+  // 清除所有筛选
+  const clearAllFilters = (): void => {
+    setFilterTags([])
+    setFilterColor('')
+    setFilterHasLinkedFile(null)
+    setFilterDateRange(null)
+  }
 
   // 按 order 字段排序的条目（用于拖拽排序）
   const sortedEntries = useMemo(() => {
@@ -791,12 +873,25 @@ function VocabularyPanel({
 
       {/* 工具栏 */}
       <div className={styles.toolbar}>
-        <Input.Search
-          placeholder="搜索..."
-          allowClear
-          style={{ width: embedded ? '100%' : 200 }}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+        <Space>
+          <Input.Search
+            placeholder="搜索..."
+            allowClear
+            style={{ width: embedded ? '100%' : 200 }}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          {!embedded && (
+            <Badge count={activeFilterCount} size="small">
+              <Button 
+                icon={<FilterOutlined />} 
+                onClick={() => setFilterPanelOpen(!filterPanelOpen)}
+                type={filterPanelOpen ? 'primary' : 'default'}
+              >
+                筛选
+              </Button>
+            </Badge>
+          )}
+        </Space>
         {!embedded && (
           <Space>
             {batchMode && selectedRowKeys.length > 0 && (
@@ -866,6 +961,88 @@ function VocabularyPanel({
           </Button>
         )}
       </div>
+      
+      {/* 高级筛选面板 */}
+      {filterPanelOpen && !embedded && (
+        <div className={styles.filterPanel}>
+          <Space wrap size="middle">
+            {/* 标签筛选 */}
+            <div className={styles.filterItem}>
+              <span className={styles.filterLabel}>标签：</span>
+              <Select
+                mode="multiple"
+                placeholder="选择标签"
+                value={filterTags}
+                onChange={setFilterTags}
+                options={allTags.map(t => ({ value: t, label: t }))}
+                style={{ minWidth: 150 }}
+                allowClear
+                size="small"
+              />
+            </div>
+            
+            {/* 颜色筛选 */}
+            <div className={styles.filterItem}>
+              <span className={styles.filterLabel}>颜色：</span>
+              <Select
+                placeholder="选择颜色"
+                value={filterColor || undefined}
+                onChange={(v) => setFilterColor(v || '')}
+                allowClear
+                style={{ minWidth: 120 }}
+                size="small"
+              >
+                {allColors.map(color => (
+                  <Select.Option key={color} value={color}>
+                    <Space>
+                      <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }} />
+                      <span>{color}</span>
+                    </Space>
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+            
+            {/* 关联文件筛选 */}
+            <div className={styles.filterItem}>
+              <span className={styles.filterLabel}>关联文件：</span>
+              <Select
+                placeholder="选择"
+                value={filterHasLinkedFile}
+                onChange={setFilterHasLinkedFile}
+                allowClear
+                style={{ minWidth: 100 }}
+                size="small"
+              >
+                <Select.Option value={true}>有关联</Select.Option>
+                <Select.Option value={false}>无关联</Select.Option>
+              </Select>
+            </div>
+            
+            {/* 日期范围筛选 */}
+            <div className={styles.filterItem}>
+              <span className={styles.filterLabel}>更新时间：</span>
+              <DatePicker.RangePicker
+                value={filterDateRange}
+                onChange={(dates) => setFilterDateRange(dates)}
+                size="small"
+                style={{ width: 220 }}
+              />
+            </div>
+            
+            {/* 清除筛选 */}
+            {activeFilterCount > 0 && (
+              <Button 
+                size="small" 
+                icon={<ClearOutlined />}
+                onClick={clearAllFilters}
+              >
+                清除筛选
+              </Button>
+            )}
+          </Space>
+        </div>
+      )}
       
       {/* 表格 */}
       <div className={styles.tableContainer}>
