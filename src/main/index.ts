@@ -23,6 +23,24 @@ import { dynamicSkillService } from './services/dynamicSkill'
 import { fileService } from './services/file'
 import { aiAssistantService } from './services/aiAssistant'
 
+// 注册 local:// 协议为特权协议（必须在 app.ready 之前）
+// 只能调用一次，所以添加标志防止重复
+let schemesRegistered = false
+if (!schemesRegistered && !app.isReady()) {
+  schemesRegistered = true
+  protocol.registerSchemesAsPrivileged([
+    {
+      scheme: 'local',
+      privileges: {
+        secure: true,
+        standard: true,
+        supportFetchAPI: true,
+        corsEnabled: true,
+      },
+    },
+  ])
+}
+
 let mainWindow: BrowserWindow | null = null
 let terminalWindow: BrowserWindow | null = null
 
@@ -237,19 +255,6 @@ function registerMainWindowHandlers(): void {
   ipcMain.on('updater:quit-and-install', () => {
   })
 }
-
-// 注册 local:// 协议为特权协议（必须在 app.ready 之前）
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'local',
-    privileges: {
-      secure: true,
-      standard: true,
-      supportFetchAPI: true,
-      corsEnabled: true,
-    },
-  },
-])
 
 app.whenReady().then(() => {
   // 注册 local:// 协议用于加载本地图片
