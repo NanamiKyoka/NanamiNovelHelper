@@ -55,7 +55,8 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
@@ -104,6 +105,51 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
   )
 }
 
+// 可排序的表头单元格组件
+interface SortableHeaderCellProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  id?: string
+}
+
+function SortableHeaderCell({ id, children, className, style, ...props }: SortableHeaderCellProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: id || '' })
+
+  const combinedStyle: React.CSSProperties = {
+    ...style,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: id ? 'grab' : undefined
+  }
+
+  if (!id) {
+    return (
+      <th className={className} style={style} {...props}>
+        {children}
+      </th>
+    )
+  }
+
+  return (
+    <th
+      ref={setNodeRef}
+      className={className}
+      style={combinedStyle}
+      {...props}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </th>
+  )
+}
+
 interface VocabularyPanelProps {
   readOnly?: boolean
   /** 外部搜索关键词（选中文字后自动搜索） */
@@ -136,6 +182,7 @@ function VocabularyPanel({
     deleteEntry,
     createLinkedFile,
     reorderEntries,
+    updateType,
     isLoaded
   } = useVocabularyStore()
   
@@ -170,6 +217,9 @@ function VocabularyPanel({
   // 列可见性状态
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
   const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
+  
+  // 列拖拽排序状态
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null)
   
   // 拖拽状态（仅在启用排序时使用）
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -335,6 +385,50 @@ function VocabularyPanel({
   // 当前拖拽的条目
   const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
 
+  // 列拖拽排序处理函数
+  const handleColumnDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveColumnId(event.active.id as string)
+  }, [])
+
+  const handleColumnDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id && currentTypeDefinition?.tableConfig) {
+      const tableConfig = currentTypeDefinition.tableConfig
+      const visibleConfig = tableConfig
+        .filter(c => c.visible && c.fieldId !== 'name')
+        .sort((a, b) => a.order - b.order)
+
+      const oldIndex = visibleConfig.findIndex(c => c.fieldId === active.id)
+      const newIndex = visibleConfig.findIndex(c => c.fieldId === over.id)
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newConfig = [...visibleConfig]
+        const [movedItem] = newConfig.splice(oldIndex, 1)
+        newConfig.splice(newIndex, 0, movedItem)
+
+        const updatedConfig = tableConfig.map(c => {
+          if (c.fieldId === 'name') return c
+          const newIndexInNew = newConfig.findIndex(nc => nc.fieldId === c.fieldId)
+          if (newIndexInNew !== -1) {
+            return { ...c, order: newIndexInNew }
+          }
+          return c
+        })
+
+        updateType(currentTypeDefinition.id, { tableConfig: updatedConfig }).catch((error) => {
+          console.error('Failed to reorder columns:', error)
+          message.error('列排序失败')
+        })
+      }
+    }
+
+    setActiveColumnId(null)
+  }, [currentTypeDefinition, updateType])
+
+  // 当前拖拽的列
+  const activeColumn = activeColumnId ? currentTypeDefinition?.fields.find(f => f.id === activeColumnId) : null
+
   // 根据配置生成表格列
   const columns = useMemo(() => {
     // 拖拽手柄列（仅在启用排序时显示）
@@ -419,7 +513,12 @@ function VocabularyPanel({
         if (columnVisibility[field.id] === false) return null
 
         return {
-          title: field.name,
+          title: (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'grab' }}>
+              <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
+              <span>{field.name}</span>
+            </div>
+          ),
           dataIndex: ['fields', field.id],
           key: field.id,
           width: config.width || 120,
@@ -453,7 +552,12 @@ function VocabularyPanel({
           if (columnVisibility[field.id] === false) return null
           
           return {
-            title: field.name,
+            title: (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'grab' }}>
+                <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
+                <span>{field.name}</span>
+              </div>
+            ),
             dataIndex: ['fields', field.id],
             key: field.id,
             width: 120,
@@ -517,6 +621,15 @@ function VocabularyPanel({
     if (!currentTypeDefinition?.fields) return []
     return currentTypeDefinition.fields.filter(f => f.id !== 'name')
   }, [currentTypeDefinition])
+
+  // 获取可见列的 ID 列表（用于列拖拽排序）
+  const visibleColumnIds = useMemo(() => {
+    if (!currentTypeDefinition?.tableConfig) return []
+    return currentTypeDefinition.tableConfig
+      .filter(c => c.visible && c.fieldId !== 'name' && columnVisibility[c.fieldId] !== false)
+      .sort((a, b) => a.order - b.order)
+      .map(c => c.fieldId)
+  }, [currentTypeDefinition, columnVisibility])
 
   // 切换列可见性
   const toggleColumnVisibility = (fieldId: string): void => {
@@ -1360,25 +1473,40 @@ function VocabularyPanel({
               items={sortedEntries.map(e => e.id)}
               strategy={verticalListSortingStrategy}
             >
-              <Table
-                dataSource={sortedEntries}
-                columns={columns as unknown[]}
-                rowKey="id"
-                size="small"
-                scroll={{ x: 'max-content' }}
-                pagination={{ pageSize: 10, align: 'center' }}
-                locale={{ emptyText: renderEmptyState() }}
-                rowSelection={batchMode ? {
-                  selectedRowKeys,
-                  onChange: setSelectedRowKeys,
-                  selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-                } : undefined}
-                components={{
-                  body: {
-                    row: SortableRow
-                  }
-                }}
-              />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleColumnDragStart}
+                onDragEnd={handleColumnDragEnd}
+              >
+                <SortableContext
+                  items={visibleColumnIds}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <Table
+                    dataSource={sortedEntries}
+                    columns={columns as unknown[]}
+                    rowKey="id"
+                    size="small"
+                    scroll={{ x: 'max-content' }}
+                    pagination={{ pageSize: 10, align: 'center' }}
+                    locale={{ emptyText: renderEmptyState() }}
+                    rowSelection={batchMode ? {
+                      selectedRowKeys,
+                      onChange: setSelectedRowKeys,
+                      selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+                    } : undefined}
+                    components={{
+                      body: {
+                        row: SortableRow
+                      },
+                      header: {
+                        cell: SortableHeaderCell
+                      }
+                    }}
+                  />
+                </SortableContext>
+              </DndContext>
             </SortableContext>
             
             <DragOverlay>
@@ -1397,20 +1525,37 @@ function VocabularyPanel({
             </DragOverlay>
           </DndContext>
         ) : (
-          <Table
-            dataSource={filteredEntries}
-            columns={columns as unknown[]}
-            rowKey="id"
-            size="small"
-            scroll={{ x: 'max-content' }}
-            pagination={{ pageSize: 10, align: 'center' }}
-            locale={{ emptyText: renderEmptyState() }}
-            rowSelection={batchMode ? {
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-              selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-            } : undefined}
-          />
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleColumnDragStart}
+            onDragEnd={handleColumnDragEnd}
+          >
+            <SortableContext
+              items={visibleColumnIds}
+              strategy={horizontalListSortingStrategy}
+            >
+              <Table
+                dataSource={filteredEntries}
+                columns={columns as unknown[]}
+                rowKey="id"
+                size="small"
+                scroll={{ x: 'max-content' }}
+                pagination={{ pageSize: 10, align: 'center' }}
+                locale={{ emptyText: renderEmptyState() }}
+                rowSelection={batchMode ? {
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
+                  selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+                } : undefined}
+                components={{
+                  header: {
+                    cell: SortableHeaderCell
+                  }
+                }}
+              />
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
