@@ -600,7 +600,6 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     embedded 
                     currentTypeId={selectedTypeId || ''} 
                     onTypeChange={setSelectedTypeId}
-                    enableSorting={true}
                   />
                 )}
                 {activeTab === 'typeSettings' && (

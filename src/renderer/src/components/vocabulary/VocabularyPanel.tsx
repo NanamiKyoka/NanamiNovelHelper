@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   Table,
   Button,
@@ -32,7 +32,6 @@ import {
   PictureOutlined,
   SettingOutlined,
   FullscreenOutlined,
-  HolderOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -43,26 +42,6 @@ import {
   FileAddOutlined,
   FolderOpenOutlined
 } from '@ant-design/icons'
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverlay
-} from '@dnd-kit/core'
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-  horizontalListSortingStrategy
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
 import type { 
   VocabularyEntry, 
@@ -76,73 +55,6 @@ import VocabularyFullscreen from './VocabularyFullscreen'
 import { getIconPreview } from './IconPicker'
 import styles from './VocabularyPanel.module.css'
 
-// 可排序的表格行组件
-interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
-  'data-row-key': string
-}
-
-function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
-
-  const style: React.CSSProperties = {
-    ...props.style,
-    transform: CSS.Transform.toString(transform),
-    transition
-  }
-
-  return (
-    <tr
-      {...props}
-      ref={setNodeRef}
-      style={style}
-      className={`${props.className || ''} ${isDragging ? 'dragging' : ''}`}
-      {...attributes}
-      {...listeners}
-    />
-  )
-}
-
-// 可拖拽的列标题组件
-interface DraggableColumnHeaderProps {
-  fieldId: string
-  title: string
-}
-
-function DraggableColumnHeader({ fieldId, title }: DraggableColumnHeaderProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: fieldId })
-
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4
-  }
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <HolderOutlined style={{ color: '#999', fontSize: 12 }} />
-      <span>{title}</span>
-    </div>
-  )
-}
-
 interface VocabularyPanelProps {
   readOnly?: boolean
   /** 外部搜索关键词（选中文字后自动搜索） */
@@ -153,8 +65,6 @@ interface VocabularyPanelProps {
   currentTypeId?: string
   /** 类型切换回调（嵌入模式下使用） */
   onTypeChange?: (typeId: string) => void
-  /** 启用拖拽排序（仅在编辑界面启用） */
-  enableSorting?: boolean
 }
 
 function VocabularyPanel({ 
@@ -162,8 +72,7 @@ function VocabularyPanel({
   externalSearchText,
   embedded = false,
   currentTypeId,
-  onTypeChange,
-  enableSorting = false
+  onTypeChange
 }: VocabularyPanelProps): JSX.Element {
   const {
     types,
@@ -174,7 +83,6 @@ function VocabularyPanel({
     updateEntry,
     deleteEntry,
     createLinkedFile,
-    reorderEntries,
     updateType,
     isLoaded
   } = useVocabularyStore()
@@ -211,24 +119,8 @@ function VocabularyPanel({
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
   const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
   
-  // 列拖拽排序状态
-  const [activeColumnId, setActiveColumnId] = useState<string | null>(null)
+  // 列拖拽排序状态（已移除）
   
-  // 拖拽状态（仅在启用排序时使用）
-  const [activeId, setActiveId] = useState<string | null>(null)
-  
-  // DnD 传感器（仅在启用排序时使用）
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5
-      }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
-  )
-
   // 嵌入模式下使用外部传入的 currentTypeId，否则使用内部状态
   const currentType = embedded ? (currentTypeId || '') : internalCurrentType
   const setCurrentType = embedded 
@@ -344,105 +236,10 @@ function VocabularyPanel({
     setFilterDateRange(null)
   }
 
-  // 按 order 字段排序的条目（用于拖拽排序）
-  const sortedEntries = useMemo(() => {
-    return [...filteredEntries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-  }, [filteredEntries])
-
-  // 拖拽开始
-  const handleDragStart = useCallback((event: DragStartEvent): void => {
-    setActiveId(event.active.id as string)
-  }, [])
-  
-  // 拖拽结束
-  const handleDragEnd = useCallback((event: DragEndEvent): void => {
-    const { active, over } = event
-    
-    if (over && active.id !== over.id && currentType) {
-      const oldIndex = sortedEntries.findIndex(e => e.id === active.id)
-      const newIndex = sortedEntries.findIndex(e => e.id === over.id)
-      
-      const newEntries = arrayMove(sortedEntries, oldIndex, newIndex)
-      const newEntryIds = newEntries.map(e => e.id)
-      
-      // 调用 reorderEntries 更新顺序
-      reorderEntries(currentType, newEntryIds).catch((error) => {
-        console.error('Failed to reorder entries:', error)
-        message.error('排序失败')
-      })
-    }
-    
-    setActiveId(null)
-  }, [sortedEntries, currentType, reorderEntries])
-  
-  // 当前拖拽的条目
-  const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
-
-  // 列拖拽排序处理函数
-  const handleColumnDragStart = useCallback((event: DragStartEvent): void => {
-    setActiveColumnId(event.active.id as string)
-  }, [])
-
-  const handleColumnDragEnd = useCallback((event: DragEndEvent): void => {
-    const { active, over } = event
-
-    if (over && active.id !== over.id && currentTypeDefinition?.tableConfig) {
-      const tableConfig = currentTypeDefinition.tableConfig
-      const visibleConfig = tableConfig
-        .filter(c => c.visible && c.fieldId !== 'name')
-        .sort((a, b) => a.order - b.order)
-
-      const oldIndex = visibleConfig.findIndex(c => c.fieldId === active.id)
-      const newIndex = visibleConfig.findIndex(c => c.fieldId === over.id)
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newConfig = [...visibleConfig]
-        const [movedItem] = newConfig.splice(oldIndex, 1)
-        newConfig.splice(newIndex, 0, movedItem)
-
-        const updatedConfig = tableConfig.map(c => {
-          if (c.fieldId === 'name') return c
-          const newIndexInNew = newConfig.findIndex(nc => nc.fieldId === c.fieldId)
-          if (newIndexInNew !== -1) {
-            return { ...c, order: newIndexInNew }
-          }
-          return c
-        })
-
-        updateType(currentTypeDefinition.id, { tableConfig: updatedConfig }).catch((error) => {
-          console.error('Failed to reorder columns:', error)
-          message.error('列排序失败')
-        })
-      }
-    }
-
-    setActiveColumnId(null)
-  }, [currentTypeDefinition, updateType])
-
-  // 当前拖拽的列
-  const activeColumn = activeColumnId ? currentTypeDefinition?.fields.find(f => f.id === activeColumnId) : null
-
   // 根据配置生成表格列
   const columns = useMemo(() => {
-    // 拖拽手柄列（仅在启用排序时显示）
-    const dragHandleColumn = (enableSorting && !readOnly) ? {
-      title: '',
-      key: 'dragHandle',
-      width: 40,
-      fixed: 'left' as const,
-      className: 'drag-handle-cell',
-      render: (_: unknown, record: VocabularyEntry) => (
-        <div
-          className={styles.dragHandle}
-          style={{ cursor: 'grab', padding: '4px' }}
-        >
-          <HolderOutlined style={{ color: '#999' }} />
-        </div>
-      )
-    } : null
-
     if (!currentTypeDefinition) {
-      return [dragHandleColumn, ...getDefaultColumns()].filter(Boolean)
+      return getDefaultColumns()
     }
 
     const fields = currentTypeDefinition.fields
@@ -450,7 +247,7 @@ function VocabularyPanel({
 
     // 如果没有字段，使用默认列
     if (!fields || fields.length === 0) {
-      return [dragHandleColumn, ...getDefaultColumns()].filter(Boolean)
+      return getDefaultColumns()
     }
 
     // 创建字段映射便于查找
@@ -506,7 +303,7 @@ function VocabularyPanel({
         if (columnVisibility[field.id] === false) return null
 
         return {
-          title: <DraggableColumnHeader fieldId={field.id} title={field.name} />,
+          title: field.name,
           dataIndex: ['fields', field.id],
           key: field.id,
           width: config.width || 120,
@@ -540,7 +337,7 @@ function VocabularyPanel({
           if (columnVisibility[field.id] === false) return null
           
           return {
-            title: <DraggableColumnHeader fieldId={field.id} title={field.name} />,
+            title: field.name,
             dataIndex: ['fields', field.id],
             key: field.id,
             width: 120,
@@ -596,23 +393,14 @@ function VocabularyPanel({
       )
     }
 
-    return [dragHandleColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
-  }, [currentTypeDefinition, readOnly, enableSorting, columnVisibility])
+    return [nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
+  }, [currentTypeDefinition, readOnly, columnVisibility])
 
   // 获取所有可选列
   const allFieldColumns = useMemo(() => {
     if (!currentTypeDefinition?.fields) return []
     return currentTypeDefinition.fields.filter(f => f.id !== 'name')
   }, [currentTypeDefinition])
-
-  // 获取可见列的 ID 列表（用于列拖拽排序）
-  const visibleColumnIds = useMemo(() => {
-    if (!currentTypeDefinition?.tableConfig) return []
-    return currentTypeDefinition.tableConfig
-      .filter(c => c.visible && c.fieldId !== 'name' && columnVisibility[c.fieldId] !== false)
-      .sort((a, b) => a.order - b.order)
-      .map(c => c.fieldId)
-  }, [currentTypeDefinition, columnVisibility])
 
   // 切换列可见性
   const toggleColumnVisibility = (fieldId: string): void => {
@@ -1445,92 +1233,21 @@ function VocabularyPanel({
           <div className={styles.skeletonContainer}>
             <Skeleton active paragraph={{ rows: 8 }} />
           </div>
-        ) : enableSorting ? (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={sortedEntries.map(e => e.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleColumnDragStart}
-                onDragEnd={handleColumnDragEnd}
-              >
-                <SortableContext
-                  items={visibleColumnIds}
-                  strategy={horizontalListSortingStrategy}
-                >
-                  <Table
-                    dataSource={sortedEntries}
-                    columns={columns as unknown[]}
-                    rowKey="id"
-                    size="small"
-                    scroll={{ x: 'max-content' }}
-                    pagination={{ pageSize: 10, align: 'center' }}
-                    locale={{ emptyText: renderEmptyState() }}
-                    rowSelection={batchMode ? {
-                      selectedRowKeys,
-                      onChange: setSelectedRowKeys,
-                      selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-                    } : undefined}
-                    components={{
-                      body: {
-                        row: SortableRow
-                      }
-                    }}
-                  />
-                </SortableContext>
-              </DndContext>
-            </SortableContext>
-            
-            <DragOverlay>
-              {activeEntry ? (
-                <div className={styles.overlayRow}>
-                  <Table
-                    dataSource={[activeEntry]}
-                    columns={columns as unknown[]}
-                    rowKey="id"
-                    size="small"
-                    pagination={false}
-                    showHeader={false}
-                  />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleColumnDragStart}
-            onDragEnd={handleColumnDragEnd}
-          >
-            <SortableContext
-              items={visibleColumnIds}
-              strategy={horizontalListSortingStrategy}
-            >
-              <Table
-                dataSource={filteredEntries}
-                columns={columns as unknown[]}
-                rowKey="id"
-                size="small"
-                scroll={{ x: 'max-content' }}
-                pagination={{ pageSize: 10, align: 'center' }}
-                locale={{ emptyText: renderEmptyState() }}
-                rowSelection={batchMode ? {
-                  selectedRowKeys,
-                  onChange: setSelectedRowKeys,
-                  selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
-                } : undefined}
-              />
-            </SortableContext>
-          </DndContext>
+          <Table
+            dataSource={filteredEntries}
+            columns={columns as unknown[]}
+            rowKey="id"
+            size="small"
+            scroll={{ x: 'max-content' }}
+            pagination={{ pageSize: 10, align: 'center' }}
+            locale={{ emptyText: renderEmptyState() }}
+            rowSelection={batchMode ? {
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
+            } : undefined}
+          />
         )}
       </div>
 

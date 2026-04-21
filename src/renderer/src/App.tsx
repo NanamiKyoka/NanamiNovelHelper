@@ -482,7 +482,6 @@ function App(): JSX.Element {
                   <VocabularyPanel 
                     readOnly={false} 
                     externalSearchText={selectedText}
-                    enableSorting={true}
                   />
                 )}
                 {rightPanelKey === 'sensitive' && (
