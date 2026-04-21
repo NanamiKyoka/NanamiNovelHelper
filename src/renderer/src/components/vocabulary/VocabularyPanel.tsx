@@ -390,7 +390,15 @@ function VocabularyPanel({
           />
           <span>{name}</span>
           {record.linkedFilePath && (
-            <LinkOutlined style={{ fontSize: 12, color: '#999' }} />
+            <Tooltip title="点击打开关联文件">
+              <LinkOutlined 
+                style={{ fontSize: 12, color: '#1890ff', cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenLinkedFile(record.linkedFilePath!)
+                }}
+              />
+            </Tooltip>
           )}
         </Space>
       )
@@ -1000,6 +1008,16 @@ function VocabularyPanel({
     }
   }
 
+  // 打开关联文件
+  const handleOpenLinkedFile = async (filePath: string): Promise<void> => {
+    try {
+      await window.electron.ipcRenderer.invoke('open-external', filePath)
+    } catch (error) {
+      console.error('打开文件失败:', error)
+      message.error('打开文件失败')
+    }
+  }
+
   // 渲染字段输入组件
   const renderFieldInput = (field: FieldDefinition): JSX.Element => {
     switch (field.type) {
@@ -1469,23 +1487,31 @@ function VocabularyPanel({
           {/* 关联文件 */}
           <Form.Item 
             name="linkedFilePath" 
-            label={
-              <Space>
-                关联文件
-                {editingEntry && (
-                  <Button 
-                    type="link" 
-                    size="small" 
-                    onClick={handleCreateLinkedFile}
-                    disabled={!editingEntry.linkedFilePath}
-                  >
-                    {editingEntry.linkedFilePath ? '重新生成' : '创建关联文件'}
-                  </Button>
-                )}
-              </Space>
-            }
+            label="关联文件"
           >
-            <Input placeholder="关联的 Markdown 文件路径" disabled />
+            <Space.Compact style={{ width: '100%' }}>
+              <Input 
+                placeholder="关联的 Markdown 文件路径" 
+                disabled 
+                style={{ flex: 1 }}
+              />
+              {editingEntry?.linkedFilePath && (
+                <Tooltip title="打开文件">
+                  <Button 
+                    icon={<FolderOpenOutlined />}
+                    onClick={() => handleOpenLinkedFile(editingEntry.linkedFilePath!)}
+                  />
+                </Tooltip>
+              )}
+              {editingEntry && (
+                <Tooltip title={editingEntry.linkedFilePath ? '重新生成关联文件' : '创建关联文件'}>
+                  <Button 
+                    icon={<FileAddOutlined />}
+                    onClick={handleCreateLinkedFile}
+                  />
+                </Tooltip>
+              )}
+            </Space.Compact>
           </Form.Item>
         </Form>
       </Drawer>
