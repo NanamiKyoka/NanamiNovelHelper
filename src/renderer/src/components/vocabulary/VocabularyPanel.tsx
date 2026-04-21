@@ -18,8 +18,7 @@ import {
   DatePicker,
   Collapse,
   Badge,
-  Checkbox,
-  Tooltip
+  Checkbox
 } from 'antd'
 import type { MenuProps, TableProps } from 'antd'
 import dayjs from 'dayjs'
@@ -39,9 +38,7 @@ import {
   ExportOutlined,
   FilterOutlined,
   ClearOutlined,
-  ColumnHeightOutlined,
-  FolderOpenOutlined,
-  FileAddOutlined
+  ColumnHeightOutlined
 } from '@ant-design/icons'
 import {
   DndContext,

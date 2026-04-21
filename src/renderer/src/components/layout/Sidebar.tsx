@@ -77,7 +77,7 @@ function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Elem
       case 'search':
         return <SearchPanel />
       case 'vocabulary':
-        return <VocabularyPanel />
+        return <VocabularyPanel enableSorting={true} />
       case 'sensitive':
         return <SensitiveWordPanel />
       case 'git':
