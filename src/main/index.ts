@@ -59,6 +59,14 @@ function createWindow(): void {
     mainWindow?.webContents.send('window-maximized', false)
   })
 
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow?.webContents.send('window-fullscreen-change', true)
+  })
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow?.webContents.send('window-fullscreen-change', false)
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -139,100 +147,96 @@ ipcMain.on('window-minimize', () => {
   mainWindow?.minimize()
 })
 
-ipcMain.on('window-maximize', () => {
-  if (mainWindow?.isMaximized()) {
-    mainWindow.unmaximize()
-  } else {
-    mainWindow?.maximize()
-  }
-})
+let mainWindowHandlersRegistered = false
 
-ipcMain.on('window-close', () => {
-  mainWindow?.close()
-})
+function registerMainWindowHandlers(): void {
+  if (mainWindowHandlersRegistered) return
+  mainWindowHandlersRegistered = true
 
-ipcMain.handle('window-is-maximized', () => {
-  return mainWindow?.isMaximized() ?? false
-})
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow?.maximize()
+    }
+  })
 
-// 全屏模式控制
-ipcMain.on('window-set-fullscreen', (_, isFullscreen: boolean) => {
-  mainWindow?.setFullScreen(isFullscreen)
-})
+  ipcMain.on('window-close', () => {
+    mainWindow?.close()
+  })
 
-ipcMain.handle('window-is-fullscreen', () => {
-  return mainWindow?.isFullScreen() ?? false
-})
+  ipcMain.handle('window-is-maximized', () => {
+    return mainWindow?.isMaximized() ?? false
+  })
 
-// 全屏状态变化通知
-mainWindow?.on('enter-full-screen', () => {
-  mainWindow?.webContents.send('window-fullscreen-change', true)
-})
+  ipcMain.on('window-set-fullscreen', (_, isFullscreen: boolean) => {
+    mainWindow?.setFullScreen(isFullscreen)
+  })
 
-mainWindow?.on('leave-full-screen', () => {
-  mainWindow?.webContents.send('window-fullscreen-change', false)
-})
+  ipcMain.handle('window-is-fullscreen', () => {
+    return mainWindow?.isFullScreen() ?? false
+  })
 
-// 终端窗口 IPC 处理
-ipcMain.handle('terminal-window:create', () => {
-  if (terminalWindow) {
-    terminalWindow.focus()
+  ipcMain.handle('terminal-window:create', () => {
+    if (terminalWindow) {
+      terminalWindow.focus()
+      return true
+    }
+    createTerminalWindow()
     return true
-  }
-  createTerminalWindow()
-  return true
-})
+  })
 
-ipcMain.handle('terminal-window:is-open', () => {
-  return terminalWindow !== null
-})
+  ipcMain.handle('terminal-window:is-open', () => {
+    return terminalWindow !== null
+  })
 
-ipcMain.on('terminal-window:close', () => {
-  terminalWindow?.close()
-})
+  ipcMain.on('terminal-window:close', () => {
+    terminalWindow?.close()
+  })
 
-ipcMain.on('terminal-window:show', () => {
-  if (terminalWindow) {
-    terminalWindow.show()
-    terminalWindow.focus()
-  }
-})
+  ipcMain.on('terminal-window:show', () => {
+    if (terminalWindow) {
+      terminalWindow.show()
+      terminalWindow.focus()
+    }
+  })
 
-ipcMain.on('terminal-window:minimize', () => {
-  terminalWindow?.minimize()
-})
+  ipcMain.on('terminal-window:minimize', () => {
+    terminalWindow?.minimize()
+  })
 
-ipcMain.on('terminal-window:maximize', () => {
-  if (terminalWindow?.isMaximized()) {
-    terminalWindow.unmaximize()
-  } else {
-    terminalWindow?.maximize()
-  }
-})
+  ipcMain.on('terminal-window:maximize', () => {
+    if (terminalWindow?.isMaximized()) {
+      terminalWindow.unmaximize()
+    } else {
+      terminalWindow?.maximize()
+    }
+  })
 
-ipcMain.handle('terminal-window:is-maximized', () => {
-  return terminalWindow?.isMaximized() ?? false
-})
+  ipcMain.handle('terminal-window:is-maximized', () => {
+    return terminalWindow?.isMaximized() ?? false
+  })
 
-ipcMain.handle('shell:open-external', async (_event, url: string) => {
-  try {
-    await shell.openExternal(url)
-    return true
-  } catch {
+  ipcMain.handle('shell:open-external', async (_event, url: string) => {
+    try {
+      await shell.openExternal(url)
+      return true
+    } catch {
+      return false
+    }
+  })
+
+  ipcMain.handle('updater:check-for-updates', async () => {
     return false
-  }
-})
+  })
 
-ipcMain.handle('updater:check-for-updates', async () => {
-  return false
-})
+  ipcMain.handle('updater:download-update', async () => {
+    return false
+  })
 
-ipcMain.handle('updater:download-update', async () => {
-  return false
-})
-
-ipcMain.on('updater:quit-and-install', () => {
-})
+  ipcMain.on('updater:quit-and-install', () => {
+  })
+}
 
 // 注册 local:// 协议为特权协议（必须在 app.ready 之前）
 protocol.registerSchemesAsPrivileged([
@@ -280,6 +284,7 @@ app.whenReady().then(() => {
   })
 
   // 注册 IPC 处理器
+  registerMainWindowHandlers()
   registerProjectHandlers()
   registerVocabularyHandlers()
   registerFileHandlers()
