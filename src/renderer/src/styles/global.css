@@ -548,33 +548,37 @@ a:hover {
 
 /* Message (Toast) 组件主题适配 */
 body.dark .ant-message-notice-content {
-  background-color: var(--bg-elevated, #2d2d2d);
+  background-color: var(--bg-elevated, #2d2d2d) !important;
   border: 1px solid var(--border-primary, #3c3c3c);
   box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.45));
 }
 
-body.dark .ant-message .anticon {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+body.dark .ant-message-notice-content .ant-message-custom-content {
+  color: var(--text-primary, rgba(255, 255, 255, 0.85)) !important;
 }
 
-body.dark .ant-message-success .anticon {
+body.dark .ant-message-notice-content span {
+  color: var(--text-primary, rgba(255, 255, 255, 0.85)) !important;
+}
+
+body.dark .ant-message-notice-content .anticon {
   color: var(--color-success, #49aa19);
 }
 
-body.dark .ant-message-error .anticon {
+body.dark .ant-message-notice-content.ant-message-success .anticon {
+  color: var(--color-success, #49aa19);
+}
+
+body.dark .ant-message-notice-content.ant-message-error .anticon {
   color: var(--color-error, #a61d24);
 }
 
-body.dark .ant-message-warning .anticon {
+body.dark .ant-message-notice-content.ant-message-warning .anticon {
   color: var(--color-warning, #d89614);
 }
 
-body.dark .ant-message-info .anticon {
+body.dark .ant-message-notice-content.ant-message-info .anticon {
   color: var(--color-info, #177ddc);
-}
-
-body.dark .ant-message .ant-message-custom-content {
-  color: var(--text-primary, rgba(255, 255, 255, 0.85));
 }
 
 body.light .ant-message-notice-content {
