@@ -3,7 +3,7 @@
  * 左侧类型列表 + 右侧条目管理/高亮设置
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   Layout,
   Button,
@@ -62,10 +62,11 @@ import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
 import type { VocabularyType, VocabularyEntry, FieldDefinition } from '@types/vocabulary'
 import { getBuiltInVocabularyTypes, DEFAULT_COLORS } from '@types/vocabulary'
-import VocabularyPanel from './VocabularyPanel'
+import VocabularyPanel, { type VocabularyPanelRef } from './VocabularyPanel'
 import { HighlightSettings } from '@components/settings/HighlightSettings'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
 import IconPicker, { getIconPreview, type IconValue } from './IconPicker'
+import { useShortcuts } from '@hooks/useShortcuts'
 import { v4 as uuidv4 } from 'uuid'
 import styles from './VocabularyFullscreen.module.css'
 
@@ -220,6 +221,9 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const panelRef = useRef<VocabularyPanelRef>(null)
+  const typeSearchInputRef = useRef<Input>(null)
+
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
   
@@ -264,6 +268,51 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       setSelectedTypeId(types[0].id)
     }
   }, [types, selectedTypeId])
+
+  // 注册快捷键
+  useShortcuts([
+    {
+      id: 'vocabulary.create',
+      key: 'Ctrl+N',
+      action: () => {
+        if (activeTab === 'entries' && selectedTypeId) {
+          panelRef.current?.openCreateDrawer()
+        }
+      },
+      description: '新建词汇',
+      category: '词汇管理'
+    },
+    {
+      id: 'vocabulary.search',
+      key: 'Ctrl+F',
+      action: () => {
+        if (activeTab === 'entries') {
+          panelRef.current?.focusSearch()
+        } else {
+          typeSearchInputRef.current?.focus()
+        }
+      },
+      description: '聚焦搜索框',
+      category: '词汇管理'
+    },
+    {
+      id: 'vocabulary.close',
+      key: 'Escape',
+      action: () => {
+        if (panelRef.current?.isDrawerOpen()) {
+          panelRef.current.closeDrawer()
+        } else if (isTypeModalOpen) {
+          setIsTypeModalOpen(false)
+        } else if (isIconPickerOpen) {
+          setIsIconPickerOpen(false)
+        } else {
+          onBack()
+        }
+      },
+      description: '关闭弹窗或返回',
+      category: '词汇管理'
+    }
+  ])
 
   // 选中的类型
   const selectedType = types.find(t => t.id === selectedTypeId) || null
@@ -497,13 +546,19 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+            返回
+            <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.6 }}>Esc</span>
+          </Button>
           <Title level={5} className={styles.title}>词汇管理</Title>
         </div>
         <div className={styles.toolbarRight}>
           <span className={styles.stats}>
             {types.length} 个类型 · {entries.length} 个条目
           </span>
+          <Tooltip title="Ctrl+N 新建 | Ctrl+F 搜索 | Esc 返回">
+            <Tag style={{ marginLeft: 8 }}>快捷键</Tag>
+          </Tooltip>
         </div>
       </div>
 
@@ -512,6 +567,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         <Sider width={280} className={styles.sider}>
           <div className={styles.siderHeader}>
             <Input.Search
+              ref={typeSearchInputRef}
               placeholder="搜索类型..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -596,6 +652,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               <div className={styles.tabContent}>
                 {activeTab === 'entries' && (
                   <VocabularyPanel 
+                    ref={panelRef}
                     readOnly={false} 
                     embedded 
                     currentTypeId={selectedTypeId || ''} 

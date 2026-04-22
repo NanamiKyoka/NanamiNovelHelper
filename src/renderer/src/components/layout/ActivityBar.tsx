@@ -22,6 +22,7 @@ import styles from './ActivityBar.module.css'
 
 interface ActivityBarProps {
   activePanel: string
+  sidebarCollapsed: boolean
   onPanelClick: (panelId: string) => void
 }
 
@@ -50,7 +51,7 @@ const SIDEBAR_BADGE_CONFIG: Record<SidebarBadgeType, { icon: React.ComponentType
 // 拖拽数据类型
 const DRAG_DATA_TYPE = 'application/sidebar-badge'
 
-function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Element {
+function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBarProps): JSX.Element {
   const projectSettings = useSettingsStore((state) => state.projectSettings)
   const updateSidebarBadgeOrder = useSettingsStore((state) => state.updateSidebarBadgeOrder)
   
@@ -187,7 +188,7 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
       <div className={styles.mainButtons} role="navigation" aria-label="主导航">
         {MAIN_BUTTONS.map((button) => {
           const IconComponent = button.icon
-          const isActive = activePanel === button.id
+          const isActive = !sidebarCollapsed && activePanel === button.id
           
           return (
             <Tooltip key={button.id} title={button.tooltip} placement="right">
@@ -216,7 +217,7 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
           if (!config) return null
           
           const IconComponent = config.icon
-          const isActive = activePanel === badgeId
+          const isActive = !sidebarCollapsed && activePanel === badgeId
           const isDragging = draggedIndex === index
           const showTopIndicator = dragOverIndex === index && dropPosition === 'top'
           const showBottomIndicator = dragOverIndex === index && dropPosition === 'bottom'
@@ -249,11 +250,11 @@ function ActivityBar({ activePanel, onPanelClick }: ActivityBarProps): JSX.Eleme
         <div className={styles.divider} />
         <Tooltip title={SETTINGS_BUTTON.tooltip} placement="right">
           <div
-            className={`${styles.button} ${activePanel === SETTINGS_BUTTON.id ? styles.active : ''}`}
+            className={`${styles.button} ${!sidebarCollapsed && activePanel === SETTINGS_BUTTON.id ? styles.active : ''}`}
             onClick={() => onPanelClick(SETTINGS_BUTTON.id)}
             role="button"
             aria-label={SETTINGS_BUTTON.tooltip}
-            aria-pressed={activePanel === SETTINGS_BUTTON.id}
+            aria-pressed={!sidebarCollapsed && activePanel === SETTINGS_BUTTON.id}
             tabIndex={0}
           >
             <SETTINGS_BUTTON.icon className={styles.icon} />

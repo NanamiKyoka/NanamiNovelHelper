@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useCallback, forwardRef, useImperativeHandle, useRef } from 'react'
 import {
   Table,
   Button,
@@ -15,14 +15,12 @@ import {
   Tabs,
   Dropdown,
   Modal,
-  DatePicker,
   Collapse,
   Badge,
   Checkbox,
   Tooltip
 } from 'antd'
 import type { MenuProps, TableProps } from 'antd'
-import dayjs from 'dayjs'
 import {
   PlusOutlined,
   EditOutlined,
@@ -112,23 +110,29 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
 
 interface VocabularyPanelProps {
   readOnly?: boolean
-  /** 外部搜索关键词（选中文字后自动搜索） */
   externalSearchText?: string
-  /** 嵌入模式（隐藏类型标签页和工具栏，用于全屏编辑器） */
   embedded?: boolean
-  /** 当前类型ID（嵌入模式下使用） */
   currentTypeId?: string
-  /** 类型切换回调（嵌入模式下使用） */
   onTypeChange?: (typeId: string) => void
 }
 
-function VocabularyPanel({ 
-  readOnly = false, 
-  externalSearchText,
-  embedded = false,
-  currentTypeId,
-  onTypeChange
-}: VocabularyPanelProps): JSX.Element {
+export interface VocabularyPanelRef {
+  openCreateDrawer: () => void
+  closeDrawer: () => void
+  focusSearch: () => void
+  isDrawerOpen: () => boolean
+}
+
+const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(function VocabularyPanel(
+  { 
+    readOnly = false, 
+    externalSearchText,
+    embedded = false,
+    currentTypeId,
+    onTypeChange
+  },
+  ref
+): JSX.Element {
   const {
     types,
     entries,
@@ -165,7 +169,6 @@ function VocabularyPanel({
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [filterColor, setFilterColor] = useState<string>('')
   const [filterHasLinkedFile, setFilterHasLinkedFile] = useState<boolean | null>(null)
-  const [filterDateRange, setFilterDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   
   // 快速创建状态
   const [quickAddMode, setQuickAddMode] = useState(false)
@@ -181,6 +184,8 @@ function VocabularyPanel({
   
   // 拖拽排序状态
   const [activeId, setActiveId] = useState<string | null>(null)
+  
+  const searchInputRef = useRef<Input>(null)
   
   // DnD 传感器
   const sensors = useSensors(
@@ -261,17 +266,9 @@ function VocabularyPanel({
         if (filterHasLinkedFile !== hasLinkedFile) return false
       }
       
-      // 日期范围筛选
-      if (filterDateRange && filterDateRange[0] && filterDateRange[1]) {
-        const itemDate = dayjs(item.updatedAt)
-        if (itemDate.isBefore(filterDateRange[0], 'day') || itemDate.isAfter(filterDateRange[1], 'day')) {
-          return false
-        }
-      }
-      
       return true
     })
-  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile, filterDateRange])
+  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile])
 
   // 按 order 字段排序的条目（用于拖拽排序）
   const sortedEntries = useMemo(() => {
@@ -330,16 +327,14 @@ function VocabularyPanel({
     if (filterTags.length > 0) count++
     if (filterColor) count++
     if (filterHasLinkedFile !== null) count++
-    if (filterDateRange) count++
     return count
-  }, [filterTags, filterColor, filterHasLinkedFile, filterDateRange])
+  }, [filterTags, filterColor, filterHasLinkedFile])
 
   // 清除所有筛选
   const clearAllFilters = (): void => {
     setFilterTags([])
     setFilterColor('')
     setFilterHasLinkedFile(null)
-    setFilterDateRange(null)
   }
 
   // 根据配置生成表格列
@@ -633,6 +628,13 @@ function VocabularyPanel({
     })
     setDrawerOpen(true)
   }
+
+  useImperativeHandle(ref, () => ({
+    openCreateDrawer: handleCreate,
+    closeDrawer: () => setDrawerOpen(false),
+    focusSearch: () => searchInputRef.current?.focus(),
+    isDrawerOpen: () => drawerOpen
+  }), [drawerOpen])
 
   // 快速创建词汇
   const handleQuickAdd = async (): Promise<void> => {
@@ -1105,6 +1107,7 @@ function VocabularyPanel({
       <div className={styles.toolbar}>
         <Space>
           <Input.Search
+            ref={searchInputRef}
             placeholder="搜索..."
             allowClear
             style={{ width: embedded ? '100%' : 200 }}
@@ -1320,17 +1323,6 @@ function VocabularyPanel({
                 <Select.Option value={true}>有关联</Select.Option>
                 <Select.Option value={false}>无关联</Select.Option>
               </Select>
-            </div>
-            
-            {/* 日期范围筛选 */}
-            <div className={styles.filterItem}>
-              <span className={styles.filterLabel}>更新时间：</span>
-              <DatePicker.RangePicker
-                value={filterDateRange}
-                onChange={(dates) => setFilterDateRange(dates)}
-                size="small"
-                style={{ width: 220 }}
-              />
             </div>
             
             {/* 清除筛选 */}

@@ -407,6 +407,7 @@ function App(): JSX.Element {
         <nav aria-label="主导航">
           <ActivityBar
             activePanel={activePanel}
+            sidebarCollapsed={sidebarCollapsed}
             onPanelClick={handleActivityBarClick}
           />
         </nav>
