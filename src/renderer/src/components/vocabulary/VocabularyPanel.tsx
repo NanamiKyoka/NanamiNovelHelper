@@ -958,6 +958,68 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
     )
   }
 
+  // 批量编辑状态
+  const [batchEditModalOpen, setBatchEditModalOpen] = useState(false)
+  const [batchEditForm] = Form.useForm()
+
+  // 打开批量编辑弹窗
+  const handleBatchEdit = (): void => {
+    if (selectedRowKeys.length === 0) return
+    batchEditForm.resetFields()
+    setBatchEditModalOpen(true)
+  }
+
+  // 执行批量编辑
+  const executeBatchEdit = async (): Promise<void> => {
+    const values = await batchEditForm.validateFields()
+    
+    setLoading(true)
+    let successCount = 0
+    
+    try {
+      for (const id of selectedRowKeys) {
+        const updates: Partial<VocabularyEntry> = {}
+        
+        if (values.tags !== undefined) {
+          if (values.tagsMode === 'replace') {
+            updates.tags = values.tags
+          } else if (values.tagsMode === 'add') {
+            const entry = entries.find(e => e.id === id)
+            if (entry) {
+              updates.tags = [...new Set([...entry.tags, ...values.tags])]
+            }
+          } else if (values.tagsMode === 'remove') {
+            const entry = entries.find(e => e.id === id)
+            if (entry) {
+              updates.tags = entry.tags.filter(t => !values.tags.includes(t))
+            }
+          }
+        }
+        
+        if (values.color) {
+          updates.color = typeof values.color === 'string' 
+            ? values.color 
+            : values.color?.toHexString?.()
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          await updateEntry(id as string, updates)
+          successCount++
+        }
+      }
+      
+      message.success(`成功更新 ${successCount} 个词汇`)
+      setBatchEditModalOpen(false)
+      setSelectedRowKeys([])
+      setBatchMode(false)
+    } catch (error) {
+      console.error('批量编辑失败:', error)
+      message.error('批量编辑失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 批量删除
   const handleBatchDelete = (): void => {
     if (readOnly || selectedRowKeys.length === 0) return
@@ -1214,6 +1276,13 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
             )}
             {batchMode && (
               <>
+                <Button 
+                  icon={<EditOutlined />}
+                  onClick={handleBatchEdit}
+                  disabled={selectedRowKeys.length === 0}
+                >
+                  批量编辑
+                </Button>
                 <Button 
                   danger 
                   icon={<DeleteOutlined />}
@@ -1630,6 +1699,41 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
             ))}
           </div>
         )}
+      </Modal>
+
+      {/* 批量编辑弹窗 */}
+      <Modal
+        title={`批量编辑 ${selectedRowKeys.length} 个词汇`}
+        open={batchEditModalOpen}
+        onCancel={() => setBatchEditModalOpen(false)}
+        onOk={executeBatchEdit}
+        confirmLoading={loading}
+        okText="应用更改"
+        cancelText="取消"
+      >
+        <Alert
+          message="只有设置了值的字段才会被更新，留空的字段将保持不变"
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+        <Form form={batchEditForm} layout="vertical">
+          <Form.Item name="color" label="标记颜色">
+            <ColorPicker format="hex" allowClear />
+          </Form.Item>
+          
+          <Form.Item name="tagsMode" label="标签操作" initialValue="add">
+            <Select>
+              <Select.Option value="add">添加标签</Select.Option>
+              <Select.Option value="remove">移除标签</Select.Option>
+              <Select.Option value="replace">替换标签</Select.Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item name="tags" label="标签">
+            <Select mode="tags" placeholder="输入标签后按回车添加" />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   )
