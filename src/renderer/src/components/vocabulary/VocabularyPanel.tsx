@@ -741,6 +741,61 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
     }
   }
 
+  // 保存并继续添加
+  const handleSaveAndContinue = async (): Promise<void> => {
+    try {
+      const values = await form.validateFields()
+      setLoading(true)
+
+      const colorValue = typeof values.color === 'string' 
+        ? values.color 
+        : values.color?.toHexString?.() || '#1890ff'
+      const typeName = types.find(t => t.id === currentType)?.name || '未知'
+
+      await addEntry({
+        name: values.name,
+        aliases: values.aliases || [],
+        color: colorValue,
+        typeId: currentType,
+        typeName,
+        fields: values.fields || {},
+        tags: values.tags || [],
+        description: values.description,
+        linkedFilePath: values.linkedFilePath
+      })
+      
+      message.success('创建成功，可继续添加')
+      
+      // 重置表单但保持抽屉打开
+      form.resetFields(['name', 'aliases', 'description', 'linkedFilePath'])
+      form.setFieldsValue({
+        name: '',
+        aliases: [],
+        tags: [],
+        description: '',
+        linkedFilePath: undefined,
+        fields: (() => {
+          const defaultFields: Record<string, string | string[]> = {}
+          currentTypeDefinition?.fields.forEach(field => {
+            if (field.defaultValue) {
+              defaultFields[field.id] = field.defaultValue
+            } else if (field.type === 'tags') {
+              defaultFields[field.id] = []
+            } else {
+              defaultFields[field.id] = ''
+            }
+          })
+          return defaultFields
+        })()
+      })
+    } catch (error) {
+      console.error('保存失败:', error)
+      message.error('保存失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 删除条目
   const handleDelete = async (id: string): Promise<void> => {
     if (readOnly) return
@@ -1418,6 +1473,11 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
         footer={
           <Space>
             <Button onClick={() => setDrawerOpen(false)}>取消</Button>
+            {!editingEntry && (
+              <Button loading={loading} onClick={handleSaveAndContinue}>
+                保存并继续添加
+              </Button>
+            )}
             <Button type="primary" loading={loading} onClick={handleSave}>
               保存
             </Button>
