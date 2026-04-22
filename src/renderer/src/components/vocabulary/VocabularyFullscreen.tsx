@@ -20,7 +20,12 @@ import {
   Modal,
   Form,
   ColorPicker,
-  message
+  message,
+  Upload,
+  Progress,
+  Alert,
+  Table,
+  Select
 } from 'antd'
 import type { MenuProps } from 'antd'
 import {
@@ -37,7 +42,10 @@ import {
   TagOutlined,
   SettingOutlined,
   HighlightOutlined,
-  HolderOutlined
+  HolderOutlined,
+  ImportOutlined,
+  UploadOutlined,
+  FileTextOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -253,6 +261,15 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   const [form] = Form.useForm()
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
   const [selectedIcon, setSelectedIcon] = useState<IconValue | undefined>()
+
+  // 导入状态
+  const [importModalOpen, setImportModalOpen] = useState(false)
+  const [importData, setImportData] = useState<Record<string, unknown>[]>([])
+  const [importFields, setImportFields] = useState<string[]>([])
+  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({})
+  const [importing, setImporting] = useState(false)
+  const [importProgress, setImportProgress] = useState(0)
+  const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null)
 
   // 加载数据
   useEffect(() => {
@@ -486,6 +503,187 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     }
   }
 
+  // 解析导入文件
+  const parseImportFile = (file: File): Promise<Record<string, unknown>[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string
+          if (file.name.endsWith('.json')) {
+            const data = JSON.parse(content)
+            resolve(Array.isArray(data) ? data : [data])
+          } else if (file.name.endsWith('.csv')) {
+            const lines = content.split('\n').filter(line => line.trim())
+            if (lines.length < 2) {
+              reject(new Error('CSV 文件至少需要包含标题行和一行数据'))
+              return
+            }
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
+            const data = lines.slice(1).map(line => {
+              const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+              const obj: Record<string, unknown> = {}
+              headers.forEach((header, index) => {
+                obj[header] = values[index] || ''
+              })
+              return obj
+            })
+            resolve(data)
+          } else {
+            reject(new Error('不支持的文件格式，请使用 JSON 或 CSV 文件'))
+          }
+        } catch (error) {
+          reject(new Error('文件解析失败，请检查文件格式'))
+        }
+      }
+      reader.onerror = () => reject(new Error('文件读取失败'))
+      reader.readAsText(file)
+    })
+  }
+
+  // 处理文件上传
+  const handleImportUpload = async (file: File): Promise<boolean> => {
+    try {
+      const data = await parseImportFile(file)
+      if (data.length === 0) {
+        message.error('文件中没有数据')
+        return false
+      }
+      
+      setImportData(data)
+      setImportFields(Object.keys(data[0]))
+      
+      // 自动映射字段
+      const currentTypeDef = types.find(t => t.id === selectedTypeId)
+      const autoMapping: Record<string, string> = {}
+      const fieldKeywords: Record<string, string[]> = {
+        'name': ['名称', '名字', 'name', 'title'],
+        'aliases': ['别名', 'aliases', 'alias', 'aka'],
+        'description': ['描述', '备注', '说明', 'description', 'desc', 'note'],
+        'tags': ['标签', 'tags', 'tag'],
+        'color': ['颜色', 'color']
+      }
+      
+      Object.keys(data[0]).forEach(importField => {
+        const lowerField = importField.toLowerCase()
+        for (const [targetField, keywords] of Object.entries(fieldKeywords)) {
+          if (keywords.some(kw => lowerField.includes(kw.toLowerCase()))) {
+            autoMapping[importField] = targetField
+            break
+          }
+        }
+        // 检查是否匹配自定义字段
+        if (!autoMapping[importField] && currentTypeDef) {
+          const matchedField = currentTypeDef.fields.find(f => 
+            f.name.toLowerCase() === lowerField || 
+            f.id.toLowerCase() === lowerField
+          )
+          if (matchedField) {
+            autoMapping[importField] = `field_${matchedField.id}`
+          }
+        }
+      })
+      
+      setFieldMapping(autoMapping)
+      setImportResult(null)
+      setImportModalOpen(true)
+      return false
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '导入失败')
+      return false
+    }
+  }
+
+  // 执行导入
+  const executeImport = async (): Promise<void> => {
+    if (!selectedTypeId || importData.length === 0) return
+    
+    setImporting(true)
+    setImportProgress(0)
+    setImportResult(null)
+    
+    const currentTypeDef = types.find(t => t.id === selectedTypeId)
+    const typeName = currentTypeDef?.name || '未知'
+    let successCount = 0
+    let failedCount = 0
+    
+    for (let i = 0; i < importData.length; i++) {
+      const item = importData[i]
+      try {
+        const entry: {
+          name: string
+          aliases: string[]
+          color: string
+          typeId: string
+          typeName: string
+          fields: Record<string, unknown>
+          tags: string[]
+          description: string
+        } = {
+          name: '',
+          aliases: [],
+          color: currentTypeDef?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)],
+          typeId: selectedTypeId,
+          typeName,
+          fields: {},
+          tags: [],
+          description: ''
+        }
+        
+        // 应用字段映射
+        Object.entries(fieldMapping).forEach(([importField, targetField]) => {
+          const value = item[importField]
+          if (value === undefined || value === '') return
+          
+          if (targetField === 'name') {
+            entry.name = String(value)
+          } else if (targetField === 'aliases') {
+            entry.aliases = String(value).split(/[,、，]/).map(s => s.trim()).filter(Boolean)
+          } else if (targetField === 'description') {
+            entry.description = String(value)
+          } else if (targetField === 'tags') {
+            entry.tags = String(value).split(/[,、，]/).map(s => s.trim()).filter(Boolean)
+          } else if (targetField === 'color') {
+            entry.color = String(value)
+          } else if (targetField.startsWith('field_')) {
+            const fieldId = targetField.replace('field_', '')
+            entry.fields[fieldId] = value
+          }
+        })
+        
+        if (!entry.name) {
+          failedCount++
+          continue
+        }
+        
+        await addEntry(entry)
+        successCount++
+      } catch {
+        failedCount++
+      }
+      
+      setImportProgress(Math.round(((i + 1) / importData.length) * 100))
+    }
+    
+    setImporting(false)
+    setImportResult({ success: successCount, failed: failedCount })
+    
+    if (successCount > 0) {
+      loadEntries()
+    }
+  }
+
+  // 关闭导入弹窗
+  const closeImportModal = (): void => {
+    if (!importing) {
+      setImportModalOpen(false)
+      setImportData([])
+      setImportFields([])
+      setFieldMapping({})
+      setImportResult(null)
+    }
+  }
+
   // 新建菜单
   const createMenuItems: MenuProps['items'] = [
     {
@@ -556,6 +754,22 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           <span className={styles.stats}>
             {types.length} 个类型 · {entries.length} 个条目
           </span>
+          <Upload
+            accept=".json,.csv"
+            showUploadList={false}
+            beforeUpload={(file) => handleImportUpload(file)}
+            disabled={!selectedTypeId}
+          >
+            <Tooltip title={!selectedTypeId ? '请先选择类型' : '导入 JSON/CSV 文件'}>
+              <Button 
+                icon={<ImportOutlined />} 
+                style={{ marginLeft: 8 }}
+                disabled={!selectedTypeId}
+              >
+                导入
+              </Button>
+            </Tooltip>
+          </Upload>
           <Tooltip title="Ctrl+N 新建 | Ctrl+F 搜索 | Esc 返回">
             <Tag style={{ marginLeft: 8 }}>快捷键</Tag>
           </Tooltip>
@@ -734,6 +948,123 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         }}
         onCancel={() => setIsIconPickerOpen(false)}
       />
+
+      {/* 导入弹窗 */}
+      <Modal
+        title="批量导入词汇"
+        open={importModalOpen}
+        onCancel={closeImportModal}
+        footer={null}
+        width={700}
+      >
+        <Alert
+          message={`将导入 ${importData.length} 条数据到「${types.find(t => t.id === selectedTypeId)?.name || '当前类型'}」`}
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+        
+        {importing ? (
+          <div style={{ padding: '24px 0', textAlign: 'center' }}>
+            <Progress percent={importProgress} status="active" />
+            <p style={{ marginTop: 16 }}>正在导入... {importProgress}%</p>
+          </div>
+        ) : importResult ? (
+          <div style={{ padding: '24px 0', textAlign: 'center' }}>
+            <Alert
+              message={`导入完成：成功 ${importResult.success} 条，失败 ${importResult.failed} 条`}
+              type={importResult.failed === 0 ? 'success' : 'warning'}
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <Button type="primary" onClick={closeImportModal}>
+              完成
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <Text strong>字段映射</Text>
+              <Text type="secondary" style={{ marginLeft: 8 }}>
+                将导入文件的字段映射到词汇字段
+              </Text>
+            </div>
+            
+            <Table
+              dataSource={importFields.map(field => ({ key: field, field }))}
+              columns={[
+                {
+                  title: '导入字段',
+                  dataIndex: 'field',
+                  key: 'field',
+                  width: 200
+                },
+                {
+                  title: '映射到',
+                  key: 'mapping',
+                  render: (_, record) => {
+                    const currentTypeDef = types.find(t => t.id === selectedTypeId)
+                    const targetOptions = [
+                      { value: '', label: '- 忽略 -' },
+                      { value: 'name', label: '名称（必填）' },
+                      { value: 'aliases', label: '别名' },
+                      { value: 'description', label: '描述' },
+                      { value: 'tags', label: '标签' },
+                      { value: 'color', label: '颜色' },
+                      ...(currentTypeDef?.fields.map(f => ({
+                        value: `field_${f.id}`,
+                        label: `字段: ${f.name}`
+                      })) || [])
+                    ]
+                    
+                    return (
+                      <Select
+                        value={fieldMapping[record.field] || ''}
+                        onChange={(value) => {
+                          setFieldMapping(prev => ({
+                            ...prev,
+                            [record.field]: value
+                          }))
+                        }}
+                        options={targetOptions}
+                        style={{ width: '100%' }}
+                        placeholder="选择映射字段"
+                      />
+                    )
+                  }
+                },
+                {
+                  title: '预览',
+                  key: 'preview',
+                  render: (_, record) => {
+                    const previewValue = importData[0]?.[record.field]
+                    return (
+                      <Text type="secondary" ellipsis style={{ maxWidth: 200 }}>
+                        {String(previewValue ?? '-')}
+                      </Text>
+                    )
+                  }
+                }
+              ]}
+              pagination={false}
+              size="small"
+            />
+            
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+              <Space>
+                <Button onClick={closeImportModal}>取消</Button>
+                <Button 
+                  type="primary" 
+                  onClick={executeImport}
+                  disabled={!Object.values(fieldMapping).includes('name')}
+                >
+                  开始导入
+                </Button>
+              </Space>
+            </div>
+          </>
+        )}
+      </Modal>
     </div>
   )
 }
