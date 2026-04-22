@@ -92,7 +92,7 @@ function SortableEventRow({
         {/* 拖拽手柄 */}
         {isEditMode && (
           <div className={styles.dragHandle} {...attributes} {...listeners}>
-            <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+            <HolderOutlined style={{ color: 'var(--text-tertiary)', cursor: 'grab' }} />
           </div>
         )}
         <span className={styles.colIndex} style={{ color: token.colorTextSecondary }}>

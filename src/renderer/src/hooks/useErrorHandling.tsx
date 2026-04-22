@@ -291,7 +291,7 @@ export function useErrorHandling() {
             <div>
               <p>{errorMessage}</p>
               {detail.suggestion && (
-                <p style={{ color: '#8c8c8c', fontSize: 12, marginTop: 8 }}>
+                <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 8 }}>
                   💡 {detail.suggestion}
                 </p>
               )}
@@ -301,7 +301,7 @@ export function useErrorHandling() {
                   style={{
                     marginTop: 12,
                     padding: '4px 12px',
-                    background: '#1890ff',
+                    background: 'var(--color-primary)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 4,
@@ -360,7 +360,7 @@ export function useErrorHandling() {
         <div>
           <p>{errorMessage}</p>
           {detail.suggestion && (
-            <p style={{ color: '#8c8c8c', fontSize: 12, marginTop: 8 }}>
+            <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 8 }}>
               💡 {detail.suggestion}
             </p>
           )}
@@ -370,7 +370,7 @@ export function useErrorHandling() {
               style={{
                 marginTop: 12,
                 padding: '4px 12px',
-                background: '#1890ff',
+                background: 'var(--color-primary)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 4,

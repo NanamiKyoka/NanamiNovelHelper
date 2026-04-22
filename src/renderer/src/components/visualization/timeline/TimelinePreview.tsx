@@ -84,7 +84,7 @@ function SortableTimelineItem({
       {/* 拖拽手柄 */}
       {isEditMode && (
         <div className={styles.dragHandle} {...attributes} {...listeners}>
-          <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+          <HolderOutlined style={{ color: 'var(--text-tertiary)', cursor: 'grab' }} />
         </div>
       )}
       <div className={styles.timelineItem}>

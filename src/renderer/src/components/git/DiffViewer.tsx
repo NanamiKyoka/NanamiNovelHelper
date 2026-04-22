@@ -90,9 +90,9 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
         </span>
         <div style={{ display: 'flex', gap: 8 }}>
           <span style={{ fontSize: 12, color: 'var(--ant-color-text-secondary)' }}>
-            <span style={{ color: '#52c41a' }}>+{diff.additions}</span>
+            <span style={{ color: 'var(--color-success)' }}>+{diff.additions}</span>
             {' / '}
-            <span style={{ color: '#ff4d4f' }}>-{diff.deletions}</span>
+            <span style={{ color: 'var(--color-error)' }}>-{diff.deletions}</span>
           </span>
           <Tooltip title="复制差异">
             <Button size="small" type="text" icon={<CopyOutlined />} onClick={handleCopy} />

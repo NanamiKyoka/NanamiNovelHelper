@@ -93,7 +93,7 @@ export function DataManagementSettings(): JSX.Element {
                 <li>导出时间: {data.exportedAt ? new Date(data.exportedAt).toLocaleString() : '未知'}</li>
                 <li>版本: {data.version || '未知'}</li>
               </ul>
-              <p style={{ color: '#ff4d4f' }}>注意：当前设置将被覆盖！</p>
+              <p style={{ color: 'var(--color-error)' }}>注意：当前设置将被覆盖！</p>
             </div>
           ),
           onOk: async () => {

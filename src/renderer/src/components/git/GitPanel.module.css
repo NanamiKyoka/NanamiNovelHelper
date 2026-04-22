@@ -154,23 +154,23 @@
 }
 
 .fileStatus.modified {
-  color: #1890ff;
-  background: #e6f7ff;
+  color: var(--color-info);
+  background: var(--color-info-bg);
 }
 
 .fileStatus.added {
-  color: #52c41a;
-  background: #f6ffed;
+  color: var(--color-success);
+  background: var(--color-success-bg);
 }
 
 .fileStatus.deleted {
-  color: #ff4d4f;
-  background: #fff2f0;
+  color: var(--color-error);
+  background: var(--color-error-bg);
 }
 
 .fileStatus.untracked {
-  color: #8c8c8c;
-  background: #fafafa;
+  color: var(--text-tertiary);
+  background: var(--bg-muted);
 }
 
 .fileName {
@@ -189,11 +189,11 @@
 }
 
 .fileStats .additions {
-  color: #52c41a;
+  color: var(--color-success);
 }
 
 .fileStats .deletions {
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .fileActions {
@@ -248,11 +248,11 @@
 }
 
 .diffLine.add {
-  background: #f6ffed;
+  background: var(--color-success-bg);
 }
 
 .diffLine.delete {
-  background: #fff2f0;
+  background: var(--color-error-bg);
 }
 
 .lineNumber {

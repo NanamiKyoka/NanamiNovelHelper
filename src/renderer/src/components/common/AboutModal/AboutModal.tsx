@@ -54,7 +54,7 @@ export function AboutModal(): JSX.Element {
           </Button>
           
           <Text type="secondary" style={{ fontSize: 12 }}>
-            使用 <HeartFilled style={{ color: '#ff4d4f' }} /> 开发
+            使用 <HeartFilled style={{ color: 'var(--color-error)' }} /> 开发
           </Text>
           
           <Text type="secondary" style={{ fontSize: 11 }}>

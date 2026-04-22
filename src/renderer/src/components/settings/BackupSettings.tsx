@@ -235,7 +235,7 @@ export function BackupSettings(): JSX.Element {
             <Space>
               启用自动备份
               <Tooltip title="开启后，应用会自动创建项目备份">
-                <InfoCircleOutlined style={{ color: '#999' }} />
+                <InfoCircleOutlined style={{ color: 'var(--text-tertiary)' }} />
               </Tooltip>
             </Space>
           }>
@@ -249,7 +249,7 @@ export function BackupSettings(): JSX.Element {
             <Space>
               最大备份数量
               <Tooltip title="超过此数量的旧备份将被自动删除">
-                <InfoCircleOutlined style={{ color: '#999' }} />
+                <InfoCircleOutlined style={{ color: 'var(--text-tertiary)' }} />
               </Tooltip>
             </Space>
           }>

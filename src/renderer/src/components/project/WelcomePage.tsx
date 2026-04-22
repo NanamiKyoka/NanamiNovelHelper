@@ -143,7 +143,7 @@ function WelcomePage(): JSX.Element {
                   onClick={() => handleQuickOpen(item.path)}
                 >
                   <List.Item.Meta
-                    avatar={<FolderOutlined style={{ fontSize: 20, color: '#faad14' }} />}
+                    avatar={<FolderOutlined style={{ fontSize: 20, color: 'var(--color-warning)' }} />}
                     title={item.name}
                     description={
                       <Tooltip title={item.path}>

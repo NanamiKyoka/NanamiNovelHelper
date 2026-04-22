@@ -173,7 +173,7 @@ function TableConfigEditor({
       className: 'drag-handle-cell',
       render: (_: unknown, record: TableColumnConfig) => (
         <div className={styles.dragHandle} style={{ cursor: 'grab', padding: '4px' }}>
-          <HolderOutlined style={{ color: '#999' }} />
+          <HolderOutlined style={{ color: 'var(--text-tertiary)' }} />
         </div>
       )
     },

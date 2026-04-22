@@ -104,7 +104,7 @@ function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: Sorta
             {...attributes}
             {...listeners}
           >
-            <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+            <HolderOutlined style={{ color: 'var(--text-tertiary)', cursor: 'grab' }} />
           </div>
         )}
 
@@ -162,7 +162,7 @@ function DragOverlayNode({ node }: DragOverlayNodeProps): JSX.Element {
   return (
     <div className={styles.dragOverlayNode}>
       <div className={styles.dragHandle}>
-        <HolderOutlined style={{ color: '#999' }} />
+        <HolderOutlined style={{ color: 'var(--text-tertiary)' }} />
       </div>
       <div
         className={styles.nodeColor}

@@ -26,40 +26,25 @@
 }
 
 .menuButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-:global(body.dark) .menuButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg);
 }
 
 .menuButton.active {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: var(--active-bg);
 }
 
-:global(body.dark) .menuButton.active {
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* 下拉菜单 */
 .dropdown {
   position: absolute;
   top: 100%;
   left: 0;
   min-width: 200px;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-dropdown);
   padding: 4px 0;
   z-index: 1000;
   animation: fadeIn 0.1s ease;
-}
-
-:global(body.dark) .dropdown {
-  background-color: #252526;
-  border-color: #454545;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes fadeIn {
@@ -93,22 +78,13 @@
 }
 
 .dropdownItem:hover:not(.disabled) {
-  background-color: var(--ant-color-primary, #1890ff);
-  color: #fff;
-}
-
-:global(body.dark) .dropdownItem:hover:not(.disabled) {
-  background-color: #094771;
+  background-color: var(--color-primary);
   color: #fff;
 }
 
 .dropdownItem.disabled {
-  color: #999;
+  color: var(--text-disabled);
   cursor: default;
-}
-
-:global(body.dark) .dropdownItem.disabled {
-  color: #666;
 }
 
 .menuItemLabel {
@@ -124,7 +100,7 @@
   display: inline-block;
   width: 16px;
   font-size: 12px;
-  color: var(--ant-color-primary, #1890ff);
+  color: var(--color-primary);
   margin-right: 4px;
 }
 
@@ -134,7 +110,7 @@
 
 .shortcut {
   font-size: 11px;
-  color: #888;
+  color: var(--text-tertiary);
   margin-left: 24px;
 }
 
@@ -144,7 +120,7 @@
 
 .subMenuArrow {
   font-size: 10px;
-  color: #888;
+  color: var(--text-tertiary);
   margin-left: 8px;
 }
 
@@ -152,35 +128,24 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* 分隔线 */
 .separator {
   height: 1px;
-  background-color: #e5e5e5;
+  background-color: var(--border-primary);
   margin: 4px 8px;
 }
 
-:global(body.dark) .separator {
-  background-color: #454545;
-}
-
-/* 子菜单（如"打开最近"） */
 .subMenu {
   position: absolute;
   left: 100%;
   top: -4px;
   min-width: 180px;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-dropdown);
   padding: 4px 0;
   display: none;
   z-index: 1001;
-}
-
-:global(body.dark) .subMenu {
-  background-color: #252526;
-  border-color: #454545;
 }
 
 .dropdownItemWrapper:hover > .subMenu {
@@ -201,16 +166,11 @@
 }
 
 .subMenuItem:hover:not(.disabled) {
-  background-color: var(--ant-color-primary, #1890ff);
-  color: #fff;
-}
-
-:global(body.dark) .subMenuItem:hover:not(.disabled) {
-  background-color: #094771;
+  background-color: var(--color-primary);
   color: #fff;
 }
 
 .subMenuItem.disabled {
-  color: #999;
+  color: var(--text-disabled);
   cursor: default;
 }

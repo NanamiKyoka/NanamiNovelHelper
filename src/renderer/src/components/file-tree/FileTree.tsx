@@ -55,14 +55,14 @@ const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): 
   switch (ext) {
     case 'md':
     case 'markdown':
-      return <FileMarkdownOutlined style={{ color: '#1890ff' }} />
+      return <FileMarkdownOutlined style={{ color: 'var(--color-primary)' }} />
     case 'txt':
-      return <FileTextOutlined style={{ color: '#52c41a' }} />
+      return <FileTextOutlined style={{ color: 'var(--color-success)' }} />
     case 'json':
     case 'json5':
     case 'yaml':
     case 'yml':
-      return <FileOutlined style={{ color: '#faad14' }} />
+      return <FileOutlined style={{ color: 'var(--color-warning)' }} />
     default:
       return <FileOutlined />
   }
@@ -756,7 +756,7 @@ function FileTree(): JSX.Element {
               <Spin />
             </div>
           ) : error ? (
-            <div style={{ textAlign: 'center', padding: 20, color: '#ff4d4f' }}>
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-error)' }}>
               {error}
             </div>
           ) : (

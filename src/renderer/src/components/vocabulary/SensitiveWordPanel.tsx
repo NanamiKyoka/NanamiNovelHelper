@@ -236,7 +236,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => (
-        <span style={{ color: '#f5222d', fontWeight: 500 }}>{name}</span>
+        <span style={{ color: 'var(--color-error)', fontWeight: 500 }}>{name}</span>
       )
     },
     {

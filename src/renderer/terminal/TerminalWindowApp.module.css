@@ -187,21 +187,21 @@
 
 /* 暗色主题优化 */
 :global(body.dark) .app {
-  background: #1e1e1e;
+  background: var(--bg-base);
 }
 
 :global(body.dark) .titleBar {
-  background: #252526;
-  border-bottom-color: #3c3c3c;
+  background: var(--bg-container);
+  border-bottom-color: var(--border-primary);
 }
 
 :global(body.dark) .titleBtn:hover,
 :global(body.dark) .controlBtn:hover {
-  background: #3c3c3c;
+  background: var(--hover-bg);
 }
 
 :global(body.dark) .select :global(.ant-select-selector) {
-  background: #3c3c3c !important;
-  border-color: #3c3c3c !important;
-  color: #ccc !important;
+  background: var(--bg-muted) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-secondary) !important;
 }

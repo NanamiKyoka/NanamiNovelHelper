@@ -586,18 +586,18 @@ function VocabularyTypeSettings({
           cancelText="取消"
         >
           {createMode === 'template' && selectedTemplate && (
-            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+            <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
               <div style={{ fontWeight: 500, marginBottom: 8 }}>
                 模板：{selectedTemplate.name}
               </div>
-              <div style={{ fontSize: 12, color: '#666' }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 将预设 {BUILTIN_FIELDS_MAP[selectedTemplate.id]?.length || 0} 个字段
               </div>
             </div>
           )}
           {createMode === 'custom' && (
-            <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-              <div style={{ fontSize: 13, color: '#666' }}>
+            <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 从空白开始创建，后续可在字段定义中添加字段
               </div>
             </div>
@@ -736,18 +736,18 @@ function VocabularyTypeSettings({
         cancelText="取消"
       >
         {createMode === 'template' && selectedTemplate && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
+          <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
             <div style={{ fontWeight: 500, marginBottom: 8 }}>
               模板：{selectedTemplate.name}
             </div>
-            <div style={{ fontSize: 12, color: '#666' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               将预设 {BUILTIN_FIELDS_MAP[selectedTemplate.id]?.length || 0} 个字段
             </div>
           </div>
         )}
         {createMode === 'custom' && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-            <div style={{ fontSize: 13, color: '#666' }}>
+          <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               从空白开始创建，后续可在字段定义中添加字段
             </div>
           </div>

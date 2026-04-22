@@ -30,10 +30,10 @@ export interface EmptyProps {
  */
 const PRESET_ICONS: Record<string, React.ReactNode> = {
   default: null,
-  list: <FileTextOutlined style={{ fontSize: 48, color: '#bfbfbf' }} />,
-  folder: <FolderOutlined style={{ fontSize: 48, color: '#bfbfbf' }} />,
-  search: <SearchOutlined style={{ fontSize: 48, color: '#bfbfbf' }} />,
-  user: <UserOutlined style={{ fontSize: 48, color: '#bfbfbf' }} />,
+  list: <FileTextOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
+  folder: <FolderOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
+  search: <SearchOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
+  user: <UserOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
 }
 
 /**

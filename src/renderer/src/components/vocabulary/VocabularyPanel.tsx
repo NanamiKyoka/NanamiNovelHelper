@@ -351,7 +351,7 @@ function VocabularyPanel({
       width: 40,
       fixed: 'left' as const,
       render: () => (
-        <HolderOutlined style={{ color: '#999', cursor: 'grab' }} />
+        <HolderOutlined style={{ color: 'var(--text-tertiary)', cursor: 'grab' }} />
       )
     }
 
@@ -391,7 +391,7 @@ function VocabularyPanel({
           {record.linkedFilePath && (
             <Tooltip title="点击打开关联文件">
               <LinkOutlined 
-                style={{ fontSize: 12, color: '#1890ff', cursor: 'pointer' }}
+                style={{ fontSize: 12, color: 'var(--color-primary)', cursor: 'pointer' }}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenLinkedFile(record.linkedFilePath!)
@@ -430,7 +430,7 @@ function VocabularyPanel({
             if (value === undefined || value === null || value === '') return '-'
             // 图片类型显示图标
             if (field.type === 'image') {
-              return <PictureOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+              return <PictureOutlined style={{ fontSize: 16, color: 'var(--color-primary)' }} />
             }
             if (Array.isArray(value)) {
               return value.length > 0
@@ -463,7 +463,7 @@ function VocabularyPanel({
               if (value === undefined || value === null || value === '') return '-'
               // 图片类型显示图标
               if (field.type === 'image') {
-                return <PictureOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+                return <PictureOutlined style={{ fontSize: 16, color: 'var(--color-primary)' }} />
               }
               if (Array.isArray(value)) {
                 return value.length > 0
@@ -1068,7 +1068,7 @@ function VocabularyPanel({
       <span style={{ display: 'inline-flex', alignItems: 'center' }}>
         <span style={{ marginRight: 4 }}>{getIconPreview(type.icon, <TagOutlined />)}</span>
         {type.name}
-        <span style={{ fontSize: 12, color: '#999', marginLeft: 4 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 4 }}>
           ({entries.filter(e => e.typeId === type.id).length})
         </span>
       </span>

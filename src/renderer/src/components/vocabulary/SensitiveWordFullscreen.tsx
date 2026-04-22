@@ -291,7 +291,7 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
       key: 'name',
       width: 150,
       render: (name: string) => (
-        <span style={{ color: '#f5222d', fontWeight: 500 }}>{name}</span>
+        <span style={{ color: 'var(--color-error)', fontWeight: 500 }}>{name}</span>
       )
     },
     {

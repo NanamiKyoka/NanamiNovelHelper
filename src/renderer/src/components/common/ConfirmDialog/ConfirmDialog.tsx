@@ -28,23 +28,23 @@ export interface ConfirmDialogProps extends Omit<ModalProps, 'onOk' | 'onCancel'
  */
 const TYPE_CONFIG = {
   confirm: {
-    icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+    icon: <ExclamationCircleOutlined style={{ color: 'var(--color-warning)' }} />,
     okType: 'primary' as const,
   },
   info: {
-    icon: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
+    icon: <InfoCircleOutlined style={{ color: 'var(--color-info)' }} />,
     okType: 'primary' as const,
   },
   success: {
-    icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+    icon: <CheckCircleOutlined style={{ color: 'var(--color-success)' }} />,
     okType: 'primary' as const,
   },
   warning: {
-    icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+    icon: <ExclamationCircleOutlined style={{ color: 'var(--color-warning)' }} />,
     okType: 'primary' as const,
   },
   danger: {
-    icon: <CloseCircleOutlined style={{ color: '#f5222d' }} />,
+    icon: <CloseCircleOutlined style={{ color: 'var(--color-error)' }} />,
     okType: 'primary' as const,
   },
 }
@@ -144,7 +144,7 @@ export function UnsavedConfirmDialog({
     <Modal
       title={
         <div className={styles.title} id={titleId}>
-          <ExclamationCircleOutlined style={{ color: '#faad14' }} />
+          <ExclamationCircleOutlined style={{ color: 'var(--color-warning)' }} />
           <span>未保存的更改</span>
         </div>
       }

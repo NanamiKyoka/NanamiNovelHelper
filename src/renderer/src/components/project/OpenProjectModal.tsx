@@ -126,7 +126,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
                 onClick={() => handleOpen(item.path)}
               >
                 <List.Item.Meta
-                  avatar={<FolderOutlined style={{ fontSize: 24, color: '#faad14' }} />}
+                  avatar={<FolderOutlined style={{ fontSize: 24, color: 'var(--color-warning)' }} />}
                   title={item.name}
                   description={
                     <Tooltip title={item.path}>

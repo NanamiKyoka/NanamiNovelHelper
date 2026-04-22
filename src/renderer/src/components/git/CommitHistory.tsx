@@ -69,7 +69,7 @@ function CommitHistory(): JSX.Element {
           <p>目标提交: <code>{commit.shortHash}</code></p>
           <p>提交信息: {commit.title}</p>
           {mode === 'hard' && (
-            <p style={{ color: '#ff4d4f' }}>警告：硬重置将永久丢失所有未提交的更改！</p>
+            <p style={{ color: 'var(--color-error)' }}>警告：硬重置将永久丢失所有未提交的更改！</p>
           )}
         </div>
       ),
