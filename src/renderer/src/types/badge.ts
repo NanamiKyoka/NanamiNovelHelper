@@ -2,7 +2,7 @@
  * 徽章类型定义
  */
 
-export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'terminal'
+export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
 
 export interface BadgeConfig {
   id: BadgeType
@@ -11,7 +11,7 @@ export interface BadgeConfig {
   order: number
 }
 
-export const DEFAULT_BADGE_ORDER: BadgeType[] = ['vocabulary', 'sensitive', 'randomName', 'relationship', 'timeline', 'sequenceChart', 'organization', 'terminal']
+export const DEFAULT_BADGE_ORDER: BadgeType[] = ['vocabulary', 'sensitive', 'randomName', 'relationship', 'timeline', 'sequenceChart', 'organization', 'map', 'terminal']
 
 export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: string }> = {
   vocabulary: { label: '词汇查询', icon: 'TagOutlined' },
@@ -21,6 +21,7 @@ export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: stri
   timeline: { label: '时间线', icon: 'ClockCircleOutlined' },
   sequenceChart: { label: '事序图', icon: 'TableOutlined' },
   organization: { label: '组织架构', icon: 'ClusterOutlined' },
+  map: { label: '地图设计', icon: 'EnvironmentOutlined' },
   terminal: { label: '终端', icon: 'CodeOutlined' }
 }
 

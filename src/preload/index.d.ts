@@ -264,7 +264,7 @@ interface ProjectBackupSettings {
 /**
  * 徽章类型
  */
-type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'terminal'
+type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
 
 /**
  * 默认徽章顺序
@@ -279,6 +279,7 @@ interface BadgeVisibility {
   timeline: boolean
   sequenceChart: boolean
   organization: boolean
+  map: boolean
   terminal: boolean
 }
 
