@@ -25,7 +25,11 @@ import {
   Progress,
   Alert,
   Table,
-  Select
+  Select,
+  Statistic,
+  Row,
+  Col,
+  Card
 } from 'antd'
 import type { MenuProps } from 'antd'
 import {
@@ -45,7 +49,8 @@ import {
   HolderOutlined,
   ImportOutlined,
   UploadOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  BarChartOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -225,7 +230,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   const exitFullscreen = useUIStore((state) => state.exitFullscreen)
   
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'entries' | 'typeSettings' | 'highlight'>('entries')
+  const [activeTab, setActiveTab] = useState<'entries' | 'typeSettings' | 'highlight' | 'statistics'>('entries')
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -733,6 +738,15 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       )
     },
     {
+      key: 'statistics',
+      label: (
+        <span>
+          <BarChartOutlined />
+          统计信息
+        </span>
+      )
+    },
+    {
       key: 'typeSettings',
       label: (
         <span>
@@ -871,7 +885,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             <div className={styles.contentBody}>
               <Tabs
                 activeKey={activeTab}
-                onChange={(key) => setActiveTab(key as 'entries' | 'typeSettings' | 'highlight')}
+                onChange={(key) => setActiveTab(key as 'entries' | 'typeSettings' | 'highlight' | 'statistics')}
                 items={tabItems}
                 className={styles.tabs}
               />
@@ -885,6 +899,96 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     currentTypeId={selectedTypeId || ''} 
                     onTypeChange={setSelectedTypeId}
                   />
+                )}
+                {activeTab === 'statistics' && (
+                  <div style={{ padding: 16, overflow: 'auto', height: '100%' }}>
+                    <Row gutter={[16, 16]}>
+                      <Col span={6}>
+                        <Card>
+                          <Statistic 
+                            title="词汇类型数" 
+                            value={types.length} 
+                            prefix={<TagOutlined />}
+                          />
+                        </Card>
+                      </Col>
+                      <Col span={6}>
+                        <Card>
+                          <Statistic 
+                            title="词汇总数" 
+                            value={entries.length} 
+                            prefix={<TagOutlined />}
+                          />
+                        </Card>
+                      </Col>
+                      <Col span={6}>
+                        <Card>
+                          <Statistic 
+                            title="已收藏" 
+                            value={entries.filter(e => e.starred).length} 
+                            prefix={<TagOutlined style={{ color: '#faad14' }} />}
+                          />
+                        </Card>
+                      </Col>
+                      <Col span={6}>
+                        <Card>
+                          <Statistic 
+                            title="关联文件" 
+                            value={entries.filter(e => e.linkedFilePath).length} 
+                            prefix={<FileTextOutlined />}
+                          />
+                        </Card>
+                      </Col>
+                    </Row>
+                    
+                    <Card title="各类型词汇数量" style={{ marginTop: 16 }}>
+                      <Table
+                        dataSource={types.map(t => ({
+                          key: t.id,
+                          name: t.name,
+                          count: entries.filter(e => e.typeId === t.id).length,
+                          starred: entries.filter(e => e.typeId === t.id && e.starred).length,
+                          withFile: entries.filter(e => e.typeId === t.id && e.linkedFilePath).length
+                        }))}
+                        columns={[
+                          { title: '类型名称', dataIndex: 'name', key: 'name' },
+                          { title: '词汇数量', dataIndex: 'count', key: 'count' },
+                          { title: '已收藏', dataIndex: 'starred', key: 'starred' },
+                          { title: '关联文件', dataIndex: 'withFile', key: 'withFile' }
+                        ]}
+                        pagination={false}
+                        size="small"
+                      />
+                    </Card>
+
+                    <Card title="标签使用统计" style={{ marginTop: 16 }}>
+                      {(() => {
+                        const tagCounts: Record<string, number> = {}
+                        entries.forEach(e => {
+                          e.tags.forEach(tag => {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1
+                          })
+                        })
+                        const sortedTags = Object.entries(tagCounts)
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 20)
+                        
+                        if (sortedTags.length === 0) {
+                          return <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        }
+                        
+                        return (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {sortedTags.map(([tag, count]) => (
+                              <Tag key={tag} style={{ margin: 0 }}>
+                                {tag} <span style={{ color: 'var(--text-secondary)' }}>({count})</span>
+                              </Tag>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                    </Card>
+                  </div>
                 )}
                 {activeTab === 'typeSettings' && (
                   <VocabularyTypeSettings 
