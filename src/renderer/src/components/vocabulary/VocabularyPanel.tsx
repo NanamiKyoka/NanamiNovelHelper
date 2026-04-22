@@ -1004,7 +1004,7 @@ function VocabularyPanel({
   // 打开关联文件
   const handleOpenLinkedFile = async (filePath: string): Promise<void> => {
     try {
-      await window.electron.ipcRenderer.invoke('open-external', filePath)
+      await window.electron.ipcRenderer.invoke('shell:open-external', filePath)
     } catch (error) {
       console.error('打开文件失败:', error)
       message.error('打开文件失败')
