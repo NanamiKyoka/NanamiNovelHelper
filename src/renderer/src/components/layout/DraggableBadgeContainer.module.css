@@ -14,16 +14,73 @@
 }
 
 .badgeWrapper {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .badgeWrapper.dragged {
-  opacity: 0.5;
-  transform: scale(1.1);
+  opacity: 0.3;
+  transform: scale(0.95);
 }
 
-.badgeWrapper.dragOver {
-  transform: translateY(-8px);
+.dropIndicator {
+  position: absolute;
+  height: 3px;
+  background: var(--ant-color-primary, #1890ff);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 0 8px var(--ant-color-primary, #1890ff);
+  animation: dropIndicatorPulse 1s ease-in-out infinite;
+}
+
+.dropIndicator::before,
+.dropIndicator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--ant-color-primary, #1890ff);
+  border-radius: 50%;
+}
+
+.dropIndicator::before {
+  left: -4px;
+}
+
+.dropIndicator::after {
+  right: -4px;
+}
+
+@keyframes dropIndicatorPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.dragGhost {
+  position: fixed;
+  transform: translate(-50%, -50%) scale(1.1);
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.9;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+  animation: ghostAppear 0.15s ease-out;
+}
+
+@keyframes ghostAppear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
 }
 
 .triggerBtn {
