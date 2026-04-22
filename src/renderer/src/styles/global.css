@@ -546,6 +546,43 @@ a:hover {
   z-index: 10010 !important;
 }
 
+/* Message (Toast) 组件主题适配 */
+body.dark .ant-message-notice-content {
+  background-color: var(--bg-elevated, #2d2d2d);
+  border: 1px solid var(--border-primary, #3c3c3c);
+  box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+body.dark .ant-message .anticon {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+body.dark .ant-message-success .anticon {
+  color: var(--color-success, #49aa19);
+}
+
+body.dark .ant-message-error .anticon {
+  color: var(--color-error, #a61d24);
+}
+
+body.dark .ant-message-warning .anticon {
+  color: var(--color-warning, #d89614);
+}
+
+body.dark .ant-message-info .anticon {
+  color: var(--color-info, #177ddc);
+}
+
+body.dark .ant-message .ant-message-custom-content {
+  color: var(--text-primary, rgba(255, 255, 255, 0.85));
+}
+
+body.light .ant-message-notice-content {
+  background-color: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-primary, #f0f0f0);
+  box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.15));
+}
+
 .ant-modal-wrap {
   z-index: 10000 !important;
 }
@@ -572,6 +609,55 @@ a:hover {
 
 .ant-notification {
   z-index: 10004 !important;
+}
+
+/* Notification 组件主题适配 */
+body.dark .ant-notification-notice {
+  background: var(--bg-elevated, #2d2d2d);
+  border: 1px solid var(--border-primary, #3c3c3c);
+  box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+body.dark .ant-notification-notice-message {
+  color: var(--text-primary, rgba(255, 255, 255, 0.85));
+}
+
+body.dark .ant-notification-notice-description {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+body.dark .ant-notification-notice .anticon {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+body.dark .ant-notification-notice-success .anticon {
+  color: var(--color-success, #49aa19);
+}
+
+body.dark .ant-notification-notice-error .anticon {
+  color: var(--color-error, #a61d24);
+}
+
+body.dark .ant-notification-notice-warning .anticon {
+  color: var(--color-warning, #d89614);
+}
+
+body.dark .ant-notification-notice-info .anticon {
+  color: var(--color-info, #177ddc);
+}
+
+body.dark .ant-notification-notice-close {
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.45));
+}
+
+body.dark .ant-notification-notice-close:hover {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+body.light .ant-notification-notice {
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-primary, #f0f0f0);
+  box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.15));
 }
 
 .ant-drawer {
