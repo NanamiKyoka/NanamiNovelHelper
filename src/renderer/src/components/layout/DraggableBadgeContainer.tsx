@@ -17,19 +17,19 @@ interface DragGhostPosition {
 }
 
 interface DropIndicator {
-  index: number
+  targetId: BadgeType
   position: 'before' | 'after'
 }
 
 function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.Element {
-  const { badgeOrder, moveBadge, loadConfig, isLoaded } = useBadgeConfigStore()
+  const { badgeOrder, setBadgeOrder, loadConfig, isLoaded } = useBadgeConfigStore()
   
   const isDraggingRef = useRef(false)
-  const draggedIndexRef = useRef<number | null>(null)
+  const draggedIdRef = useRef<BadgeType | null>(null)
   const dropIndicatorRef = useRef<DropIndicator | null>(null)
   
   const [isDragging, setIsDragging] = useState(false)
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [draggedId, setDraggedId] = useState<BadgeType | null>(null)
   const [ghostPosition, setGhostPosition] = useState<DragGhostPosition | null>(null)
   const [dropIndicator, setDropIndicator] = useState<DropIndicator | null>(null)
   const [previewOrder, setPreviewOrder] = useState<BadgeType[]>([])
@@ -38,7 +38,7 @@ function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const badgeRefsRef = useRef<Map<number, HTMLDivElement>>(new Map())
+  const badgeRefsRef = useRef<Map<BadgeType, HTMLDivElement>>(new Map())
 
   useEffect(() => {
     if (!isLoaded) {
@@ -66,115 +66,114 @@ function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.
   const calculateDropPosition = useCallback((clientY: number): DropIndicator | null => {
     if (!containerRef.current) return null
     
-    const badgeElements = Array.from(badgeRefsRef.current.entries())
-      .sort((a, b) => a[0] - b[0])
+    const visibleBadges = displayBadges
+    if (visibleBadges.length === 0) return null
     
-    if (badgeElements.length === 0) return null
-    
-    for (const [index, element] of badgeElements) {
+    for (const badge of visibleBadges) {
+      const element = badgeRefsRef.current.get(badge.id)
+      if (!element) continue
+      
       const rect = element.getBoundingClientRect()
       const midY = rect.top + rect.height / 2
       
       if (clientY < midY) {
-        return { index, position: 'before' }
+        return { targetId: badge.id, position: 'before' }
       }
     }
     
-    return { index: badgeElements.length - 1, position: 'after' }
-  }, [])
+    const lastBadge = visibleBadges[visibleBadges.length - 1]
+    return { targetId: lastBadge.id, position: 'after' }
+  }, [displayBadges])
 
-  const updatePreviewOrder = useCallback((fromIndex: number, dropInfo: DropIndicator) => {
-    const currentOrder = sortedBadges.map(b => b.id)
-    const toIndex = dropInfo.position === 'before' 
-      ? dropInfo.index 
-      : dropInfo.index + 1
+  const calculateNewOrder = useCallback((
+    currentOrder: BadgeType[],
+    draggedId: BadgeType,
+    dropInfo: DropIndicator
+  ): BadgeType[] => {
+    const fromIndex = currentOrder.indexOf(draggedId)
+    const targetIndex = currentOrder.indexOf(dropInfo.targetId)
     
-    if (fromIndex === toIndex || fromIndex === toIndex - 1 && dropInfo.position === 'after') {
-      setPreviewOrder(currentOrder)
-      return
-    }
+    if (fromIndex === -1 || targetIndex === -1) return currentOrder
     
     const newOrder = [...currentOrder]
-    const [removed] = newOrder.splice(fromIndex, 1)
+    newOrder.splice(fromIndex, 1)
     
-    let insertIndex = toIndex
-    if (fromIndex < toIndex) {
-      insertIndex = toIndex - 1
+    let insertIndex = targetIndex
+    if (fromIndex < targetIndex) {
+      insertIndex = dropInfo.position === 'before' ? targetIndex - 1 : targetIndex
+    } else {
+      insertIndex = dropInfo.position === 'before' ? targetIndex : targetIndex + 1
     }
     
-    newOrder.splice(insertIndex, 0, removed)
-    setPreviewOrder(newOrder)
-  }, [sortedBadges])
+    insertIndex = Math.max(0, Math.min(insertIndex, newOrder.length))
+    newOrder.splice(insertIndex, 0, draggedId)
+    
+    return newOrder
+  }, [])
 
   const updateDragPosition = useCallback((clientX: number, clientY: number) => {
-    if (!isDraggingRef.current) return
+    if (!isDraggingRef.current || !draggedIdRef.current) return
     
     setGhostPosition({ x: clientX, y: clientY })
     
     const newDropIndicator = calculateDropPosition(clientY)
     
     if (newDropIndicator && 
-        (dropIndicatorRef.current?.index !== newDropIndicator.index || 
+        (dropIndicatorRef.current?.targetId !== newDropIndicator.targetId || 
          dropIndicatorRef.current?.position !== newDropIndicator.position)) {
       dropIndicatorRef.current = newDropIndicator
       setDropIndicator(newDropIndicator)
       
-      if (draggedIndexRef.current !== null) {
-        updatePreviewOrder(draggedIndexRef.current, newDropIndicator)
-      }
+      const currentOrder = previewOrder.length > 0 ? previewOrder : badgeOrder
+      const newPreviewOrder = calculateNewOrder(currentOrder, draggedIdRef.current, newDropIndicator)
+      setPreviewOrder(newPreviewOrder)
     }
-  }, [calculateDropPosition, updatePreviewOrder])
+  }, [calculateDropPosition, calculateNewOrder, previewOrder, badgeOrder])
 
   const finishDrag = useCallback(() => {
     clearLongPressTimer()
     
     if (isDraggingRef.current && 
-        draggedIndexRef.current !== null && 
-        dropIndicatorRef.current !== null) {
-      const fromIndex = draggedIndexRef.current
-      const toIndex = dropIndicatorRef.current.position === 'before'
-        ? dropIndicatorRef.current.index
-        : dropIndicatorRef.current.index + 1
+        draggedIdRef.current && 
+        dropIndicatorRef.current) {
+      const newOrder = calculateNewOrder(badgeOrder, draggedIdRef.current, dropIndicatorRef.current)
       
-      if (fromIndex !== toIndex) {
-        if (fromIndex < toIndex) {
-          moveBadge(fromIndex, toIndex - 1)
-        } else {
-          moveBadge(fromIndex, toIndex)
-        }
+      const isOrderChanged = newOrder.some((id, index) => id !== badgeOrder[index])
+      if (isOrderChanged) {
+        setBadgeOrder(newOrder)
       }
     }
 
     isDraggingRef.current = false
-    draggedIndexRef.current = null
+    draggedIdRef.current = null
     dropIndicatorRef.current = null
     
     setIsDragging(false)
-    setDraggedIndex(null)
+    setDraggedId(null)
     setGhostPosition(null)
     setDropIndicator(null)
     setPreviewOrder([])
     setGhostElement(null)
-  }, [clearLongPressTimer, moveBadge])
+  }, [clearLongPressTimer, calculateNewOrder, badgeOrder, setBadgeOrder])
 
-  const startLongPressDetection = useCallback((index: number, element: ReactNode) => {
+  const startLongPressDetection = useCallback((id: BadgeType, element: ReactNode) => {
     clearLongPressTimer()
     
     longPressTimerRef.current = setTimeout(() => {
       isDraggingRef.current = true
-      draggedIndexRef.current = index
+      draggedIdRef.current = id
       
       setIsDragging(true)
-      setDraggedIndex(index)
+      setDraggedId(id)
       setGhostElement(element)
-      setPreviewOrder(sortedBadges.map(b => b.id))
+      setPreviewOrder([...badgeOrder])
     }, LONG_PRESS_THRESHOLD)
-  }, [clearLongPressTimer, sortedBadges])
+  }, [clearLongPressTimer, badgeOrder])
 
-  const handleTouchStart = useCallback((e: React.TouchEvent, index: number, element: ReactNode) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent, id: BadgeType, element: ReactNode) => {
     const touch = e.touches[0]
     touchStartPosRef.current = { x: touch.clientX, y: touch.clientY }
-    startLongPressDetection(index, element)
+    startLongPressDetection(id, element)
   }, [startLongPressDetection])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
@@ -201,11 +200,11 @@ function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.
     finishDrag()
   }, [finishDrag])
 
-  const handleMouseDown = useCallback((e: React.MouseEvent, index: number, element: ReactNode) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, id: BadgeType, element: ReactNode) => {
     if (e.button !== 0) return
     
     e.preventDefault()
-    startLongPressDetection(index, element)
+    startLongPressDetection(id, element)
 
     const handleGlobalMouseMove = (moveEvent: MouseEvent): void => {
       if (isDraggingRef.current) {
@@ -223,18 +222,18 @@ function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.
     document.addEventListener('mouseup', handleGlobalMouseUp)
   }, [startLongPressDetection, updateDragPosition, finishDrag])
 
-  const setBadgeRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
+  const setBadgeRef = useCallback((id: BadgeType) => (el: HTMLDivElement | null) => {
     if (el) {
-      badgeRefsRef.current.set(index, el)
+      badgeRefsRef.current.set(id, el)
     } else {
-      badgeRefsRef.current.delete(index)
+      badgeRefsRef.current.delete(id)
     }
   }, [])
 
   const getDropIndicatorStyle = useCallback((): React.CSSProperties => {
     if (!dropIndicator || !containerRef.current) return {}
     
-    const element = badgeRefsRef.current.get(dropIndicator.index)
+    const element = badgeRefsRef.current.get(dropIndicator.targetId)
     if (!element) return {}
     
     const rect = element.getBoundingClientRect()
@@ -257,17 +256,17 @@ function DraggableBadgeContainer({ badges }: DraggableBadgeContainerProps): JSX.
       onTouchEnd={isDragging ? handleTouchEnd : undefined}
       onTouchCancel={isDragging ? handleTouchEnd : undefined}
     >
-      {displayBadges.map((badge, index) => {
-        const isBeingDragged = isDragging && draggedIndex === index
+      {displayBadges.map((badge) => {
+        const isBeingDragged = isDragging && draggedId === badge.id
         
         return (
           <div
             key={badge.id}
-            ref={setBadgeRef(index)}
-            data-badge-index={index}
+            ref={setBadgeRef(badge.id)}
+            data-badge-id={badge.id}
             className={`${styles.badgeWrapper} ${isBeingDragged ? styles.dragged : ''}`}
-            onTouchStart={(e) => handleTouchStart(e, index, badge.content)}
-            onMouseDown={(e) => handleMouseDown(e, index, badge.content)}
+            onTouchStart={(e) => handleTouchStart(e, badge.id, badge.content)}
+            onMouseDown={(e) => handleMouseDown(e, badge.id, badge.content)}
           >
             {badge.content}
           </div>
