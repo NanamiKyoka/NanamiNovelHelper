@@ -279,12 +279,25 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     }
   }, [isLoaded, loadTypes, loadEntries])
 
-  // 自动选择第一个类型
+  // 自动选择类型（优先使用上次选择的类型）
   useEffect(() => {
     if (types.length > 0 && !selectedTypeId) {
-      setSelectedTypeId(types[0].id)
+      const lastSelectedTypeId = localStorage.getItem('vocabulary_last_selected_type')
+      const typeExists = types.some(t => t.id === lastSelectedTypeId)
+      if (lastSelectedTypeId && typeExists) {
+        setSelectedTypeId(lastSelectedTypeId)
+      } else {
+        setSelectedTypeId(types[0].id)
+      }
     }
   }, [types, selectedTypeId])
+
+  // 保存选择的类型到 localStorage
+  useEffect(() => {
+    if (selectedTypeId) {
+      localStorage.setItem('vocabulary_last_selected_type', selectedTypeId)
+    }
+  }, [selectedTypeId])
 
   // 注册快捷键
   useShortcuts([
