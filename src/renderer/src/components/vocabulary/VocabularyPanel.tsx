@@ -18,7 +18,9 @@ import {
   Collapse,
   Badge,
   Checkbox,
-  Tooltip
+  Tooltip,
+  Radio,
+  Alert
 } from 'antd'
 import type { MenuProps, TableProps } from 'antd'
 import {
@@ -1098,41 +1100,105 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
     })
   }
 
-  // 批量导出
-  const handleBatchExport = (): void => {
-    if (selectedRowKeys.length === 0) return
-    
-    const selectedEntries = filteredEntries.filter(e => selectedRowKeys.includes(e.id))
+  // 导出状态
+  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'markdown'>('json')
+  const [exportScope, setExportScope] = useState<'all' | 'selected'>('all')
+
+  // 通用导出函数
+  const doExport = (entries: VocabularyEntry[], format: 'json' | 'csv' | 'markdown'): void => {
     const typeName = currentTypeDefinition?.name || '词汇'
+    const fields = currentTypeDefinition?.fields.filter(f => f.id !== 'name') || []
     
-    const exportData = selectedEntries.map(entry => ({
+    const prepareData = (entry: VocabularyEntry) => ({
       名称: entry.name,
       别名: entry.aliases.join('、'),
       颜色: entry.color,
       标签: entry.tags.join('、'),
       备注: entry.description || '',
       ...Object.fromEntries(
-        currentTypeDefinition?.fields
-          .filter(f => f.id !== 'name')
-          .map(f => {
-            const value = entry.fields[f.id]
-            return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
-          }) || []
+        fields.map(f => {
+          const value = entry.fields[f.id]
+          return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
+        })
       )
-    }))
+    })
     
-    const jsonString = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
+    const data = entries.map(prepareData)
+    const dateStr = new Date().toISOString().slice(0, 10)
+    
+    let content: string
+    let mimeType: string
+    let extension: string
+    
+    if (format === 'json') {
+      content = JSON.stringify(data, null, 2)
+      mimeType = 'application/json'
+      extension = 'json'
+    } else if (format === 'csv') {
+      const headers = Object.keys(data[0] || {})
+      const csvRows = [
+        headers.join(','),
+        ...data.map(row => 
+          headers.map(h => {
+            const cell = String(row[h as keyof typeof row] || '')
+            return cell.includes(',') || cell.includes('"') || cell.includes('\n')
+              ? `"${cell.replace(/"/g, '""')}"`
+              : cell
+          }).join(',')
+        )
+      ]
+      content = '\uFEFF' + csvRows.join('\n')
+      mimeType = 'text/csv;charset=utf-8'
+      extension = 'csv'
+    } else {
+      const headers = Object.keys(data[0] || {})
+      const mdLines = [
+        `# ${typeName}词汇导出`,
+        `导出时间：${dateStr}`,
+        `共 ${entries.length} 条记录`,
+        '',
+        '---',
+        ''
+      ]
+      
+      entries.forEach((entry, index) => {
+        mdLines.push(`## ${index + 1}. ${entry.name}`)
+        mdLines.push('')
+        headers.forEach(h => {
+          const value = data[index][h as keyof typeof data[0]]
+          if (value) {
+            mdLines.push(`**${h}**：${value}`)
+          }
+        })
+        mdLines.push('')
+        mdLines.push('---')
+        mdLines.push('')
+      })
+      
+      content = mdLines.join('\n')
+      mimeType = 'text/markdown;charset=utf-8'
+      extension = 'md'
+    }
+    
+    const blob = new Blob([content], { type: mimeType })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${typeName}_导出_${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `${typeName}_导出_${dateStr}.${extension}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
     
-    message.success(`成功导出 ${selectedEntries.length} 个词汇`)
+    message.success(`成功导出 ${entries.length} 个词汇`)
+  }
+
+  // 批量导出
+  const handleBatchExport = (): void => {
+    if (selectedRowKeys.length === 0) return
+    setExportScope('selected')
+    setExportModalOpen(true)
   }
 
   // 导出全部
@@ -1141,37 +1207,17 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
       message.warning('没有可导出的数据')
       return
     }
-    
-    const typeName = currentTypeDefinition?.name || '词汇'
-    
-    const exportData = filteredEntries.map(entry => ({
-      名称: entry.name,
-      别名: entry.aliases.join('、'),
-      颜色: entry.color,
-      标签: entry.tags.join('、'),
-      备注: entry.description || '',
-      ...Object.fromEntries(
-        currentTypeDefinition?.fields
-          .filter(f => f.id !== 'name')
-          .map(f => {
-            const value = entry.fields[f.id]
-            return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
-          }) || []
-      )
-    }))
-    
-    const jsonString = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${typeName}_全部导出_${new Date().toISOString().slice(0, 10)}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    
-    message.success(`成功导出 ${filteredEntries.length} 个词汇`)
+    setExportScope('all')
+    setExportModalOpen(true)
+  }
+
+  // 确认导出
+  const confirmExport = (): void => {
+    const entries = exportScope === 'selected' 
+      ? filteredEntries.filter(e => selectedRowKeys.includes(e.id))
+      : filteredEntries
+    doExport(entries, exportFormat)
+    setExportModalOpen(false)
   }
 
   // 切换批量模式
@@ -1799,6 +1845,31 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
             <Select mode="tags" placeholder="输入标签后按回车添加" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 导出格式选择弹窗 */}
+      <Modal
+        title="选择导出格式"
+        open={exportModalOpen}
+        onCancel={() => setExportModalOpen(false)}
+        onOk={confirmExport}
+        okText="导出"
+        cancelText="取消"
+      >
+        <div style={{ marginBottom: 16 }}>
+          <span style={{ marginRight: 8 }}>导出范围：</span>
+          <strong>{exportScope === 'selected' ? `选中的 ${selectedRowKeys.length} 条` : `全部 ${filteredEntries.length} 条`}</strong>
+        </div>
+        <Radio.Group value={exportFormat} onChange={e => setExportFormat(e.target.value)}>
+          <Radio.Button value="json">JSON</Radio.Button>
+          <Radio.Button value="csv">CSV</Radio.Button>
+          <Radio.Button value="markdown">Markdown</Radio.Button>
+        </Radio.Group>
+        <div style={{ marginTop: 12, color: 'var(--text-secondary)', fontSize: 12 }}>
+          <div>• JSON：适合数据交换和程序处理</div>
+          <div>• CSV：适合在 Excel 中查看和编辑</div>
+          <div>• Markdown：适合阅读和文档记录</div>
+        </div>
       </Modal>
     </div>
   )
