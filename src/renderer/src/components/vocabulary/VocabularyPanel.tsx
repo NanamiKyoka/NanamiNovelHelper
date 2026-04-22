@@ -275,6 +275,29 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
     return [...filteredEntries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [filteredEntries])
 
+  // 高亮搜索关键词
+  const highlightText = useCallback((text: string, keyword: string): React.ReactNode => {
+    if (!keyword || !text) return text
+    
+    const lowerText = text.toLowerCase()
+    const lowerKeyword = keyword.toLowerCase()
+    const index = lowerText.indexOf(lowerKeyword)
+    
+    if (index === -1) return text
+    
+    const before = text.slice(0, index)
+    const match = text.slice(index, index + keyword.length)
+    const after = text.slice(index + keyword.length)
+    
+    return (
+      <>
+        {before}
+        <span style={{ backgroundColor: '#ffe58f', padding: '0 2px', borderRadius: 2 }}>{match}</span>
+        {highlightText(after, keyword)}
+      </>
+    )
+  }, [])
+
   // 拖拽开始
   const handleDragStart = useCallback((event: DragStartEvent): void => {
     setActiveId(event.active.id as string)
@@ -382,7 +405,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
               backgroundColor: record.color
             }}
           />
-          <span>{name}</span>
+          <span>{highlightText(name, searchText)}</span>
           {record.linkedFilePath && (
             <Tooltip title="点击打开关联文件">
               <LinkOutlined 
@@ -545,7 +568,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
                 backgroundColor: record.color
               }}
             />
-            <span>{name}</span>
+            <span>{highlightText(name, searchText)}</span>
           </Space>
         )
       },
@@ -554,7 +577,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
         dataIndex: 'description',
         key: 'description',
         ellipsis: true,
-        render: (desc: string) => desc || '-'
+        render: (desc: string) => desc ? highlightText(desc, searchText) : '-'
       },
       {
         title: '别名',
@@ -563,7 +586,9 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
         width: 150,
         render: (aliases: string[]) => 
           aliases?.length > 0 
-            ? aliases.slice(0, 3).map((a, i) => <Tag key={i} style={{ margin: '2px' }}>{a}</Tag>)
+            ? aliases.slice(0, 3).map((a, i) => (
+                <Tag key={i} style={{ margin: '2px' }}>{highlightText(a, searchText)}</Tag>
+              ))
             : '-'
       }
     ]
