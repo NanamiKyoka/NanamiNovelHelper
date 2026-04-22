@@ -39,7 +39,9 @@ import {
   ClearOutlined,
   ColumnHeightOutlined,
   FileAddOutlined,
-  FolderOpenOutlined
+  FolderOpenOutlined,
+  StarOutlined,
+  StarFilled
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -169,6 +171,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [filterColor, setFilterColor] = useState<string>('')
   const [filterHasLinkedFile, setFilterHasLinkedFile] = useState<boolean | null>(null)
+  const [filterStarred, setFilterStarred] = useState<boolean | null>(null)
   
   // 快速创建状态
   const [quickAddMode, setQuickAddMode] = useState(false)
@@ -266,13 +269,25 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
         if (filterHasLinkedFile !== hasLinkedFile) return false
       }
       
+      // 收藏筛选
+      if (filterStarred !== null) {
+        if (filterStarred !== !!item.starred) return false
+      }
+      
       return true
     })
-  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile])
+  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile, filterStarred])
 
-  // 按 order 字段排序的条目（用于拖拽排序）
+  // 按 order 字段排序的条目（收藏置顶）
   const sortedEntries = useMemo(() => {
-    return [...filteredEntries].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    return [...filteredEntries].sort((a, b) => {
+      const aStarred = !!a.starred
+      const bStarred = !!b.starred
+      if (aStarred !== bStarred) {
+        return aStarred ? -1 : 1
+      }
+      return (a.order ?? 0) - (b.order ?? 0)
+    })
   }, [filteredEntries])
 
   // 高亮搜索关键词
@@ -350,14 +365,26 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
     if (filterTags.length > 0) count++
     if (filterColor) count++
     if (filterHasLinkedFile !== null) count++
+    if (filterStarred !== null) count++
     return count
-  }, [filterTags, filterColor, filterHasLinkedFile])
+  }, [filterTags, filterColor, filterHasLinkedFile, filterStarred])
 
   // 清除所有筛选
   const clearAllFilters = (): void => {
     setFilterTags([])
     setFilterColor('')
     setFilterHasLinkedFile(null)
+    setFilterStarred(null)
+  }
+
+  // 切换收藏状态
+  const toggleStarred = async (entry: VocabularyEntry): Promise<void> => {
+    try {
+      await updateEntry(entry.id, { starred: !entry.starred })
+    } catch (error) {
+      console.error('切换收藏失败:', error)
+      message.error('操作失败')
+    }
   }
 
   // 根据配置生成表格列
@@ -373,8 +400,30 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
       )
     }
 
+    // 收藏列
+    const starredColumn = {
+      title: '',
+      key: 'starred',
+      width: 32,
+      fixed: 'left' as const,
+      render: (_: unknown, record: VocabularyEntry) => (
+        <Tooltip title={record.starred ? '取消收藏' : '收藏'}>
+          <Button
+            type="text"
+            size="small"
+            icon={record.starred ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleStarred(record)
+            }}
+            style={{ padding: '0 4px' }}
+          />
+        </Tooltip>
+      )
+    }
+
     if (!currentTypeDefinition) {
-      return [dragHandleColumn, ...getDefaultColumns()]
+      return [dragHandleColumn, starredColumn, ...getDefaultColumns()]
     }
 
     const fields = currentTypeDefinition.fields
@@ -382,7 +431,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
 
     // 如果没有字段，使用默认列
     if (!fields || fields.length === 0) {
-      return [dragHandleColumn, ...getDefaultColumns()]
+      return [dragHandleColumn, starredColumn, ...getDefaultColumns()]
     }
 
     // 创建字段映射便于查找
@@ -528,8 +577,8 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
       )
     }
 
-    return [dragHandleColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
-  }, [currentTypeDefinition, readOnly, columnVisibility])
+    return [dragHandleColumn, starredColumn, nameColumn, ...fieldColumns, actionColumn].filter(Boolean)
+  }, [currentTypeDefinition, readOnly, columnVisibility, searchText])
 
   // 获取所有可选列
   const allFieldColumns = useMemo(() => {
@@ -1471,6 +1520,22 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
               >
                 <Select.Option value={true}>有关联</Select.Option>
                 <Select.Option value={false}>无关联</Select.Option>
+              </Select>
+            </div>
+            
+            {/* 收藏筛选 */}
+            <div className={styles.filterItem}>
+              <span className={styles.filterLabel}>收藏：</span>
+              <Select
+                placeholder="选择"
+                value={filterStarred}
+                onChange={setFilterStarred}
+                allowClear
+                style={{ minWidth: 100 }}
+                size="small"
+              >
+                <Select.Option value={true}>已收藏</Select.Option>
+                <Select.Option value={false}>未收藏</Select.Option>
               </Select>
             </div>
             

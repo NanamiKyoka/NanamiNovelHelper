@@ -100,6 +100,7 @@ export interface VocabularyEntry {
   tags: string[] // 标签
   description?: string // 备注/描述
   linkedFilePath?: string // 关联的 Markdown 文件路径（相对于项目根目录）
+  starred?: boolean // 是否收藏
   order: number // 排序序号
   createdAt: string
   updatedAt: string
