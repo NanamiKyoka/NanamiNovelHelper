@@ -19,11 +19,48 @@
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
   align-items: center;
+  align-content: flex-start;
+  gap: 12px;
   padding: 12px 16px;
   background: var(--ant-color-bg-container);
   border-bottom: 1px solid var(--ant-color-border);
+  container-type: inline-size;
+  container-name: vocab-toolbar;
+}
+
+/* 响应式布局 */
+@container vocab-toolbar (max-width: 400px) {
+  .toolbar {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  
+  .toolbar :global(.ant-input-search) {
+    width: 100% !important;
+    min-width: 120px;
+  }
+  
+  .toolbar :global(.ant-btn) {
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+}
+
+@container vocab-toolbar (max-width: 300px) {
+  .toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  
+  .toolbar :global(.ant-btn) {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  
+  .toolbar :global(.ant-space) {
+    gap: 6px !important;
+  }
 }
 
 .filterPanel {

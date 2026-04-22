@@ -9,10 +9,15 @@
 .searchSection {
   padding: 8px;
   border-bottom: 1px solid var(--ant-color-border);
+  container-type: inline-size;
+  container-name: search-section;
 }
 
 .inputRow {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
   gap: 4px;
   margin-bottom: 4px;
 }
@@ -23,6 +28,24 @@
 
 .searchInput {
   flex: 1;
+  min-width: 120px;
+}
+
+/* 响应式布局 */
+@container search-section (max-width: 280px) {
+  .searchSection {
+    padding: 6px;
+  }
+  
+  .searchInput {
+    min-width: 80px;
+  }
+  
+  .toggleBtn {
+    padding: 0 2px;
+    font-size: 11px;
+    min-width: 20px;
+  }
 }
 
 .inputIcon {

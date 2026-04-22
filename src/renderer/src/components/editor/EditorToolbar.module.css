@@ -1,11 +1,51 @@
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  align-content: flex-start;
   padding: 4px 8px;
   background: var(--ant-color-bg-container);
   border-bottom: 1px solid var(--ant-color-border);
-  flex-wrap: wrap;
   gap: 4px;
+  container-type: inline-size;
+  container-name: editor-toolbar;
+}
+
+/* 响应式布局 */
+@container editor-toolbar (max-width: 600px) {
+  .toolbar {
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  
+  .group {
+    gap: 1px;
+  }
+  
+  .divider {
+    margin: 0 2px;
+  }
+}
+
+@container editor-toolbar (max-width: 450px) {
+  .toolbar {
+    padding: 3px 4px;
+    gap: 1px;
+  }
+  
+  .group {
+    gap: 0;
+  }
+  
+  .divider {
+    margin: 0 1px;
+    width: 1px;
+    height: 14px;
+  }
+  
+  .arrow {
+    display: none;
+  }
 }
 
 .group {

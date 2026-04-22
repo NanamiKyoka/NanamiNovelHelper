@@ -8,15 +8,20 @@
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  align-content: flex-start;
   gap: var(--spacing-2);
   padding: var(--spacing-2);
   border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
+  container-type: inline-size;
+  container-name: filetree-toolbar;
 }
 
 .searchInput {
   flex: 1;
+  min-width: 120px;
 }
 
 .searchIcon {
@@ -25,6 +30,8 @@
 
 .toolbarActions {
   flex-shrink: 0;
+  display: flex;
+  gap: 0;
 }
 
 .toolbarActions :global(.ant-btn) {
@@ -34,6 +41,26 @@
 .toolbarActions :global(.ant-btn):hover {
   color: var(--text-primary);
   background: var(--hover-bg);
+}
+
+/* 响应式按钮优先级 */
+/* 极窄宽度：只显示搜索框和新建文件 */
+@container filetree-toolbar (max-width: 220px) {
+  .searchInput {
+    min-width: 80px;
+  }
+  
+  .toolbarBtnSecondary,
+  .toolbarBtnTertiary {
+    display: none;
+  }
+}
+
+/* 较窄宽度：显示搜索框、新建文件、新建文件夹 */
+@container filetree-toolbar (max-width: 280px) {
+  .toolbarBtnTertiary {
+    display: none;
+  }
 }
 
 .content {

@@ -687,13 +687,14 @@ function FileTree(): JSX.Element {
           size="small"
           className={styles.searchInput}
         />
-        <Space size={0} className={styles.toolbarActions}>
+        <div className={styles.toolbarActions}>
           <Tooltip title="新建文件 (Ctrl+N)">
             <Button
               type="text"
               size="small"
               icon={<FileAddOutlined />}
               onClick={handleNewFile}
+              className={styles.toolbarBtn}
             />
           </Tooltip>
           <Tooltip title="新建文件夹 (Ctrl+Shift+N)">
@@ -702,6 +703,7 @@ function FileTree(): JSX.Element {
               size="small"
               icon={<FolderAddOutlined />}
               onClick={handleNewFolder}
+              className={styles.toolbarBtnSecondary}
             />
           </Tooltip>
           <Tooltip title={sortOptions.field === 'name' 
@@ -715,7 +717,6 @@ function FileTree(): JSX.Element {
                 : (sortOptions.order === 'asc' ? <FieldTimeOutlined /> : <FieldTimeOutlined style={{ transform: 'scaleY(-1)' }} />)
               }
               onClick={() => {
-                // 点击切换排序字段：name -> modified -> name
                 if (sortOptions.field === 'name') {
                   setSortMode(`modified-${sortOptions.order}` as SortMode)
                 } else {
@@ -723,10 +724,10 @@ function FileTree(): JSX.Element {
                 }
               }}
               onContextMenu={(e) => {
-                // 右键切换升序/降序
                 e.preventDefault()
                 toggleSortOrder()
               }}
+              className={styles.toolbarBtnSecondary}
             />
           </Tooltip>
           <Tooltip title="刷新">
@@ -736,9 +737,10 @@ function FileTree(): JSX.Element {
               icon={<ReloadOutlined />}
               onClick={refreshTree}
               loading={loading}
+              className={styles.toolbarBtnTertiary}
             />
           </Tooltip>
-        </Space>
+        </div>
       </div>
 
       {/* 文件树内容（虚拟滚动） */}
