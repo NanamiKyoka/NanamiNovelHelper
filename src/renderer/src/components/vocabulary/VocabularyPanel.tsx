@@ -127,16 +127,17 @@ export interface VocabularyPanelRef {
   isDrawerOpen: () => boolean
 }
 
-const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(function VocabularyPanel(
-  { 
-    readOnly = false, 
-    externalSearchText,
-    embedded = false,
-    currentTypeId,
-    onTypeChange
-  },
-  ref
-): JSX.Element {
+const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
+  (
+    { 
+      readOnly = false, 
+      externalSearchText,
+      embedded = false,
+      currentTypeId,
+      onTypeChange
+    },
+    ref
+  ) => {
   const {
     types,
     entries,
@@ -1873,7 +1874,8 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(fun
       </Modal>
     </div>
   )
-}
+  }
+)
 
 export default VocabularyPanel
 export { VocabularyPanel }
