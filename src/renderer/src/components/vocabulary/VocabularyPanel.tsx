@@ -63,6 +63,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
+import { useEditorStore } from '../../stores/editorStore'
+import { useFileTreeStore } from '../../stores/fileTreeStore'
 import type { 
   VocabularyEntry, 
   VocabularyType, 
@@ -140,6 +142,10 @@ function VocabularyPanel({
     updateType,
     isLoaded
   } = useVocabularyStore()
+  
+  const openFile = useEditorStore((state) => state.openFile)
+  const expandToPath = useFileTreeStore((state) => state.expandToPath)
+  const selectFile = useFileTreeStore((state) => state.select)
   
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<VocabularyEntry | null>(null)
@@ -1001,10 +1007,13 @@ function VocabularyPanel({
     }
   }
 
-  // 打开关联文件
+  // 打开关联文件（在编辑器中打开并定位到文件树）
   const handleOpenLinkedFile = async (filePath: string): Promise<void> => {
     try {
-      await window.electron.ipcRenderer.invoke('shell:open-external', filePath)
+      const fileName = filePath.split(/[/\\]/).pop() || filePath
+      await expandToPath(filePath)
+      selectFile(filePath)
+      await openFile(filePath, fileName)
     } catch (error) {
       console.error('打开文件失败:', error)
       message.error('打开文件失败')
