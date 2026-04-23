@@ -4,6 +4,7 @@
 
 import { ipcMain } from 'electron'
 import { highlightService } from '../services/highlight'
+import { validateParams } from '../utils/validation'
 import type { HighlightConfig } from '../types/highlight'
 
 let registered = false
@@ -17,6 +18,7 @@ export function registerHighlightHandlers(): void {
   })
 
   ipcMain.handle('highlight:saveConfig', (_event, config: Partial<HighlightConfig>): void => {
+    validateParams('highlight:saveConfig').object(config, 'config').validate()
     highlightService.saveConfig(config)
   })
 }

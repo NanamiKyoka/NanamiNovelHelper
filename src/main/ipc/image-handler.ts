@@ -5,6 +5,7 @@
 import { ipcMain } from 'electron'
 import { imageService, ImageUploadResult } from '../services/image'
 import { projectService } from '../services/project'
+import { validateParams } from '../utils/validation'
 import { ImageFieldConfig } from '../types/vocabulary'
 
 /**
@@ -13,6 +14,7 @@ import { ImageFieldConfig } from '../types/vocabulary'
 export function registerImageHandlers(): void {
   // 从 Base64 上传图片
   ipcMain.handle('image:uploadFromBase64', async (_event, base64Data: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
+    validateParams('image:uploadFromBase64').nonEmptyString(base64Data, 'base64Data').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {
@@ -27,6 +29,7 @@ export function registerImageHandlers(): void {
 
   // 从文件路径上传图片
   ipcMain.handle('image:uploadFromFile', async (_event, filePath: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
+    validateParams('image:uploadFromFile').nonEmptyString(filePath, 'filePath').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {
@@ -61,6 +64,7 @@ export function registerImageHandlers(): void {
 
   // 删除图片
   ipcMain.handle('image:delete', async (_event, imagePath: string): Promise<void> => {
+    validateParams('image:delete').nonEmptyString(imagePath, 'imagePath').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {
@@ -75,6 +79,7 @@ export function registerImageHandlers(): void {
 
   // 读取图片为 Base64
   ipcMain.handle('image:readAsBase64', async (_event, imagePath: string): Promise<string> => {
+    validateParams('image:readAsBase64').nonEmptyString(imagePath, 'imagePath').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {
@@ -89,6 +94,7 @@ export function registerImageHandlers(): void {
 
   // 检查图片是否存在
   ipcMain.handle('image:exists', (_event, imagePath: string): boolean => {
+    validateParams('image:exists').nonEmptyString(imagePath, 'imagePath').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {
@@ -103,6 +109,7 @@ export function registerImageHandlers(): void {
 
   // 获取图片完整路径
   ipcMain.handle('image:getFullPath', (_event, imagePath: string): string => {
+    validateParams('image:getFullPath').nonEmptyString(imagePath, 'imagePath').validate()
     try {
       const project = projectService.getCurrentProject()
       if (!project) {

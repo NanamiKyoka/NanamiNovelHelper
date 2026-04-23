@@ -13,6 +13,7 @@ import { ipcMain, dialog } from 'electron'
 import { globalSettingsService } from '../services/globalSettings'
 import { projectSettingsService } from '../services/projectSettings'
 import { backupService } from '../services/backup'
+import { validateParams } from '../utils/validation'
 import type { GlobalSettings, ProjectSettings, BadgeVisibility, BadgeType, SidebarBadgeVisibility } from '../types/settings'
 
 /**
@@ -29,6 +30,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:update', (_, settings: Partial<GlobalSettings>): GlobalSettings => {
+    validateParams('settings:global:update').object(settings, 'settings').validate()
     return globalSettingsService.update(settings)
   })
 
@@ -41,6 +43,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:updateTheme', (_, theme) => {
+    validateParams('settings:global:updateTheme').object(theme, 'theme').validate()
     return globalSettingsService.updateTheme(theme)
   })
 
@@ -49,6 +52,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:updateWindowState', (_, state) => {
+    validateParams('settings:global:updateWindowState').object(state, 'state').validate()
     return globalSettingsService.updateWindowState(state)
   })
 
@@ -57,6 +61,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:setLanguage', (_, language) => {
+    validateParams('settings:global:setLanguage').nonEmptyString(language, 'language').validate()
     globalSettingsService.setLanguage(language)
   })
 
@@ -65,6 +70,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:setSidebarWidth', (_, width: number) => {
+    validateParams('settings:global:setSidebarWidth').number(width, 'width').validate()
     globalSettingsService.setSidebarWidth(width)
   })
 
@@ -73,14 +79,17 @@ export function registerSettingsHandlers(): void {
   // ============================================
 
   ipcMain.handle('settings:global:getApiKey', (_, keyName: string): string | null => {
+    validateParams('settings:global:getApiKey').nonEmptyString(keyName, 'keyName').validate()
     return globalSettingsService.getApiKey(keyName)
   })
 
   ipcMain.handle('settings:global:setApiKey', (_, keyName: string, value: string) => {
+    validateParams('settings:global:setApiKey').nonEmptyString(keyName, 'keyName').string(value, 'value').validate()
     globalSettingsService.setApiKey(keyName, value)
   })
 
   ipcMain.handle('settings:global:deleteApiKey', (_, keyName: string) => {
+    validateParams('settings:global:deleteApiKey').nonEmptyString(keyName, 'keyName').validate()
     globalSettingsService.deleteApiKey(keyName)
   })
 
@@ -102,6 +111,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:update', (_, settings: Partial<ProjectSettings>): ProjectSettings => {
+    validateParams('settings:project:update').object(settings, 'settings').validate()
     return projectSettingsService.update(settings)
   })
 
@@ -118,6 +128,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateEditor', (_, settings) => {
+    validateParams('settings:project:updateEditor').object(settings, 'settings').validate()
     return projectSettingsService.updateEditorSettings(settings)
   })
 
@@ -126,6 +137,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateHighlight', (_, settings) => {
+    validateParams('settings:project:updateHighlight').object(settings, 'settings').validate()
     return projectSettingsService.updateHighlightSettings(settings)
   })
 
@@ -134,6 +146,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateBackup', (_, settings) => {
+    validateParams('settings:project:updateBackup').object(settings, 'settings').validate()
     return projectSettingsService.updateBackupSettings(settings)
   })
 
@@ -142,6 +155,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateBadgeVisibility', (_, settings: Partial<BadgeVisibility>): BadgeVisibility => {
+    validateParams('settings:project:updateBadgeVisibility').object(settings, 'settings').validate()
     return projectSettingsService.updateBadgeVisibility(settings)
   })
 
@@ -150,6 +164,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateBadgeOrder', (_, order: BadgeType[]): BadgeType[] => {
+    validateParams('settings:project:updateBadgeOrder').array(order, 'order').validate()
     return projectSettingsService.updateBadgeOrder(order)
   })
 
@@ -158,6 +173,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:updateSidebarBadgeVisibility', (_, settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility => {
+    validateParams('settings:project:updateSidebarBadgeVisibility').object(settings, 'settings').validate()
     return projectSettingsService.updateSidebarBadgeVisibility(settings)
   })
 
@@ -166,6 +182,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:setSidebarBadgeOrder', (_, order: string[]): string[] => {
+    validateParams('settings:project:setSidebarBadgeOrder').stringArray(order, 'order').validate()
     return projectSettingsService.setSidebarBadgeOrder(order)
   })
 
@@ -174,6 +191,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:setShowHiddenFiles', (_, value: boolean): void => {
+    validateParams('settings:project:setShowHiddenFiles').boolean(value, 'value').validate()
     projectSettingsService.setShowHiddenFiles(value)
   })
 
@@ -182,6 +200,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:setExpandedFolders', (_, folders: string[]): void => {
+    validateParams('settings:project:setExpandedFolders').stringArray(folders, 'folders').validate()
     projectSettingsService.setExpandedFolders(folders)
   })
 
@@ -190,6 +209,7 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:project:setHiddenItems', (_, items: string[]): void => {
+    validateParams('settings:project:setHiddenItems').stringArray(items, 'items').validate()
     projectSettingsService.setHiddenItems(items)
   })
 
@@ -209,14 +229,17 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('backup:restore', async (_, filename: string): Promise<boolean> => {
+    validateParams('backup:restore').nonEmptyString(filename, 'filename').validate()
     return backupService.restoreBackup(filename)
   })
 
   ipcMain.handle('backup:delete', (_, filename: string): boolean => {
+    validateParams('backup:delete').nonEmptyString(filename, 'filename').validate()
     return backupService.deleteBackup(filename)
   })
 
   ipcMain.handle('backup:export', async (_, filename: string): Promise<string | null> => {
+    validateParams('backup:export').nonEmptyString(filename, 'filename').validate()
     const result = await dialog.showSaveDialog({
       title: '导出备份',
       defaultPath: filename,

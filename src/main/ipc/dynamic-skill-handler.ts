@@ -4,6 +4,7 @@
 
 import { ipcMain, BrowserWindow } from 'electron'
 import { dynamicSkillService } from '@main/services/dynamicSkill'
+import { validateParams } from '../utils/validation'
 import type {
   DynamicSkill,
   DynamicSkillExecutionRequest,
@@ -27,6 +28,7 @@ export function registerDynamicSkillHandlers(): void {
    * 获取单个 SKILL
    */
   ipcMain.handle('dynamicSkill:get', async (_event, skillId: string): Promise<DynamicSkill | undefined> => {
+    validateParams('dynamicSkill:get').nonEmptyString(skillId, 'skillId').validate()
     return dynamicSkillService.getSkill(skillId)
   })
 
@@ -45,6 +47,7 @@ export function registerDynamicSkillHandlers(): void {
    * 获取 SKILL 的工具列表
    */
   ipcMain.handle('dynamicSkill:getTools', async (_event, skillId: string) => {
+    validateParams('dynamicSkill:getTools').nonEmptyString(skillId, 'skillId').validate()
     const skill = dynamicSkillService.getSkill(skillId)
     return skill?.tools || []
   })
@@ -61,6 +64,11 @@ export function registerDynamicSkillHandlers(): void {
       parameters: Record<string, unknown>,
       context: { projectPath: string; currentChapter?: { path: string; content: string }; selectedText?: string },
     ): Promise<DynamicSkillExecutionResult> => {
+      validateParams('dynamicSkill:execute')
+        .nonEmptyString(skillId, 'skillId')
+        .nonEmptyString(toolId, 'toolId')
+        .object(parameters, 'parameters')
+        .validate()
       const request: DynamicSkillExecutionRequest = {
         skillId,
         toolId,
@@ -84,6 +92,7 @@ export function registerDynamicSkillHandlers(): void {
    * 取消执行
    */
   ipcMain.handle('dynamicSkill:cancel', async (_event, executionId: string): Promise<boolean> => {
+    validateParams('dynamicSkill:cancel').nonEmptyString(executionId, 'executionId').validate()
     return dynamicSkillService.cancelExecution(executionId)
   })
 
@@ -101,6 +110,11 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:addToWhitelist',
     async (_event, skillId: string, skillName: string, skillPath: string): Promise<void> => {
+      validateParams('dynamicSkill:addToWhitelist')
+        .nonEmptyString(skillId, 'skillId')
+        .nonEmptyString(skillName, 'skillName')
+        .nonEmptyString(skillPath, 'skillPath')
+        .validate()
       return dynamicSkillService.trustSkill(skillId, skillName, skillPath)
     },
   )
@@ -109,6 +123,7 @@ export function registerDynamicSkillHandlers(): void {
    * 从白名单移除（取消信任）
    */
   ipcMain.handle('dynamicSkill:removeFromWhitelist', async (_event, skillId: string): Promise<void> => {
+    validateParams('dynamicSkill:removeFromWhitelist').nonEmptyString(skillId, 'skillId').validate()
     return dynamicSkillService.untrustSkill(skillId)
   })
 
@@ -118,6 +133,7 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:isTrusted',
     async (_event, skillId: string, skillPath: string): Promise<boolean> => {
+      validateParams('dynamicSkill:isTrusted').nonEmptyString(skillId, 'skillId').nonEmptyString(skillPath, 'skillPath').validate()
       return dynamicSkillService.isSkillTrusted(skillId, skillPath)
     },
   )
@@ -128,6 +144,7 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:create',
     async (_event, options: CreateSkillOptions): Promise<DynamicSkill> => {
+      validateParams('dynamicSkill:create').object(options, 'options').validate()
       return dynamicSkillService.createSkill(options)
     },
   )
@@ -138,6 +155,7 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:update',
     async (_event, skillId: string, options: UpdateSkillOptions): Promise<DynamicSkill> => {
+      validateParams('dynamicSkill:update').nonEmptyString(skillId, 'skillId').object(options, 'options').validate()
       return dynamicSkillService.updateSkill(skillId, options)
     },
   )
@@ -148,6 +166,7 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:delete',
     async (_event, skillId: string): Promise<void> => {
+      validateParams('dynamicSkill:delete').nonEmptyString(skillId, 'skillId').validate()
       return dynamicSkillService.deleteSkill(skillId)
     },
   )

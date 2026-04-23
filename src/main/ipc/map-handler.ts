@@ -6,6 +6,7 @@
 
 import { ipcMain, dialog } from 'electron'
 import { mapService } from '../services/map'
+import { validateParams } from '../utils/validation'
 import type {
   Map,
   MapMeta,
@@ -13,36 +14,42 @@ import type {
   UpdateMapOptions
 } from '../types/map'
 
-/**
- * 注册地图相关 IPC 处理器
- */
 export function registerMapHandlers(): void {
   // ============================================
   // 地图管理
   // ============================================
 
-  // 获取地图列表
   ipcMain.handle('map:getList', (): MapMeta[] => {
     return mapService.getList()
   })
 
-  // 获取单个地图
   ipcMain.handle('map:get', (_, mapId: string): Map | null => {
+    validateParams('map:get')
+      .nonEmptyString(mapId, 'mapId')
+      .validate()
     return mapService.get(mapId)
   })
 
-  // 创建地图
   ipcMain.handle('map:create', (_, options: CreateMapOptions): Map => {
+    validateParams('map:create')
+      .object(options, 'options')
+      .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
+      .validate()
     return mapService.createMap(options)
   })
 
-  // 更新地图
   ipcMain.handle('map:update', (_, mapId: string, updates: UpdateMapOptions): Map | null => {
+    validateParams('map:update')
+      .nonEmptyString(mapId, 'mapId')
+      .object(updates, 'updates')
+      .validate()
     return mapService.updateMap(mapId, updates)
   })
 
-  // 删除地图
   ipcMain.handle('map:delete', (_, mapId: string): boolean => {
+    validateParams('map:delete')
+      .nonEmptyString(mapId, 'mapId')
+      .validate()
     return mapService.delete(mapId)
   })
 
@@ -50,13 +57,18 @@ export function registerMapHandlers(): void {
   // 缩略图
   // ============================================
 
-  // 保存缩略图
   ipcMain.handle('map:saveThumbnail', (_, mapId: string, dataUrl: string): string | null => {
+    validateParams('map:saveThumbnail')
+      .nonEmptyString(mapId, 'mapId')
+      .nonEmptyString(dataUrl, 'dataUrl')
+      .validate()
     return mapService.saveThumbnail(mapId, dataUrl)
   })
 
-  // 获取缩略图路径
   ipcMain.handle('map:getThumbnailPath', (_, mapId: string): string | null => {
+    validateParams('map:getThumbnailPath')
+      .nonEmptyString(mapId, 'mapId')
+      .validate()
     return mapService.getThumbnailFullPath(mapId)
   })
 
@@ -64,18 +76,24 @@ export function registerMapHandlers(): void {
   // 导入导出
   // ============================================
 
-  // 导出地图
   ipcMain.handle('map:export', (_, mapId: string): string | null => {
+    validateParams('map:export')
+      .nonEmptyString(mapId, 'mapId')
+      .validate()
     return mapService.exportItem(mapId)
   })
 
-  // 导入地图
   ipcMain.handle('map:import', (_, jsonContent: string): Map | null => {
+    validateParams('map:import')
+      .nonEmptyString(jsonContent, 'jsonContent')
+      .validate()
     return mapService.importItem(jsonContent)
   })
 
-  // 显示导出对话框
   ipcMain.handle('map:showExportDialog', async (_, mapName: string): Promise<string | null> => {
+    validateParams('map:showExportDialog')
+      .nonEmptyString(mapName, 'mapName')
+      .validate()
     const result = await dialog.showSaveDialog({
       title: '导出地图',
       defaultPath: `${mapName}.json5`,
@@ -88,7 +106,6 @@ export function registerMapHandlers(): void {
     return result.canceled ? null : result.filePath
   })
 
-  // 显示导入对话框
   ipcMain.handle('map:showImportDialog', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       title: '导入地图',
@@ -102,8 +119,10 @@ export function registerMapHandlers(): void {
     return result.canceled ? null : result.filePaths[0]
   })
 
-  // 重新排序地图
   ipcMain.handle('map:reorderMaps', (_, mapIds: string[]): boolean => {
+    validateParams('map:reorderMaps')
+      .stringArray(mapIds, 'mapIds')
+      .validate()
     return mapService.reorderMaps(mapIds)
   })
 }

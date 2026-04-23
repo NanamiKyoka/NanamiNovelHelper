@@ -7,6 +7,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { sequenceChartService } from '../services/sequence-chart'
 import { projectService } from '../services/project'
+import { validateParams } from '../utils/validation'
 import {
   SequenceChart,
   SequenceChartMeta,
@@ -40,36 +41,34 @@ export function registerSequenceChartHandlers(): void {
    * 获取单个事序图详情
    */
   ipcMain.handle('sequenceChart:get', (_, chartId: string): SequenceChart | null => {
+    validateParams('sequenceChart:get').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.get(chartId)
   })
 
-  /**
-   * 创建事序图
-   */
   ipcMain.handle('sequenceChart:create', (_, options: CreateSequenceChartOptions): SequenceChart => {
+    validateParams('sequenceChart:create')
+      .object(options, 'options')
+      .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
+      .validate()
     const project = projectService.getCurrentProject()
     if (!project) throw new Error('没有打开的项目')
     sequenceChartService.init(project.path)
     return sequenceChartService.createChart(options)
   })
 
-  /**
-   * 更新事序图
-   */
   ipcMain.handle('sequenceChart:update', (_, chartId: string, updates: UpdateSequenceChartOptions): SequenceChart | null => {
+    validateParams('sequenceChart:update').nonEmptyString(chartId, 'chartId').object(updates, 'updates').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.updateChart(chartId, updates)
   })
 
-  /**
-   * 删除事序图
-   */
   ipcMain.handle('sequenceChart:delete', (_, chartId: string): boolean => {
+    validateParams('sequenceChart:delete').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return false
     sequenceChartService.init(project.path)
@@ -84,66 +83,55 @@ export function registerSequenceChartHandlers(): void {
    * 添加事件
    */
   ipcMain.handle('sequenceChart:addEvent', (_, chartId: string, event: CreateSequenceEventOptions): SequenceEvent | null => {
+    validateParams('sequenceChart:addEvent').nonEmptyString(chartId, 'chartId').object(event, 'event').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.addEvent(chartId, event)
   })
 
-  /**
-   * 更新事件
-   */
   ipcMain.handle('sequenceChart:updateEvent', (_, chartId: string, eventId: string, updates: UpdateSequenceEventOptions): SequenceEvent | null => {
+    validateParams('sequenceChart:updateEvent').nonEmptyString(chartId, 'chartId').nonEmptyString(eventId, 'eventId').object(updates, 'updates').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.updateEvent(chartId, eventId, updates)
   })
 
-  /**
-   * 删除事件
-   */
   ipcMain.handle('sequenceChart:deleteEvent', (_, chartId: string, eventId: string): boolean => {
+    validateParams('sequenceChart:deleteEvent').nonEmptyString(chartId, 'chartId').nonEmptyString(eventId, 'eventId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return false
     sequenceChartService.init(project.path)
     return sequenceChartService.deleteEvent(chartId, eventId)
   })
 
-  /**
-   * 批量删除事件
-   */
   ipcMain.handle('sequenceChart:batchDeleteEvents', (_, chartId: string, eventIds: string[]): number => {
+    validateParams('sequenceChart:batchDeleteEvents').nonEmptyString(chartId, 'chartId').stringArray(eventIds, 'eventIds').validate()
     const project = projectService.getCurrentProject()
     if (!project) return 0
     sequenceChartService.init(project.path)
     return sequenceChartService.batchDeleteEvents(chartId, eventIds)
   })
 
-  /**
-   * 移动事件（改变顺序）
-   */
   ipcMain.handle('sequenceChart:moveEvent', (_, chartId: string, eventId: string, newOrder: number): SequenceEvent[] | null => {
+    validateParams('sequenceChart:moveEvent').nonEmptyString(chartId, 'chartId').nonEmptyString(eventId, 'eventId').number(newOrder, 'newOrder').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.moveEvent(chartId, eventId, newOrder)
   })
 
-  /**
-   * 更新事件时间位置
-   */
   ipcMain.handle('sequenceChart:updateEventTime', (_, chartId: string, eventId: string, cellStart: number, cellEnd: number): SequenceEvent | null => {
+    validateParams('sequenceChart:updateEventTime').nonEmptyString(chartId, 'chartId').nonEmptyString(eventId, 'eventId').number(cellStart, 'cellStart').number(cellEnd, 'cellEnd').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.updateEventTime(chartId, eventId, cellStart, cellEnd)
   })
 
-  /**
-   * 更新所有事件
-   */
   ipcMain.handle('sequenceChart:updateEvents', (_, chartId: string, events: SequenceEvent[]): SequenceChart | null => {
+    validateParams('sequenceChart:updateEvents').nonEmptyString(chartId, 'chartId').array(events, 'events').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
@@ -158,36 +146,31 @@ export function registerSequenceChartHandlers(): void {
    * 获取事件类型列表
    */
   ipcMain.handle('sequenceChart:getEventTypes', (_, chartId: string): SequenceEventType[] => {
+    validateParams('sequenceChart:getEventTypes').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return []
     sequenceChartService.init(project.path)
     return sequenceChartService.getEventTypes(chartId)
   })
 
-  /**
-   * 添加自定义事件类型
-   */
   ipcMain.handle('sequenceChart:addEventType', (_, chartId: string, type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>): SequenceEventType | null => {
+    validateParams('sequenceChart:addEventType').nonEmptyString(chartId, 'chartId').object(type, 'type').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.addEventType(chartId, type)
   })
 
-  /**
-   * 更新自定义事件类型
-   */
   ipcMain.handle('sequenceChart:updateEventType', (_, chartId: string, typeId: string, updates: Partial<SequenceEventType>): SequenceEventType | null => {
+    validateParams('sequenceChart:updateEventType').nonEmptyString(chartId, 'chartId').nonEmptyString(typeId, 'typeId').object(updates, 'updates').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.updateEventType(chartId, typeId, updates)
   })
 
-  /**
-   * 删除自定义事件类型
-   */
   ipcMain.handle('sequenceChart:deleteEventType', (_, chartId: string, typeId: string): boolean => {
+    validateParams('sequenceChart:deleteEventType').nonEmptyString(chartId, 'chartId').nonEmptyString(typeId, 'typeId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return false
     sequenceChartService.init(project.path)
@@ -202,16 +185,15 @@ export function registerSequenceChartHandlers(): void {
    * 保存缩略图
    */
   ipcMain.handle('sequenceChart:saveThumbnail', (_, chartId: string, dataUrl: string): string | null => {
+    validateParams('sequenceChart:saveThumbnail').nonEmptyString(chartId, 'chartId').nonEmptyString(dataUrl, 'dataUrl').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.saveThumbnail(chartId, dataUrl)
   })
 
-  /**
-   * 获取缩略图路径
-   */
   ipcMain.handle('sequenceChart:getThumbnailPath', (_, chartId: string): string | null => {
+    validateParams('sequenceChart:getThumbnailPath').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
@@ -226,26 +208,23 @@ export function registerSequenceChartHandlers(): void {
    * 导出事序图为 JSON
    */
   ipcMain.handle('sequenceChart:export', (_, chartId: string): string | null => {
+    validateParams('sequenceChart:export').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.exportItem(chartId)
   })
 
-  /**
-   * 导出事序图为 Markdown
-   */
   ipcMain.handle('sequenceChart:exportMarkdown', (_, chartId: string): string | null => {
+    validateParams('sequenceChart:exportMarkdown').nonEmptyString(chartId, 'chartId').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
     return sequenceChartService.exportChartAsMarkdown(chartId)
   })
 
-  /**
-   * 导入事序图
-   */
   ipcMain.handle('sequenceChart:import', (_, jsonContent: string): SequenceChart | null => {
+    validateParams('sequenceChart:import').nonEmptyString(jsonContent, 'jsonContent').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
     sequenceChartService.init(project.path)
@@ -256,6 +235,7 @@ export function registerSequenceChartHandlers(): void {
    * 显示导出对话框
    */
   ipcMain.handle('sequenceChart:showExportDialog', async (_, chartName: string, format?: 'json' | 'markdown'): Promise<string | null> => {
+    validateParams('sequenceChart:showExportDialog').nonEmptyString(chartName, 'chartName').validate()
     const project = projectService.getCurrentProject()
     if (!project) return null
 
@@ -308,6 +288,7 @@ export function registerSequenceChartHandlers(): void {
    * 保存导出文件
    */
   ipcMain.handle('sequenceChart:saveExportFile', (_, filePath: string, content: string): boolean => {
+    validateParams('sequenceChart:saveExportFile').nonEmptyString(filePath, 'filePath').string(content, 'content').validate()
     try {
       fs.writeFileSync(filePath, content, 'utf-8')
       return true
@@ -321,6 +302,7 @@ export function registerSequenceChartHandlers(): void {
    * 读取导入文件
    */
   ipcMain.handle('sequenceChart:readImportFile', (_, filePath: string): string | null => {
+    validateParams('sequenceChart:readImportFile').nonEmptyString(filePath, 'filePath').validate()
     try {
       return fs.readFileSync(filePath, 'utf-8')
     } catch (error) {

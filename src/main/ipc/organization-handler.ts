@@ -4,6 +4,7 @@
 
 import { ipcMain, dialog } from 'electron'
 import { organizationService } from '../services/organization'
+import { validateParams } from '../utils/validation'
 import type {
   OrganizationGraph,
   OrganizationGraphMeta,
@@ -29,21 +30,25 @@ export function registerOrganizationHandlers(): void {
 
   // 获取单个组织架构图
   ipcMain.handle('organization:get', (_, graphId: string): OrganizationGraph | null => {
+    validateParams('organization:get').nonEmptyString(graphId, 'graphId').validate()
     return organizationService.get(graphId)
   })
 
-  // 创建组织架构图
   ipcMain.handle('organization:create', (_, options: CreateOrganizationGraphOptions): OrganizationGraph => {
+    validateParams('organization:create')
+      .object(options, 'options')
+      .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
+      .validate()
     return organizationService.createGraph(options)
   })
 
-  // 更新组织架构图
   ipcMain.handle('organization:update', (_, graphId: string, updates: UpdateOrganizationGraphOptions): OrganizationGraph | null => {
+    validateParams('organization:update').nonEmptyString(graphId, 'graphId').object(updates, 'updates').validate()
     return organizationService.updateGraph(graphId, updates)
   })
 
-  // 删除组织架构图
   ipcMain.handle('organization:delete', (_, graphId: string): boolean => {
+    validateParams('organization:delete').nonEmptyString(graphId, 'graphId').validate()
     return organizationService.delete(graphId)
   })
 
@@ -53,36 +58,37 @@ export function registerOrganizationHandlers(): void {
 
   // 添加节点
   ipcMain.handle('organization:addNode', (_, graphId: string, options: CreateOrganizationNodeOptions): OrganizationNode | null => {
+    validateParams('organization:addNode').nonEmptyString(graphId, 'graphId').object(options, 'options').validate()
     return organizationService.addNode(graphId, options)
   })
 
-  // 更新节点
   ipcMain.handle('organization:updateNode', (_, graphId: string, nodeId: string, updates: UpdateOrganizationNodeOptions): OrganizationNode | null => {
+    validateParams('organization:updateNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').object(updates, 'updates').validate()
     return organizationService.updateNode(graphId, nodeId, updates)
   })
 
-  // 删除节点
   ipcMain.handle('organization:deleteNode', (_, graphId: string, nodeId: string): boolean => {
+    validateParams('organization:deleteNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
     return organizationService.deleteNode(graphId, nodeId)
   })
 
-  // 移动节点
   ipcMain.handle('organization:moveNode', (_, graphId: string, nodeId: string, newParentId: string | undefined): OrganizationNode | null => {
+    validateParams('organization:moveNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
     return organizationService.moveNode(graphId, nodeId, newParentId)
   })
 
-  // 获取子节点
   ipcMain.handle('organization:getChildren', (_, graphId: string, parentId: string | undefined): OrganizationNode[] => {
+    validateParams('organization:getChildren').nonEmptyString(graphId, 'graphId').validate()
     return organizationService.getChildren(graphId, parentId)
   })
 
-  // 获取子孙节点
   ipcMain.handle('organization:getDescendants', (_, graphId: string, nodeId: string): OrganizationNode[] => {
+    validateParams('organization:getDescendants').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
     return organizationService.getDescendants(graphId, nodeId)
   })
 
-  // 获取祖先节点
   ipcMain.handle('organization:getAncestors', (_, graphId: string, nodeId: string): OrganizationNode[] => {
+    validateParams('organization:getAncestors').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
     return organizationService.getAncestors(graphId, nodeId)
   })
 
@@ -92,11 +98,12 @@ export function registerOrganizationHandlers(): void {
 
   // 保存缩略图
   ipcMain.handle('organization:saveThumbnail', (_, graphId: string, dataUrl: string): string | null => {
+    validateParams('organization:saveThumbnail').nonEmptyString(graphId, 'graphId').nonEmptyString(dataUrl, 'dataUrl').validate()
     return organizationService.saveThumbnail(graphId, dataUrl)
   })
 
-  // 获取缩略图路径
   ipcMain.handle('organization:getThumbnailPath', (_, graphId: string): string | null => {
+    validateParams('organization:getThumbnailPath').nonEmptyString(graphId, 'graphId').validate()
     return organizationService.getThumbnailFullPath(graphId)
   })
 
@@ -106,11 +113,12 @@ export function registerOrganizationHandlers(): void {
 
   // 导出组织架构图
   ipcMain.handle('organization:export', (_, graphId: string): string | null => {
+    validateParams('organization:export').nonEmptyString(graphId, 'graphId').validate()
     return organizationService.exportItem(graphId)
   })
 
-  // 导入组织架构图
   ipcMain.handle('organization:import', (_, jsonContent: string): OrganizationGraph | null => {
+    validateParams('organization:import').nonEmptyString(jsonContent, 'jsonContent').validate()
     return organizationService.importItem(jsonContent)
   })
 
@@ -144,6 +152,7 @@ export function registerOrganizationHandlers(): void {
 
   // 重新排序组织架构图列表
   ipcMain.handle('organization:reorderGraphs', (_, graphIds: string[]): boolean => {
+    validateParams('organization:reorderGraphs').stringArray(graphIds, 'graphIds').validate()
     return organizationService.reorderGraphs(graphIds)
   })
 }
