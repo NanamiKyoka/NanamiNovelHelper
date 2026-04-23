@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip, App } from 'antd'
-import { EditOutlined, HolderOutlined, CheckOutlined } from '@ant-design/icons'
+import { EditOutlined, HolderOutlined, CheckOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import {
   DndContext,
   closestCenter,
@@ -275,7 +275,7 @@ function SequenceChartPreview({
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button onClick={onClose}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>返回</Button>
           <Title level={5} className={styles.title}>{currentChart.name}</Title>
         </div>
         <div className={styles.toolbarRight}>

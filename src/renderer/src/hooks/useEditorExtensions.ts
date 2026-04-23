@@ -100,7 +100,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
         }
       }),
       Placeholder.configure({
-        placeholder: '开始写作...',
+        placeholder: 'Start writing...',
         emptyEditorClass: 'is-empty'
       }),
       Typography,

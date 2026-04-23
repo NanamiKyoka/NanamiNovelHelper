@@ -7,7 +7,7 @@ import styles from './StatusBar.module.css'
 function getFileTypeLabel(type: string): string {
   switch (type) {
     case 'markdown':
-      return 'Markdown'
+      return '富文本'
     case 'text':
       return '纯文本'
     default:

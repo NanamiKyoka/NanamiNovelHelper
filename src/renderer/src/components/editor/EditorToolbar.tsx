@@ -1,6 +1,6 @@
 /**
  * 编辑器工具栏组件
- * 提供 Markdown 格式化和编辑工具
+ * 提供文本格式化和编辑工具
  */
 
 import { useCallback, useState, useMemo } from 'react'

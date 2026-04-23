@@ -414,7 +414,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       <div className={styles.container}>
         <div className={styles.loading}>
           <Text type="secondary">时间线不存在</Text>
-          <Button onClick={onBack}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
         </div>
       </div>
     )

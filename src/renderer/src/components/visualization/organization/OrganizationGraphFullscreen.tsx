@@ -593,7 +593,7 @@ function OrganizationGraphFullscreen({
       <div className={styles.container}>
         <div className={styles.loading}>
           <Empty description="组织架构图不存在" />
-          <Button onClick={onBack}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
         </div>
       </div>
     )

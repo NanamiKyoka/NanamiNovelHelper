@@ -786,7 +786,7 @@ function RelationshipGraphFullscreen({
       <div className={styles.container}>
         <div className={styles.loading}>
           <Empty description="关系图不存在" />
-          <Button onClick={onBack}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
         </div>
       </div>
     )

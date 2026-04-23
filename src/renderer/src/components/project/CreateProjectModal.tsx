@@ -3,11 +3,10 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Modal, Form, Input, Button, Checkbox, Divider, message, Collapse } from 'antd'
+import { Modal, Form, Input, Button, Checkbox, Divider, message } from 'antd'
 import { 
   FolderOpenOutlined, 
-  FolderOutlined, 
-  FileOutlined,
+  FolderOutlined,
   UserOutlined,
   EnvironmentOutlined,
   TeamOutlined,
@@ -18,13 +17,11 @@ import {
 import { useProjectActions } from '@hooks/useProjectActions'
 import type { 
   CreateProjectOptions, 
-  ProjectDirectoryType, 
-  ProjectTemplateType,
+  ProjectDirectoryType,
   PresetVocabularyType 
 } from '@shared/project'
 import { 
-  DEFAULT_DIRECTORIES, 
-  DEFAULT_TEMPLATES, 
+  DEFAULT_DIRECTORIES,
   PRESET_VOCABULARY_TYPES 
 } from '@shared/project'
 
@@ -41,7 +38,6 @@ interface FormValues {
   author?: string
 }
 
-// 图标映射
 const VOCABULARY_ICONS: Record<string, React.ReactNode> = {
   'UserOutlined': <UserOutlined />,
   'EnvironmentOutlined': <EnvironmentOutlined />,
@@ -55,13 +51,10 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [directories, setDirectories] = useState(DEFAULT_DIRECTORIES)
-  const [templates, setTemplates] = useState(DEFAULT_TEMPLATES)
   const [vocabularyTypes, setVocabularyTypes] = useState(PRESET_VOCABULARY_TYPES)
   
-  // 使用 useProjectActions 处理跨 Store 的项目操作
   const { createProject, showCreateDialog } = useProjectActions()
 
-  // 选择项目保存位置
   const handleSelectPath = useCallback(async () => {
     const path = await showCreateDialog()
     if (path) {
@@ -69,7 +62,6 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
     }
   }, [form, showCreateDialog])
 
-  // 切换目录选择
   const toggleDirectory = useCallback((type: ProjectDirectoryType) => {
     setDirectories(prev => 
       prev.map(dir => 
@@ -78,16 +70,6 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
     )
   }, [])
 
-  // 切换模板选择
-  const toggleTemplate = useCallback((type: ProjectTemplateType) => {
-    setTemplates(prev => 
-      prev.map(tpl => 
-        tpl.type === type ? { ...tpl, selected: !tpl.selected } : tpl
-      )
-    )
-  }, [])
-
-  // 切换预设词汇类型选择
   const toggleVocabularyType = useCallback((type: PresetVocabularyType) => {
     setVocabularyTypes(prev => 
       prev.map(vt => 
@@ -96,32 +78,20 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
     )
   }, [])
 
-  // 全选/取消全选目录
   const toggleAllDirectories = useCallback((selectAll: boolean) => {
     setDirectories(prev => prev.map(dir => ({ ...dir, selected: selectAll })))
   }, [])
 
-  // 全选/取消全选模板
-  const toggleAllTemplates = useCallback((selectAll: boolean) => {
-    setTemplates(prev => prev.map(tpl => ({ ...tpl, selected: selectAll })))
-  }, [])
-
-  // 全选/取消全选词汇类型
   const toggleAllVocabularyTypes = useCallback((selectAll: boolean) => {
     setVocabularyTypes(prev => prev.map(vt => ({ ...vt, selected: selectAll })))
   }, [])
 
-  // 提交表单
   const handleSubmit = useCallback(async (values: FormValues) => {
     setLoading(true)
     try {
       const selectedDirectories = directories
         .filter(dir => dir.selected)
         .map(dir => dir.type)
-      
-      const selectedTemplates = templates
-        .filter(tpl => tpl.selected)
-        .map(tpl => tpl.type)
       
       const selectedVocabularyTypes = vocabularyTypes
         .filter(vt => vt.selected)
@@ -133,16 +103,13 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
         description: values.description?.trim(),
         author: values.author?.trim(),
         directories: selectedDirectories,
-        templates: selectedTemplates,
         presetVocabulary: selectedVocabularyTypes
       }
 
       await createProject(options)
       message.success('项目创建成功')
       form.resetFields()
-      // 重置选择状态
       setDirectories(DEFAULT_DIRECTORIES)
-      setTemplates(DEFAULT_TEMPLATES)
       setVocabularyTypes(PRESET_VOCABULARY_TYPES)
       onSuccess?.()
     } catch (error) {
@@ -151,22 +118,18 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
     } finally {
       setLoading(false)
     }
-  }, [createProject, form, onSuccess, directories, templates, vocabularyTypes])
+  }, [createProject, form, onSuccess, directories, vocabularyTypes])
 
-  // 取消
   const handleCancel = useCallback(() => {
     form.resetFields()
     setDirectories(DEFAULT_DIRECTORIES)
-    setTemplates(DEFAULT_TEMPLATES)
     setVocabularyTypes(PRESET_VOCABULARY_TYPES)
     onCancel()
   }, [form, onCancel])
 
   const allDirectoriesSelected = directories.every(dir => dir.selected)
-  const allTemplatesSelected = templates.every(tpl => tpl.selected)
   const allVocabularyTypesSelected = vocabularyTypes.every(vt => vt.selected)
   const someDirectoriesSelected = directories.some(dir => dir.selected) && !allDirectoriesSelected
-  const someTemplatesSelected = templates.some(tpl => tpl.selected) && !allTemplatesSelected
   const someVocabularyTypesSelected = vocabularyTypes.some(vt => vt.selected) && !allVocabularyTypesSelected
 
   return (
@@ -297,34 +260,6 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
                 onChange={() => toggleDirectory(dir.type)}
               >
                 {dir.name}
-              </Checkbox>
-            ))}
-          </div>
-        </div>
-
-        {/* 模板选择 */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 500 }}>
-              <FileOutlined style={{ marginRight: 6 }} />
-              模板文件
-            </span>
-            <Checkbox
-              checked={allTemplatesSelected}
-              indeterminate={someTemplatesSelected}
-              onChange={(e) => toggleAllTemplates(e.target.checked)}
-            >
-              全选
-            </Checkbox>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {templates.map(tpl => (
-              <Checkbox
-                key={tpl.type}
-                checked={tpl.selected}
-                onChange={() => toggleTemplate(tpl.type)}
-              >
-                {tpl.name}
               </Checkbox>
             ))}
           </div>

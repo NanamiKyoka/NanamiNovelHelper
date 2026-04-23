@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined } from '@ant-design/icons'
+import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { BUILTIN_RELATION_TYPES, type RelationType } from '@types/relationship'
@@ -293,7 +293,7 @@ function RelationshipGraphPreview({
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button onClick={onClose}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>返回</Button>
           <Title level={5} className={styles.title}>{currentGraph.name}</Title>
         </div>
         <div className={styles.toolbarRight}>

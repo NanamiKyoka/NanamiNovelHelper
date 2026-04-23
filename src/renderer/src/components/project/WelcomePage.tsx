@@ -187,7 +187,7 @@ function WelcomePage(): JSX.Element {
         {/* 帮助提示 */}
         <div className={styles.help}>
           <Text type="secondary">
-            提示：项目以 Markdown 格式存储，你可以使用任何文本编辑器打开项目文件
+            提示：项目文件可以使用文本编辑器直接编辑
           </Text>
         </div>
       </div>
