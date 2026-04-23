@@ -107,8 +107,8 @@ function SearchPanel(): JSX.Element {
   }, [handleSearch])
 
   // 点击搜索结果跳转到编辑器
-  const handleMatchClick = useCallback(async (filePath: string, matchText: string, line: number, column: number) => {
-    console.log('[SearchPanel] handleMatchClick:', { filePath, matchText, line, column })
+  const handleMatchClick = useCallback(async (filePath: string, matchText: string) => {
+    console.log('[SearchPanel] handleMatchClick:', { filePath, matchText })
     try {
       // 从路径中提取文件名
       const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath
@@ -118,8 +118,8 @@ function SearchPanel(): JSX.Element {
       console.log('[SearchPanel] 文件已打开，准备触发跳转')
       // 文件打开后，延迟触发跳转请求，确保编辑器内容已更新
       setTimeout(() => {
-        console.log('[SearchPanel] 触发 requestGoToPosition:', { filePath, matchText, line, column })
-        requestGoToPosition(filePath, matchText, line, column)
+        console.log('[SearchPanel] 触发 requestGoToPosition:', { filePath, matchText })
+        requestGoToPosition(filePath, matchText)
       }, 50)
     } catch (error) {
       console.error('[SearchPanel] 打开文件失败:', error)
@@ -324,7 +324,7 @@ function SearchPanel(): JSX.Element {
                         <div
                           key={idx}
                           className={styles.matchItem}
-                          onClick={() => handleMatchClick(file.filePath, match.matchText, match.line, match.column)}
+                          onClick={() => handleMatchClick(file.filePath, match.matchText)}
                         >
                           <Text type="secondary" className={styles.lineNumber}>
                             {match.line}
