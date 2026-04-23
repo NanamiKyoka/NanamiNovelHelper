@@ -79,7 +79,6 @@ import VocabularyPanel, { type VocabularyPanelRef } from './VocabularyPanel'
 import { HighlightSettings } from '@components/settings/HighlightSettings'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
 import IconPicker, { getIconPreview, type IconValue } from './IconPicker'
-import { useShortcuts } from '@hooks/useShortcuts'
 import { v4 as uuidv4 } from 'uuid'
 import styles from './VocabularyFullscreen.module.css'
 
@@ -303,51 +302,6 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       localStorage.setItem('vocabulary_last_selected_type', selectedTypeId)
     }
   }, [selectedTypeId])
-
-  // 注册快捷键
-  useShortcuts([
-    {
-      id: 'vocabulary.create',
-      key: 'Ctrl+N',
-      action: () => {
-        if (activeTab === 'entries' && selectedTypeId) {
-          panelRef.current?.openCreateDrawer()
-        }
-      },
-      description: '新建词汇',
-      category: '词汇管理'
-    },
-    {
-      id: 'vocabulary.search',
-      key: 'Ctrl+F',
-      action: () => {
-        if (activeTab === 'entries') {
-          panelRef.current?.focusSearch()
-        } else {
-          typeSearchInputRef.current?.focus()
-        }
-      },
-      description: '聚焦搜索框',
-      category: '词汇管理'
-    },
-    {
-      id: 'vocabulary.close',
-      key: 'Escape',
-      action: () => {
-        if (panelRef.current?.isDrawerOpen()) {
-          panelRef.current.closeDrawer()
-        } else if (isTypeModalOpen) {
-          setIsTypeModalOpen(false)
-        } else if (isIconPickerOpen) {
-          setIsIconPickerOpen(false)
-        } else {
-          onBack()
-        }
-      },
-      description: '关闭弹窗或返回',
-      category: '词汇管理'
-    }
-  ])
 
   // 选中的类型
   const selectedType = types.find(t => t.id === selectedTypeId) || null
