@@ -2,17 +2,17 @@
  * Service 基类
  * 
  * 提供通用的文件操作、目录管理和 CRUD 方法，减少 Service 层的重复代码
+ * 继承 ServiceCore 获得路径管理、ID 生成、JSON5 读写等基础能力
  */
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import JSON5 from 'json5'
-import { createLogger } from '../utils/logger'
-import { 
-  ServiceError, 
-  ErrorCode, 
-  Errors, 
+import { ServiceCore } from './service-core'
+import {
+  ServiceError,
+  ErrorCode,
+  Errors,
   ensureInitialized,
   handleError,
   handleErrorAsync
@@ -44,20 +44,11 @@ export interface BaseEntity {
  * 
  * 提供通用的项目管理、文件操作和 CRUD 方法
  */
-export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'edges' | 'events' | 'data'>> {
-  protected projectPath: string | null = null
-  protected dataDir: string | null = null
+export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'edges' | 'events' | 'data'>> extends ServiceCore {
   protected config: Required<BaseServiceConfig>
-  
-  /** 日志器 */
-  protected logger = createLogger(this.constructor.name)
-  
-  /** 项目元数据目录名 */
-  protected readonly PROJECT_META_DIR = '.novelhelper'
-  /** 数据目录名 */
-  protected readonly DATA_DIR = 'data'
 
   constructor(config: BaseServiceConfig) {
+    super()
     this.config = {
       fileExtension: '.json5',
       useDataSubDir: true,
@@ -73,24 +64,14 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
   init(projectPath: string, metaDir?: string): void {
     this.projectPath = projectPath
     const meta = metaDir || this.PROJECT_META_DIR
-    
+
     if (this.config.useDataSubDir) {
       this.dataDir = path.join(projectPath, meta, this.DATA_DIR, this.config.dataSubDir)
     } else {
       this.dataDir = path.join(projectPath, meta, this.config.dataSubDir)
     }
-    
-    this.ensureDirectories()
-  }
 
-  /**
-   * 确保目录存在
-   */
-  protected ensureDirectories(): void {
-    if (!this.dataDir) return
-    if (!fs.existsSync(this.dataDir)) {
-      fs.mkdirSync(this.dataDir, { recursive: true })
-    }
+    this.ensureDirectories()
   }
 
   /**
@@ -107,30 +88,9 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
     return path.join(this.dataDir!, `${id}.png`)
   }
 
-  /**
-   * 生成 UUID
-   */
-  protected generateId(): string {
-    return uuidv4()
-  }
-
-  /**
-   * 获取当前时间戳
-   */
-  protected getTimestamp(): string {
-    return new Date().toISOString()
-  }
-
   // ============================================
   // 通用 CRUD 方法
   // ============================================
-
-  /**
-   * 检查服务是否已初始化
-   */
-  protected checkInitialized(): boolean {
-    return this.dataDir !== null
-  }
 
   /**
    * 获取所有实体列表
@@ -199,13 +159,13 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
 
     try {
       fs.unlinkSync(filePath)
-      
+
       // 删除缩略图
       const thumbnailPath = this.getThumbnailPath(id)
       if (fs.existsSync(thumbnailPath)) {
         fs.unlinkSync(thumbnailPath)
       }
-      
+
       return true
     } catch (error) {
       this.logger.error(`Failed to delete entity ${id}`, error)
@@ -249,10 +209,10 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       // 移除 data URL 前缀
       const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '')
       const buffer = Buffer.from(base64Data, 'base64')
-      
+
       const thumbnailPath = this.getThumbnailPath(id)
       fs.writeFileSync(thumbnailPath, buffer)
-      
+
       return thumbnailPath
     } catch (error) {
       this.logger.error(`Failed to save thumbnail for ${id}`, error)
@@ -304,13 +264,5 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       this.logger.error('Failed to import item', error)
       return null
     }
-  }
-
-  /**
-   * 重置服务状态
-   */
-  reset(): void {
-    this.projectPath = null
-    this.dataDir = null
   }
 }
