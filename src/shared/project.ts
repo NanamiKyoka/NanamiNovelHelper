@@ -225,6 +225,11 @@ export const VOCABULARY_TYPES_FILE = 'types.json5'
 export const VOCABULARY_DEFAULT_DIR = 'default'
 
 /**
+ * 词汇详细描述目录名
+ */
+export const VOCABULARY_DETAILS_DIR = 'details'
+
+/**
  * 敏感词文件名
  */
 export const SENSITIVE_WORDS_FILE = 'sensitive-words.json5'

@@ -17,6 +17,7 @@ DATA_DIR = 'data'
 VOCABULARY_DIR = 'vocabulary'
 VOCABULARY_TYPES_FILE = 'types.json5'
 VOCABULARY_DEFAULT_DIR = 'default'
+VOCABULARY_DETAILS_DIR = 'details'
 
 # 敏感词
 SENSITIVE_WORDS_FILE = 'sensitive-words.json5'
@@ -66,6 +67,11 @@ def get_vocabulary_types_path(project_path: str) -> str:
 def get_vocabulary_default_dir(project_path: str) -> str:
     """获取词汇默认类型目录路径（内置类型）"""
     return os.path.join(get_vocabulary_dir(project_path), VOCABULARY_DEFAULT_DIR)
+
+
+def get_vocabulary_details_dir(project_path: str) -> str:
+    """获取词汇详细描述目录路径"""
+    return os.path.join(get_vocabulary_dir(project_path), VOCABULARY_DETAILS_DIR)
 
 
 def get_vocabulary_entries_path(project_path: str, type_id: str, is_builtin: bool = False) -> str:

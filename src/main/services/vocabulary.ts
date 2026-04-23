@@ -12,6 +12,7 @@ import {
   VOCABULARY_DIR,
   VOCABULARY_TYPES_FILE,
   VOCABULARY_DEFAULT_DIR,
+  VOCABULARY_DETAILS_DIR,
   SENSITIVE_WORDS_FILE
 } from '../types/project'
 import { createLogger } from '../utils/logger'
@@ -32,6 +33,7 @@ class VocabularyService {
   private settingsPath: string | null = null
   private vocabularyDir: string | null = null
   private vocabularyDefaultDir: string | null = null
+  private vocabularyDetailsDir: string | null = null
   private sensitiveWordsPath: string | null = null
   private settings: ProjectSettings = DEFAULT_PROJECT_SETTINGS
   private logger = createLogger('VocabularyService')
@@ -42,6 +44,7 @@ class VocabularyService {
     this.settingsPath = path.join(projectPath, PROJECT_META_DIR, 'settings.json5')
     this.vocabularyDir = path.join(projectPath, PROJECT_META_DIR, VOCABULARY_DIR)
     this.vocabularyDefaultDir = path.join(this.vocabularyDir, VOCABULARY_DEFAULT_DIR)
+    this.vocabularyDetailsDir = path.join(this.vocabularyDir, VOCABULARY_DETAILS_DIR)
     this.sensitiveWordsPath = path.join(projectPath, PROJECT_META_DIR, SENSITIVE_WORDS_FILE)
 
     // 确保目录存在
@@ -70,6 +73,12 @@ class VocabularyService {
     if (!this.vocabularyDefaultDir) return
     if (!fs.existsSync(this.vocabularyDefaultDir)) {
       fs.mkdirSync(this.vocabularyDefaultDir, { recursive: true })
+    }
+
+    // 创建词汇详细描述目录
+    if (!this.vocabularyDetailsDir) return
+    if (!fs.existsSync(this.vocabularyDetailsDir)) {
+      fs.mkdirSync(this.vocabularyDetailsDir, { recursive: true })
     }
   }
 
@@ -330,8 +339,8 @@ class VocabularyService {
 
   // 获取词汇详细描述目录
   private getVocabularyDetailDir(): string {
-    ensureInitialized(this.projectPath, 'VocabularyService')
-    return path.join(this.projectPath!, '设定', '词汇详情')
+    ensureInitialized(this.vocabularyDetailsDir, 'VocabularyService')
+    return this.vocabularyDetailsDir!
   }
 
   // 创建关联的 Markdown 文件
