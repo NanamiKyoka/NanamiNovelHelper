@@ -4,15 +4,13 @@
 
 import { useState } from 'react'
 import {
-  Card,
   Button,
-  Divider,
   Modal,
   message,
   Typography,
-  Space,
   Alert,
-  Popconfirm
+  Popconfirm,
+  Card
 } from 'antd'
 import {
   DownloadOutlined,
@@ -25,7 +23,7 @@ import { useSettingsStore } from '@stores/settingsStore'
 import baseStyles from './SettingsBase.module.css'
 import styles from './DataManagementSettings.module.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 export function DataManagementSettings(): JSX.Element {
   const { resetGlobalSettings, globalSettings } = useSettingsStore()
@@ -142,17 +140,12 @@ export function DataManagementSettings(): JSX.Element {
         description="您可以在此导出或导入应用设置，方便备份或在不同设备间迁移配置。"
         type="info"
         showIcon
-        style={{ marginBottom: 24 }}
+        style={{ marginBottom: 16 }}
       />
 
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>设置导入/导出</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          导出或导入应用设置文件。
-        </Text>
-
-        <div className={styles.actionItem}>
-          <div className={styles.actionInfo}>
+      <Card title="设置导入/导出" className={baseStyles.card}>
+        <div className={baseStyles.actionItem}>
+          <div className={baseStyles.actionInfo}>
             <Text strong>导出设置</Text>
             <br />
             <Text type="secondary">将当前应用设置导出为 JSON5 文件</Text>
@@ -166,10 +159,8 @@ export function DataManagementSettings(): JSX.Element {
           </Button>
         </div>
 
-        <Divider style={{ margin: '16px 0' }} />
-
-        <div className={styles.actionItem}>
-          <div className={styles.actionInfo}>
+        <div className={baseStyles.actionItem}>
+          <div className={baseStyles.actionInfo}>
             <Text strong>导入设置</Text>
             <br />
             <Text type="secondary">从 JSON5 文件导入设置（将覆盖当前设置）</Text>
@@ -182,18 +173,11 @@ export function DataManagementSettings(): JSX.Element {
             导入
           </Button>
         </div>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>重置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          重置应用设置或清除缓存数据。
-        </Text>
-
-        <div className={styles.actionItem}>
-          <div className={styles.actionInfo}>
+      <Card title="重置" className={baseStyles.card}>
+        <div className={baseStyles.actionItem}>
+          <div className={baseStyles.actionInfo}>
             <Text strong>重置所有设置</Text>
             <br />
             <Text type="secondary">将所有设置恢复为默认值</Text>
@@ -212,10 +196,8 @@ export function DataManagementSettings(): JSX.Element {
           </Popconfirm>
         </div>
 
-        <Divider style={{ margin: '16px 0' }} />
-
-        <div className={styles.actionItem}>
-          <div className={styles.actionInfo}>
+        <div className={baseStyles.actionItem}>
+          <div className={baseStyles.actionInfo}>
             <Text strong>清除缓存</Text>
             <br />
             <Text type="secondary">清除应用缓存数据，不影响项目和设置</Text>
@@ -227,16 +209,9 @@ export function DataManagementSettings(): JSX.Element {
             清除
           </Button>
         </div>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>数据存储位置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          应用数据的存储路径说明。
-        </Text>
-
+      <Card title="数据存储位置" className={baseStyles.card}>
         <div className={styles.storageInfo}>
           <div className={styles.storageItem}>
             <Text type="secondary">全局设置：</Text>
@@ -251,7 +226,7 @@ export function DataManagementSettings(): JSX.Element {
             <Text code>项目目录/.novelhelper/backups/</Text>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

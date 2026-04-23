@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { Switch, message, Input, Button, Tag, Space, Divider, Typography } from 'antd'
+import { Switch, message, Input, Button, Tag, Space, Divider, Card } from 'antd'
 import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
@@ -13,8 +13,6 @@ import type { BadgeVisibility, SidebarBadgeVisibility } from '@types/settings'
 import { DEFAULT_BADGE_VISIBILITY, DEFAULT_SIDEBAR_BADGE_VISIBILITY } from '@types/settings'
 import baseStyles from './SettingsBase.module.css'
 import styles from './LayoutSettings.module.css'
-
-const { Text, Title } = Typography
 
 const BADGE_CONFIG = [
   {
@@ -179,11 +177,10 @@ function LayoutSettings(): JSX.Element {
 
   return (
     <div className={baseStyles.container}>
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>徽章显示</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="徽章显示" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           控制徽章的显示位置。可以同时在右侧工具栏和左侧边栏显示入口。
-        </Text>
+        </p>
         
         <div className={styles.badgeList}>
           {BADGE_CONFIG.map((badge) => {
@@ -229,15 +226,12 @@ function LayoutSettings(): JSX.Element {
             )
           })}
         </div>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>高级设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="高级设置" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           文件树的高级显示选项。
-        </Text>
+        </p>
         
         <div className={styles.badgeList}>
           <div className={styles.badgeItem}>
@@ -319,9 +313,7 @@ function LayoutSettings(): JSX.Element {
             )}
           </div>
         </div>
-      </div>
-
-      <Divider className={baseStyles.divider} />
+      </Card>
 
       <div className={baseStyles.tip}>
         <InfoCircleOutlined className={baseStyles.tipIcon} />

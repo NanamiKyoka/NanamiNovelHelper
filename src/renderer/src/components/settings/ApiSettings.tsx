@@ -3,13 +3,13 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Form, Input, Button, Divider, message, Card, Typography, Alert, Space, Popconfirm } from 'antd'
-import { SaveOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined, PlusOutlined } from '@ant-design/icons'
+import { Form, Input, Button, message, Card, Typography, Alert, Space, Popconfirm } from 'antd'
+import { SaveOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import baseStyles from './SettingsBase.module.css'
 import styles from './ApiSettings.module.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 interface ApiConfig {
   id: string
@@ -114,76 +114,56 @@ export function ApiSettings(): JSX.Element {
         description="API 密钥功能已预留接口，相关 AI 辅助功能正在开发中。您的密钥将被安全存储在本地。"
         type="info"
         showIcon
-        style={{ marginBottom: 24 }}
+        style={{ marginBottom: 16 }}
       />
 
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>API 密钥管理</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="API 密钥管理" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           配置 AI 服务的 API 密钥，密钥将被安全存储在本地配置中。
-        </Text>
+        </p>
 
-        {configs.map(config => (
-          <Card key={config.id} size="small" className={styles.apiCard}>
-            <div className={styles.cardHeader}>
-              <div>
-                <Text strong>{config.name}</Text>
-                <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {PRESET_APIS.find(p => p.id === config.id)?.description}
+        {configs.length === 0 ? (
+          <Text type="secondary">暂无已配置的 API 密钥</Text>
+        ) : (
+          configs.map(config => (
+            <div key={config.id} className={styles.apiItem}>
+              <div className={styles.apiItemHeader}>
+                <div>
+                  <Text strong>{config.name}</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {PRESET_APIS.find(p => p.id === config.id)?.description}
+                  </Text>
+                </div>
+                <Popconfirm
+                  title="确定删除此 API 密钥？"
+                  onConfirm={() => handleDelete(config.id)}
+                  okText="删除"
+                  cancelText="取消"
+                >
+                  <Button type="text" danger icon={<DeleteOutlined />} />
+                </Popconfirm>
+              </div>
+              <div className={styles.keyDisplay}>
+                <Text code className={styles.keyText}>
+                  {visibleKeys[config.id] ? config.key : maskKey(config.key)}
                 </Text>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={visibleKeys[config.id] ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  onClick={() => toggleKeyVisibility(config.id)}
+                />
               </div>
-              <Popconfirm
-                title="确定删除此 API 密钥？"
-                onConfirm={() => handleDelete(config.id)}
-                okText="删除"
-                cancelText="取消"
-              >
-                <Button type="text" danger icon={<DeleteOutlined />} />
-              </Popconfirm>
             </div>
-            <div className={styles.keyDisplay}>
-              <Text code className={styles.keyText}>
-                {visibleKeys[config.id] ? config.key : maskKey(config.key)}
-              </Text>
-              <Button
-                type="text"
-                size="small"
-                icon={visibleKeys[config.id] ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                onClick={() => toggleKeyVisibility(config.id)}
-              />
-            </div>
-          </Card>
-        ))}
-      </div>
+          ))
+        )}
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>添加 API 密钥</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="添加 API 密钥" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           选择要添加的 API 服务并输入密钥。
-        </Text>
-
-        <div className={styles.addSection}>
-          {PRESET_APIS.filter(preset => !configs.find(c => c.id === preset.id)).map(preset => (
-            <Card
-              key={preset.id}
-              size="small"
-              className={styles.addCard}
-              hoverable
-              onClick={() => {
-                form.setFieldsValue({ [`${preset.id}_key`]: '' })
-              }}
-            >
-              <div className={styles.addCardContent}>
-                <Text strong>{preset.name}</Text>
-                <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>{preset.description}</Text>
-              </div>
-            </Card>
-          ))}
-        </div>
+        </p>
 
         <Form
           form={form}
@@ -202,7 +182,6 @@ export function ApiSettings(): JSX.Element {
               }
             }
           }}
-          className={styles.form}
         >
           {PRESET_APIS.filter(preset => !configs.find(c => c.id === preset.id)).map(preset => (
             <div key={preset.id} className={styles.formItem}>
@@ -233,19 +212,16 @@ export function ApiSettings(): JSX.Element {
             </Button>
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>安全提示</Title>
+      <Card title="安全提示" className={baseStyles.card}>
         <ul className={styles.securityTips}>
           <li>API 密钥存储在本地配置文件中，不会上传到云端</li>
           <li>请勿与他人分享您的 API 密钥</li>
           <li>定期更换 API 密钥以提高安全性</li>
           <li>如果密钥泄露，请立即在服务商处重新生成</li>
         </ul>
-      </div>
+      </Card>
     </div>
   )
 }

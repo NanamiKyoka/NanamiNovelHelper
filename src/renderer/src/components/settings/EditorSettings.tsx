@@ -3,13 +3,11 @@
  */
 
 import { useCallback } from 'react'
-import { Form, Select, InputNumber, Switch, Slider, Divider, Button, message, Checkbox, Typography } from 'antd'
+import { Form, Select, Switch, Slider, message, Checkbox, Card } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorSettings, StatusBarConfig } from '@types/editor'
 import baseStyles from './SettingsBase.module.css'
 import styles from './EditorSettings.module.css'
-
-const { Text, Title } = Typography
 
 const FONT_FAMILIES = [
   { value: 'PingFang SC, Microsoft YaHei, sans-serif', label: '苹方 / 微软雅黑' },
@@ -54,11 +52,7 @@ export function EditorSettings() {
 
   return (
     <div className={baseStyles.container}>
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>字体设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置编辑器的字体显示效果
-        </Text>
+      <Card title="字体设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="字体">
             <Select
@@ -98,15 +92,9 @@ export function EditorSettings() {
             />
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>视图设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置编辑器的显示选项
-        </Text>
+      <Card title="视图设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="默认视图模式">
             <Select
@@ -132,15 +120,9 @@ export function EditorSettings() {
             />
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>工具栏设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置编辑器工具栏的显示方式
-        </Text>
+      <Card title="工具栏设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="显示工具栏">
             <Switch
@@ -161,15 +143,9 @@ export function EditorSettings() {
             />
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>保存设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置自动保存行为
-        </Text>
+      <Card title="保存设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="自动保存间隔">
             <Select
@@ -180,15 +156,9 @@ export function EditorSettings() {
             />
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>状态栏设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置状态栏显示的信息
-        </Text>
+      <Card title="状态栏设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="显示项目">
             <div className={baseStyles.checkboxGroup}>
@@ -219,15 +189,9 @@ export function EditorSettings() {
             </div>
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>编辑设置</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
-          配置编辑器的基本行为
-        </Text>
+      <Card title="编辑设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label={`Tab 宽度: ${settings.tabSize} 个空格`}>
             <Slider
@@ -245,7 +209,7 @@ export function EditorSettings() {
             />
           </Form.Item>
         </Form>
-      </div>
+      </Card>
     </div>
   )
 }

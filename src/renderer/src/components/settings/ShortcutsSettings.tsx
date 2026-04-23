@@ -3,12 +3,12 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Input, Button, Modal, message, Tag, Space, Typography } from 'antd'
+import { Table, Input, Button, Modal, message, Tag, Space, Typography, Card } from 'antd'
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons'
 import baseStyles from './SettingsBase.module.css'
 import styles from './ShortcutsSettings.module.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 interface ShortcutConfig {
   id: string
@@ -238,8 +238,7 @@ export function ShortcutsSettings(): JSX.Element {
       </div>
 
       {Object.entries(groupedShortcuts).map(([category, items]) => (
-        <div key={category} className={baseStyles.section}>
-          <Title level={5} className={baseStyles.sectionTitle}>{category}</Title>
+        <Card key={category} title={category} className={baseStyles.card}>
           <Table
             dataSource={items}
             columns={columns}
@@ -248,7 +247,7 @@ export function ShortcutsSettings(): JSX.Element {
             pagination={false}
             showHeader={false}
           />
-        </div>
+        </Card>
       ))}
 
       <Modal

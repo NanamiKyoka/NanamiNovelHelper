@@ -2,26 +2,27 @@
   max-width: 800px;
 }
 
-.section {
-  margin-bottom: 24px;
+.card {
+  margin-bottom: 16px;
 }
 
-.section:last-child {
-  margin-bottom: 0;
+.card :global(.ant-card-head) {
+  border-bottom: 1px solid var(--ant-color-border);
 }
 
-.sectionTitle {
-  margin-bottom: 4px !important;
+.card :global(.ant-card-body) {
+  padding: 16px 24px;
 }
 
-.sectionDescription {
-  display: block;
-  margin-bottom: 12px;
+.cardTitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hint {
   color: var(--ant-color-text-secondary);
-}
-
-.divider {
-  margin: 24px 0;
+  font-size: 12px;
+  margin-bottom: 12px;
 }
 
 .tip {
@@ -33,6 +34,7 @@
   border-radius: 6px;
   font-size: 13px;
   color: var(--ant-color-text-secondary);
+  margin-bottom: 16px;
 }
 
 .tipIcon {
@@ -41,23 +43,15 @@
   flex-shrink: 0;
 }
 
-.card {
-  margin-bottom: 16px;
-}
-
-.card :global(.ant-card-head) {
-  min-height: auto;
-  padding: 0 16px;
-}
-
-.card :global(.ant-card-body) {
-  padding: 16px;
-}
-
 .actionItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 0;
+}
+
+.actionItem:not(:last-child) {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
 .actionInfo {
@@ -70,6 +64,7 @@
   gap: 8px 24px;
 }
 
-.checkboxGroup label {
-  margin-inline-start: 0;
+.checkboxGroup :global(.ant-form-item) {
+  margin-bottom: 0;
+  margin-right: 16px;
 }

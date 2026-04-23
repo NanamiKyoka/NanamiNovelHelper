@@ -8,14 +8,14 @@ import {
   Switch,
   InputNumber,
   Button,
-  Divider,
   Table,
   Space,
   message,
   Popconfirm,
   Empty,
   Typography,
-  Tooltip
+  Tooltip,
+  Card
 } from 'antd'
 import {
   CloudUploadOutlined,
@@ -33,7 +33,7 @@ import dayjs from 'dayjs'
 import baseStyles from './SettingsBase.module.css'
 import styles from './BackupSettings.module.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
@@ -221,11 +221,10 @@ export function BackupSettings(): JSX.Element {
 
   return (
     <div className={baseStyles.container}>
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>自动备份</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="自动备份" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           配置自动备份策略，保护您的项目数据安全。
-        </Text>
+        </p>
 
         <Form layout="vertical" size="small">
           <Form.Item label={
@@ -261,15 +260,12 @@ export function BackupSettings(): JSX.Element {
             <Text type="secondary" style={{ marginLeft: 8 }}>个</Text>
           </Form.Item>
         </Form>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <Title level={5} className={baseStyles.sectionTitle}>手动备份</Title>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card title="手动备份" className={baseStyles.card}>
+        <p className={baseStyles.hint}>
           手动创建或导入备份文件。
-        </Text>
+        </p>
 
         <Space wrap>
           <Button
@@ -287,26 +283,28 @@ export function BackupSettings(): JSX.Element {
             导入备份
           </Button>
         </Space>
-      </div>
+      </Card>
 
-      <Divider className={baseStyles.divider} />
-
-      <div className={baseStyles.section}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Title level={5} className={baseStyles.sectionTitle} style={{ marginBottom: 0 }}>备份列表</Title>
-          <Button
-            type="text"
-            size="small"
-            icon={<ReloadOutlined />}
-            onClick={loadBackups}
-            loading={loading}
-          >
-            刷新
-          </Button>
-        </div>
-        <Text type="secondary" className={baseStyles.sectionDescription}>
+      <Card 
+        title={
+          <Space>
+            <span>备份列表</span>
+            <Button
+              type="text"
+              size="small"
+              icon={<ReloadOutlined />}
+              onClick={loadBackups}
+              loading={loading}
+            >
+              刷新
+            </Button>
+          </Space>
+        }
+        className={baseStyles.card}
+      >
+        <p className={baseStyles.hint}>
           查看和管理所有备份文件。
-        </Text>
+        </p>
 
         {backups.length === 0 ? (
           <Empty description="暂无备份" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -320,7 +318,7 @@ export function BackupSettings(): JSX.Element {
             loading={loading}
           />
         )}
-      </div>
+      </Card>
     </div>
   )
 }
