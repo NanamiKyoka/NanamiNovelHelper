@@ -5,11 +5,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Table, Input, Button, Modal, message, Tag, Space, Typography } from 'antd'
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons'
+import baseStyles from './SettingsBase.module.css'
 import styles from './ShortcutsSettings.module.css'
 
-const { Text } = Typography
+const { Text, Title } = Typography
 
-// 快捷键配置类型
 interface ShortcutConfig {
   id: string
   name: string
@@ -19,18 +19,14 @@ interface ShortcutConfig {
   category: string
 }
 
-// 本地存储键名
 const STORAGE_KEY = 'nanami-shortcuts'
 
-// 默认快捷键配置
 const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
-  // 文件操作
   { id: 'file.new', name: '新建文件', description: '创建新文件', defaultKey: 'Ctrl+N', currentKey: 'Ctrl+N', category: '文件' },
   { id: 'file.open', name: '打开文件', description: '打开现有文件', defaultKey: 'Ctrl+O', currentKey: 'Ctrl+O', category: '文件' },
   { id: 'file.save', name: '保存文件', description: '保存当前文件', defaultKey: 'Ctrl+S', currentKey: 'Ctrl+S', category: '文件' },
   { id: 'file.saveAll', name: '保存全部', description: '保存所有文件', defaultKey: 'Ctrl+Shift+S', currentKey: 'Ctrl+Shift+S', category: '文件' },
   
-  // 编辑操作
   { id: 'edit.undo', name: '撤销', description: '撤销上一步操作', defaultKey: 'Ctrl+Z', currentKey: 'Ctrl+Z', category: '编辑' },
   { id: 'edit.redo', name: '重做', description: '重做上一步操作', defaultKey: 'Ctrl+Y', currentKey: 'Ctrl+Y', category: '编辑' },
   { id: 'edit.cut', name: '剪切', description: '剪切选中内容', defaultKey: 'Ctrl+X', currentKey: 'Ctrl+X', category: '编辑' },
@@ -39,18 +35,15 @@ const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
   { id: 'edit.find', name: '查找', description: '在当前文件中查找', defaultKey: 'Ctrl+F', currentKey: 'Ctrl+F', category: '编辑' },
   { id: 'edit.replace', name: '替换', description: '在当前文件中替换', defaultKey: 'Ctrl+H', currentKey: 'Ctrl+H', category: '编辑' },
   
-  // 视图操作
   { id: 'view.sidebar', name: '切换侧边栏', description: '显示/隐藏侧边栏', defaultKey: 'Ctrl+B', currentKey: 'Ctrl+B', category: '视图' },
   { id: 'view.settings', name: '打开设置', description: '打开设置页面', defaultKey: 'Ctrl+,', currentKey: 'Ctrl+,', category: '视图' },
   { id: 'view.fullscreen', name: '全屏', description: '切换全屏模式', defaultKey: 'F11', currentKey: 'F11', category: '视图' },
   
-  // 格式操作
   { id: 'format.bold', name: '加粗', description: '将选中文字加粗', defaultKey: 'Ctrl+B', currentKey: 'Ctrl+B', category: '格式' },
   { id: 'format.italic', name: '斜体', description: '将选中文字设为斜体', defaultKey: 'Ctrl+I', currentKey: 'Ctrl+I', category: '格式' },
   { id: 'format.heading', name: '标题', description: '切换标题级别', defaultKey: 'Ctrl+1', currentKey: 'Ctrl+1', category: '格式' },
 ]
 
-// 从本地存储加载快捷键配置
 function loadShortcuts(): ShortcutConfig[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -67,7 +60,6 @@ function loadShortcuts(): ShortcutConfig[] {
   return [...DEFAULT_SHORTCUTS]
 }
 
-// 保存快捷键配置到本地存储
 function saveShortcuts(shortcuts: ShortcutConfig[]): void {
   try {
     const customKeys = shortcuts.reduce((acc, s) => {
@@ -90,12 +82,10 @@ export function ShortcutsSettings(): JSX.Element {
   const [currentEditKey, setCurrentEditKey] = useState('')
   const [recording, setRecording] = useState(false)
 
-  // 保存到本地存储
   useEffect(() => {
     saveShortcuts(shortcuts)
   }, [shortcuts])
 
-  // 打开编辑弹窗
   const handleEdit = useCallback((record: ShortcutConfig) => {
     setEditingId(record.id)
     setCurrentEditKey(record.currentKey)
@@ -103,18 +93,15 @@ export function ShortcutsSettings(): JSX.Element {
     setRecording(false)
   }, [])
 
-  // 保存快捷键
   const handleSave = useCallback(() => {
     if (!editingId) return
     
-    // 检查是否与其他快捷键冲突
     const conflict = shortcuts.find(s => s.id !== editingId && s.currentKey === currentEditKey)
     if (conflict) {
       message.warning(`快捷键与「${conflict.name}」冲突，请选择其他组合`)
       return
     }
     
-    // 验证快捷键格式
     if (!currentEditKey || currentEditKey.length < 2) {
       message.error('请输入有效的快捷键组合')
       return
@@ -127,7 +114,6 @@ export function ShortcutsSettings(): JSX.Element {
     message.success(`快捷键「${currentEditKey}」已保存`)
   }, [editingId, currentEditKey, shortcuts])
 
-  // 重置单个快捷键
   const handleReset = useCallback((id: string) => {
     const shortcut = shortcuts.find(s => s.id === id)
     if (shortcut) {
@@ -138,7 +124,6 @@ export function ShortcutsSettings(): JSX.Element {
     }
   }, [shortcuts])
 
-  // 重置所有快捷键
   const handleResetAll = useCallback(() => {
     Modal.confirm({
       title: '重置所有快捷键',
@@ -154,7 +139,6 @@ export function ShortcutsSettings(): JSX.Element {
     })
   }, [])
 
-  // 记录按键
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!recording) return
     
@@ -167,7 +151,6 @@ export function ShortcutsSettings(): JSX.Element {
     if (e.altKey) keys.push('Alt')
     if (e.metaKey) keys.push('Meta')
     
-    // 获取主键
     const key = e.key
     if (!['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
       keys.push(key.toUpperCase())
@@ -178,7 +161,6 @@ export function ShortcutsSettings(): JSX.Element {
     }
   }, [recording])
 
-  // 表格列定义
   const columns = [
     {
       title: '功能',
@@ -234,7 +216,6 @@ export function ShortcutsSettings(): JSX.Element {
     }
   ]
 
-  // 按分类分组
   const groupedShortcuts = shortcuts.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = []
@@ -243,11 +224,10 @@ export function ShortcutsSettings(): JSX.Element {
     return acc
   }, {} as Record<string, ShortcutConfig[]>)
 
-  // 统计自定义数量
   const customCount = shortcuts.filter(s => s.currentKey !== s.defaultKey).length
 
   return (
-    <div className={styles.container}>
+    <div className={baseStyles.container}>
       <div className={styles.toolbar}>
         <Text type="secondary">
           {customCount > 0 ? `已自定义 ${customCount} 个快捷键` : '所有快捷键均为默认值'}
@@ -258,8 +238,8 @@ export function ShortcutsSettings(): JSX.Element {
       </div>
 
       {Object.entries(groupedShortcuts).map(([category, items]) => (
-        <div key={category} className={styles.category}>
-          <h3 className={styles.categoryTitle}>{category}</h3>
+        <div key={category} className={baseStyles.section}>
+          <Title level={5} className={baseStyles.sectionTitle}>{category}</Title>
           <Table
             dataSource={items}
             columns={columns}
@@ -271,7 +251,6 @@ export function ShortcutsSettings(): JSX.Element {
         </div>
       ))}
 
-      {/* 编辑弹窗 */}
       <Modal
         title="编辑快捷键"
         open={editModalOpen}

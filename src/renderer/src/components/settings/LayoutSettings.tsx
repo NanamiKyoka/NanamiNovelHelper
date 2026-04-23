@@ -4,16 +4,18 @@
  */
 
 import { useMemo, useState, useEffect } from 'react'
-import { Switch, message, Input, Button, Tag, Space, Divider } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, CloseOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
+import { Switch, message, Input, Button, Tag, Space, Divider, Typography } from 'antd'
+import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined, PlusOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
 import type { BadgeVisibility, SidebarBadgeVisibility } from '@types/settings'
 import { DEFAULT_BADGE_VISIBILITY, DEFAULT_SIDEBAR_BADGE_VISIBILITY } from '@types/settings'
+import baseStyles from './SettingsBase.module.css'
 import styles from './LayoutSettings.module.css'
 
-// 徽章配置
+const { Text, Title } = Typography
+
 const BADGE_CONFIG = [
   {
     key: 'vocabulary' as keyof BadgeVisibility,
@@ -87,14 +89,10 @@ function LayoutSettings(): JSX.Element {
   const updateSidebarBadgeVisibility = useSettingsStore((state) => state.updateSidebarBadgeVisibility)
   const refreshTree = useFileTreeStore((state) => state.refreshTree)
   
-  // 显示隐藏文件设置
   const [showHiddenFiles, setShowHiddenFiles] = useState(false)
-  // 隐藏项列表
   const [hiddenItems, setHiddenItems] = useState<string[]>([])
-  // 新增隐藏项输入
   const [newHiddenItem, setNewHiddenItem] = useState('')
 
-  // 加载设置
   useEffect(() => {
     if (currentProject) {
       window.electron.settings.project.getShowHiddenFiles().then(setShowHiddenFiles)
@@ -102,17 +100,14 @@ function LayoutSettings(): JSX.Element {
     }
   }, [currentProject])
 
-  // 当前徽章可见性设置
   const badgeVisibility = useMemo(() => {
     return projectSettings?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
   }, [projectSettings?.badgeVisibility])
 
-  // 当前左侧边栏徽章入口可见性设置
   const sidebarBadgeVisibility = useMemo(() => {
     return projectSettings?.sidebarBadgeVisibility || DEFAULT_SIDEBAR_BADGE_VISIBILITY
   }, [projectSettings?.sidebarBadgeVisibility])
 
-  // 切换徽章可见性
   const handleBadgeToggle = async (key: keyof BadgeVisibility, checked: boolean) => {
     try {
       await updateBadgeVisibility({ [key]: checked })
@@ -121,7 +116,6 @@ function LayoutSettings(): JSX.Element {
     }
   }
 
-  // 切换左侧边栏入口可见性
   const handleSidebarBadgeToggle = async (key: keyof SidebarBadgeVisibility, checked: boolean) => {
     try {
       await updateSidebarBadgeVisibility({ [key]: checked })
@@ -130,19 +124,16 @@ function LayoutSettings(): JSX.Element {
     }
   }
 
-  // 切换显示隐藏文件
   const handleToggleHiddenFiles = async (checked: boolean) => {
     try {
       await window.electron.settings.project.setShowHiddenFiles(checked)
       setShowHiddenFiles(checked)
-      // 刷新文件树
       refreshTree()
     } catch (error) {
       message.error('保存设置失败')
     }
   }
 
-  // 添加隐藏项
   const handleAddHiddenItem = async () => {
     const item = newHiddenItem.trim()
     if (!item) return
@@ -164,7 +155,6 @@ function LayoutSettings(): JSX.Element {
     }
   }
 
-  // 移除隐藏项
   const handleRemoveHiddenItem = async (item: string) => {
     try {
       const newItems = hiddenItems.filter(i => i !== item)
@@ -178,9 +168,9 @@ function LayoutSettings(): JSX.Element {
 
   if (!currentProject) {
     return (
-      <div className={styles.container}>
-        <div className={styles.tip}>
-          <InfoCircleOutlined className={styles.tipIcon} />
+      <div className={baseStyles.container}>
+        <div className={baseStyles.tip}>
+          <InfoCircleOutlined className={baseStyles.tipIcon} />
           <span>请先打开项目以配置界面布局</span>
         </div>
       </div>
@@ -188,12 +178,12 @@ function LayoutSettings(): JSX.Element {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>徽章显示</div>
-        <div className={styles.sectionDescription}>
+    <div className={baseStyles.container}>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>徽章显示</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
           控制徽章的显示位置。可以同时在右侧工具栏和左侧边栏显示入口。
-        </div>
+        </Text>
         
         <div className={styles.badgeList}>
           {BADGE_CONFIG.map((badge) => {
@@ -241,11 +231,13 @@ function LayoutSettings(): JSX.Element {
         </div>
       </div>
 
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>高级设置</div>
-        <div className={styles.sectionDescription}>
+      <Divider className={baseStyles.divider} />
+
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>高级设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
           文件树的高级显示选项。
-        </div>
+        </Text>
         
         <div className={styles.badgeList}>
           <div className={styles.badgeItem}>
@@ -267,7 +259,6 @@ function LayoutSettings(): JSX.Element {
           </div>
         </div>
 
-        {/* 隐藏指定文件/文件夹 */}
         <div style={{ marginTop: 16 }}>
           <div className={styles.badgeItem} style={{ alignItems: 'flex-start' }}>
             <div className={styles.badgeItemLeft}>
@@ -300,7 +291,7 @@ function LayoutSettings(): JSX.Element {
             
             {hiddenItems.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ marginBottom: 8, color: 'var(--text-secondary)', fontSize: 12 }}>
+                <div style={{ marginBottom: 8, color: 'var(--ant-color-text-secondary)', fontSize: 12 }}>
                   已隐藏的项目：
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -330,8 +321,10 @@ function LayoutSettings(): JSX.Element {
         </div>
       </div>
 
-      <div className={styles.tip}>
-        <InfoCircleOutlined className={styles.tipIcon} />
+      <Divider className={baseStyles.divider} />
+
+      <div className={baseStyles.tip}>
+        <InfoCircleOutlined className={baseStyles.tipIcon} />
         <div>
           <p style={{ margin: 0 }}>提示：</p>
           <ul style={{ margin: '8px 0 0 0', paddingLeft: 20 }}>

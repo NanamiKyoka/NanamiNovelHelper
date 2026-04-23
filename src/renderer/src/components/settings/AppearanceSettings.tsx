@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons'
 import { useThemeStore } from '@stores/themeStore'
 import { PRESET_COLORS, DEFAULT_THEME } from '@types/theme'
+import baseStyles from './SettingsBase.module.css'
 import styles from './AppearanceSettings.module.css'
 
 const { Text, Title } = Typography
@@ -20,11 +21,12 @@ function AppearanceSettings(): JSX.Element {
   const { config, resolvedMode, setMode, setPrimaryColor, setFontSize, resetTheme } = useThemeStore()
 
   return (
-    <div className={styles.container}>
-      {/* 主题模式 */}
-      <div className={styles.section}>
-        <Title level={5}>主题模式</Title>
-        <Text type="secondary">选择应用的显示主题</Text>
+    <div className={baseStyles.container}>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>主题模式</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          选择应用的显示主题
+        </Text>
         <div className={styles.modeOptions}>
           <Radio.Group
             value={config.mode}
@@ -50,12 +52,13 @@ function AppearanceSettings(): JSX.Element {
         </div>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 主题色 */}
-      <div className={styles.section}>
-        <Title level={5}>主题色</Title>
-        <Text type="secondary">选择应用的主色调</Text>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>主题色</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          选择应用的主色调
+        </Text>
         <div className={styles.colorOptions}>
           {PRESET_COLORS.map((color) => (
             <div
@@ -82,12 +85,13 @@ function AppearanceSettings(): JSX.Element {
         </div>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 字体大小 */}
-      <div className={styles.section}>
-        <Title level={5}>字体大小</Title>
-        <Text type="secondary">调整界面字体大小</Text>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>字体大小</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          调整界面字体大小
+        </Text>
         <div className={styles.fontSizeOption}>
           <Space.Compact>
             <InputNumber
@@ -102,12 +106,13 @@ function AppearanceSettings(): JSX.Element {
         </div>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 重置 */}
-      <div className={styles.section}>
-        <Title level={5}>重置</Title>
-        <Text type="secondary">恢复默认外观设置</Text>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>重置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          恢复默认外观设置
+        </Text>
         <div className={styles.resetOption}>
           <Button
             icon={<ReloadOutlined />}

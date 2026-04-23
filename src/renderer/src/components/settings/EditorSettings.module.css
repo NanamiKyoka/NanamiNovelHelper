@@ -1,29 +1,7 @@
-.container {
-  max-width: 600px;
+.sliderMark {
+  font-size: 12px;
 }
 
-.section {
-  margin-bottom: 16px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: var(--text-color, rgba(0, 0, 0, 0.85));
-}
-
-.checkboxGroup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 24px;
-}
-
-.checkboxGroup label {
-  margin-inline-start: 0;
-}
-
-/* 滑块样式 */
 :global(.ant-slider) {
   margin: 8px 0;
 }

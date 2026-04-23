@@ -3,12 +3,14 @@
  */
 
 import { useCallback } from 'react'
-import { Form, Select, InputNumber, Switch, Slider, Divider, Button, message, Checkbox, Row, Col } from 'antd'
+import { Form, Select, InputNumber, Switch, Slider, Divider, Button, message, Checkbox, Typography } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorSettings, StatusBarConfig } from '@types/editor'
+import baseStyles from './SettingsBase.module.css'
 import styles from './EditorSettings.module.css'
 
-// 字体选项
+const { Text, Title } = Typography
+
 const FONT_FAMILIES = [
   { value: 'PingFang SC, Microsoft YaHei, sans-serif', label: '苹方 / 微软雅黑' },
   { value: 'SimHei, sans-serif', label: '黑体' },
@@ -22,7 +24,6 @@ const FONT_FAMILIES = [
   { value: 'monospace', label: '等宽字体' }
 ]
 
-// 自动保存间隔选项
 const AUTO_SAVE_OPTIONS = [
   { value: 0, label: '禁用' },
   { value: 10000, label: '10 秒' },
@@ -52,10 +53,12 @@ export function EditorSettings() {
   }, [updateStatusBarConfig])
 
   return (
-    <div className={styles.container}>
-      {/* 字体设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>字体设置</h3>
+    <div className={baseStyles.container}>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>字体设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置编辑器的字体显示效果
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label="字体">
             <Select
@@ -97,11 +100,13 @@ export function EditorSettings() {
         </Form>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 视图设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>视图设置</h3>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>视图设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置编辑器的显示选项
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label="默认视图模式">
             <Select
@@ -129,11 +134,13 @@ export function EditorSettings() {
         </Form>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 工具栏设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>工具栏设置</h3>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>工具栏设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置编辑器工具栏的显示方式
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label="显示工具栏">
             <Switch
@@ -156,11 +163,13 @@ export function EditorSettings() {
         </Form>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 保存设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>保存设置</h3>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>保存设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置自动保存行为
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label="自动保存间隔">
             <Select
@@ -173,14 +182,16 @@ export function EditorSettings() {
         </Form>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 状态栏设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>状态栏设置</h3>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>状态栏设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置状态栏显示的信息
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label="显示项目">
-            <div className={styles.checkboxGroup}>
+            <div className={baseStyles.checkboxGroup}>
               <Checkbox
                 checked={statusBarConfig.showWordCount}
                 onChange={(e) => handleStatusBarConfigChange('showWordCount', e.target.checked)}
@@ -210,11 +221,13 @@ export function EditorSettings() {
         </Form>
       </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 编辑设置 */}
-      <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>编辑设置</h3>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>编辑设置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置编辑器的基本行为
+        </Text>
         <Form layout="vertical" size="small">
           <Form.Item label={`Tab 宽度: ${settings.tabSize} 个空格`}>
             <Slider

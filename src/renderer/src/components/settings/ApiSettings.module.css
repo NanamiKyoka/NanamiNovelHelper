@@ -1,7 +1,3 @@
-.container {
-  padding: 0;
-}
-
 .apiCard {
   margin-bottom: 12px;
 }
@@ -39,7 +35,7 @@
 }
 
 .addCard:hover {
-  border-color: var(--primary-color);
+  border-color: var(--ant-color-primary);
 }
 
 .addCardContent {
@@ -51,22 +47,16 @@
 }
 
 .formItem {
-  background: var(--background-color);
+  background: var(--ant-color-bg-layout);
   padding: 12px;
   border-radius: 6px;
   margin-bottom: 12px;
 }
 
 .securityTips {
-  padding: 16px;
-  background: var(--background-color);
-  border-radius: 6px;
-}
-
-.securityTips ul {
   margin: 8px 0 0 0;
   padding-left: 20px;
-  color: var(--text-color-secondary);
+  color: var(--ant-color-text-secondary);
 }
 
 .securityTips li {

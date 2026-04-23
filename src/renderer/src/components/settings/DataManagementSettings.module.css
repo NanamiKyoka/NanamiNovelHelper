@@ -1,20 +1,3 @@
-.container {
-  padding: 0;
-}
-
-.card {
-  margin-bottom: 16px;
-}
-
-.card :global(.ant-card-head) {
-  min-height: auto;
-  padding: 0 16px;
-}
-
-.card :global(.ant-card-body) {
-  padding: 16px;
-}
-
 .actionItem {
   display: flex;
   justify-content: space-between;

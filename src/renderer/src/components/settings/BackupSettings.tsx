@@ -10,12 +10,10 @@ import {
   Button,
   Divider,
   Table,
-  Tag,
   Space,
   message,
   Popconfirm,
   Empty,
-  Card,
   Typography,
   Tooltip
 } from 'antd'
@@ -32,11 +30,11 @@ import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
 import type { BackupInfo } from '@types/settings'
 import dayjs from 'dayjs'
+import baseStyles from './SettingsBase.module.css'
 import styles from './BackupSettings.module.css'
 
 const { Text, Title } = Typography
 
-// 格式化文件大小
 const formatSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -54,7 +52,6 @@ export function BackupSettings(): JSX.Element {
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
 
-  // 加载备份列表
   useEffect(() => {
     if (currentProject) {
       loadBackups()
@@ -73,7 +70,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 创建备份
   const handleCreateBackup = async () => {
     setCreating(true)
     try {
@@ -91,7 +87,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 恢复备份
   const handleRestore = async (filename: string) => {
     try {
       const result = await restoreBackup(filename)
@@ -105,7 +100,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 删除备份
   const handleDelete = async (filename: string) => {
     try {
       const result = await deleteBackup(filename)
@@ -120,7 +114,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 导出备份
   const handleExport = async (filename: string) => {
     try {
       const result = await exportBackup(filename)
@@ -134,7 +127,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 导入备份
   const handleImport = async () => {
     try {
       const result = await importBackup()
@@ -147,7 +139,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 更新备份设置
   const handleSettingChange = async (key: string, value: boolean | number) => {
     try {
       await updateBackupSettings({ [key]: value })
@@ -157,7 +148,6 @@ export function BackupSettings(): JSX.Element {
     }
   }
 
-  // 表格列定义
   const columns = [
     {
       title: '备份时间',
@@ -220,22 +210,29 @@ export function BackupSettings(): JSX.Element {
 
   if (!currentProject) {
     return (
-      <div className={styles.container}>
-        <Empty description="请先打开项目以管理备份" />
+      <div className={baseStyles.container}>
+        <div className={baseStyles.tip}>
+          <InfoCircleOutlined className={baseStyles.tipIcon} />
+          <span>请先打开项目以管理备份</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className={styles.container}>
-      {/* 自动备份设置 */}
-      <Card title="自动备份" className={styles.card}>
+    <div className={baseStyles.container}>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>自动备份</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          配置自动备份策略，保护您的项目数据安全。
+        </Text>
+
         <Form layout="vertical" size="small">
           <Form.Item label={
             <Space>
               启用自动备份
               <Tooltip title="开启后，应用会自动创建项目备份">
-                <InfoCircleOutlined style={{ color: 'var(--text-tertiary)' }} />
+                <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
               </Tooltip>
             </Space>
           }>
@@ -249,7 +246,7 @@ export function BackupSettings(): JSX.Element {
             <Space>
               最大备份数量
               <Tooltip title="超过此数量的旧备份将被自动删除">
-                <InfoCircleOutlined style={{ color: 'var(--text-tertiary)' }} />
+                <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
               </Tooltip>
             </Space>
           }>
@@ -264,12 +261,16 @@ export function BackupSettings(): JSX.Element {
             <Text type="secondary" style={{ marginLeft: 8 }}>个</Text>
           </Form.Item>
         </Form>
-      </Card>
+      </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 手动备份 */}
-      <Card title="手动备份" className={styles.card}>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>手动备份</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          手动创建或导入备份文件。
+        </Text>
+
         <Space wrap>
           <Button
             type="primary"
@@ -286,26 +287,27 @@ export function BackupSettings(): JSX.Element {
             导入备份
           </Button>
         </Space>
-      </Card>
+      </div>
 
-      <Divider />
+      <Divider className={baseStyles.divider} />
 
-      {/* 备份列表 */}
-      <Card 
-        title={
-          <Space>
-            <span>备份列表</span>
-            <Button
-              type="text"
-              size="small"
-              icon={<ReloadOutlined />}
-              onClick={loadBackups}
-              loading={loading}
-            />
-          </Space>
-        }
-        className={styles.card}
-      >
+      <div className={baseStyles.section}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <Title level={5} className={baseStyles.sectionTitle} style={{ marginBottom: 0 }}>备份列表</Title>
+          <Button
+            type="text"
+            size="small"
+            icon={<ReloadOutlined />}
+            onClick={loadBackups}
+            loading={loading}
+          >
+            刷新
+          </Button>
+        </div>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          查看和管理所有备份文件。
+        </Text>
+
         {backups.length === 0 ? (
           <Empty description="暂无备份" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
@@ -318,7 +320,7 @@ export function BackupSettings(): JSX.Element {
             loading={loading}
           />
         )}
-      </Card>
+      </div>
     </div>
   )
 }

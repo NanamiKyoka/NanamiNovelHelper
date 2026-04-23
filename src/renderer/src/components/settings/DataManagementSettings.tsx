@@ -18,33 +18,29 @@ import {
   DownloadOutlined,
   UploadOutlined,
   ReloadOutlined,
-  DeleteOutlined,
-  ExportOutlined,
-  ImportOutlined
+  DeleteOutlined
 } from '@ant-design/icons'
 import JSON5 from 'json5'
 import { useSettingsStore } from '@stores/settingsStore'
+import baseStyles from './SettingsBase.module.css'
 import styles from './DataManagementSettings.module.css'
 
-const { Text, Title, Paragraph } = Typography
+const { Text, Title } = Typography
 
 export function DataManagementSettings(): JSX.Element {
   const { resetGlobalSettings, globalSettings } = useSettingsStore()
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
 
-  // 导出设置
   const handleExport = async () => {
     setExporting(true)
     try {
-      // 创建导出数据
       const exportData = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
         settings: globalSettings
       }
       
-      // 创建下载（使用 JSON5 格式）
       const blob = new Blob([JSON5.stringify(exportData, null, 2)], { type: 'application/json5' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -63,7 +59,6 @@ export function DataManagementSettings(): JSX.Element {
     }
   }
 
-  // 导入设置
   const handleImport = () => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -78,12 +73,10 @@ export function DataManagementSettings(): JSX.Element {
         const text = await file.text()
         const data = JSON5.parse(text)
         
-        // 验证数据格式
         if (!data.settings) {
           throw new Error('Invalid settings file')
         }
         
-        // 确认导入
         Modal.confirm({
           title: '确认导入设置',
           content: (
@@ -93,7 +86,7 @@ export function DataManagementSettings(): JSX.Element {
                 <li>导出时间: {data.exportedAt ? new Date(data.exportedAt).toLocaleString() : '未知'}</li>
                 <li>版本: {data.version || '未知'}</li>
               </ul>
-              <p style={{ color: 'var(--color-error)' }}>注意：当前设置将被覆盖！</p>
+              <p style={{ color: 'var(--ant-color-error)' }}>注意：当前设置将被覆盖！</p>
             </div>
           ),
           onOk: async () => {
@@ -115,7 +108,6 @@ export function DataManagementSettings(): JSX.Element {
     input.click()
   }
 
-  // 重置全局设置
   const handleReset = async () => {
     try {
       await resetGlobalSettings()
@@ -125,7 +117,6 @@ export function DataManagementSettings(): JSX.Element {
     }
   }
 
-  // 清除缓存
   const handleClearCache = () => {
     Modal.confirm({
       title: '清除缓存',
@@ -134,9 +125,7 @@ export function DataManagementSettings(): JSX.Element {
       cancelText: '取消',
       onOk: async () => {
         try {
-          // 清除 localStorage
           localStorage.clear()
-          // 清除 sessionStorage
           sessionStorage.clear()
           message.success('缓存已清除，建议重启应用')
         } catch (error) {
@@ -147,95 +136,107 @@ export function DataManagementSettings(): JSX.Element {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={baseStyles.container}>
       <Alert
         message="数据管理功能"
         description="您可以在此导出或导入应用设置，方便备份或在不同设备间迁移配置。"
         type="info"
         showIcon
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 24 }}
       />
 
-      {/* 导入导出 */}
-      <Card title="设置导入/导出" className={styles.card}>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <div className={styles.actionItem}>
-            <div className={styles.actionInfo}>
-              <Text strong>导出设置</Text>
-              <br />
-              <Text type="secondary">将当前应用设置导出为 JSON5 文件</Text>
-            </div>
-            <Button
-              icon={<DownloadOutlined />}
-              onClick={handleExport}
-              loading={exporting}
-            >
-              导出
-            </Button>
-          </div>
-          
-          <Divider style={{ margin: '12px 0' }} />
-          
-          <div className={styles.actionItem}>
-            <div className={styles.actionInfo}>
-              <Text strong>导入设置</Text>
-              <br />
-              <Text type="secondary">从 JSON5 文件导入设置（将覆盖当前设置）</Text>
-            </div>
-            <Button
-              icon={<UploadOutlined />}
-              onClick={handleImport}
-              loading={importing}
-            >
-              导入
-            </Button>
-          </div>
-        </Space>
-      </Card>
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>设置导入/导出</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          导出或导入应用设置文件。
+        </Text>
 
-      {/* 重置 */}
-      <Card title="重置" className={styles.card}>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <div className={styles.actionItem}>
-            <div className={styles.actionInfo}>
-              <Text strong>重置所有设置</Text>
-              <br />
-              <Text type="secondary">将所有设置恢复为默认值</Text>
-            </div>
-            <Popconfirm
-              title="确定要重置所有设置吗？"
-              description="此操作不可撤销。"
-              onConfirm={handleReset}
-              okText="确定"
-              cancelText="取消"
-              okButtonProps={{ danger: true }}
-            >
-              <Button icon={<ReloadOutlined />}>
-                重置
-              </Button>
-            </Popconfirm>
+        <div className={styles.actionItem}>
+          <div className={styles.actionInfo}>
+            <Text strong>导出设置</Text>
+            <br />
+            <Text type="secondary">将当前应用设置导出为 JSON5 文件</Text>
           </div>
-          
-          <Divider style={{ margin: '12px 0' }} />
-          
-          <div className={styles.actionItem}>
-            <div className={styles.actionInfo}>
-              <Text strong>清除缓存</Text>
-              <br />
-              <Text type="secondary">清除应用缓存数据，不影响项目和设置</Text>
-            </div>
-            <Button
-              icon={<DeleteOutlined />}
-              onClick={handleClearCache}
-            >
-              清除
-            </Button>
-          </div>
-        </Space>
-      </Card>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExport}
+            loading={exporting}
+          >
+            导出
+          </Button>
+        </div>
 
-      {/* 存储位置 */}
-      <Card title="数据存储位置" className={styles.card}>
+        <Divider style={{ margin: '16px 0' }} />
+
+        <div className={styles.actionItem}>
+          <div className={styles.actionInfo}>
+            <Text strong>导入设置</Text>
+            <br />
+            <Text type="secondary">从 JSON5 文件导入设置（将覆盖当前设置）</Text>
+          </div>
+          <Button
+            icon={<UploadOutlined />}
+            onClick={handleImport}
+            loading={importing}
+          >
+            导入
+          </Button>
+        </div>
+      </div>
+
+      <Divider className={baseStyles.divider} />
+
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>重置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          重置应用设置或清除缓存数据。
+        </Text>
+
+        <div className={styles.actionItem}>
+          <div className={styles.actionInfo}>
+            <Text strong>重置所有设置</Text>
+            <br />
+            <Text type="secondary">将所有设置恢复为默认值</Text>
+          </div>
+          <Popconfirm
+            title="确定要重置所有设置吗？"
+            description="此操作不可撤销。"
+            onConfirm={handleReset}
+            okText="确定"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Button icon={<ReloadOutlined />}>
+              重置
+            </Button>
+          </Popconfirm>
+        </div>
+
+        <Divider style={{ margin: '16px 0' }} />
+
+        <div className={styles.actionItem}>
+          <div className={styles.actionInfo}>
+            <Text strong>清除缓存</Text>
+            <br />
+            <Text type="secondary">清除应用缓存数据，不影响项目和设置</Text>
+          </div>
+          <Button
+            icon={<DeleteOutlined />}
+            onClick={handleClearCache}
+          >
+            清除
+          </Button>
+        </div>
+      </div>
+
+      <Divider className={baseStyles.divider} />
+
+      <div className={baseStyles.section}>
+        <Title level={5} className={baseStyles.sectionTitle}>数据存储位置</Title>
+        <Text type="secondary" className={baseStyles.sectionDescription}>
+          应用数据的存储路径说明。
+        </Text>
+
         <div className={styles.storageInfo}>
           <div className={styles.storageItem}>
             <Text type="secondary">全局设置：</Text>
@@ -250,7 +251,7 @@ export function DataManagementSettings(): JSX.Element {
             <Text code>项目目录/.novelhelper/backups/</Text>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

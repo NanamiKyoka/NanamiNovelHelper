@@ -7,7 +7,7 @@
 }
 
 .card :global(.ant-card-head) {
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  border-bottom: 1px solid var(--ant-color-border);
 }
 
 .card :global(.ant-card-body) {
@@ -25,7 +25,7 @@
 }
 
 .hint {
-  color: var(--text-color-secondary, #8c8c8c);
+  color: var(--ant-color-text-secondary);
   font-size: 12px;
   margin-bottom: 8px;
 }

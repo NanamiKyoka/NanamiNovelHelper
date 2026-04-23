@@ -1,16 +1,1 @@
-.container {
-  padding: 0;
-}
-
-.card {
-  margin-bottom: 16px;
-}
-
-.card :global(.ant-card-head) {
-  min-height: auto;
-  padding: 0 16px;
-}
-
-.card :global(.ant-card-body) {
-  padding: 16px;
-}
+/* BackupSettings 使用基础样式，此处仅保留组件特有样式（如有需要） */
