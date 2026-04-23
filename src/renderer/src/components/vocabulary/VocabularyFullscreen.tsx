@@ -727,7 +727,6 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         <div className={styles.toolbarLeft}>
           <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
             返回
-            <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.6 }}>Esc</span>
           </Button>
           <Title level={5} className={styles.title}>词汇管理</Title>
         </div>
@@ -751,9 +750,6 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               </Button>
             </Tooltip>
           </Upload>
-          <Tooltip title="Ctrl+N 新建 | Ctrl+F 搜索 | Esc 返回">
-            <Tag style={{ marginLeft: 8 }}>快捷键</Tag>
-          </Tooltip>
         </div>
       </div>
 
