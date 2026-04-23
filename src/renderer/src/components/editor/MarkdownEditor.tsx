@@ -313,7 +313,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   useEffect(() => {
     if (!editor || !goToPositionRequest) return
 
-    const { filePath, matchText } = goToPositionRequest
+    const { filePath, matchText, line, column } = goToPositionRequest
 
     // 统一路径分隔符进行比较（使用正斜杠）
     const normalizedRequestPath = filePath.replace(/\\/g, '/')
@@ -322,6 +322,8 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     console.log('[MarkdownEditor] goToPositionRequest:', {
       filePath,
       matchText,
+      line,
+      column,
       normalizedRequestPath,
       normalizedCurrentPath,
       isMatch: normalizedRequestPath === normalizedCurrentPath
@@ -333,36 +335,125 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       return
     }
 
-    // 使用 ProseMirror 的方式在文档中搜索匹配文本
+    // 使用行号和列号精确定位
+    // 获取编辑器的纯文本内容
+    const textContent = editor.getText()
+    const lines = textContent.split('\n')
+    
+    // 计算目标行在文档中的起始位置
+    let targetLineStart = 0
+    for (let i = 0; i < line - 1 && i < lines.length; i++) {
+      targetLineStart += lines[i].length + 1 // +1 for newline
+    }
+    
+    // 目标位置 = 行起始位置 + 列偏移 - 1（列从1开始）
+    const targetPosition = targetLineStart + column - 1
+    
+    console.log('[MarkdownEditor] 计算位置:', {
+      line,
+      column,
+      targetLineStart,
+      targetPosition,
+      lineContent: lines[line - 1]?.substring(0, 50)
+    })
+    
+    // 验证 matchText 在目标位置附近
     const doc = editor.state.doc
     let foundFrom = -1
     let foundTo = -1
     
-    // 遍历文档节点找到匹配文本
+    // 从目标位置附近搜索匹配文本
     doc.descendants((node, pos) => {
-      if (foundFrom !== -1) return false // 已经找到，停止遍历
+      if (foundFrom !== -1) return false
       
       if (node.isText && node.text) {
         const text = node.text
         const index = text.indexOf(matchText)
         
         if (index !== -1) {
-          // pos 是节点在文档中的起始位置
-          // 加上 index 得到匹配文本的起始位置
-          foundFrom = pos + index
-          foundTo = pos + index + matchText.length
-          console.log('[MarkdownEditor] 找到匹配:', {
-            nodeText: text.substring(0, 30),
-            nodePos: pos,
-            matchIndex: index,
-            foundFrom,
-            foundTo
-          })
-          return false
+          const matchPos = pos + index
+          // 检查这个匹配是否在目标位置附近（允许一定误差，因为HTML标签可能影响位置计算）
+          const tolerance = 100 // 允许100个字符的误差
+          if (Math.abs(matchPos - targetPosition) <= tolerance) {
+            foundFrom = matchPos
+            foundTo = matchPos + matchText.length
+            console.log('[MarkdownEditor] 找到匹配:', {
+              nodeText: text.substring(0, 30),
+              nodePos: pos,
+              matchIndex: index,
+              foundFrom,
+              foundTo,
+              distance: Math.abs(matchPos - targetPosition)
+            })
+            return false
+          }
         }
       }
       return true
     })
+    
+    // 如果在容差范围内没找到，尝试在整个文档中查找第N个匹配
+    if (foundFrom === -1) {
+      console.log('[MarkdownEditor] 在容差范围内未找到，尝试全局搜索')
+      
+      // 计算这是第几个匹配项（基于行号）
+      let matchCount = 0
+      let targetMatchIndex = 0
+      
+      // 先计算目标匹配是第几个
+      for (let i = 0; i < line - 1 && i < lines.length; i++) {
+        const lineText = lines[i]
+        let searchPos = 0
+        while (searchPos < lineText.length) {
+          const idx = lineText.indexOf(matchText, searchPos)
+          if (idx === -1) break
+          matchCount++
+          searchPos = idx + 1
+        }
+      }
+      // 加上当前行的匹配序号
+      const currentLine = lines[line - 1]
+      if (currentLine) {
+        let searchPos = 0
+        while (searchPos < column - 1) {
+          const idx = currentLine.indexOf(matchText, searchPos)
+          if (idx === -1 || idx >= column - 1) break
+          targetMatchIndex++
+          searchPos = idx + 1
+        }
+      }
+      targetMatchIndex = matchCount + targetMatchIndex
+      
+      console.log('[MarkdownEditor] 目标匹配索引:', targetMatchIndex)
+      
+      // 在文档中找到第 targetMatchIndex 个匹配
+      let currentMatchIndex = 0
+      doc.descendants((node, pos) => {
+        if (foundFrom !== -1) return false
+        
+        if (node.isText && node.text) {
+          const text = node.text
+          let searchPos = 0
+          while (searchPos < text.length) {
+            const index = text.indexOf(matchText, searchPos)
+            if (index === -1) break
+            
+            if (currentMatchIndex === targetMatchIndex) {
+              foundFrom = pos + index
+              foundTo = pos + index + matchText.length
+              console.log('[MarkdownEditor] 找到第', targetMatchIndex, '个匹配:', {
+                foundFrom,
+                foundTo
+              })
+              return false
+            }
+            currentMatchIndex++
+            searchPos = index + 1
+          }
+        }
+        return true
+      })
+    }
     
     console.log('[MarkdownEditor] 搜索结果:', { foundFrom, foundTo })
     
