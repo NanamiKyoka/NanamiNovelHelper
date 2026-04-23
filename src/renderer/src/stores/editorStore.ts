@@ -59,8 +59,8 @@ interface EditorState {
   updateCursorPosition: (position: CursorPosition) => void
   updateStatusBarConfig: (config: Partial<StatusBarConfig>) => void
 
-  goToPositionRequest: { filePath: string; matchText: string } | null
-  requestGoToPosition: (filePath: string, matchText: string) => void
+  goToPositionRequest: { filePath: string; matchText: string; matchIndex: number } | null
+  requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => void
   clearGoToPositionRequest: () => void
 
   externalRefreshRequest: string | null
@@ -595,9 +595,9 @@ export const useEditorStore = create<EditorState>()(
         return state.previewTabId === tabId
       },
 
-      // 请求跳转到指定匹配文本（包含文件路径）
-      requestGoToPosition: (filePath: string, matchText: string) => {
-        set({ goToPositionRequest: { filePath, matchText } })
+      // 请求跳转到指定匹配文本（包含文件路径和匹配索引）
+      requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => {
+        set({ goToPositionRequest: { filePath, matchText, matchIndex } })
       },
 
       // 清除跳转请求

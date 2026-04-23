@@ -313,7 +313,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   useEffect(() => {
     if (!editor || !goToPositionRequest) return
 
-    const { filePath, matchText } = goToPositionRequest
+    const { filePath, matchText, matchIndex } = goToPositionRequest
 
     // 统一路径分隔符进行比较（使用正斜杠）
     const normalizedRequestPath = filePath.replace(/\\/g, '/')
@@ -322,9 +322,9 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     console.log('[MarkdownEditor] goToPositionRequest:', {
       filePath,
       matchText,
+      matchIndex,
       normalizedRequestPath,
-      normalizedCurrentPath,
-      isMatch: normalizedRequestPath === normalizedCurrentPath
+      normalizedCurrentPath
     })
 
     // 只处理当前文件的跳转请求
@@ -333,54 +333,49 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       return
     }
 
-    // 使用 ProseMirror 的方式在文档中搜索匹配文本
+    // 收集所有匹配位置
     const doc = editor.state.doc
-    let foundFrom = -1
-    let foundTo = -1
+    const allMatches: Array<{ from: number; to: number }> = []
     
-    // 遍历文档节点找到匹配文本
     doc.descendants((node, pos) => {
-      if (foundFrom !== -1) return false // 已经找到，停止遍历
-      
       if (node.isText && node.text) {
         const text = node.text
-        const index = text.indexOf(matchText)
+        let searchPos = 0
         
-        if (index !== -1) {
-          // pos 是节点在文档中的起始位置
-          // 加上 index 得到匹配文本的起始位置
-          foundFrom = pos + index
-          foundTo = pos + index + matchText.length
-          console.log('[MarkdownEditor] 找到匹配:', {
-            nodeText: text.substring(0, 30),
-            nodePos: pos,
-            matchIndex: index,
-            foundFrom,
-            foundTo
+        while (searchPos < text.length) {
+          const index = text.indexOf(matchText, searchPos)
+          
+          if (index === -1) break
+          
+          allMatches.push({
+            from: pos + index,
+            to: pos + index + matchText.length
           })
-          return false
+          
+          searchPos = index + 1
         }
       }
       return true
     })
     
-    console.log('[MarkdownEditor] 搜索结果:', { foundFrom, foundTo })
+    console.log('[MarkdownEditor] 找到所有匹配:', {
+      totalMatches: allMatches.length,
+      targetIndex: matchIndex,
+      matches: allMatches.slice(0, 10)
+    })
     
-    if (foundFrom !== -1 && foundTo !== -1) {
-      console.log('[MarkdownEditor] 设置选区:', { from: foundFrom, to: foundTo })
+    if (allMatches.length > 0 && matchIndex >= 0 && matchIndex < allMatches.length) {
+      const targetMatch = allMatches[matchIndex]
       
-      // 设置光标位置并选中匹配文本
+      console.log('[MarkdownEditor] 设置选区到第', matchIndex + 1, '个匹配:', targetMatch)
+      
       editor.chain()
         .focus()
-        .setTextSelection({ from: foundFrom, to: foundTo })
+        .setTextSelection({ from: targetMatch.from, to: targetMatch.to })
         .run()
       
-      console.log('[MarkdownEditor] 已设置光标位置')
-      
-      // 延迟滚动，确保 DOM 已更新
       requestAnimationFrame(() => {
         const editorDom = editor.view.dom
-        // 使用 CSS Modules 导出的类名查找滚动容器
         const scrollContainer = editorDom.closest(`.${styles.editorContainer}`) as HTMLElement
         
         if (scrollContainer) {
@@ -401,10 +396,9 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
         }
       })
     } else {
-      console.log('[MarkdownEditor] 未找到匹配文本')
+      console.log('[MarkdownEditor] 未找到第', matchIndex + 1, '个匹配文本')
     }
 
-    // 清除请求
     clearGoToPositionRequest()
   }, [editor, goToPositionRequest, currentFilePath, clearGoToPositionRequest])
 
