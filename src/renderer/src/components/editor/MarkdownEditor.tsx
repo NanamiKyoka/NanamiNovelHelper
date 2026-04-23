@@ -315,25 +315,13 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
     const { filePath, matchText, matchIndex } = goToPositionRequest
 
-    // 统一路径分隔符进行比较（使用正斜杠）
     const normalizedRequestPath = filePath.replace(/\\/g, '/')
     const normalizedCurrentPath = currentFilePath.replace(/\\/g, '/')
 
-    console.log('[MarkdownEditor] goToPositionRequest:', {
-      filePath,
-      matchText,
-      matchIndex,
-      normalizedRequestPath,
-      normalizedCurrentPath
-    })
-
-    // 只处理当前文件的跳转请求
     if (normalizedRequestPath !== normalizedCurrentPath) {
-      console.log('[MarkdownEditor] 路径不匹配，跳过')
       return
     }
 
-    // 收集所有匹配位置
     const doc = editor.state.doc
     const allMatches: Array<{ from: number; to: number }> = []
     
@@ -358,16 +346,8 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       return true
     })
     
-    console.log('[MarkdownEditor] 找到所有匹配:', {
-      totalMatches: allMatches.length,
-      targetIndex: matchIndex,
-      matches: allMatches.slice(0, 10)
-    })
-    
     if (allMatches.length > 0 && matchIndex >= 0 && matchIndex < allMatches.length) {
       const targetMatch = allMatches[matchIndex]
-      
-      console.log('[MarkdownEditor] 设置选区到第', matchIndex + 1, '个匹配:', targetMatch)
       
       editor.chain()
         .focus()
@@ -396,7 +376,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
         }
       })
     } else {
-      console.log('[MarkdownEditor] 未找到第', matchIndex + 1, '个匹配文本')
+      // 未找到匹配
     }
 
     clearGoToPositionRequest()

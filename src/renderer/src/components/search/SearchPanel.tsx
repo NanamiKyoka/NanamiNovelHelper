@@ -108,17 +108,10 @@ function SearchPanel(): JSX.Element {
 
   // 点击搜索结果跳转到编辑器
   const handleMatchClick = useCallback(async (filePath: string, matchText: string, matchIndex: number) => {
-    console.log('[SearchPanel] handleMatchClick:', { filePath, matchText, matchIndex })
     try {
-      // 从路径中提取文件名
       const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath
-      console.log('[SearchPanel] 准备打开文件:', { filePath, fileName })
-      // 先打开文件
       await openFile(filePath, fileName)
-      console.log('[SearchPanel] 文件已打开，准备触发跳转')
-      // 文件打开后，延迟触发跳转请求，确保编辑器内容已更新
       setTimeout(() => {
-        console.log('[SearchPanel] 触发 requestGoToPosition:', { filePath, matchText, matchIndex })
         requestGoToPosition(filePath, matchText, matchIndex)
       }, 50)
     } catch (error) {
