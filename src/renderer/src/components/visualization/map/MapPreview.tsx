@@ -34,7 +34,7 @@ interface MapPreviewProps {
 function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.Element {
   const { message, modal } = App.useApp()
 
-  const { currentMap, loadMap, deleteMap, exportMap, saveThumbnail } = useMapStore()
+  const { currentMap, loadMap, deleteMap, exportMap } = useMapStore()
   const { types: vocabularyTypes } = useVocabularyStore()
 
   const [isExporting, setIsExporting] = useState(false)
@@ -43,12 +43,6 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
   useEffect(() => {
     loadMap(mapId)
   }, [mapId, loadMap])
-
-  // 获取本地文件 URL
-  const getLocalUrl = useCallback((filePath: string): string => {
-    if (!filePath) return ''
-    return `file://${filePath.replace(/\\/g, '/')}`
-  }, [])
 
   // 导出地图
   const handleExport = useCallback(async () => {

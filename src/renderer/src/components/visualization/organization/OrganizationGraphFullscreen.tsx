@@ -485,7 +485,7 @@ function OrganizationGraphFullscreen({
     }
   }
 
-  const handleEditSelectedNode = () => {
+  const _handleEditSelectedNode = () => {
     if (!selectedNodeId) return
     handleEditNode(selectedNodeId)
   }
@@ -496,7 +496,7 @@ function OrganizationGraphFullscreen({
     setContextMenu(prev => ({ ...prev, visible: false }))
   }
 
-  const handleDeleteSelectedNode = async () => {
+  const _handleDeleteSelectedNode = async () => {
     if (!selectedNodeId) return
     await handleDeleteNode(selectedNodeId)
   }

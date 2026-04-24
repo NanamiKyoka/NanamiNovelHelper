@@ -76,7 +76,7 @@ interface TemplateEditorProps {
   onExecute?: (template: PromptTemplate) => void
 }
 
-function TemplateEditor({ templateId, onBack, onExecute }: TemplateEditorProps): JSX.Element {
+function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateEditorProps): JSX.Element {
   const {
     templates,
     currentTemplate,

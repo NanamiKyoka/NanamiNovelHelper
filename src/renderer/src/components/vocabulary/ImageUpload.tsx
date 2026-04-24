@@ -121,12 +121,6 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
     }
   }, [disabled, finalConfig, onChange])
 
-  // 处理文件选择
-  const handleFileSelect = (): void => {
-    if (disabled) return
-    fileInputRef.current?.click()
-  }
-
   // 文件输入变化
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0]

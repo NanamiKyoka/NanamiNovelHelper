@@ -18,7 +18,7 @@ interface ChunkGalleryProps {
   onChunkDrop: (chunkType: ChunkType, hexPosition: { q: number; r: number }) => void
 }
 
-export function ChunkGallery({ onChunkDrop }: ChunkGalleryProps) {
+export function ChunkGallery({ onChunkDrop: _onChunkDrop }: ChunkGalleryProps) {
   const [searchText, setSearchText] = useState('')
   
   const addChunk = useMapStore(state => state.addChunk)

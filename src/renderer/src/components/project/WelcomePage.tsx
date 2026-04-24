@@ -34,7 +34,7 @@ function WelcomePage(): JSX.Element {
   const clearError = useProjectStore((state) => state.clearError)
   
   // 使用 useProjectActions 处理跨 Store 的项目操作
-  const { openProject, browseAndOpen } = useProjectActions()
+  const { openProject } = useProjectActions()
 
   // 加载最近项目列表
   useEffect(() => {
@@ -67,15 +67,6 @@ function WelcomePage(): JSX.Element {
       // 忽略错误
     }
   }, [removeRecentProject])
-
-  // 浏览打开项目
-  const handleBrowse = useCallback(async () => {
-    try {
-      await browseAndOpen()
-    } catch {
-      // 错误已在 hook 中处理
-    }
-  }, [browseAndOpen])
 
   return (
     <div className={styles.welcomePage}>

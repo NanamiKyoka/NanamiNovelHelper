@@ -539,7 +539,7 @@ function RelationshipGraphFullscreen({
     }
   }
 
-  const handleEditSelectedNode = () => {
+  const _handleEditSelectedNode = () => {
     if (!selectedNodeId) return
     const node = currentGraph?.nodes.find((n) => n.id === selectedNodeId)
     if (node) {
@@ -548,7 +548,7 @@ function RelationshipGraphFullscreen({
     }
   }
 
-  const handleDeleteSelectedNode = async () => {
+  const _handleDeleteSelectedNode = async () => {
     if (!selectedNodeId) return
     await deleteNode(selectedNodeId)
     setSelectedNodeId(null)
@@ -566,7 +566,7 @@ function RelationshipGraphFullscreen({
     })
   }
 
-  const handleEditSelectedEdge = () => {
+  const _handleEditSelectedEdge = () => {
     if (!selectedEdgeId) return
     const edge = currentGraph?.edges.find((e) => e.id === selectedEdgeId)
     if (edge) {
@@ -574,7 +574,7 @@ function RelationshipGraphFullscreen({
     }
   }
 
-  const handleDeleteSelectedEdge = async () => {
+  const _handleDeleteSelectedEdge = async () => {
     if (!selectedEdgeId) return
     await deleteEdge(selectedEdgeId)
     setSelectedEdgeId(null)
@@ -766,7 +766,7 @@ function RelationshipGraphFullscreen({
   ]
 
   // 关闭右键菜单
-  const handleCloseContextMenu = () => {
+  const _handleCloseContextMenu = () => {
     setContextMenu(prev => ({ ...prev, visible: false }))
   }
 

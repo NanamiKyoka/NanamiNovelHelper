@@ -211,7 +211,6 @@ function VocabularyTypeSettings({
   const { 
     types, 
     loadTypes, 
-    saveTypes, 
     addType, 
     updateType, 
     deleteType,
@@ -305,12 +304,6 @@ function VocabularyTypeSettings({
   
   // 当前拖拽的类型
   const activeType = activeId ? types.find(t => t.id === activeId) : null
-
-  // 点击新建按钮 - 打开自定义类型创建
-  const handleCreateClick = (): void => {
-    if (readOnly) return
-    openCreateModal('custom')
-  }
 
   // 从模板创建
   const handleCreateFromTemplate = (template: VocabularyType): void => {

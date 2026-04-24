@@ -154,13 +154,12 @@ function SortableCard({
 /**
  * 事序图列表组件
  */
-function SequenceChartList({ onOpenChart, onCreateChart }: SequenceChartListProps): JSX.Element {
+function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: SequenceChartListProps): JSX.Element {
   const {
     charts,
     isLoading,
     loadList,
     createChart,
-    updateChart,
     deleteChart,
     exportChart,
     exportChartAsMarkdown,

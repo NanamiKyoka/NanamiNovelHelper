@@ -289,18 +289,6 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
     }
   }, [exportMap, message])
 
-  // 导入地图
-  const handleImport = useCallback(async () => {
-    try {
-      const importedMap = await importMap('')
-      if (importedMap) {
-        message.success('导入成功')
-      }
-    } catch (error) {
-      message.error('导入失败')
-    }
-  }, [importMap, message])
-
   // 拖拽结束处理
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event

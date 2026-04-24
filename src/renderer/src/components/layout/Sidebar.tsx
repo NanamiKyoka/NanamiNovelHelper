@@ -44,7 +44,7 @@ const PANEL_TITLES: Record<string, string> = {
 // 全屏功能面板列表（这些面板需要返回按钮）
 const FULLSCREEN_PANELS = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'aiAssistant', 'map']
 
-function Sidebar({ collapsed, activePanel, onCollapse }: SidebarProps): JSX.Element {
+function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarProps): JSX.Element {
   const sidebarWidth = useSettingsStore((state) => state.globalSettings.sidebarWidth)
   const setSidebarWidth = useSettingsStore((state) => state.setSidebarWidth)
 
