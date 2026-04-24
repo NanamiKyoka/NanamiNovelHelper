@@ -258,7 +258,7 @@ class VocabularyService extends ServiceCore {
   }
 
   // ============================================
-  // 关联 Markdown 文件管理
+  // 关联 Novel 文件管理
   // ============================================
 
   private getVocabularyDetailDir(): string {
@@ -266,7 +266,7 @@ class VocabularyService extends ServiceCore {
     return this.vocabularyDetailsDir!
   }
 
-  createLinkedMarkdownFile(entry: VocabularyEntry): string | null {
+  createLinkedNovelFile(entry: VocabularyEntry): string | null {
     if (!this.projectPath) return null
 
     try {
@@ -298,19 +298,19 @@ ${entry.description || '详细描述...'}
 
       return relativePath
     } catch (error) {
-      this.logger.error('创建关联 Markdown 文件失败', error)
+      this.logger.error('创建关联 Novel 文件失败', error)
       return null
     }
   }
 
-  linkToMarkdownFile(entryId: string, filePath: string): boolean {
+  linkToFile(entryId: string, filePath: string): boolean {
     ensureInitialized(this.projectPath, 'VocabularyService')
     const relativePath = path.relative(this.projectPath!, filePath)
     const result = this.updateVocabularyEntry(entryId, { linkedFilePath: relativePath })
     return result !== null
   }
 
-  unlinkMarkdownFile(entryId: string): boolean {
+  unlinkFile(entryId: string): boolean {
     const result = this.updateVocabularyEntry(entryId, { linkedFilePath: undefined })
     return result !== null
   }

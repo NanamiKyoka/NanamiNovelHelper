@@ -101,7 +101,7 @@ export function registerVocabularyHandlers(): void {
       .object(entry, 'entry')
       .nonEmptyString((entry as Record<string, unknown>).id as string, 'entry.id')
       .validate()
-    return vocabularyService.createLinkedMarkdownFile(entry)
+    return vocabularyService.createLinkedNovelFile(entry)
   })
 
   ipcMain.handle('vocabulary:linkFile', (_event, entryId: string, filePath: string): boolean => {
@@ -109,14 +109,14 @@ export function registerVocabularyHandlers(): void {
       .nonEmptyString(entryId, 'entryId')
       .nonEmptyString(filePath, 'filePath')
       .validate()
-    return vocabularyService.linkToMarkdownFile(entryId, filePath)
+    return vocabularyService.linkToFile(entryId, filePath)
   })
 
   ipcMain.handle('vocabulary:unlinkFile', (_event, entryId: string): boolean => {
     validateParams('vocabulary:unlinkFile')
       .nonEmptyString(entryId, 'entryId')
       .validate()
-    return vocabularyService.unlinkMarkdownFile(entryId)
+    return vocabularyService.unlinkFile(entryId)
   })
 
   // ============================================
