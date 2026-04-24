@@ -12,8 +12,10 @@ import type {
   WorkflowExecution,
   TemplateListItem,
   WorkflowListItem,
+  AiApiCallOptions,
+  AiApiCallResult,
+  AIProvider,
 } from '@shared/ai-assistant'
-import type { AiApiCallOptions, AiApiCallResult, AIProvider } from '../services/aiApi'
 
 let registered = false
 

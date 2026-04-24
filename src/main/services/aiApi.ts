@@ -1,56 +1,15 @@
-/**
- * AI API 调用服务
- * 支持多种 AI 提供商的统一调用接口
- */
-
 import { globalSettingsService } from './globalSettings'
+import type { AIProvider, AiApiCallOptions, AiApiCallResult } from '@shared/ai-assistant'
 
-// 默认配置常量
 const DEFAULT_MAX_TOKENS = 2000
 const DEFAULT_TEMPERATURE = 0.7
 
-/**
- * AI 提供商类型
- */
-export type AIProvider = 'openai' | 'anthropic' | 'custom'
-
-/**
- * API 调用选项
- */
-export interface AiApiCallOptions {
-  provider?: AIProvider
-  model?: string
-  temperature?: number
-  maxTokens?: number
-  systemPrompt?: string
-}
-
-/**
- * API 调用结果
- */
-export interface AiApiCallResult {
-  success: boolean
-  content?: string
-  error?: string
-  tokensUsed?: {
-    input: number
-    output: number
-  }
-  duration: number // 毫秒
-}
-
-/**
- * API 配置
- */
 interface ApiConfig {
   baseUrl: string
   apiKeyName: string
   defaultModel: string
 }
 
-/**
- * 各提供商的默认配置
- */
 const PROVIDER_CONFIGS: Record<AIProvider, ApiConfig> = {
   openai: {
     baseUrl: 'https://api.openai.com/v1',
@@ -69,20 +28,25 @@ const PROVIDER_CONFIGS: Record<AIProvider, ApiConfig> = {
   },
 }
 
-/**
- * AI API 服务
- */
+interface OpenAiCompatibleResponse {
+  choices?: Array<{ message?: { content?: string } }>
+  usage?: { prompt_tokens?: number; completion_tokens?: number }
+  error?: { message?: string }
+}
+
+interface AnthropicResponse {
+  content?: Array<{ text?: string }>
+  usage?: { input_tokens?: number; output_tokens?: number }
+  error?: { message?: string }
+}
+
 class AiApiService {
-  /**
-   * 调用 AI API
-   */
   async call(prompt: string, options: AiApiCallOptions = {}): Promise<AiApiCallResult> {
     const startTime = Date.now()
     const provider = options.provider || 'openai'
     const config = PROVIDER_CONFIGS[provider]
 
     try {
-      // 获取 API Key
       const apiKey = globalSettingsService.getApiKey(config.apiKeyName)
       if (!apiKey) {
         return {
@@ -92,10 +56,9 @@ class AiApiService {
         }
       }
 
-      // 根据提供商调用不同的 API
       switch (provider) {
         case 'openai':
-          return await this.callOpenAI(prompt, options, apiKey, config, startTime)
+          return await this.callOpenAiCompatible(prompt, options, apiKey, config.baseUrl, startTime)
         case 'anthropic':
           return await this.callAnthropic(prompt, options, apiKey, config, startTime)
         case 'custom':
@@ -116,24 +79,18 @@ class AiApiService {
     }
   }
 
-  /**
-   * 调用 OpenAI API
-   */
-  private async callOpenAI(
+  private async callOpenAiCompatible(
     prompt: string,
     options: AiApiCallOptions,
     apiKey: string,
-    config: ApiConfig,
+    defaultBaseUrl: string,
     startTime: number
   ): Promise<AiApiCallResult> {
-    const model = options.model || config.defaultModel
-    const baseUrl = PROVIDER_CONFIGS.custom.apiKeyName
-      ? globalSettingsService.getApiKey('custom_base_url') || config.baseUrl
-      : config.baseUrl
+    const model = options.model || 'gpt-4'
+    const baseUrl = globalSettingsService.getApiKey('custom_base_url') || defaultBaseUrl
 
     try {
       const messages: Array<{ role: string; content: string }> = []
-
       if (options.systemPrompt) {
         messages.push({ role: 'system', content: options.systemPrompt })
       }
@@ -154,7 +111,7 @@ class AiApiService {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        const errorData = await response.json().catch(() => ({})) as OpenAiCompatibleResponse
         return {
           success: false,
           error: errorData.error?.message || `HTTP ${response.status}`,
@@ -162,12 +119,10 @@ class AiApiService {
         }
       }
 
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content || ''
-
+      const data = await response.json() as OpenAiCompatibleResponse
       return {
         success: true,
-        content,
+        content: data.choices?.[0]?.message?.content || '',
         tokensUsed: {
           input: data.usage?.prompt_tokens || 0,
           output: data.usage?.completion_tokens || 0,
@@ -183,9 +138,6 @@ class AiApiService {
     }
   }
 
-  /**
-   * 调用 Anthropic API
-   */
   private async callAnthropic(
     prompt: string,
     options: AiApiCallOptions,
@@ -212,7 +164,7 @@ class AiApiService {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
+        const errorData = await response.json().catch(() => ({})) as AnthropicResponse
         return {
           success: false,
           error: errorData.error?.message || `HTTP ${response.status}`,
@@ -220,12 +172,10 @@ class AiApiService {
         }
       }
 
-      const data = await response.json()
-      const content = data.content?.[0]?.text || ''
-
+      const data = await response.json() as AnthropicResponse
       return {
         success: true,
-        content,
+        content: data.content?.[0]?.text || '',
         tokensUsed: {
           input: data.usage?.input_tokens || 0,
           output: data.usage?.output_tokens || 0,
@@ -241,9 +191,6 @@ class AiApiService {
     }
   }
 
-  /**
-   * 调用自定义 API（兼容 OpenAI 格式）
-   */
   private async callCustom(
     prompt: string,
     options: AiApiCallOptions,
@@ -251,8 +198,6 @@ class AiApiService {
     startTime: number
   ): Promise<AiApiCallResult> {
     const baseUrl = globalSettingsService.getApiKey('custom_base_url')
-    const model = options.model || globalSettingsService.getApiKey('custom_model') || 'gpt-4'
-
     if (!baseUrl) {
       return {
         success: false,
@@ -261,61 +206,10 @@ class AiApiService {
       }
     }
 
-    try {
-      const messages: Array<{ role: string; content: string }> = []
-
-      if (options.systemPrompt) {
-        messages.push({ role: 'system', content: options.systemPrompt })
-      }
-      messages.push({ role: 'user', content: prompt })
-
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: options.temperature ?? DEFAULT_TEMPERATURE,
-          max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        return {
-          success: false,
-          error: errorData.error?.message || `HTTP ${response.status}`,
-          duration: Date.now() - startTime,
-        }
-      }
-
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content || ''
-
-      return {
-        success: true,
-        content,
-        tokensUsed: {
-          input: data.usage?.prompt_tokens || 0,
-          output: data.usage?.completion_tokens || 0,
-        },
-        duration: Date.now() - startTime,
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '网络请求失败',
-        duration: Date.now() - startTime,
-      }
-    }
+    const model = options.model || globalSettingsService.getApiKey('custom_model') || 'gpt-4'
+    return this.callOpenAiCompatible(prompt, { ...options, model }, apiKey, baseUrl, startTime)
   }
 
-  /**
-   * 测试 API 连接
-   */
   async testConnection(provider: AIProvider): Promise<{ success: boolean; error?: string }> {
     const config = PROVIDER_CONFIGS[provider]
     const apiKey = globalSettingsService.getApiKey(config.apiKeyName)
@@ -324,7 +218,6 @@ class AiApiService {
       return { success: false, error: '未配置 API Key' }
     }
 
-    // 发送一个简单的测试请求
     const result = await this.call('Hello', {
       provider,
       model: config.defaultModel,
@@ -337,9 +230,6 @@ class AiApiService {
     }
   }
 
-  /**
-   * 获取可用的模型列表
-   */
   getAvailableModels(provider: AIProvider): string[] {
     switch (provider) {
       case 'openai':
@@ -347,12 +237,11 @@ class AiApiService {
       case 'anthropic':
         return ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307']
       case 'custom':
-        return [] // 自定义模型需要用户自己配置
+        return []
       default:
         return []
     }
   }
 }
 
-// 单例导出
 export const aiApiService = new AiApiService()
