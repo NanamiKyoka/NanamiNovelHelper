@@ -130,7 +130,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       embedded = false,
       currentTypeId,
       onTypeChange
-    },
+    }: VocabularyPanelProps,
     ref
   ) => {
   const {
@@ -936,10 +936,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       />
     )
   }
-
-  // 批量编辑状态
-  const [batchEditModalOpen, setBatchEditModalOpen] = useState(false)
-  const [batchEditForm] = Form.useForm()
 
   // 打开批量编辑弹窗
   const handleBatchEdit = (): void => {
