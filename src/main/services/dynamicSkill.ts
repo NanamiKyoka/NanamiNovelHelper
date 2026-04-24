@@ -417,9 +417,20 @@ export class DynamicSkillService {
    * 查找脚本文件
    */
   private findScript(scriptsDir: string, toolId: string): string | null {
+    if (toolId.includes('/') || toolId.includes('\\') || toolId.includes('..')) {
+      this.logger.error(`Invalid toolId detected (path traversal attempt): ${toolId}`)
+      return null
+    }
+
     const extensions = ['.py', '.js']
     for (const ext of extensions) {
       const scriptPath = path.join(scriptsDir, `${toolId}${ext}`)
+      const resolved = path.resolve(scriptPath)
+      const resolvedDir = path.resolve(scriptsDir)
+      if (!resolved.startsWith(resolvedDir + path.sep) && resolved !== resolvedDir) {
+        this.logger.error(`Script path escapes scripts directory: ${resolved}`)
+        return null
+      }
       if (fs.existsSync(scriptPath)) {
         return scriptPath
       }

@@ -3,8 +3,7 @@
  * 支持系统 Git 和 isomorphic-git 两种模式
  */
 
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { spawn } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as git from 'isomorphic-git'
@@ -28,8 +27,6 @@ import type {
   GitResult,
   GitConfig
 } from '../types/git'
-
-const execAsync = promisify(exec)
 
 /** 状态映射 */
 const STATUS_MAP: Record<string, { status: GitFileStatus; short: GitFileStatusShort }> = {
@@ -75,7 +72,7 @@ class GitService {
   /** 检测系统 Git 是否可用 */
   private async isSystemGitAvailable(): Promise<boolean> {
     try {
-      await execAsync('git --version')
+      await this.execGit(process.cwd(), ['--version'])
       return true
     } catch {
       return false
@@ -98,11 +95,38 @@ class GitService {
     return this.useSystemGit
   }
 
-  /** 执行系统 Git 命令 */
+  /** 执行系统 Git 命令（使用spawn避免shell注入） */
   private async execGit(cwd: string, args: string[]): Promise<string> {
-    const command = `git ${args.join(' ')}`
-    const { stdout } = await execAsync(command, { cwd, encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 })
-    return stdout
+    return new Promise((resolve, reject) => {
+      const proc = spawn('git', args, {
+        cwd,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: process.env,
+      })
+      
+      let stdout = ''
+      let stderr = ''
+      
+      proc.stdout.on('data', (data: Buffer) => {
+        stdout += data.toString('utf-8')
+      })
+      
+      proc.stderr.on('data', (data: Buffer) => {
+        stderr += data.toString('utf-8')
+      })
+      
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve(stdout)
+        } else {
+          reject(new Error(`git ${args[0]} failed with code ${code}: ${stderr}`))
+        }
+      })
+      
+      proc.on('error', (err) => {
+        reject(err)
+      })
+    })
   }
 
   /** 检查是否是 Git 仓库 */
@@ -131,7 +155,7 @@ class GitService {
         
         if (options.initialCommit) {
           await this.execGit(options.path, ['add', '.'])
-          await this.execGit(options.path, ['commit', '-m', `"${options.initialCommit}"`])
+          await this.execGit(options.path, ['commit', '-m', options.initialCommit])
         }
       } else {
         await git.init({ fs, dir: options.path, defaultBranch: options.defaultBranch || 'main' })
@@ -395,10 +419,10 @@ class GitService {
       args.push('--', options.path)
     }
     if (options.search) {
-      args.push('--grep', `"${options.search}"`)
+      args.push('--grep', options.search)
     }
     if (options.author) {
-      args.push('--author', `"${options.author}"`)
+      args.push('--author', options.author)
     }
 
     const output = await this.execGit(repoPath, args)
@@ -503,12 +527,12 @@ class GitService {
   async commit(repoPath: string, options: GitCommitOptions): Promise<GitResult<string>> {
     try {
       if (this.useSystemGit) {
-        const args = ['commit', '-m', `"${options.message}"`]
+        const args = ['commit', '-m', options.message]
         if (options.all) {
           args.push('-a')
         }
         if (options.authorName && options.authorEmail) {
-          args.push('--author', `"${options.authorName} <${options.authorEmail}>"`)
+          args.push('--author', `${options.authorName} <${options.authorEmail}>`)
         }
         await this.execGit(repoPath, args)
         
@@ -862,7 +886,7 @@ class GitService {
           args.push('--allow-unrelated-histories')
         }
         if (options.message) {
-          args.push('-m', `"${options.message}"`)
+          args.push('-m', options.message)
         }
         await this.execGit(repoPath, args)
       } else {
