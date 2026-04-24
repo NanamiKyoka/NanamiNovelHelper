@@ -432,7 +432,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     set({
       newItemParent: parentKey,
       newItemType: type,
-      newItemName: type === 'file' ? '新建文件.md' : '新建文件夹'
+      newItemName: type === 'file' ? '新建文件.novel' : '新建文件夹'
     })
     
     // 如果父节点是目录，确保展开

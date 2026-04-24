@@ -275,7 +275,7 @@ class VocabularyService extends ServiceCore {
 
       const safeTypeName = entry.typeName.replace(/[\\/:*?"<>|]/g, '_')
       const safeEntryName = entry.name.replace(/[\\/:*?"<>|]/g, '_')
-      const fileName = `${safeTypeName}_${safeEntryName}.md`
+      const fileName = `${safeTypeName}_${safeEntryName}.novel`
       const filePath = path.join(detailDir, fileName)
 
       const content = `---

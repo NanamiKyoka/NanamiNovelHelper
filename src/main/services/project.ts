@@ -246,7 +246,7 @@ backup/
         case 'chapter': {
           const contentDir = join(projectPath, '内容')
           if (existsSync(contentDir)) {
-            const chapterPath = join(contentDir, '章节模板.md')
+            const chapterPath = join(contentDir, '章节模板.novel')
             if (!existsSync(chapterPath)) {
               writeFileSync(chapterPath, this.getChapterTemplate(), 'utf-8')
             }
@@ -256,7 +256,7 @@ backup/
         case 'character': {
           const contentDir = join(projectPath, '内容')
           if (existsSync(contentDir)) {
-            const characterPath = join(contentDir, '人物卡模板.md')
+            const characterPath = join(contentDir, '人物卡模板.novel')
             if (!existsSync(characterPath)) {
               writeFileSync(characterPath, this.getCharacterTemplate(), 'utf-8')
             }
@@ -265,7 +265,7 @@ backup/
         }
         case 'worldSetting': {
           // 世界观设定模板放到项目根目录
-          const worldSettingPath = join(projectPath, '世界观设定.md')
+          const worldSettingPath = join(projectPath, '世界观设定.novel')
           if (!existsSync(worldSettingPath)) {
             writeFileSync(worldSettingPath, this.getWorldSettingTemplate(), 'utf-8')
           }
@@ -720,7 +720,7 @@ ${project.name}/
           // 跳过隐藏目录
           if (item.name.startsWith('.')) continue
           scanDir(fullPath)
-        } else if (item.isFile() && item.name.endsWith('.md')) {
+        } else if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.novel'))) {
           stats.totalFiles++
           
           // 读取文件统计字数

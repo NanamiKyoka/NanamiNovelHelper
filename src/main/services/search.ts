@@ -94,6 +94,7 @@ const DEFAULT_EXCLUDES = [
  * 默认包含的文件类型
  */
 const DEFAULT_INCLUDES = [
+  '**/*.novel',
   '**/*.md',
   '**/*.markdown',
   '**/*.txt',

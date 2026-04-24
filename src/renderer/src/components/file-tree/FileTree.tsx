@@ -53,6 +53,8 @@ const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): 
   
   const ext = name.split('.').pop()?.toLowerCase()
   switch (ext) {
+    case 'novel':
+      return <FileTextOutlined style={{ color: 'var(--color-primary)' }} />
     case 'md':
     case 'markdown':
       return <FileMarkdownOutlined style={{ color: 'var(--color-primary)' }} />
@@ -218,7 +220,7 @@ const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, o
         <RightOutlined />
       </span>
       <span className={styles.icon}>
-        {type === 'folder' ? <FolderOutlined /> : <FileMarkdownOutlined />}
+        {type === 'folder' ? <FolderOutlined /> : <FileTextOutlined style={{ color: 'var(--color-primary)' }} />}
       </span>
       <input
         ref={inputRef}
