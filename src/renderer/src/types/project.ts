@@ -10,10 +10,6 @@ export {
   Project,
   CreateProjectOptions,
   RecentProject,
-  ProjectDirectoryType,
-  ProjectDirectoryConfig,
-  ProjectTemplateType,
-  ProjectTemplateConfig,
   PresetVocabularyType,
   PresetVocabularyConfig,
   FileType,
@@ -28,7 +24,5 @@ export {
   BACKUP_DIR,
   IMAGES_DIR,
   ENCRYPTED_KEYS_FILE,
-  DEFAULT_DIRECTORIES,
-  DEFAULT_TEMPLATES,
   PRESET_VOCABULARY_TYPES,
 } from '@shared/project'

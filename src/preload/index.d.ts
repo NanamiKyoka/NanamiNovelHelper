@@ -16,16 +16,6 @@ interface Project {
 }
 
 /**
- * 项目目录类型
- */
-type ProjectDirectoryType = 'content' | 'draft' | 'reference'
-
-/**
- * 项目模板类型
- */
-type ProjectTemplateType = 'chapter' | 'character' | 'worldSetting' | 'readme'
-
-/**
  * 预设词汇类型
  */
 type PresetVocabularyType = 'character' | 'location' | 'organization' | 'item' | 'magic' | 'event'
@@ -36,8 +26,6 @@ interface CreateProjectOptions {
   description?: string
   author?: string
   tags?: string[]
-  directories?: ProjectDirectoryType[]
-  templates?: ProjectTemplateType[]
   presetVocabulary?: PresetVocabularyType[]
 }
 

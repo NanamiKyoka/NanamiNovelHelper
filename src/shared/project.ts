@@ -4,67 +4,6 @@
  */
 
 // ============================================
-// 项目目录类型
-// ============================================
-
-/**
- * 可创建的项目目录类型
- */
-export type ProjectDirectoryType = 'content' | 'draft' | 'reference'
-
-/**
- * 项目目录配置
- */
-export interface ProjectDirectoryConfig {
-  /** 目录类型 */
-  type: ProjectDirectoryType
-  /** 目录名称 */
-  name: string
-  /** 是否选中（用于 UI） */
-  selected: boolean
-}
-
-/**
- * 默认目录配置
- */
-export const DEFAULT_DIRECTORIES: ProjectDirectoryConfig[] = [
-  { type: 'content', name: '内容', selected: true },
-  { type: 'draft', name: '草稿', selected: true },
-  { type: 'reference', name: '参考资料', selected: true }
-]
-
-// ============================================
-// 项目模板类型
-// ============================================
-
-/**
- * 可创建的模板类型
- */
-export type ProjectTemplateType = 'chapter' | 'character' | 'worldSetting' | 'readme'
-
-/**
- * 项目模板配置
- */
-export interface ProjectTemplateConfig {
-  /** 模板类型 */
-  type: ProjectTemplateType
-  /** 模板名称 */
-  name: string
-  /** 是否选中（用于 UI） */
-  selected: boolean
-}
-
-/**
- * 默认模板配置
- */
-export const DEFAULT_TEMPLATES: ProjectTemplateConfig[] = [
-  { type: 'chapter', name: '章节模板', selected: true },
-  { type: 'character', name: '人物卡模板', selected: true },
-  { type: 'worldSetting', name: '世界观设定模板', selected: true },
-  { type: 'readme', name: 'README', selected: true }
-]
-
-// ============================================
 // 预设词汇类型
 // ============================================
 
@@ -165,10 +104,6 @@ export interface CreateProjectOptions {
   author?: string
   /** 标签 */
   tags?: string[]
-  /** 要创建的目录类型列表 */
-  directories?: ProjectDirectoryType[]
-  /** 要创建的模板类型列表 */
-  templates?: ProjectTemplateType[]
   /** 预设词汇类型列表 */
   presetVocabulary?: PresetVocabularyType[]
 }

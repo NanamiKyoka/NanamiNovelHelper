@@ -22,10 +22,7 @@ import {
   VOCABULARY_DEFAULT_DIR,
   SENSITIVE_WORDS_FILE,
   BACKUP_DIR,
-  ProjectDirectoryType,
-  ProjectTemplateType,
-  PresetVocabularyType,
-  DEFAULT_DIRECTORIES
+  PresetVocabularyType
 } from '../types/project'
 import { vocabularyService } from './vocabulary'
 import { projectSettingsService } from './projectSettings'
@@ -64,7 +61,7 @@ class ProjectService {
    * 创建新项目
    */
   async createProject(options: CreateProjectOptions): Promise<Project> {
-    const { name, parentPath, description, author, tags, directories, templates, presetVocabulary } = options
+    const { name, parentPath, description, author, tags, presetVocabulary } = options
 
     if (!name || name.trim().length === 0) {
       throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称不能为空', { module: 'ProjectService' })
@@ -98,13 +95,10 @@ class ProjectService {
     }
 
     // 创建目录结构
-    await this.createProjectStructure(projectPath, directories)
+    await this.createProjectStructure(projectPath)
 
     // 创建项目配置文件
     await this.saveProjectConfig(project)
-
-    // 创建模板文件
-    await this.createTemplateFiles(projectPath, templates, project)
 
     // 创建默认设定文件（包含预设词汇类型）
     await this.createDefaultSettingsFiles(projectPath, presetVocabulary)
@@ -118,10 +112,7 @@ class ProjectService {
   /**
    * 创建项目目录结构
    */
-  private async createProjectStructure(
-    projectPath: string, 
-    directories: ProjectDirectoryType[] = ['content', 'draft', 'reference']
-  ): Promise<void> {
+  private async createProjectStructure(projectPath: string): Promise<void> {
     // 主目录
     mkdirSync(projectPath, { recursive: true })
 
@@ -139,20 +130,6 @@ class ProjectService {
 
     // SKILL 目录: .novelhelper/data/ai-assistant/skills
     mkdirSync(join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills'), { recursive: true })
-
-    // 根据选择的目录类型创建目录
-    const directoryMap: Record<ProjectDirectoryType, string> = {
-      content: '内容',
-      draft: '草稿',
-      reference: '参考资料'
-    }
-
-    for (const dirType of directories) {
-      const dirName = directoryMap[dirType]
-      if (dirName) {
-        mkdirSync(join(projectPath, dirName), { recursive: true })
-      }
-    }
   }
 
   /**
@@ -231,236 +208,6 @@ backup/
 `
       writeFileSync(gitignorePath, gitignoreContent, 'utf-8')
     }
-  }
-
-  /**
-   * 创建模板文件
-   */
-  private async createTemplateFiles(
-    projectPath: string, 
-    templates: ProjectTemplateType[] = [],
-    project: Project
-  ): Promise<void> {
-    for (const templateType of templates) {
-      switch (templateType) {
-        case 'chapter': {
-          const contentDir = join(projectPath, '内容')
-          if (existsSync(contentDir)) {
-            const chapterPath = join(contentDir, '章节模板.novel')
-            if (!existsSync(chapterPath)) {
-              writeFileSync(chapterPath, this.getChapterTemplate(), 'utf-8')
-            }
-          }
-          break
-        }
-        case 'character': {
-          const contentDir = join(projectPath, '内容')
-          if (existsSync(contentDir)) {
-            const characterPath = join(contentDir, '人物卡模板.novel')
-            if (!existsSync(characterPath)) {
-              writeFileSync(characterPath, this.getCharacterTemplate(), 'utf-8')
-            }
-          }
-          break
-        }
-        case 'worldSetting': {
-          // 世界观设定模板放到项目根目录
-          const worldSettingPath = join(projectPath, '世界观设定.novel')
-          if (!existsSync(worldSettingPath)) {
-            writeFileSync(worldSettingPath, this.getWorldSettingTemplate(), 'utf-8')
-          }
-          break
-        }
-        case 'readme': {
-          const readmePath = join(projectPath, 'README.md')
-          if (!existsSync(readmePath)) {
-            writeFileSync(readmePath, this.getReadmeTemplate(project), 'utf-8')
-          }
-          break
-        }
-      }
-    }
-  }
-
-  /**
-   * 章节模板内容
-   */
-  private getChapterTemplate(): string {
-    return `# 章节标题
-
-> 章节简介或备注（可选）
-
----
-
-## 第一节
-
-在此输入正文内容...
-
-<!-- 
-  写作提示：
-  - 使用二级标题（##）分隔不同场景或时间线
-  - 使用三级标题（###）分隔小节
-  - 可以使用引用（>）添加备注或灵感
--->
-`
-  }
-
-  /**
-   * 人物卡模板内容
-   */
-  private getCharacterTemplate(): string {
-    return `---
-name: 人物名称
-aliases: 
-  - 别名1
-  - 别名2
-age: 年龄
-gender: 性别
-role: 主角/配角/反派/路人
----
-
-# 人物名称
-
-## 基本信息
-
-| 属性 | 内容 |
-|------|------|
-| 姓名 | 人物名称 |
-| 年龄 | |
-| 性别 | |
-| 身份 | |
-| 职业 | |
-
-## 外貌特征
-
-描述人物的外貌特征...
-
-## 性格特点
-
-- 性格特点1
-- 性格特点2
-- 性格特点3
-
-## 背景故事
-
-人物背景故事...
-
-## 人物关系
-
-| 人物 | 关系 | 备注 |
-|------|------|------|
-| | | |
-
-## 重要事件
-
-- [ ] 事件1
-- [ ] 事件2
-
-## 备注
-
-其他需要记录的信息...
-`
-  }
-
-  /**
-   * 世界观设定模板内容
-   */
-  private getWorldSettingTemplate(): string {
-    return `# 世界观设定
-
-## 世界背景
-
-描述故事发生的世界背景...
-
-## 历史背景
-
-### 重要历史事件
-
-| 时间 | 事件 | 影响 |
-|------|------|------|
-| | | |
-
-## 地理环境
-
-### 主要地点
-
-| 地点名称 | 描述 | 相关剧情 |
-|---------|------|---------|
-| | | |
-
-## 社会结构
-
-### 势力/组织
-
-| 名称 | 领导者 | 目的 | 与主角关系 |
-|------|--------|------|-----------|
-| | | | |
-
-## 魔法/科技体系
-
-### 能力设定
-
-| 能力名称 | 描述 | 限制 |
-|---------|------|------|
-| | | |
-
-## 种族/族群
-
-| 种族名称 | 特点 | 分布 |
-|---------|------|------|
-| | | |
-
-## 其他设定
-
-### 货币/经济
-
-### 宗教/信仰
-
-### 风俗习惯
-`
-  }
-
-  /**
-   * README 模板内容
-   */
-  private getReadmeTemplate(project: Project): string {
-    return `# ${project.name}
-
-${project.description || '这是一个小说创作项目。'}
-
-## 项目信息
-
-| 属性 | 内容 |
-|------|------|
-| 作者 | ${project.author || '未知'} |
-| 创建时间 | ${new Date(project.createdAt).toLocaleDateString('zh-CN')} |
-| 标签 | ${project.tags.length > 0 ? project.tags.join(', ') : '无'} |
-
-## 目录结构
-
-\`\`\`
-${project.name}/
-├── 内容/              # 小说正文章节
-├── 草稿/              # 草稿、废案、灵感
-├── 参考资料/          # 参考资料、大纲等
-└── .novelhelper/      # 项目配置（不要手动修改）
-    ├── settings.json5       # 项目设置
-    ├── sensitive-words.json5 # 敏感词表
-    └── vocabulary/          # 词汇库
-        ├── types.json5      # 词汇类型
-        └── default/         # 预设词汇类型
-\`\`\`
-
-## 写作进度
-
-| 章节 | 状态 | 字数 | 备注 |
-|------|------|------|------|
-| 第一章 | 进行中 | 0 | |
-
----
-
-> 由 NanamiNovelHelper 创建
-`
   }
 
   /**
