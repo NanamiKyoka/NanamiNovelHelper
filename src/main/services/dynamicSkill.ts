@@ -205,7 +205,7 @@ export class DynamicSkillService {
             skills.push(skill)
           }
         } catch (err) {
-          this.logger.error(`Failed to load skill ${skillId}`, err)
+          this.logger.error(`加载 SKILL ${skillId} 失败`, err)
         }
       }
     }
@@ -236,7 +236,7 @@ export class DynamicSkillService {
         const toolsContent = await fs.promises.readFile(toolsJsonPath, 'utf-8')
         tools = JSON.parse(toolsContent)
       } catch (err) {
-        this.logger.error(`Failed to parse tools.json for ${skillId}`, err)
+        this.logger.error(`解析 ${skillId} 的 tools.json 失败`, err)
       }
     }
 
@@ -280,7 +280,7 @@ export class DynamicSkillService {
 
         return { metadata, body }
       } catch (err) {
-        this.logger.error('Failed to parse SKILL.md frontmatter', err)
+        this.logger.error('解析 SKILL.md frontmatter 失败', err)
       }
     }
 
@@ -350,7 +350,7 @@ export class DynamicSkillService {
         }
       }
     } catch {
-      // ignore
+      // 忽略
     }
 
     return '执行脚本操作'

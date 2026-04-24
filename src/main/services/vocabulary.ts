@@ -298,7 +298,7 @@ ${entry.description || '详细描述...'}
 
       return relativePath
     } catch (error) {
-      this.logger.error('Failed to create linked markdown file', error)
+      this.logger.error('创建关联 Markdown 文件失败', error)
       return null
     }
   }

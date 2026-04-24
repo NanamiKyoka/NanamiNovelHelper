@@ -74,7 +74,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
             items.push(this.toMetadata(item))
           }
         } catch (error) {
-          this.logger.error(`Failed to load ${file}`, error)
+          this.logger.error(`加载 ${file} 失败`, error)
         }
       }
     }
@@ -104,7 +104,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
             items.push(this.toMetadata(item))
           }
         } catch (error) {
-          this.logger.error(`Failed to load ${file}`, error)
+          this.logger.error(`加载 ${file} 失败`, error)
         }
       }
     }
@@ -122,7 +122,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       const content = fs.readFileSync(filePath, 'utf-8')
       return this.parseEntity(content)
     } catch (error) {
-      this.logger.error(`Failed to load entity ${id}`, error)
+      this.logger.error(`加载条目 ${id} 失败`, error)
       return null
     }
   }
@@ -139,7 +139,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       const content = await fs.promises.readFile(filePath, 'utf-8')
       return this.parseEntity(content)
     } catch (error) {
-      this.logger.error(`Failed to load entity ${id}`, error)
+      this.logger.error(`加载条目 ${id} 失败`, error)
       return null
     }
   }
@@ -172,7 +172,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
 
       return true
     } catch (error) {
-      this.logger.error(`Failed to delete entity ${id}`, error)
+      this.logger.error(`删除条目 ${id} 失败`, error)
       return false
     }
   }
@@ -193,12 +193,12 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
         await fs.promises.access(thumbnailPath)
         await fs.promises.unlink(thumbnailPath)
       } catch {
-        // thumbnail doesn't exist, that's fine
+        // 缩略图不存在，忽略
       }
 
       return true
     } catch (error) {
-      this.logger.error(`Failed to delete entity ${id}`, error)
+      this.logger.error(`删除条目 ${id} 失败`, error)
       return false
     }
   }
@@ -221,7 +221,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
 
       return thumbnailPath
     } catch (error) {
-      this.logger.error(`Failed to save thumbnail for ${id}`, error)
+      this.logger.error(`保存条目 ${id} 缩略图失败`, error)
       return null
     }
   }
@@ -236,7 +236,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
 
       return thumbnailPath
     } catch (error) {
-      this.logger.error(`Failed to save thumbnail for ${id}`, error)
+      this.logger.error(`保存条目 ${id} 缩略图失败`, error)
       return null
     }
   }
@@ -285,7 +285,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       this.save(item)
       return item
     } catch (error) {
-      this.logger.error('Failed to import item', error)
+      this.logger.error('导入条目失败', error)
       return null
     }
   }
@@ -302,7 +302,7 @@ export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'e
       await this.saveAsync(item)
       return item
     } catch (error) {
-      this.logger.error('Failed to import item', error)
+      this.logger.error('导入条目失败', error)
       return null
     }
   }

@@ -400,7 +400,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
       this.save(importedGraph)
       return importedGraph
     } catch (error) {
-      this.logger.error('Failed to import organization graph', error)
+      this.logger.error('导入组织架构图失败', error)
       return null
     }
   }
@@ -420,7 +420,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
       }
       return true
     } catch (error) {
-      this.logger.error('Failed to reorder organization graphs', error)
+      this.logger.error('重排组织架构图顺序失败', error)
       return false
     }
   }

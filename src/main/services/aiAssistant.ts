@@ -179,7 +179,7 @@ class AiAssistantService {
         template.source = 'project'
         templates.push(template)
       } catch (error) {
-        this.logger.error(`Failed to load template ${file}`, error)
+        this.logger.error(`加载模板 ${file} 失败`, error)
       }
     }
 
@@ -225,7 +225,7 @@ class AiAssistantService {
       template.source = 'project'
       return template
     } catch (error) {
-      this.logger.error(`Failed to load template ${id}`, error)
+      this.logger.error(`加载模板 ${id} 失败`, error)
       return null
     }
   }
@@ -321,7 +321,7 @@ class AiAssistantService {
         workflow.source = 'project'
         workflows.push(workflow)
       } catch (error) {
-        this.logger.error(`Failed to load workflow ${file}`, error)
+        this.logger.error(`加载工作流 ${file} 失败`, error)
       }
     }
 
@@ -366,7 +366,7 @@ class AiAssistantService {
       workflow.source = 'project'
       return workflow
     } catch (error) {
-      this.logger.error(`Failed to load workflow ${id}`, error)
+      this.logger.error(`加载工作流 ${id} 失败`, error)
       return null
     }
   }
@@ -454,7 +454,7 @@ class AiAssistantService {
       const content = fs.readFileSync(filePath, 'utf-8')
       return JSON5.parse(content)
     } catch (error) {
-      this.logger.error(`Failed to load execution ${id}`, error)
+      this.logger.error(`加载执行记录 ${id} 失败`, error)
       return null
     }
   }
@@ -501,7 +501,7 @@ class AiAssistantService {
         const content = fs.readFileSync(path.join(this.projectExecutionsDir!, file), 'utf-8')
         executions.push(JSON5.parse(content))
       } catch (error) {
-        this.logger.error(`Failed to load execution ${file}`, error)
+        this.logger.error(`加载执行记录 ${file} 失败`, error)
       }
     }
 
@@ -557,7 +557,7 @@ class AiAssistantService {
       this.saveTemplateFile(importedTemplate)
       return importedTemplate
     } catch (error) {
-      this.logger.error('Failed to import template', error)
+      this.logger.error('导入模板失败', error)
       return null
     }
   }
@@ -594,7 +594,7 @@ class AiAssistantService {
       this.saveWorkflowFile(importedWorkflow)
       return importedWorkflow
     } catch (error) {
-      this.logger.error('Failed to import workflow', error)
+      this.logger.error('导入工作流失败', error)
       return null
     }
   }

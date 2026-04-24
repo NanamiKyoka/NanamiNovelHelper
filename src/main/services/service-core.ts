@@ -51,7 +51,7 @@ export abstract class ServiceCore {
       const content = fs.readFileSync(filePath, 'utf-8')
       return JSON5.parse(content) as T
     } catch (error) {
-      this.logger.error(`Failed to read JSON5 file: ${filePath}`, error)
+      this.logger.error(`读取 JSON5 文件失败: ${filePath}`, error)
       return null
     }
   }
@@ -66,7 +66,7 @@ export abstract class ServiceCore {
       const content = await fs.promises.readFile(filePath, 'utf-8')
       return JSON5.parse(content) as T
     } catch (error) {
-      this.logger.error(`Failed to read JSON5 file: ${filePath}`, error)
+      this.logger.error(`读取 JSON5 文件失败: ${filePath}`, error)
       return null
     }
   }

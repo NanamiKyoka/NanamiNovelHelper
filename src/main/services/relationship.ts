@@ -425,7 +425,7 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
       this.save(importedGraph)
       return importedGraph
     } catch (error) {
-      this.logger.error('Failed to import relationship graph', error)
+      this.logger.error('导入关系图失败', error)
       return null
     }
   }
@@ -445,7 +445,7 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
       })
       return true
     } catch (error) {
-      this.logger.error('Failed to reorder relationship graphs', error)
+      this.logger.error('重排关系图顺序失败', error)
       return false
     }
   }

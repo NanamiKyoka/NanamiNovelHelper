@@ -66,7 +66,7 @@ class HighlightService {
       
       return this.config
     } catch (error) {
-      this.logger.error('Failed to load highlight config', error)
+      this.logger.error('加载高亮配置失败', error)
       this.config = DEFAULT_HIGHLIGHT_CONFIG
       return this.config
     }
@@ -131,7 +131,7 @@ class HighlightService {
       writeFileSync(configPath, JSON5.stringify(newConfig, null, 2), 'utf-8')
       this.config = newConfig
     } catch (error) {
-      this.logger.error('Failed to save highlight config', error)
+      this.logger.error('保存高亮配置失败', error)
       throw error
     }
   }

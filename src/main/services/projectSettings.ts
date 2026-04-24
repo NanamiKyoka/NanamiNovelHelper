@@ -73,7 +73,7 @@ class ProjectSettingsService {
         hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
       }
     } catch (error) {
-      this.logger.error('Failed to load project settings', error)
+      this.logger.error('加载项目设置失败', error)
       this.settings = { ...DEFAULT_PROJECT_SETTINGS }
     }
   }

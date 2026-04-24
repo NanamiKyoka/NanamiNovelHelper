@@ -33,7 +33,7 @@ class MapService extends BaseService<Map, MapMeta> {
     try {
       return JSON5.parse(content) as Map
     } catch (error) {
-      this.logger.error('Failed to parse map', error)
+      this.logger.error('解析地图失败', error)
       return null
     }
   }
@@ -173,7 +173,7 @@ class MapService extends BaseService<Map, MapMeta> {
       this.save(importedMap)
       return importedMap
     } catch (error) {
-      this.logger.error('Failed to import map', error)
+      this.logger.error('导入地图失败', error)
       return null
     }
   }
@@ -192,7 +192,7 @@ class MapService extends BaseService<Map, MapMeta> {
       })
       return true
     } catch (error) {
-      this.logger.error('Failed to reorder maps', error)
+      this.logger.error('重排地图顺序失败', error)
       return false
     }
   }

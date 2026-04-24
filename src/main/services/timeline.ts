@@ -483,7 +483,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
       this.save(importedTimeline)
       return importedTimeline
     } catch (error) {
-      this.logger.error('Failed to import timeline', error)
+      this.logger.error('导入时间线失败', error)
       return null
     }
   }
@@ -572,7 +572,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
       
       return true
     } catch (error) {
-      this.logger.error('Failed to reorder timelines', error)
+      this.logger.error('重排时间线顺序失败', error)
       return false
     }
   }

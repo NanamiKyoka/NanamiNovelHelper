@@ -558,7 +558,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
       this.save(importedChart)
       return importedChart
     } catch (error) {
-      this.logger.error('Failed to import sequence chart', error)
+      this.logger.error('导入事序图失败', error)
       return null
     }
   }
@@ -662,7 +662,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
       })
       return true
     } catch (error) {
-      this.logger.error('Failed to reorder sequence charts', error)
+      this.logger.error('重排事序图顺序失败', error)
       return false
     }
   }

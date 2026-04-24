@@ -85,7 +85,7 @@ class FileService {
              !relativePath.startsWith('/') && 
              !relativePath.startsWith('\\')
     } catch (error) {
-      this.logger.warn('Path validation failed', error)
+      this.logger.warn('路径验证失败', error)
       return false
     }
   }
