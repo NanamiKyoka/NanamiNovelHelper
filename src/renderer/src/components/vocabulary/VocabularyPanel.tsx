@@ -6,7 +6,6 @@ import {
   Form,
   Input,
   Select,
-  ColorPicker,
   Space,
   message,
   Tag,
@@ -15,14 +14,12 @@ import {
   Tabs,
   Dropdown,
   Modal,
-  Collapse,
   Badge,
   Checkbox,
   Tooltip,
-  Radio,
-  Alert
+  Skeleton
 } from 'antd'
-import type { MenuProps, TableProps } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
@@ -38,10 +35,7 @@ import {
   CloseCircleOutlined,
   ExportOutlined,
   FilterOutlined,
-  ClearOutlined,
   ColumnHeightOutlined,
-  FileAddOutlined,
-  FolderOpenOutlined,
   StarOutlined,
   StarFilled
 } from '@ant-design/icons'
@@ -67,16 +61,17 @@ import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
 import { useEditorStore } from '../../stores/editorStore'
 import { useFileTreeStore } from '../../stores/fileTreeStore'
-import type { 
-  VocabularyEntry, 
-  VocabularyType, 
-  FieldDefinition 
-} from '../../types/vocabulary'
+import type { VocabularyEntry } from '../../types/vocabulary'
 import { DEFAULT_COLORS } from '../../types/vocabulary'
-import ImageUpload from './ImageUpload'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
 import VocabularyFullscreen from './VocabularyFullscreen'
 import { getIconPreview } from './IconPicker'
+import { useVocabularyFilter } from './useVocabularyFilter'
+import { useVocabularyExport } from './useVocabularyExport'
+import VocabularyFilterPanel from './VocabularyFilterPanel'
+import VocabularyBatchEditModal from './VocabularyBatchEditModal'
+import VocabularyExportModal from './VocabularyExportModal'
+import VocabularyEntryDrawer from './VocabularyEntryDrawer'
 import styles from './VocabularyPanel.module.css'
 
 // 可排序的表格行组件
@@ -165,31 +160,22 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
   const [typeSettingsOpen, setTypeSettingsOpen] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
   
-  // 批量操作状态
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [batchMode, setBatchMode] = useState(false)
   
-  // 高级筛选状态
-  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
-  const [filterTags, setFilterTags] = useState<string[]>([])
-  const [filterColor, setFilterColor] = useState<string>('')
-  const [filterHasLinkedFile, setFilterHasLinkedFile] = useState<boolean | null>(null)
-  const [filterStarred, setFilterStarred] = useState<boolean | null>(null)
-  
-  // 快速创建状态
   const [quickAddMode, setQuickAddMode] = useState(false)
   const [quickAddName, setQuickAddName] = useState('')
   
-  // 撤销删除状态
   const [deletedEntry, setDeletedEntry] = useState<VocabularyEntry | null>(null)
   const [undoMessageKey, setUndoMessageKey] = useState<string>('')
   
-  // 列可见性状态
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({})
   const [columnSettingsOpen, setColumnSettingsOpen] = useState(false)
   
-  // 拖拽排序状态
   const [activeId, setActiveId] = useState<string | null>(null)
+  
+  const [batchEditModalOpen, setBatchEditModalOpen] = useState(false)
+  const [batchEditForm] = Form.useForm()
   
   const searchInputRef = useRef<Input>(null)
   
@@ -237,61 +223,39 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }
   }, [types, currentType])
 
-  // 当前类型的字段定义
   const currentTypeDefinition = types.find(t => t.id === currentType)
-  
-  // 过滤当前类型的条目
   const currentEntries = entries.filter(item => item.typeId === currentType)
-  
-  // 搜索过滤
-  const filteredEntries = useMemo(() => {
-    return currentEntries.filter(item => {
-      // 关键词搜索
-      if (searchText) {
-        const keywordMatch = 
-          item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.aliases.some(a => a.toLowerCase().includes(searchText.toLowerCase()))
-        if (!keywordMatch) return false
-      }
-      
-      // 标签筛选
-      if (filterTags.length > 0) {
-        const hasAllTags = filterTags.every(tag => item.tags.includes(tag))
-        if (!hasAllTags) return false
-      }
-      
-      // 颜色筛选
-      if (filterColor) {
-        if (item.color !== filterColor) return false
-      }
-      
-      // 关联文件筛选
-      if (filterHasLinkedFile !== null) {
-        const hasLinkedFile = !!item.linkedFilePath
-        if (filterHasLinkedFile !== hasLinkedFile) return false
-      }
-      
-      // 收藏筛选
-      if (filterStarred !== null) {
-        if (filterStarred !== !!item.starred) return false
-      }
-      
-      return true
-    })
-  }, [currentEntries, searchText, filterTags, filterColor, filterHasLinkedFile, filterStarred])
 
-  // 按 order 字段排序的条目（收藏置顶）
-  const sortedEntries = useMemo(() => {
-    return [...filteredEntries].sort((a, b) => {
-      const aStarred = !!a.starred
-      const bStarred = !!b.starred
-      if (aStarred !== bStarred) {
-        return aStarred ? -1 : 1
-      }
-      return (a.order ?? 0) - (b.order ?? 0)
-    })
-  }, [filteredEntries])
+  const {
+    sortedEntries,
+    filteredEntries,
+    allTags,
+    allColors,
+    activeFilterCount,
+    clearAllFilters,
+    filterState,
+    setFilterTags,
+    setFilterColor,
+    setFilterHasLinkedFile,
+    setFilterStarred
+  } = useVocabularyFilter({ entries: currentEntries, searchText })
+
+  const {
+    exportModalOpen,
+    setExportModalOpen,
+    exportFormat,
+    setExportFormat,
+    exportScope,
+    handleBatchExport,
+    handleExportAll,
+    confirmExport
+  } = useVocabularyExport({
+    currentTypeDefinition,
+    filteredEntries,
+    selectedRowKeys
+  })
+
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
 
   // 高亮搜索关键词
   const highlightText = useCallback((text: string, keyword: string): React.ReactNode => {
@@ -344,43 +308,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
   // 当前拖拽的条目
   const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
 
-  // 获取当前类型所有标签（用于筛选）
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    currentEntries.forEach(item => {
-      item.tags.forEach(tag => tagSet.add(tag))
-    })
-    return Array.from(tagSet).sort()
-  }, [currentEntries])
-
-  // 获取当前类型所有颜色（用于筛选）
-  const allColors = useMemo(() => {
-    const colorSet = new Set<string>()
-    currentEntries.forEach(item => {
-      colorSet.add(item.color)
-    })
-    return Array.from(colorSet)
-  }, [currentEntries])
-
-  // 筛选条件数量
-  const activeFilterCount = useMemo(() => {
-    let count = 0
-    if (filterTags.length > 0) count++
-    if (filterColor) count++
-    if (filterHasLinkedFile !== null) count++
-    if (filterStarred !== null) count++
-    return count
-  }, [filterTags, filterColor, filterHasLinkedFile, filterStarred])
-
-  // 清除所有筛选
-  const clearAllFilters = (): void => {
-    setFilterTags([])
-    setFilterColor('')
-    setFilterHasLinkedFile(null)
-    setFilterStarred(null)
-  }
-
-  // 切换收藏状态
   const toggleStarred = async (entry: VocabularyEntry): Promise<void> => {
     try {
       await updateEntry(entry.id, { starred: !entry.starred })
@@ -1101,127 +1028,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     })
   }
 
-  // 导出状态
-  const [exportModalOpen, setExportModalOpen] = useState(false)
-  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'markdown'>('json')
-  const [exportScope, setExportScope] = useState<'all' | 'selected'>('all')
-
-  // 通用导出函数
-  const doExport = (entries: VocabularyEntry[], format: 'json' | 'csv' | 'markdown'): void => {
-    const typeName = currentTypeDefinition?.name || '词汇'
-    const fields = currentTypeDefinition?.fields.filter(f => f.id !== 'name') || []
-    
-    const prepareData = (entry: VocabularyEntry) => ({
-      名称: entry.name,
-      别名: entry.aliases.join('、'),
-      颜色: entry.color,
-      标签: entry.tags.join('、'),
-      备注: entry.description || '',
-      ...Object.fromEntries(
-        fields.map(f => {
-          const value = entry.fields[f.id]
-          return [f.name, Array.isArray(value) ? value.join('、') : (value || '')]
-        })
-      )
-    })
-    
-    const data = entries.map(prepareData)
-    const dateStr = new Date().toISOString().slice(0, 10)
-    
-    let content: string
-    let mimeType: string
-    let extension: string
-    
-    if (format === 'json') {
-      content = JSON.stringify(data, null, 2)
-      mimeType = 'application/json'
-      extension = 'json'
-    } else if (format === 'csv') {
-      const headers = Object.keys(data[0] || {})
-      const csvRows = [
-        headers.join(','),
-        ...data.map(row => 
-          headers.map(h => {
-            const cell = String(row[h as keyof typeof row] || '')
-            return cell.includes(',') || cell.includes('"') || cell.includes('\n')
-              ? `"${cell.replace(/"/g, '""')}"`
-              : cell
-          }).join(',')
-        )
-      ]
-      content = '\uFEFF' + csvRows.join('\n')
-      mimeType = 'text/csv;charset=utf-8'
-      extension = 'csv'
-    } else {
-      const headers = Object.keys(data[0] || {})
-      const mdLines = [
-        `# ${typeName}词汇导出`,
-        `导出时间：${dateStr}`,
-        `共 ${entries.length} 条记录`,
-        '',
-        '---',
-        ''
-      ]
-      
-      entries.forEach((entry, index) => {
-        mdLines.push(`## ${index + 1}. ${entry.name}`)
-        mdLines.push('')
-        headers.forEach(h => {
-          const value = data[index][h as keyof typeof data[0]]
-          if (value) {
-            mdLines.push(`**${h}**：${value}`)
-          }
-        })
-        mdLines.push('')
-        mdLines.push('---')
-        mdLines.push('')
-      })
-      
-      content = mdLines.join('\n')
-      mimeType = 'text/markdown;charset=utf-8'
-      extension = 'md'
-    }
-    
-    const blob = new Blob([content], { type: mimeType })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${typeName}_导出_${dateStr}.${extension}`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    
-    message.success(`成功导出 ${entries.length} 个词汇`)
-  }
-
-  // 批量导出
-  const handleBatchExport = (): void => {
-    if (selectedRowKeys.length === 0) return
-    setExportScope('selected')
-    setExportModalOpen(true)
-  }
-
-  // 导出全部
-  const handleExportAll = (): void => {
-    if (filteredEntries.length === 0) {
-      message.warning('没有可导出的数据')
-      return
-    }
-    setExportScope('all')
-    setExportModalOpen(true)
-  }
-
-  // 确认导出
-  const confirmExport = (): void => {
-    const entries = exportScope === 'selected' 
-      ? filteredEntries.filter(e => selectedRowKeys.includes(e.id))
-      : filteredEntries
-    doExport(entries, exportFormat)
-    setExportModalOpen(false)
-  }
-
-  // 切换批量模式
   const toggleBatchMode = (): void => {
     setBatchMode(!batchMode)
     if (batchMode) {
@@ -1260,48 +1066,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }
   }
 
-  // 渲染字段输入组件
-  const renderFieldInput = (field: FieldDefinition): JSX.Element => {
-    switch (field.type) {
-      case 'text':
-        return <Input placeholder={field.placeholder || `请输入${field.name}`} />
-      case 'textarea':
-        return <Input.TextArea rows={3} placeholder={field.placeholder || `请输入${field.name}`} />
-      case 'tags':
-        return <Select mode="tags" placeholder={field.placeholder || '输入后按回车添加'} />
-      case 'select':
-        return (
-          <Select 
-            placeholder={field.placeholder || `请选择${field.name}`}
-            options={field.options?.map(o => ({ value: o, label: o }))}
-          />
-        )
-      case 'number':
-        return <Input type="number" placeholder={field.placeholder || `请输入${field.name}`} />
-      case 'date':
-        return <Input type="date" />
-      case 'color':
-        return <ColorPicker format="hex" />
-      case 'image':
-        return <ImageUpload config={field.imageConfig} />
-      case 'reference':
-        const refItems = entries.filter(item => item.typeId === field.referenceTypeId)
-        return (
-          <Select
-            placeholder={`选择${field.name}`}
-            options={refItems.map(item => ({ value: item.id, label: item.name }))}
-            showSearch
-            filterOption={(input, option) => 
-              (option?.label as string)?.toLowerCase().includes(input.toLowerCase())
-            }
-          />
-        )
-      default:
-        return <Input placeholder={field.placeholder || `请输入${field.name}`} />
-    }
-  }
-
-  // 标签页配置
   const tabItems = types.map(type => ({
     key: type.id,
     label: (
@@ -1513,91 +1277,21 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         </div>
       )}
       
-      {/* 高级筛选面板 */}
       {filterPanelOpen && !embedded && (
-        <div className={styles.filterPanel}>
-          <Space wrap size="middle">
-            {/* 标签筛选 */}
-            <div className={styles.filterItem}>
-              <span className={styles.filterLabel}>标签：</span>
-              <Select
-                mode="multiple"
-                placeholder="选择标签"
-                value={filterTags}
-                onChange={setFilterTags}
-                options={allTags.map(t => ({ value: t, label: t }))}
-                style={{ minWidth: 150 }}
-                allowClear
-                size="small"
-              />
-            </div>
-            
-            {/* 颜色筛选 */}
-            <div className={styles.filterItem}>
-              <span className={styles.filterLabel}>颜色：</span>
-              <Select
-                placeholder="选择颜色"
-                value={filterColor || undefined}
-                onChange={(v) => setFilterColor(v || '')}
-                allowClear
-                style={{ minWidth: 120 }}
-                size="small"
-              >
-                {allColors.map(color => (
-                  <Select.Option key={color} value={color}>
-                    <Space>
-                      <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }} />
-                      <span>{color}</span>
-                    </Space>
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-            
-            {/* 关联文件筛选 */}
-            <div className={styles.filterItem}>
-              <span className={styles.filterLabel}>关联文件：</span>
-              <Select
-                placeholder="选择"
-                value={filterHasLinkedFile}
-                onChange={setFilterHasLinkedFile}
-                allowClear
-                style={{ minWidth: 100 }}
-                size="small"
-              >
-                <Select.Option value={true}>有关联</Select.Option>
-                <Select.Option value={false}>无关联</Select.Option>
-              </Select>
-            </div>
-            
-            {/* 收藏筛选 */}
-            <div className={styles.filterItem}>
-              <span className={styles.filterLabel}>收藏：</span>
-              <Select
-                placeholder="选择"
-                value={filterStarred}
-                onChange={setFilterStarred}
-                allowClear
-                style={{ minWidth: 100 }}
-                size="small"
-              >
-                <Select.Option value={true}>已收藏</Select.Option>
-                <Select.Option value={false}>未收藏</Select.Option>
-              </Select>
-            </div>
-            
-            {/* 清除筛选 */}
-            {activeFilterCount > 0 && (
-              <Button 
-                size="small" 
-                icon={<ClearOutlined />}
-                onClick={clearAllFilters}
-              >
-                清除筛选
-              </Button>
-            )}
-          </Space>
-        </div>
+        <VocabularyFilterPanel
+          allTags={allTags}
+          allColors={allColors}
+          filterTags={filterState.filterTags}
+          filterColor={filterState.filterColor}
+          filterHasLinkedFile={filterState.filterHasLinkedFile}
+          filterStarred={filterState.filterStarred}
+          activeFilterCount={activeFilterCount}
+          onFilterTagsChange={setFilterTags}
+          onFilterColorChange={setFilterColor}
+          onFilterHasLinkedFileChange={setFilterHasLinkedFile}
+          onFilterStarredChange={setFilterStarred}
+          onClearAll={clearAllFilters}
+        />
       )}
       
       {/* 表格 */}
@@ -1656,110 +1350,19 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         )}
       </div>
 
-      {/* 编辑抽屉 */}
-      <Drawer
-        title={
-          <Space>
-            <span>{editingEntry ? `编辑${currentTypeDefinition?.name || '词汇'}` : `新建${currentTypeDefinition?.name || '词汇'}`}</span>
-            <Button 
-              type="link" 
-              size="small"
-              icon={<SettingOutlined />}
-              onClick={() => setTypeSettingsOpen(true)}
-              style={{ marginLeft: 8 }}
-            >
-              管理字段
-            </Button>
-          </Space>
-        }
-        placement="right"
-        width={480}
+      <VocabularyEntryDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        footer={
-          <Space>
-            <Button onClick={() => setDrawerOpen(false)}>取消</Button>
-            {!editingEntry && (
-              <Button loading={loading} onClick={handleSaveAndContinue}>
-                保存并继续添加
-              </Button>
-            )}
-            <Button type="primary" loading={loading} onClick={handleSave}>
-              保存
-            </Button>
-          </Space>
-        }
-      >
-        <Form form={form} layout="vertical">
-          {/* 基础字段 */}
-          <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
-            <Input placeholder="词汇名称" />
-          </Form.Item>
-
-          <Form.Item name="aliases" label="别名">
-            <Select mode="tags" placeholder="输入别名后按回车添加" />
-          </Form.Item>
-
-          <Form.Item name="color" label="标记颜色">
-            <ColorPicker format="hex" />
-          </Form.Item>
-
-          {/* 动态字段 */}
-          {currentTypeDefinition?.fields
-            .filter(f => f.id !== 'name')
-            .sort((a, b) => a.order - b.order)
-            .map(field => (
-              <Form.Item
-                key={field.id}
-                name={['fields', field.id]}
-                label={field.name}
-                rules={[{ required: field.required, message: `请输入${field.name}` }]}
-              >
-                {renderFieldInput(field)}
-              </Form.Item>
-            ))
-          }
-
-          {/* 通用字段 */}
-          <Form.Item name="description" label="备注">
-            <Input.TextArea rows={3} placeholder="备注说明" />
-          </Form.Item>
-
-          <Form.Item name="tags" label="标签">
-            <Select mode="tags" placeholder="添加标签" />
-          </Form.Item>
-
-          {/* 关联文件 */}
-          <Form.Item 
-            name="linkedFilePath" 
-            label="关联文件"
-          >
-            <Space.Compact style={{ width: '100%' }}>
-              <Input 
-                placeholder="关联的 Markdown 文件路径" 
-                disabled 
-                style={{ flex: 1 }}
-              />
-              {editingEntry?.linkedFilePath && (
-                <Tooltip title="打开文件">
-                  <Button 
-                    icon={<FolderOpenOutlined />}
-                    onClick={() => handleOpenLinkedFile(editingEntry.linkedFilePath!)}
-                  />
-                </Tooltip>
-              )}
-              {editingEntry && (
-                <Tooltip title={editingEntry.linkedFilePath ? '重新生成关联文件' : '创建关联文件'}>
-                  <Button 
-                    icon={<FileAddOutlined />}
-                    onClick={handleCreateLinkedFile}
-                  />
-                </Tooltip>
-              )}
-            </Space.Compact>
-          </Form.Item>
-        </Form>
-      </Drawer>
+        editingEntry={editingEntry}
+        currentTypeDefinition={currentTypeDefinition}
+        loading={loading}
+        form={form}
+        onSave={handleSave}
+        onSaveAndContinue={handleSaveAndContinue}
+        onCancel={() => setDrawerOpen(false)}
+        onTypeSettingsOpen={() => setTypeSettingsOpen(true)}
+        onCreateLinkedFile={handleCreateLinkedFile}
+        onOpenLinkedFile={handleOpenLinkedFile}
+      />
 
       {/* 管理词汇类型抽屉 */}
       <Drawer
@@ -1813,65 +1416,25 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         )}
       </Modal>
 
-      {/* 批量编辑弹窗 */}
-      <Modal
-        title={`批量编辑 ${selectedRowKeys.length} 个词汇`}
+      <VocabularyBatchEditModal
         open={batchEditModalOpen}
+        selectedCount={selectedRowKeys.length}
+        loading={loading}
         onCancel={() => setBatchEditModalOpen(false)}
         onOk={executeBatchEdit}
-        confirmLoading={loading}
-        okText="应用更改"
-        cancelText="取消"
-      >
-        <Alert
-          message="只有设置了值的字段才会被更新，留空的字段将保持不变"
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-        <Form form={batchEditForm} layout="vertical">
-          <Form.Item name="color" label="标记颜色">
-            <ColorPicker format="hex" allowClear />
-          </Form.Item>
-          
-          <Form.Item name="tagsMode" label="标签操作" initialValue="add">
-            <Select>
-              <Select.Option value="add">添加标签</Select.Option>
-              <Select.Option value="remove">移除标签</Select.Option>
-              <Select.Option value="replace">替换标签</Select.Option>
-            </Select>
-          </Form.Item>
-          
-          <Form.Item name="tags" label="标签">
-            <Select mode="tags" placeholder="输入标签后按回车添加" />
-          </Form.Item>
-        </Form>
-      </Modal>
+        form={batchEditForm}
+      />
 
-      {/* 导出格式选择弹窗 */}
-      <Modal
-        title="选择导出格式"
+      <VocabularyExportModal
         open={exportModalOpen}
+        exportFormat={exportFormat}
+        exportScope={exportScope}
+        selectedCount={selectedRowKeys.length}
+        totalCount={filteredEntries.length}
+        onFormatChange={setExportFormat}
         onCancel={() => setExportModalOpen(false)}
         onOk={confirmExport}
-        okText="导出"
-        cancelText="取消"
-      >
-        <div style={{ marginBottom: 16 }}>
-          <span style={{ marginRight: 8 }}>导出范围：</span>
-          <strong>{exportScope === 'selected' ? `选中的 ${selectedRowKeys.length} 条` : `全部 ${filteredEntries.length} 条`}</strong>
-        </div>
-        <Radio.Group value={exportFormat} onChange={e => setExportFormat(e.target.value)}>
-          <Radio.Button value="json">JSON</Radio.Button>
-          <Radio.Button value="csv">CSV</Radio.Button>
-          <Radio.Button value="markdown">Markdown</Radio.Button>
-        </Radio.Group>
-        <div style={{ marginTop: 12, color: 'var(--text-secondary)', fontSize: 12 }}>
-          <div>• JSON：适合数据交换和程序处理</div>
-          <div>• CSV：适合在 Excel 中查看和编辑</div>
-          <div>• Markdown：适合阅读和文档记录</div>
-        </div>
-      </Modal>
+      />
     </div>
   )
   }
