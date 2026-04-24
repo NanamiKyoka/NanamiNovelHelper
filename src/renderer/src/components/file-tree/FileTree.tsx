@@ -35,7 +35,6 @@ import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
 import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
-import { useThemeStore } from '@stores/themeStore'
 import type { SortMode } from '@types/fileTree'
 import styles from './FileTree.module.css'
 
@@ -259,8 +258,6 @@ function FileTree(): JSX.Element {
   const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
   const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
   const openFile = useEditorStore((state) => state.openFile)
-  const resolvedMode = useThemeStore((state) => state.resolvedMode)
-  const isDark = resolvedMode === 'dark'
   
   // 文件树 Store
   const {

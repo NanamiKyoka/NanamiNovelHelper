@@ -42,14 +42,6 @@ const STATUS_MAP: Record<string, { status: GitFileStatus; short: GitFileStatusSh
   '!!': { status: 'ignored', short: '!' }
 }
 
-/** 状态代码映射 (isomorphic-git) */
-const _MATRIX_STATUS_MAP: Record<number, { status: GitFileStatus; short: GitFileStatusShort }> = {
-  0: { status: 'unmodified', short: ' ' },
-  1: { status: 'modified', short: 'M' },
-  2: { status: 'added', short: 'A' },
-  3: { status: 'deleted', short: 'D' }
-}
-
 class GitService {
   private mode: GitMode = 'auto'
   private useSystemGit: boolean = false

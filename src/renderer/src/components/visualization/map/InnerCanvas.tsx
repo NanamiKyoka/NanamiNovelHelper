@@ -22,7 +22,6 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
   const { message } = App.useApp()
   
   const currentMap = useMapStore(state => state.currentMap)
-  const viewStack = useMapStore(state => state.viewStack)
   const getCurrentElements = useMapStore(state => state.getCurrentElements)
   const zoom = useMapStore(state => state.zoom)
   const panX = useMapStore(state => state.panX)

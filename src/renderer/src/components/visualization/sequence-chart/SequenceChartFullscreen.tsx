@@ -4,7 +4,7 @@
  * 支持：拖动移动事件、拖动边缘调整时长、拖拽排序事件行
  */
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Button,
   Input,

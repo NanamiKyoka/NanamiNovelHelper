@@ -115,7 +115,6 @@ function SequenceChartPreview({
   onClose,
   onEnterEditMode,
 }: SequenceChartPreviewProps): JSX.Element {
-  const { _token } = theme.useToken()
   const { message } = App.useApp()
 
   const {

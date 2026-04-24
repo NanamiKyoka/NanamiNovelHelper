@@ -18,7 +18,6 @@ import { createLogger } from '../utils/logger'
 class HighlightService {
   private logger = createLogger('HighlightService')
   private config: HighlightConfig | null = null
-  private _configPath: string | null = null
 
   /**
    * 获取当前项目的配置文件路径
@@ -40,8 +39,6 @@ class HighlightService {
       // 没有打开项目，返回默认配置
       return DEFAULT_HIGHLIGHT_CONFIG
     }
-
-    this._configPath = configPath
 
     if (!existsSync(configPath)) {
       // 配置文件不存在，返回默认配置

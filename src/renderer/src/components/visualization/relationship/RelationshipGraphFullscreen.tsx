@@ -539,21 +539,6 @@ function RelationshipGraphFullscreen({
     }
   }
 
-  const _handleEditSelectedNode = () => {
-    if (!selectedNodeId) return
-    const node = currentGraph?.nodes.find((n) => n.id === selectedNodeId)
-    if (node) {
-      setSelectFromVocabulary(false)
-      setNodeModal({ visible: true, mode: 'edit', node: { ...node } })
-    }
-  }
-
-  const _handleDeleteSelectedNode = async () => {
-    if (!selectedNodeId) return
-    await deleteNode(selectedNodeId)
-    setSelectedNodeId(null)
-  }
-
   const handleAddEdge = () => {
     if (!currentGraph?.nodes.length) {
       message.warning('请先添加人物节点')
@@ -564,21 +549,6 @@ function RelationshipGraphFullscreen({
       mode: 'create',
       edge: { source: selectedNodeId || undefined, target: undefined, relationTypeId: relationTypes[0]?.id },
     })
-  }
-
-  const _handleEditSelectedEdge = () => {
-    if (!selectedEdgeId) return
-    const edge = currentGraph?.edges.find((e) => e.id === selectedEdgeId)
-    if (edge) {
-      setEdgeModal({ visible: true, mode: 'edit', edge: { ...edge } })
-    }
-  }
-
-  const _handleDeleteSelectedEdge = async () => {
-    if (!selectedEdgeId) return
-    await deleteEdge(selectedEdgeId)
-    setSelectedEdgeId(null)
-    setContextMenu(prev => ({ ...prev, visible: false }))
   }
 
   const handleSaveNode = async () => {
@@ -764,11 +734,6 @@ function RelationshipGraphFullscreen({
       },
     },
   ]
-
-  // 关闭右键菜单
-  const _handleCloseContextMenu = () => {
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
 
   if (isLoading) {
     return (

@@ -485,20 +485,10 @@ function OrganizationGraphFullscreen({
     }
   }
 
-  const _handleEditSelectedNode = () => {
-    if (!selectedNodeId) return
-    handleEditNode(selectedNodeId)
-  }
-
   const handleDeleteNode = async (nodeId: string) => {
     await deleteNode(nodeId)
     setSelectedNodeId(null)
     setContextMenu(prev => ({ ...prev, visible: false }))
-  }
-
-  const _handleDeleteSelectedNode = async () => {
-    if (!selectedNodeId) return
-    await handleDeleteNode(selectedNodeId)
   }
 
   const handleSaveNode = async () => {

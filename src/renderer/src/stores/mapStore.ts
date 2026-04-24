@@ -108,7 +108,6 @@ function applyDiff(base: MapData, diff: MapDataDiff): MapData {
 const createHistoryManager = (): HistoryManager => {
   let entries: DiffHistoryEntry[] = []
   let index = -1
-  let _lastSnapshot: MapData | null = null
 
   return {
     push: (action: string, description: string, before: MapData, after: MapData) => {
@@ -125,7 +124,6 @@ const createHistoryManager = (): HistoryManager => {
         entries = entries.slice(-MAX_HISTORY_SIZE)
       }
       index = entries.length - 1
-      _lastSnapshot = after
     },
     undo: () => {
       if (index >= 0) {
@@ -148,7 +146,6 @@ const createHistoryManager = (): HistoryManager => {
     clear: () => {
       entries = []
       index = -1
-      _lastSnapshot = null
     }
   }
 }
