@@ -31,8 +31,7 @@ import type {
   CreateConnectionOptions,
   UpdateConnectionOptions,
   CreateMapOptions,
-  UpdateMapOptions,
-  HistoryEntry
+  UpdateMapOptions
 } from '@renderer/types/map'
 import {
   generateId,
@@ -55,62 +54,107 @@ import {
 const handleError = createErrorHandler('[MapStore]')
 
 // ============================================
-// 历史记录管理
+// 历史记录管理（增量差异优化）
 // ============================================
 
 const MAX_HISTORY_SIZE = 50
 
+interface MapDataDiff {
+  chunks?: Chunk[]
+  connections?: ChunkConnection[]
+  canvasWidth?: number
+  canvasHeight?: number
+  backgroundColor?: string
+  gridSize?: number
+  showGrid?: boolean
+}
+
+interface DiffHistoryEntry {
+  id: string
+  timestamp: number
+  action: string
+  description: string
+  forward: MapDataDiff
+  backward: MapDataDiff
+}
+
 interface HistoryManager {
-  history: HistoryEntry[]
-  index: number
-  push: (action: string, description: string, snapshot: MapData) => void
-  undo: () => HistoryEntry | null
-  redo: () => HistoryEntry | null
+  push: (action: string, description: string, before: MapData, after: MapData) => void
+  undo: () => MapDataDiff | null
+  redo: () => MapDataDiff | null
   canUndo: () => boolean
   canRedo: () => boolean
   clear: () => void
 }
 
-const createHistoryManager = (): HistoryManager => {
-  let history: HistoryEntry[] = []
-  let index = -1
-  
+function computeDiff(before: MapData, after: MapData): MapDataDiff {
+  const diff: MapDataDiff = {}
+  if (before.chunks !== after.chunks) diff.chunks = after.chunks
+  if (before.connections !== after.connections) diff.connections = after.connections
+  if (before.canvasWidth !== after.canvasWidth) diff.canvasWidth = after.canvasWidth
+  if (before.canvasHeight !== after.canvasHeight) diff.canvasHeight = after.canvasHeight
+  if (before.backgroundColor !== after.backgroundColor) diff.backgroundColor = after.backgroundColor
+  if (before.gridSize !== after.gridSize) diff.gridSize = after.gridSize
+  if (before.showGrid !== after.showGrid) diff.showGrid = after.showGrid
+  return diff
+}
+
+function applyDiff(base: MapData, diff: MapDataDiff): MapData {
   return {
-    history,
-    index,
-    push: (action: string, description: string, snapshot: MapData) => {
-      history = history.slice(0, index + 1)
-      history.push({
+    chunks: diff.chunks !== undefined ? diff.chunks : base.chunks,
+    connections: diff.connections !== undefined ? diff.connections : base.connections,
+    canvasWidth: diff.canvasWidth !== undefined ? diff.canvasWidth : base.canvasWidth,
+    canvasHeight: diff.canvasHeight !== undefined ? diff.canvasHeight : base.canvasHeight,
+    backgroundColor: diff.backgroundColor !== undefined ? diff.backgroundColor : base.backgroundColor,
+    gridSize: diff.gridSize !== undefined ? diff.gridSize : base.gridSize,
+    showGrid: diff.showGrid !== undefined ? diff.showGrid : base.showGrid,
+  }
+}
+
+const createHistoryManager = (): HistoryManager => {
+  let entries: DiffHistoryEntry[] = []
+  let index = -1
+  let lastSnapshot: MapData | null = null
+
+  return {
+    push: (action: string, description: string, before: MapData, after: MapData) => {
+      entries = entries.slice(0, index + 1)
+      entries.push({
         id: generateId(),
         timestamp: Date.now(),
         action,
         description,
-        snapshot: JSON.parse(JSON.stringify(snapshot))
+        forward: computeDiff(before, after),
+        backward: computeDiff(after, before),
       })
-      if (history.length > MAX_HISTORY_SIZE) {
-        history = history.slice(-MAX_HISTORY_SIZE)
+      if (entries.length > MAX_HISTORY_SIZE) {
+        entries = entries.slice(-MAX_HISTORY_SIZE)
       }
-      index = history.length - 1
+      index = entries.length - 1
+      lastSnapshot = after
     },
     undo: () => {
-      if (index > 0) {
+      if (index >= 0) {
+        const entry = entries[index]
         index--
-        return history[index]
+        return entry.backward
       }
       return null
     },
     redo: () => {
-      if (index < history.length - 1) {
+      if (index < entries.length - 1) {
         index++
-        return history[index]
+        const entry = entries[index]
+        return entry.forward
       }
       return null
     },
-    canUndo: () => index > 0,
-    canRedo: () => index < history.length - 1,
+    canUndo: () => index >= 0,
+    canRedo: () => index < entries.length - 1,
     clear: () => {
-      history = []
+      entries = []
       index = -1
+      lastSnapshot = null
     }
   }
 }
@@ -192,7 +236,7 @@ interface MapState {
   
   undo: () => void
   redo: () => void
-  saveToHistory: (action: string, description: string) => void
+  saveToHistory: (action: string, description: string, beforeData?: MapData) => void
   
   saveCurrentMap: () => Promise<void>
   
@@ -344,13 +388,12 @@ export const useMapStore = create<MapState>((set, get) => ({
     const currentMap = get().currentMap
     if (!currentMap) return null
     
+    const beforeData = currentMap.data
     const chunk = createDefaultChunk(options)
     const newData: MapData = {
       ...currentMap.data,
       chunks: [...currentMap.data.chunks, chunk]
     }
-    
-    get().saveToHistory('addChunk', `创建板块: ${chunk.name}`)
     
     set({
       currentMap: {
@@ -360,6 +403,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('addChunk', `创建板块: ${chunk.name}`, beforeData)
     
     return chunk
   },
@@ -371,6 +416,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === chunkId)
     if (chunkIndex === -1) return
     
+    const beforeData = currentMap.data
     const oldChunk = currentMap.data.chunks[chunkIndex]
     const updatedChunk: Chunk = {
       ...oldChunk,
@@ -380,8 +426,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     
     const newChunks = [...currentMap.data.chunks]
     newChunks[chunkIndex] = updatedChunk
-    
-    get().saveToHistory('updateChunk', `更新板块: ${updatedChunk.name}`)
     
     set({
       currentMap: {
@@ -393,12 +437,15 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('updateChunk', `更新板块: ${updatedChunk.name}`, beforeData)
   },
   
   deleteChunk: (chunkId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
+    const beforeData = currentMap.data
     const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
     if (!chunk) return
     
@@ -407,8 +454,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     )
     
     const newChunks = currentMap.data.chunks.filter(c => c.id !== chunkId)
-    
-    get().saveToHistory('deleteChunk', `删除板块: ${chunk.name}`)
     
     set({
       currentMap: {
@@ -424,12 +469,15 @@ export const useMapStore = create<MapState>((set, get) => ({
       },
       selectedChunkId: null
     })
+    
+    get().saveToHistory('deleteChunk', `删除板块: ${chunk.name}`, beforeData)
   },
   
   moveChunkToHex: (chunkId: string, hexPosition: HexPoint) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
+    const beforeData = currentMap.data
     const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === chunkId)
     if (chunkIndex === -1) return
     
@@ -459,12 +507,15 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('moveChunkToHex', `移动板块: ${chunk.name}`, beforeData)
   },
   
   duplicateChunk: (chunkId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return null
     
+    const beforeData = currentMap.data
     const chunk = currentMap.data.chunks.find(c => c.id === chunkId)
     if (!chunk) return null
     
@@ -485,8 +536,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       chunks: [...currentMap.data.chunks, newChunk]
     }
     
-    get().saveToHistory('duplicateChunk', `复制板块: ${newChunk.name}`)
-    
     set({
       currentMap: {
         ...currentMap,
@@ -496,6 +545,8 @@ export const useMapStore = create<MapState>((set, get) => ({
       }
     })
     
+    get().saveToHistory('duplicateChunk', `复制板块: ${newChunk.name}`, beforeData)
+    
     return newChunk
   },
   
@@ -503,6 +554,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     const currentMap = get().currentMap
     if (!currentMap) return null
     
+    const beforeData = currentMap.data
     const chunkIndex = currentMap.data.chunks.findIndex(c => c.id === parentChunkId)
     if (chunkIndex === -1) return null
     
@@ -530,8 +582,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     const newChunks = [...currentMap.data.chunks]
     newChunks[chunkIndex] = { ...chunk, updatedAt: Date.now() }
     
-    get().saveToHistory('addElement', `添加元素: ${element.name}`)
-    
     set({
       currentMap: {
         ...currentMap,
@@ -542,6 +592,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('addElement', `添加元素: ${element.name}`, beforeData)
     
     return element
   },
@@ -550,6 +602,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     const currentMap = get().currentMap
     if (!currentMap) return
     
+    const beforeData = currentMap.data
     const newChunks = currentMap.data.chunks.map(chunk => {
       const updatedChildren = updateElementInTree(chunk.children, elementId, updates)
       if (updatedChildren !== chunk.children) {
@@ -557,8 +610,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       }
       return chunk
     })
-    
-    get().saveToHistory('updateElement', `更新元素`)
     
     set({
       currentMap: {
@@ -570,12 +621,15 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('updateElement', `更新元素`, beforeData)
   },
   
   deleteElement: (elementId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
+    const beforeData = currentMap.data
     const newChunks = currentMap.data.chunks.map(chunk => {
       const updatedChildren = deleteElementFromTree(chunk.children, elementId)
       if (updatedChildren.length !== chunk.children.length || 
@@ -584,8 +638,6 @@ export const useMapStore = create<MapState>((set, get) => ({
       }
       return chunk
     })
-    
-    get().saveToHistory('deleteElement', `删除元素`)
     
     set({
       currentMap: {
@@ -598,6 +650,8 @@ export const useMapStore = create<MapState>((set, get) => ({
       },
       selectedElementId: null
     })
+    
+    get().saveToHistory('deleteElement', `删除元素`, beforeData)
   },
   
   moveElementToHex: (elementId: string, hexPosition: HexPoint) => {
@@ -650,13 +704,12 @@ export const useMapStore = create<MapState>((set, get) => ({
     )
     if (exists) return null
     
+    const beforeData = currentMap.data
     const connection = createDefaultConnection(options)
     const newData: MapData = {
       ...currentMap.data,
       connections: [...currentMap.data.connections, connection]
     }
-    
-    get().saveToHistory('addConnection', `创建连接`)
     
     set({
       currentMap: {
@@ -666,6 +719,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('addConnection', `创建连接`, beforeData)
     
     return connection
   },
@@ -705,6 +760,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     const connectionIndex = currentMap.data.connections.findIndex(c => c.id === connectionId)
     if (connectionIndex === -1) return
     
+    const beforeData = currentMap.data
     const updatedConnection: ChunkConnection = {
       ...currentMap.data.connections[connectionIndex],
       ...updates
@@ -712,8 +768,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     
     const newConnections = [...currentMap.data.connections]
     newConnections[connectionIndex] = updatedConnection
-    
-    get().saveToHistory('updateConnection', `更新连接`)
     
     set({
       currentMap: {
@@ -725,15 +779,16 @@ export const useMapStore = create<MapState>((set, get) => ({
         updatedAt: new Date().toISOString()
       }
     })
+    
+    get().saveToHistory('updateConnection', `更新连接`, beforeData)
   },
   
   deleteConnection: (connectionId: string) => {
     const currentMap = get().currentMap
     if (!currentMap) return
     
+    const beforeData = currentMap.data
     const newConnections = currentMap.data.connections.filter(c => c.id !== connectionId)
-    
-    get().saveToHistory('deleteConnection', `删除连接`)
     
     set({
       currentMap: {
@@ -747,6 +802,8 @@ export const useMapStore = create<MapState>((set, get) => ({
       },
       selectedConnectionId: null
     })
+    
+    get().saveToHistory('deleteConnection', `删除连接`, beforeData)
   },
   
   setTool: (tool: EditorTool) => {
@@ -960,12 +1017,12 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   
   undo: () => {
-    const entry = historyManager.undo()
-    if (entry && get().currentMap) {
+    const diff = historyManager.undo()
+    if (diff && get().currentMap) {
       set({
         currentMap: {
           ...get().currentMap!,
-          data: entry.snapshot,
+          data: applyDiff(get().currentMap!.data, diff),
           updatedAt: new Date().toISOString()
         },
         canUndo: historyManager.canUndo(),
@@ -975,12 +1032,12 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   
   redo: () => {
-    const entry = historyManager.redo()
-    if (entry && get().currentMap) {
+    const diff = historyManager.redo()
+    if (diff && get().currentMap) {
       set({
         currentMap: {
           ...get().currentMap!,
-          data: entry.snapshot,
+          data: applyDiff(get().currentMap!.data, diff),
           updatedAt: new Date().toISOString()
         },
         canUndo: historyManager.canUndo(),
@@ -989,10 +1046,12 @@ export const useMapStore = create<MapState>((set, get) => ({
     }
   },
   
-  saveToHistory: (action: string, description: string) => {
+  saveToHistory: (action: string, description: string, beforeData?: MapData) => {
     const currentMap = get().currentMap
     if (currentMap) {
-      historyManager.push(action, description, currentMap.data)
+      const before = beforeData ?? currentMap.data
+      const after = currentMap.data
+      historyManager.push(action, description, before, after)
       set({ 
         canUndo: historyManager.canUndo(), 
         canRedo: historyManager.canRedo() 
