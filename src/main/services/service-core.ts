@@ -1,9 +1,3 @@
-/**
- * Service 核心基类
- * 
- * 提供所有 Service 共享的基础设施：路径管理、目录管理、ID/时间戳生成、JSON5 文件读写
- */
-
 import * as fs from 'fs'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -33,9 +27,22 @@ export abstract class ServiceCore {
     }
   }
 
+  protected async ensureDirAsync(dirPath: string): Promise<void> {
+    try {
+      await fs.promises.access(dirPath)
+    } catch {
+      await fs.promises.mkdir(dirPath, { recursive: true })
+    }
+  }
+
   protected ensureDirectories(): void {
     if (!this.dataDir) return
     this.ensureDir(this.dataDir)
+  }
+
+  protected async ensureDirectoriesAsync(): Promise<void> {
+    if (!this.dataDir) return
+    await this.ensureDirAsync(this.dataDir)
   }
 
   protected readJson5File<T>(filePath: string): T | null {
@@ -49,10 +56,31 @@ export abstract class ServiceCore {
     }
   }
 
+  protected async readJson5FileAsync<T>(filePath: string): Promise<T | null> {
+    try {
+      await fs.promises.access(filePath)
+    } catch {
+      return null
+    }
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf-8')
+      return JSON5.parse(content) as T
+    } catch (error) {
+      this.logger.error(`Failed to read JSON5 file: ${filePath}`, error)
+      return null
+    }
+  }
+
   protected writeJson5File<T>(filePath: string, data: T): void {
     const dir = path.dirname(filePath)
     this.ensureDir(dir)
     fs.writeFileSync(filePath, JSON5.stringify(data, null, 2), 'utf-8')
+  }
+
+  protected async writeJson5FileAsync<T>(filePath: string, data: T): Promise<void> {
+    const dir = path.dirname(filePath)
+    await this.ensureDirAsync(dir)
+    await fs.promises.writeFile(filePath, JSON5.stringify(data, null, 2), 'utf-8')
   }
 
   protected checkInitialized(): boolean {
