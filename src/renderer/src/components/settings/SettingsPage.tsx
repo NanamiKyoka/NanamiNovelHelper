@@ -99,7 +99,7 @@ function SettingsPage(): JSX.Element {
   }, [filteredItems, selectedKey])
 
   const renderContent = (): JSX.Element => {
-    const item = menuItems.find(i => i.key === currentKey)
+    const _item = menuItems.find(i => i.key === currentKey)
     
     switch (currentKey) {
       case 'appearance':

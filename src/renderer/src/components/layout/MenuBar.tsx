@@ -61,7 +61,7 @@ function MenuBar(): JSX.Element {
     }
   }, [])
 
-  const handleMenuItemClick = useCallback(async (menuId: string, itemId: string, label?: string) => {
+  const handleMenuItemClick = useCallback(async (_menuId: string, itemId: string, _label?: string) => {
     switch (itemId) {
       case 'newProject':
         openCreateProjectModal()

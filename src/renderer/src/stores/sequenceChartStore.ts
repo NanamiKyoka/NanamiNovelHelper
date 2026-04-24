@@ -607,7 +607,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     })
   },
 
-  updateDrag: (currentX, currentY) => {
+  updateDrag: (_currentX, _currentY) => {
     // 拖拽过程中的实时更新由组件处理
   },
 

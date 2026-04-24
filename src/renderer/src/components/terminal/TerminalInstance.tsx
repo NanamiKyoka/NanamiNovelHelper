@@ -17,7 +17,7 @@ interface TerminalInstanceProps {
   cwd?: string
 }
 
-export function TerminalInstance({ id, cwd }: TerminalInstanceProps) {
+export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<XTerm | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)

@@ -153,7 +153,6 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   const {
     graphs,
     isLoading,
-    error,
     loadList,
     createGraph,
     deleteGraph,
@@ -320,7 +319,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   }
 
   // 单击选中
-  const handleClick = (graphId: string) => {
+  const handleClick = (_graphId: string) => {
     // 可以添加选中高亮效果
   }
 

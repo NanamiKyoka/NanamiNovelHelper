@@ -119,7 +119,7 @@ function isCompleteWord(text: string, start: number, end: number, pattern: Highl
  * 更新高亮模式（从外部调用）
  * 注意：实际的 patterns 和 automaton 存储在 highlightService store 中
  */
-export function updateHighlightPatterns(patterns: HighlightPattern[]): void {
+export function updateHighlightPatterns(_patterns: HighlightPattern[]): void {
   globalVersion++  // 增加版本号，强制刷新
 }
 
@@ -269,7 +269,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
           init() {
             return DecorationSet.empty
           },
-          apply(tr, oldSet, oldState, newState) {
+          apply(tr, _oldSet, _oldState, newState) {
             const storeState = useHighlightService.getState()
             const patterns = storeState.patterns
             const automaton = storeState.automaton
@@ -312,7 +312,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
           decorations(state) {
             return this.getState(state)
           },
-          handleClick(view, pos, event) {
+          handleClick(_view, _pos, event) {
             const target = event.target as HTMLElement
             const highlightEl = target.closest('[data-entry-id]')
             if (highlightEl && extensionThis.options.onClick) {
@@ -325,7 +325,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             return false
           },
           handleDOMEvents: {
-            mouseover(view, event) {
+            mouseover(_view, event) {
               if (!globalStyleConfig.showHoverTooltip) return false
 
               const target = event.target as HTMLElement
@@ -407,7 +407,7 @@ function createHighlightDecorations(
 function getHighlightStyle(
   color: string,
   styleConfig: HighlightStyleConfig,
-  isSensitive: boolean
+  _isSensitive: boolean
 ): string {
   const styles: string[] = []
 

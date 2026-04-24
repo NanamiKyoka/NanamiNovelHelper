@@ -280,7 +280,7 @@ function FieldDefinitionEditor({
       key: 'dragHandle',
       width: 40,
       className: 'drag-handle-cell',
-      render: (_: unknown, record: FieldDefinition) => (
+      render: (_: unknown, _record: FieldDefinition) => (
         <div className={styles.dragHandle} style={{ cursor: 'grab', padding: '4px' }}>
           <HolderOutlined style={{ color: 'var(--text-tertiary)' }} />
         </div>

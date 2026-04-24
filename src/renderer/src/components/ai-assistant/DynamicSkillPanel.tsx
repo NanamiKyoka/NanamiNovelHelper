@@ -409,7 +409,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       dataIndex: 'name',
       key: 'name',
       width: 200,
-      render: (name: string, record: DynamicSkillTool) => (
+      render: (name: string, _record: DynamicSkillTool) => (
         <Space>
           <ToolOutlined />
           <Text strong>{name}</Text>
@@ -555,7 +555,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   )
 
   // 渲染编辑模式（受控组件，无 Form.List 嵌套）
-  const renderEditMode = (skill: DynamicSkill) => {
+  const renderEditMode = (_skill: DynamicSkill) => {
     if (!editData) return null
 
     return (

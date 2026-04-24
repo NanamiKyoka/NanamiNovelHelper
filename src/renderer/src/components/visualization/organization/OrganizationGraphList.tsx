@@ -146,7 +146,6 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
   const {
     graphs,
     isLoading,
-    error,
     loadList,
     createGraph,
     deleteGraph,

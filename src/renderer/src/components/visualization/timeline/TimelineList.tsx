@@ -148,7 +148,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   const {
     timelines,
     isLoading,
-    error,
     loadList,
     createTimeline,
     deleteTimeline,

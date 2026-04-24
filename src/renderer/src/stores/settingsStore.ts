@@ -304,7 +304,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 // 监听系统主题变化，自动更新
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  mediaQuery.addEventListener('change', (e) => {
+  mediaQuery.addEventListener('change', (_e) => {
     const state = useSettingsStore.getState()
     if (state.globalSettings.theme.mode === 'system') {
       useSettingsStore.setState({ globalSettings: { ...state.globalSettings } })

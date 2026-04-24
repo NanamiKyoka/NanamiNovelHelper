@@ -66,7 +66,7 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
     setDragStartHex(null)
   }, [])
   
-  const handleChunkDragStart = useCallback((chunkId: string, e: React.MouseEvent) => {
+  const handleChunkDragStart = useCallback((chunkId: string, _e: React.MouseEvent) => {
     if (tool !== 'select' || isPanning) return
     
     const chunk = chunks.find(c => c.id === chunkId)

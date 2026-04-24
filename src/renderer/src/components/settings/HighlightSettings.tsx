@@ -75,7 +75,7 @@ export function HighlightSettings(): JSX.Element {
   }, [config, form])
 
   // 自动保存表单值变化
-  const handleValuesChange = useCallback((changedValues: any, allValues: any) => {
+  const handleValuesChange = useCallback((_changedValues: any, allValues: any) => {
     if (!config) return
 
     const newConfig: Partial<HighlightConfig> = {

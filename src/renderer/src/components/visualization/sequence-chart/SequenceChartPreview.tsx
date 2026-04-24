@@ -115,7 +115,7 @@ function SequenceChartPreview({
   onClose,
   onEnterEditMode,
 }: SequenceChartPreviewProps): JSX.Element {
-  const { token } = theme.useToken()
+  const { _token } = theme.useToken()
   const { message } = App.useApp()
 
   const {
@@ -237,13 +237,13 @@ function SequenceChartPreview({
   }, [])
 
   // 同步滚动：左侧事件列表和右侧时间轴垂直滚动同步
-  const handleTimelineScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  const handleTimelineScroll = useCallback((_e: React.UIEvent<HTMLDivElement>) => {
     if (eventListBodyRef.current && timelineBodyRef.current) {
       eventListBodyRef.current.scrollTop = timelineBodyRef.current.scrollTop
     }
   }, [])
 
-  const handleEventListScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  const handleEventListScroll = useCallback((_e: React.UIEvent<HTMLDivElement>) => {
     if (eventListBodyRef.current && timelineBodyRef.current) {
       timelineBodyRef.current.scrollTop = eventListBodyRef.current.scrollTop
     }

@@ -57,18 +57,16 @@ function getFieldDisplayName(fieldId: string, type: VocabularyType | undefined):
 export function HighlightHoverCard({
   entryId,
   isSensitive = false,
-  severity,
   config,
   position,
-  visible,
-  onClose
+  visible
 }: HighlightHoverCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [adjustedPosition, setAdjustedPosition] = useState(position)
   
   // 获取词汇数据
-  const { entries, types, findEntry, findType } = useVocabularyStore()
-  const { words, findWord } = useSensitiveStore()
+  const { findEntry, findType } = useVocabularyStore()
+  const { findWord } = useSensitiveStore()
   const { hoverCardConfig } = useHighlightService()
   
   // 使用传入的配置或 store 中的配置

@@ -142,7 +142,7 @@ function createTerminalWindow(): BrowserWindow {
     mainWindow?.webContents.send('terminal-window-closed')
   })
 
-  terminalWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+  terminalWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     console.error('[Main] Terminal window failed to load:', errorCode, errorDescription)
   })
 

@@ -78,7 +78,7 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
   }, [position, closeMenu])
 
   // 执行格式化命令
-  const execCommand = useCallback((command: string, ...args: unknown[]) => {
+  const execCommand = useCallback((command: string, ..._args: unknown[]) => {
     if (!editor) return
 
     closeMenu()

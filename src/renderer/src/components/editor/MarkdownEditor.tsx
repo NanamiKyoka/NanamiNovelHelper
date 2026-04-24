@@ -127,7 +127,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
         class: `${styles.editorContent}${settings.showLineNumbers ? ` ${styles.hasLineNumbers}` : ''}`,
         style: `font-family: ${settings.fontFamily}; font-size: ${settings.fontSize}px; line-height: ${settings.lineHeight};`
       },
-      handleKeyDown: (view, event) => {
+      handleKeyDown: (_view, event) => {
         // 处理 Ctrl+S
         if ((event.ctrlKey || event.metaKey) && event.key === 's') {
           event.preventDefault()
