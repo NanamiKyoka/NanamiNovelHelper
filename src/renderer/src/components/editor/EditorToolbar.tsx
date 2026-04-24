@@ -96,8 +96,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
   const [aiPreviewContent, setAiPreviewContent] = useState('')
   const [aiCurrentAction, setAiCurrentAction] = useState('')
   
-  // 是否为 Markdown 文件，决定是否显示格式化工具
-  const isMarkdown = fileType === 'markdown'
+  // 是否为 Novel 文件，决定是否显示格式化工具
+  const isNovel = fileType === 'novel'
   
   // AI 辅助功能：调用 AI API
   const callAiApi = useCallback(async (
@@ -498,8 +498,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </Dropdown>
       </div>
 
-      {/* Markdown 特定功能：标题级别 */}
-      {isMarkdown && (
+      {/* Novel 特定功能：标题级别 */}
+      {isNovel && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -512,8 +512,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Markdown 特定功能：文本格式 */}
-      {isMarkdown && (
+      {/* Novel 特定功能：文本格式 */}
+      {isNovel && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -558,8 +558,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Markdown 特定功能：列表 */}
-      {isMarkdown && (
+      {/* Novel 特定功能：列表 */}
+      {isNovel && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -603,8 +603,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Markdown 特定功能：插入 */}
-      {isMarkdown && (
+      {/* Novel 特定功能：插入 */}
+      {isNovel && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -675,8 +675,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
             onClick={() => execCommand('formatDocument')}
           />
         </Tooltip>
-        {/* 清除格式仅对 Markdown 文件显示 */}
-        {isMarkdown && (
+        {/* 清除格式仅对 Novel 文件显示 */}
+        {isNovel && (
           <Tooltip title="清除格式">
             <Button
               type="text"

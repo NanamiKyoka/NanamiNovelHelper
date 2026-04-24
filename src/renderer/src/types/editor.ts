@@ -13,7 +13,7 @@ export interface EditorTab {
   /** 文件名 */
   name: string
   /** 文件类型 */
-  type: 'markdown' | 'text' | 'other'
+  type: 'novel' | 'text' | 'other'
   /** 是否已修改 */
   isDirty: boolean
   /** 最后激活时间 */

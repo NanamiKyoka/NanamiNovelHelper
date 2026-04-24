@@ -19,7 +19,6 @@ import {
   FolderOpenOutlined,
   FolderOutlined,
   FileOutlined,
-  FileMarkdownOutlined,
   FileTextOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -53,9 +52,6 @@ const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): 
   switch (ext) {
     case 'novel':
       return <FileTextOutlined style={{ color: 'var(--color-primary)' }} />
-    case 'md':
-    case 'markdown':
-      return <FileMarkdownOutlined style={{ color: 'var(--color-primary)' }} />
     case 'txt':
       return <FileTextOutlined style={{ color: 'var(--color-success)' }} />
     case 'json':

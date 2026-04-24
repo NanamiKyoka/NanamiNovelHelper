@@ -144,7 +144,7 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
             >
               {/* 文件图标 */}
               <span className={styles.fileIcon}>
-                {tab.type === 'markdown' ? '📝' : '📄'}
+                {tab.type === 'novel' ? '📝' : '📄'}
               </span>
 
               {/* 文件名 */}

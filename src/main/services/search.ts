@@ -94,8 +94,6 @@ const DEFAULT_EXCLUDES = [
  */
 const DEFAULT_INCLUDES = [
   '**/*.novel',
-  '**/*.md',
-  '**/*.markdown',
   '**/*.txt',
   '**/*.json',
   '**/*.json5',

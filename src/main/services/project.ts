@@ -467,7 +467,7 @@ backup/
           // 跳过隐藏目录
           if (item.name.startsWith('.')) continue
           scanDir(fullPath)
-        } else if (item.isFile() && (item.name.endsWith('.md') || item.name.endsWith('.novel'))) {
+        } else if (item.isFile() && item.name.endsWith('.novel')) {
           stats.totalFiles++
           
           // 读取文件统计字数

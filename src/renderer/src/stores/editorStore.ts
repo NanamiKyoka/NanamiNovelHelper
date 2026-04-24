@@ -212,9 +212,8 @@ function calculateWordCount(content: string): WordCount {
 function getFileType(name: string): EditorTab['type'] {
   const ext = name.split('.').pop()?.toLowerCase()
   switch (ext) {
-    case 'md':
-    case 'markdown':
-      return 'markdown'
+    case 'novel':
+      return 'novel'
     case 'txt':
       return 'text'
     default:

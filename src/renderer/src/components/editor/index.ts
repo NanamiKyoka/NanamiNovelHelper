@@ -1,5 +1,5 @@
 export { EditorTabs } from './EditorTabs'
-export { MarkdownEditor } from './MarkdownEditor'
+export { NovelEditor } from './NovelEditor'
 export { EditorToolbar } from './EditorToolbar'
 export { EditorContextMenu } from './EditorContextMenu'
 export { EditorPanel } from './EditorPanel'

@@ -1,5 +1,5 @@
 /**
- * Markdown 编辑器核心组件
+ * Novel 编辑器核心组件
  * 基于 TipTap 实现，支持 WYSIWYG 和分栏预览两种模式
  */
 
@@ -17,11 +17,11 @@ import { updateHighlightPatterns, updateHighlightStyleConfig, updateHighlightEna
 import { HighlightHoverCard } from './HighlightHoverCard'
 import { EditorToolbar } from './EditorToolbar'
 import { SearchReplacePanel } from './SearchReplacePanel'
-import styles from './MarkdownEditor.module.css'
+import styles from './NovelEditor.module.css'
 
 const WORD_COUNT_DEBOUNCE_MS = 300
 
-interface MarkdownEditorProps {
+interface NovelEditorProps {
   /** 内容变更回调 */
   onChange?: (content: string) => void
   /** 保存回调 */
@@ -30,7 +30,7 @@ interface MarkdownEditorProps {
   readonly?: boolean
 }
 
-export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownEditorProps) {
+export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorProps) {
   // Store state
   const settings = useEditorStore((state) => state.settings)
   const updateSettings = useEditorStore((state) => state.updateSettings)
@@ -504,4 +504,4 @@ function restoreEditorContent(editor: ReturnType<typeof useEditor>, content: str
   }
 }
 
-export default MarkdownEditor
+export default NovelEditor

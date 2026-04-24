@@ -6,7 +6,7 @@
 import { useCallback } from 'react'
 import { Empty, message, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
-import { MarkdownEditor } from './MarkdownEditor'
+import { NovelEditor } from './NovelEditor'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './EditorPanel.module.css'
 
@@ -37,7 +37,7 @@ export function EditorPanel() {
     }
   }, [activeTab, saveFileContent, getCurrentContent, markDirty])
 
-  // 内容变更回调（仅标记为已修改，自动保存在 MarkdownEditor 中处理）
+  // 内容变更回调（仅标记为已修改，自动保存在 NovelEditor 中处理）
   const handleChange = useCallback(() => {
     if (activeTab && !activeTab.isDirty) {
       markDirty(activeTab.id, true)
@@ -74,7 +74,7 @@ export function EditorPanel() {
           </div>
         ) : (
           <div className={styles.editorWrapper}>
-            <MarkdownEditor
+            <NovelEditor
               onChange={handleChange}
               onSave={handleSave}
               readonly={false}
