@@ -57,9 +57,6 @@ function generateChineseNames(options: GenerateOptions): string[] {
   const { count = 24, surname, gender, charCount, middleChar } = options
   const result: string[] = []
   
-  // 获取所有姓氏（单姓 + 复姓）
-  const allSurnames = [...CHINESE_SURNAMES, ...CHINESE_COMPOUND_SURNAMES]
-  
   // 名字用字
   const maleChars = CHINESE_MALE_CHARS
   const femaleChars = CHINESE_FEMALE_CHARS

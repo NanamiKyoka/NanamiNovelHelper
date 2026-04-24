@@ -37,17 +37,12 @@ import {
   createDefaultChunk,
   createDefaultElement,
   createDefaultConnection,
-  createDefaultMapData,
-  hexToPixel,
-  pixelToHex,
-  hexDistance,
   getHexNeighbors,
   checkHexEdgeCompatibility,
   findBestEdges,
   findElementById,
   updateElementInTree,
-  deleteElementFromTree,
-  HEX_SIZE
+  deleteElementFromTree
 } from '@renderer/types/map'
 
 const handleError = createErrorHandler('[MapStore]')
@@ -113,7 +108,7 @@ function applyDiff(base: MapData, diff: MapDataDiff): MapData {
 const createHistoryManager = (): HistoryManager => {
   let entries: DiffHistoryEntry[] = []
   let index = -1
-  let lastSnapshot: MapData | null = null
+  let _lastSnapshot: MapData | null = null
 
   return {
     push: (action: string, description: string, before: MapData, after: MapData) => {
@@ -130,7 +125,7 @@ const createHistoryManager = (): HistoryManager => {
         entries = entries.slice(-MAX_HISTORY_SIZE)
       }
       index = entries.length - 1
-      lastSnapshot = after
+      _lastSnapshot = after
     },
     undo: () => {
       if (index >= 0) {
@@ -153,7 +148,7 @@ const createHistoryManager = (): HistoryManager => {
     clear: () => {
       entries = []
       index = -1
-      lastSnapshot = null
+      _lastSnapshot = null
     }
   }
 }

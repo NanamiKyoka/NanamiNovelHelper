@@ -25,8 +25,7 @@ function ChangesList(): JSX.Element {
     selectFile,
     add,
     restore,
-    currentDiff,
-    getDiff
+    currentDiff
   } = useGitStore()
 
   const [loading, setLoading] = useState<string | null>(null)

@@ -68,7 +68,6 @@ function RelationshipGraphPreview({
       }
 
       // 主题相关颜色
-      const nodeLabelColor = isDarkMode ? '#e0e0e0' : '#333333'
       const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
       const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff'
 

@@ -90,7 +90,7 @@ const HEADING_LEVELS = [
 ]
 
 export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch, fileType }: EditorToolbarProps) {
-  const [highlightColor, setHighlightColor] = useState('#fef3cd')
+  const [, setHighlightColor] = useState('#fef3cd')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPreviewVisible, setAiPreviewVisible] = useState(false)
   const [aiPreviewContent, setAiPreviewContent] = useState('')
@@ -206,12 +206,6 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
     setAiPreviewContent('')
     message.success('已应用到编辑器')
   }, [editor, aiPreviewContent])
-
-  // 获取当前字体显示名称
-  const fontLabel = useMemo(() => {
-    const font = FONT_FAMILIES.find(f => f.value === settings.fontFamily)
-    return font?.label || '字体'
-  }, [settings.fontFamily])
 
   // 执行编辑器命令
   const execCommand = useCallback((command: string, ...args: unknown[]) => {

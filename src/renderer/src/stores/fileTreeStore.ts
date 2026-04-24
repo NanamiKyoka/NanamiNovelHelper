@@ -398,7 +398,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   },
   
   finishRename: async (newName) => {
-    const { editingKey, roots, findNode, refreshTree } = get()
+    const { editingKey, findNode, refreshTree } = get()
     if (!editingKey || !newName.trim()) {
       set({ editingKey: null, editingName: '' })
       return
@@ -446,7 +446,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     }
   },
   
-  finishNewItem: async (name, isBlur = false) => {
+  finishNewItem: async (name, _isBlur = false) => {
     const { newItemParent, newItemType, refreshTree } = get()
     
     // 空名时取消新建（VSCode 行为）
@@ -551,7 +551,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   },
   
   toggleSortOrder: () => {
-    const { sortOptions, sortMode } = get()
+    const { sortOptions } = get()
     const newOrder: SortOrder = sortOptions.order === 'asc' ? 'desc' : 'asc'
     const newSortOptions: SortOptions = { ...sortOptions, order: newOrder }
     set({ 
@@ -576,7 +576,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   },
 
   // 批量设置数据（用于聚合接口）
-  setData: (roots: FileNodeData[], expandedFolders: string[], showHiddenFiles: boolean, hiddenItems: string[]) => {
+  setData: (roots: FileNodeData[], expandedFolders: string[], _showHiddenFiles: boolean, _hiddenItems: string[]) => {
     const expandedKeys = new Set(expandedFolders)
     
     // 如果没有保存的展开状态，默认展开根目录

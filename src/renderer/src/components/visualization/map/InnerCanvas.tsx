@@ -48,7 +48,6 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null)
   
   const elements = getCurrentElements()
-  const currentLevel = viewStack[viewStack.length - 1]
   
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (draggingElementId) {

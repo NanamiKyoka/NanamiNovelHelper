@@ -82,7 +82,6 @@ interface TreeNodeProps {
   isSelected: boolean
   isEditing: boolean
   editingName: string
-  isDark: boolean
   onToggleExpand: () => void
   onSelect: (e: React.MouseEvent) => void
   onDoubleClick: () => void
@@ -100,7 +99,6 @@ const TreeNode = memo(function TreeNode({
   isSelected,
   isEditing,
   editingName,
-  isDark,
   onToggleExpand,
   onSelect,
   onDoubleClick,
@@ -287,7 +285,6 @@ function FileTree(): JSX.Element {
     toggleExpand,
     select,
     clearSelection,
-    setFocusedKey,
     startRename,
     finishRename,
     cancelEdit,
@@ -298,7 +295,6 @@ function FileTree(): JSX.Element {
     cutItems,
     paste,
     search,
-    clearSearch,
     setSortMode,
     toggleSortOrder,
     findNode,
@@ -306,7 +302,6 @@ function FileTree(): JSX.Element {
   } = useFileTreeStore()
   
   const treeRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // 防抖搜索
@@ -834,7 +829,6 @@ function FileTree(): JSX.Element {
                       isSelected={isSelected}
                       isEditing={isEditing}
                       editingName={editingName}
-                      isDark={isDark}
                       onToggleExpand={() => toggleExpand(node.key)}
                       onSelect={(e) => {
                         e.stopPropagation()

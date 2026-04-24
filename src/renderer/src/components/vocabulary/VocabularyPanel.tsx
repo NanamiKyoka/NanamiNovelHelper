@@ -142,7 +142,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     deleteEntry,
     createLinkedFile,
     reorderEntries,
-    updateType,
     isLoaded
   } = useVocabularyStore()
   

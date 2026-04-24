@@ -45,7 +45,6 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
   const {
     styleConfig,
     highlightEnabled = true,
-    hoverCardConfig,
     onVocabularyClick,
     onVocabularyHover,
     showLineNumbers = false

@@ -50,20 +50,6 @@ function clearAllHighlights(editor: Editor) {
   view.dispatch(tr)
 }
 
-// 添加高亮标记（不记录历史）
-function addHighlightMark(editor: Editor, from: number, to: number, color: string) {
-  const { view, state } = editor
-  const { tr, schema } = state
-  const highlightMark = schema.marks.highlight
-  
-  if (!highlightMark) return
-  
-  const mark = highlightMark.create({ color })
-  tr.addMark(from, to, mark)
-  tr.setMeta('addToHistory', false)
-  view.dispatch(tr)
-}
-
 // 批量添加高亮（不记录历史）
 function addHighlightMarks(editor: Editor, matches: MatchInfo[], currentIndex: number) {
   const { view, state } = editor
@@ -146,31 +132,6 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
 
     return foundMatches
   }, [editor, searchText])
-
-  // 添加视觉高亮（不记录历史）
-  const addVisualHighlights = useCallback(() => {
-    if (!editor || matches.length === 0) return
-
-    // 先清除
-    clearAllHighlights(editor)
-    
-    // 添加高亮
-    addHighlightMarks(editor, matches, currentIndex)
-
-    // 滚动到当前选中
-    if (currentIndex >= 0 && matches[currentIndex]) {
-      editor.commands.setTextSelection({
-        from: matches[currentIndex].from,
-        to: matches[currentIndex].to
-      })
-      editor.commands.scrollIntoView()
-    }
-
-    // 保持搜索框焦点
-    setTimeout(() => {
-      searchInputRef.current?.focus()
-    }, 0)
-  }, [editor, matches, currentIndex])
 
   // 执行搜索
   const performSearch = useCallback(() => {

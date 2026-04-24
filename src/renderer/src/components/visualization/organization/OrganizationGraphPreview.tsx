@@ -266,7 +266,7 @@ function OrganizationGraphPreview({
   const graphRef = useRef<Graph | null>(null)
   const [zoom, setZoom] = useState(1)
   const [graphReady, setGraphReady] = useState(false)
-  const [nodeStyle, setNodeStyle] = useState<OrganizationNodeStyle>('simple')
+  const [nodeStyle] = useState<OrganizationNodeStyle>('simple')
 
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>('canvas')

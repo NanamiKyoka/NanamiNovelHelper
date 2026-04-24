@@ -4,7 +4,6 @@
 
 import { SettingsPage } from '@components/settings'
 import { EditorPanel } from '@components/editor'
-import { useEditorStore } from '@stores/editorStore'
 import styles from './MainContent.module.css'
 
 interface MainContentProps {
@@ -12,8 +11,6 @@ interface MainContentProps {
 }
 
 function MainContent({ activePanel }: MainContentProps): JSX.Element {
-  // 获取编辑器状态
-  const tabs = useEditorStore((state) => state.tabs)
 
   // 如果是设置面板，显示设置页面
   if (activePanel === 'settings') {

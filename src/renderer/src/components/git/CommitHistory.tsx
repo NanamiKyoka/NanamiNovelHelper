@@ -32,9 +32,7 @@ function CommitHistory(): JSX.Element {
     error,
     getLog,
     reset,
-    checkout,
-    currentBranch,
-    repository
+    checkout
   } = useGitStore()
 
   const [searchKeyword, setSearchKeyword] = useState('')

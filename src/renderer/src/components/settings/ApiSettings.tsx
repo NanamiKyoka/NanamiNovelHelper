@@ -30,7 +30,7 @@ const PRESET_APIS: { id: string; name: string; description: string; hasBaseUrl: 
 export function ApiSettings(): JSX.Element {
   const { getApiKey, setApiKey, deleteApiKey } = useSettingsStore()
   const [configs, setConfigs] = useState<ApiConfig[]>([])
-  const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [, setLoading] = useState<Record<string, boolean>>({})
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
   const [form] = Form.useForm()
 

@@ -24,7 +24,7 @@ interface TerminalPanelProps {
 export function TerminalPanel({ onClose }: TerminalPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalContainerRefs = useRef<Map<string, HTMLDivElement>>(new Map())
-  const [isTerminalWindowOpen, setIsTerminalWindowOpen] = useState(false)
+  const [, setIsTerminalWindowOpen] = useState(false)
 
   const {
     terminals,

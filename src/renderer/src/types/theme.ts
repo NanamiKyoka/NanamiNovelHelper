@@ -2,7 +2,7 @@
  * 主题类型定义
  */
 
-import { THEME_COLORS, THEME_COLOR_OPTIONS, DEFAULT_COLORS } from '@shared/constants/colors'
+import { THEME_COLOR_OPTIONS, DEFAULT_COLORS } from '@shared/constants/colors'
 
 // 主题模式
 export type ThemeMode = 'light' | 'dark' | 'system'
