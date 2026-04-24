@@ -16,7 +16,6 @@ import type {
   GitBranch,
   GitFileDiff,
   GitDiffHunk,
-  GitDiffLine,
   GitRepositoryStatus,
   GitInitOptions,
   GitCommitOptions,
@@ -24,8 +23,7 @@ import type {
   GitCheckoutOptions,
   GitMergeOptions,
   GitLogOptions,
-  GitResult,
-  GitConfig
+  GitResult
 } from '../types/git'
 
 /** 状态映射 */

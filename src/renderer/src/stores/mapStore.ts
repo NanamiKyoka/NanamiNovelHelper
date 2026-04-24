@@ -23,7 +23,6 @@ import type {
   EditorTool,
   HexEdge,
   HexPoint,
-  Point,
   CreateChunkOptions,
   UpdateChunkOptions,
   CreateElementOptions,

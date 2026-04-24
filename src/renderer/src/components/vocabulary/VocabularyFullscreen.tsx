@@ -71,7 +71,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
-import type { VocabularyType, VocabularyEntry, FieldDefinition } from '@types/vocabulary'
+import type { VocabularyType, FieldDefinition } from '@types/vocabulary'
 import { getBuiltInVocabularyTypes, DEFAULT_COLORS } from '@types/vocabulary'
 import VocabularyPanel, { type VocabularyPanelRef } from './VocabularyPanel'
 import { HighlightSettings } from '@components/settings/HighlightSettings'

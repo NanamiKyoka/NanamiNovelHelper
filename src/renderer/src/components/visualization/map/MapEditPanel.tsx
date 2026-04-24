@@ -9,9 +9,7 @@ import { Input, Select, InputNumber, ColorPicker, Button, Divider, Empty } from 
 import { DeleteOutlined, LinkOutlined } from '@ant-design/icons'
 import { useMapStore } from '@renderer/stores/mapStore'
 import type { 
-  MapRegion, 
-  RegionConnection, 
-  UpdateRegionOptions,
+  UpdateRegionOptions, 
   UpdateConnectionOptions,
   ConnectionType,
   LineStyle

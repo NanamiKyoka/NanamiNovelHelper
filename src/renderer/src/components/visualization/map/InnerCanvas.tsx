@@ -9,8 +9,7 @@ import {
   hexToPixel, 
   pixelToHex, 
   getHexCorners, 
-  HEX_SIZE,
-  type HexPoint 
+  HEX_SIZE
 } from '@renderer/types/map'
 import styles from './InnerCanvas.module.css'
 

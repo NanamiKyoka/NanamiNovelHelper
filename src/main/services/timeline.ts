@@ -10,19 +10,9 @@ import {
   TimelineNode,
   CreateTimelineOptions,
   UpdateTimelineOptions,
-  BranchInfo,
-  TimeInfo
+  BranchInfo
 } from '../types/timeline'
-import { BaseService, BaseEntity } from './base'
-
-/**
- * 默认时间信息
- */
-const DEFAULT_TIME_INFO: TimeInfo = {
-  format: 'custom',
-  customLabel: '',
-  orderValue: 0
-}
+import { BaseService } from './base'
 
 /**
  * 默认分支信息（主线）

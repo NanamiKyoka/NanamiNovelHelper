@@ -5,7 +5,7 @@ import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
 import { useCanvasInteraction } from '@hooks/useCanvasInteraction'
 import { ChunkNode } from './ChunkNode'
-import type { Chunk, ChunkConnection, Point, HexPoint } from '@renderer/types/map'
+import type { ChunkConnection } from '@renderer/types/map'
 import { hexToPixel, pixelToHex, getHexCorners, getHexEdgeCenter, HEX_SIZE } from '@renderer/types/map'
 import styles from './WorldCanvas.module.css'
 

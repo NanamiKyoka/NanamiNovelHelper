@@ -9,8 +9,6 @@ import type {
   HighlightConfig,
   HighlightPattern,
   HighlightMatch,
-  VocabularyMatchOverride,
-  VocabularyTypeMatchOverride,
   HoverCardConfig
 } from '@types/highlight'
 import type { VocabularyEntry, VocabularyType } from '@types/vocabulary'

@@ -24,12 +24,6 @@ interface CreateProjectOptions {
   tags?: string[]
 }
 
-interface RecentProject {
-  path: string
-  name: string
-  lastOpened: string
-}
-
 /**
  * 词汇相关类型定义
  */

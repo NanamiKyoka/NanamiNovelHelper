@@ -38,7 +38,7 @@ import {
 import { useTimelineStore } from '@stores/timelineStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
-import type { TimelineNode, TimeInfo, CharacterRef, ChapterRef } from '@types/timeline'
+import type { TimelineNode, TimeInfo, CharacterRef } from '@types/timeline'
 import type { MenuProps } from 'antd'
 import styles from './TimelineFullscreen.module.css'
 
