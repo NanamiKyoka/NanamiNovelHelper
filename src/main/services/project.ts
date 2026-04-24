@@ -4,7 +4,7 @@
  */
 
 import { app, dialog } from 'electron'
-import { join, resolve } from 'path'
+import { join } from 'path'
 import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync, statSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'

@@ -43,7 +43,7 @@ const STATUS_MAP: Record<string, { status: GitFileStatus; short: GitFileStatusSh
 }
 
 /** 状态代码映射 (isomorphic-git) */
-const MATRIX_STATUS_MAP: Record<number, { status: GitFileStatus; short: GitFileStatusShort }> = {
+const _MATRIX_STATUS_MAP: Record<number, { status: GitFileStatus; short: GitFileStatusShort }> = {
   0: { status: 'unmodified', short: ' ' },
   1: { status: 'modified', short: 'M' },
   2: { status: 'added', short: 'A' },
@@ -700,7 +700,7 @@ class GitService {
   }
 
   /** 使用 isomorphic-git 获取差异 */
-  private async getDiffIso(repoPath: string, filepath: string, staged: boolean): Promise<GitResult<GitFileDiff>> {
+  private async getDiffIso(_repoPath: string, filepath: string, _staged: boolean): Promise<GitResult<GitFileDiff>> {
     // isomorphic-git 的 diff 功能较有限
     const hunks: GitDiffHunk[] = []
     

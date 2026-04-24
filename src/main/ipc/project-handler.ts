@@ -17,7 +17,7 @@ import { aiAssistantService } from '../services/aiAssistant'
 import { initProject as initDynamicSkill, clearProject as clearDynamicSkill } from '../services/dynamicSkill'
 import { searchService } from '../services/search'
 import { CreateProjectOptions, Project, RecentProject } from '../types/project'
-import { validateParams, validators, ValidationError } from '../utils/validation'
+import { validateParams } from '../utils/validation'
 
 /**
  * 注册项目相关 IPC 处理器

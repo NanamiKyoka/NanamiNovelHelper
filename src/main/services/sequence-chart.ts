@@ -415,7 +415,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
   /**
    * 获取事件类型（包含内置和自定义）
    */
-  private getEventType(chart: SequenceChart, typeId: string): SequenceEventType | undefined {
+  private _getEventType(chart: SequenceChart, typeId: string): SequenceEventType | undefined {
     // 先查自定义类型
     const customType = chart.customEventTypes?.find(t => t.id === typeId)
     if (customType) return customType

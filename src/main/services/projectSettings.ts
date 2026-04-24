@@ -34,7 +34,7 @@ let saveTimer: NodeJS.Timeout | null = null
 
 class ProjectSettingsService {
   private logger = createLogger('ProjectSettingsService')
-  private projectPath: string | null = null
+  private _projectPath: string | null = null
   private settingsPath: string | null = null
   private settings: ProjectSettings = DEFAULT_PROJECT_SETTINGS
   private pendingChanges: Partial<ProjectSettings> = {}
@@ -42,7 +42,7 @@ class ProjectSettingsService {
 
   /** 初始化服务，随项目打开调用 */
   init(projectPath: string): void {
-    this.projectPath = projectPath
+    this._projectPath = projectPath
     this.settingsPath = path.join(projectPath, PROJECT_META_DIR, PROJECT_SETTINGS_FILE)
     this.loadSettings()
   }

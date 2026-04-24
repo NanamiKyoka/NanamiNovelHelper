@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { vocabularyService } from '../services/vocabulary'
-import { validateParams, validators } from '../utils/validation'
+import { validateParams } from '../utils/validation'
 import type {
   VocabularyType,
   VocabularyEntry,

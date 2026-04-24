@@ -3,7 +3,7 @@
  * 提供文件 CRUD 操作
  */
 
-import { app, shell } from 'electron'
+import { shell } from 'electron'
 import {
   existsSync,
   mkdirSync,
@@ -16,7 +16,6 @@ import {
   renameSync,
   copyFileSync,
   rmSync,
-  stat,
   realpathSync
 } from 'fs'
 import { join, relative, dirname, basename, extname, resolve, normalize, sep } from 'path'

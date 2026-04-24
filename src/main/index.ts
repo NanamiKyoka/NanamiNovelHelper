@@ -20,7 +20,6 @@ import { registerDynamicSkillHandlers } from './ipc/dynamic-skill-handler'
 import { registerSearchHandlers } from './ipc/search-handler'
 import { terminalService } from './services/terminal'
 import { dynamicSkillService } from './services/dynamicSkill'
-import { fileService } from './services/file'
 import { aiAssistantService } from './services/aiAssistant'
 
 // 注册 local:// 协议为特权协议（必须在 app.ready 之前）

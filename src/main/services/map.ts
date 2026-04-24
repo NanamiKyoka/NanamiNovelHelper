@@ -9,7 +9,6 @@ import JSON5 from 'json5'
 import {
   Map,
   MapMeta,
-  MapData,
   CreateMapOptions,
   UpdateMapOptions,
   createDefaultMapData

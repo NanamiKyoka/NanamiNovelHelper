@@ -2,7 +2,7 @@
  * 事序图 IPC 处理器
  */
 
-import { ipcMain, dialog, app } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { sequenceChartService } from '../services/sequence-chart'

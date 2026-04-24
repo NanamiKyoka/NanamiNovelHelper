@@ -10,7 +10,7 @@ import { promisify } from 'util'
 import { PROJECT_META_DIR, BACKUP_DIR } from '../types/project'
 import { projectSettingsService } from './projectSettings'
 import { createLogger } from '../utils/logger'
-import { handleError, handleErrorAsync, Errors } from '../../shared/errors'
+import { handleError, handleErrorAsync } from '../../shared/errors'
 
 const gzip = promisify(zlib.gzip)
 const gunzip = promisify(zlib.gunzip)
@@ -31,7 +31,7 @@ export interface BackupInfo {
  * 备份服务
  */
 class BackupService {
-  private logger = createLogger('BackupService')
+  private _logger = createLogger('BackupService')
   private projectPath: string | null = null
   private backupDir: string | null = null
 

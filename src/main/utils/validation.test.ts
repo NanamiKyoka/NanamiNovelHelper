@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   ValidationError,
   validators,
-  ParamValidator,
   validateParams,
   validatePath,
   validateId,

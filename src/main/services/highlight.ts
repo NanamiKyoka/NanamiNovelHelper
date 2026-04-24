@@ -18,7 +18,7 @@ import { createLogger } from '../utils/logger'
 class HighlightService {
   private logger = createLogger('HighlightService')
   private config: HighlightConfig | null = null
-  private configPath: string | null = null
+  private _configPath: string | null = null
 
   /**
    * 获取当前项目的配置文件路径
@@ -41,7 +41,7 @@ class HighlightService {
       return DEFAULT_HIGHLIGHT_CONFIG
     }
 
-    this.configPath = configPath
+    this._configPath = configPath
 
     if (!existsSync(configPath)) {
       // 配置文件不存在，返回默认配置
@@ -82,7 +82,7 @@ class HighlightService {
       throw new Error('No project is open')
     }
 
-    this.configPath = configPath
+    this._configPath = configPath
 
     // 确保 .novelhelper 目录存在
     const metaDir = join(projectService.getCurrentProject()!.path, PROJECT_META_DIR)
@@ -148,7 +148,7 @@ class HighlightService {
    */
   reset(): void {
     this.config = null
-    this.configPath = null
+    this._configPath = null
   }
 }
 

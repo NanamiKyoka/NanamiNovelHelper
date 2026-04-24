@@ -31,7 +31,7 @@ const EXECUTIONS_DIR = 'executions'
 class AiAssistantService {
   private logger = createLogger('AiAssistantService')
   // 项目目录路径
-  private projectPath: string | null = null
+  private _projectPath: string | null = null
   private projectAiDir: string | null = null
   private projectTemplatesDir: string | null = null
   private projectWorkflowsDir: string | null = null
@@ -48,7 +48,7 @@ class AiAssistantService {
    * 初始化项目（打开项目时调用）
    */
   initProject(projectPath: string): void {
-    this.projectPath = projectPath
+    this._projectPath = projectPath
     this.projectAiDir = path.join(projectPath, '.novelhelper', 'data', AI_ASSISTANT_DIR)
     this.projectTemplatesDir = path.join(this.projectAiDir, TEMPLATES_DIR)
     this.projectWorkflowsDir = path.join(this.projectAiDir, WORKFLOWS_DIR)
@@ -66,7 +66,7 @@ class AiAssistantService {
    * 清理项目数据（关闭项目时调用）
    */
   clearProject(): void {
-    this.projectPath = null
+    this._projectPath = null
     this.projectAiDir = null
     this.projectTemplatesDir = null
     this.projectWorkflowsDir = null

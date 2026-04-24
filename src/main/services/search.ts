@@ -3,11 +3,10 @@
  * 支持文本搜索、正则匹配、文件过滤
  */
 
-import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { minimatch } from 'minimatch'
-import { handleError, handleErrorAsync, Errors } from '../../shared/errors'
+import { Errors } from '../../shared/errors'
 
 /**
  * 搜索选项

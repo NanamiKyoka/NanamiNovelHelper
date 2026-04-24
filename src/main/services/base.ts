@@ -1,15 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import JSON5 from 'json5'
 import { ServiceCore } from './service-core'
-import {
-  ServiceError,
-  ErrorCode,
-  Errors,
-  ensureInitialized,
-  handleError,
-  handleErrorAsync
-} from '../../shared/errors'
 
 export interface BaseServiceConfig {
   dataSubDir: string
