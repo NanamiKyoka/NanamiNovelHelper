@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Modal, Tabs, Input, Tooltip, Segmented } from 'antd'
+import { Modal, Input, Tooltip, Segmented } from 'antd'
 import {
   // 人物相关
   TeamOutlined,

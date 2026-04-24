@@ -3,12 +3,11 @@
  */
 
 import { useState } from 'react'
-import { Button, Empty, Tooltip, Space, Dropdown, Modal, Input, message } from 'antd'
+import { Button, Empty, Tooltip, Space, Dropdown, Modal, message } from 'antd'
 import {
   PlusOutlined,
   MinusOutlined,
   ReloadOutlined,
-  DeleteOutlined,
   UndoOutlined
 } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'

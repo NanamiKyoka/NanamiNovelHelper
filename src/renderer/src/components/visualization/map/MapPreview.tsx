@@ -15,11 +15,9 @@ import {
 } from 'antd'
 import {
   ArrowLeftOutlined,
-  FullscreenOutlined,
   EditOutlined,
   ExportOutlined,
   DeleteOutlined,
-  HolderOutlined,
 } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'

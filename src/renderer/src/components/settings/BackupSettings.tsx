@@ -31,7 +31,6 @@ import { useProjectStore } from '@stores/projectStore'
 import type { BackupInfo } from '@types/settings'
 import dayjs from 'dayjs'
 import baseStyles from './SettingsBase.module.css'
-import styles from './BackupSettings.module.css'
 
 const { Text } = Typography
 

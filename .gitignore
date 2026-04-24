@@ -23,6 +23,7 @@ capacitor.config.json
 # Cache
 .cache/
 *.tsbuildinfo
+*.txt
 
 # Logs
 logs/

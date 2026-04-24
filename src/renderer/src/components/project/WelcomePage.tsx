@@ -24,7 +24,7 @@ import styles from './WelcomePage.module.css'
 dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Text } = Typography
 
 function WelcomePage(): JSX.Element {
   const recentProjects = useProjectStore((state) => state.recentProjects)

@@ -14,7 +14,6 @@ import {
   Typography,
   Empty,
   Tag,
-  Tooltip,
   Table,
   Drawer,
   Form,
@@ -28,7 +27,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   WarningOutlined,
-  TagsOutlined,
   SettingOutlined,
   HolderOutlined
 } from '@ant-design/icons'

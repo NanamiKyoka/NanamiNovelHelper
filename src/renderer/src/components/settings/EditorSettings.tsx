@@ -7,7 +7,6 @@ import { Form, Select, Switch, Slider, message, Checkbox, Card } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorSettings, StatusBarConfig } from '@types/editor'
 import baseStyles from './SettingsBase.module.css'
-import styles from './EditorSettings.module.css'
 
 const FONT_FAMILIES = [
   { value: 'PingFang SC, Microsoft YaHei, sans-serif', label: '苹方 / 微软雅黑' },

@@ -12,12 +12,10 @@ import {
   ItalicOutlined,
   StrikethroughOutlined,
   LinkOutlined,
-  PictureOutlined,
   CodeOutlined,
   OrderedListOutlined,
   UnorderedListOutlined,
   ClearOutlined,
-  FontSizeOutlined,
   BgColorsOutlined
 } from '@ant-design/icons'
 import type { Editor } from '@tiptap/react'

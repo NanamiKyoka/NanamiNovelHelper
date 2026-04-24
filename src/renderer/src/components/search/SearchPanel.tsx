@@ -8,13 +8,12 @@ import { Input, Button, Typography, Empty, Tag, Space, Tooltip, Spin, message } 
 import {
   SearchOutlined,
   ReloadOutlined,
-  CloseOutlined,
   FileOutlined
 } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './SearchPanel.module.css'
 
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
 // 搜索结果类型（与后端保持一致）
 interface SearchMatch {

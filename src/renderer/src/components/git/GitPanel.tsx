@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Tabs, Modal, message, Dropdown, Empty, Spin, Space, Typography } from 'antd'
+import { Button, Input, Tabs, Modal, message, Dropdown, Empty, Spin, Typography } from 'antd'
 import {
   BranchesOutlined,
   PlusOutlined,
@@ -11,15 +11,13 @@ import {
   HistoryOutlined,
   FileAddOutlined,
   SettingOutlined,
-  CheckOutlined,
-  CloseOutlined
+  CheckOutlined
 } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'
 import { useProjectStore } from '@stores/projectStore'
 import ChangesList from './ChangesList'
 import CommitHistory from './CommitHistory'
 import BranchManager from './BranchManager'
-import DiffViewer from './DiffViewer'
 import type { MenuProps } from 'antd'
 import styles from './GitPanel.module.css'
 

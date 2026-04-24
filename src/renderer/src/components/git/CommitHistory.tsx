@@ -3,14 +3,11 @@
  */
 
 import { useEffect, useState } from 'react'
-import { List, Button, Empty, Spin, Tag, Space, Tooltip, Dropdown, Modal, Input, message } from 'antd'
+import { Button, Empty, Spin, Tag, Tooltip, Dropdown, Modal, Input, message } from 'antd'
 import {
   SyncOutlined,
-  GitBranchOutlined,
-  TagOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  UndoOutlined,
   MoreOutlined,
   EyeOutlined
 } from '@ant-design/icons'

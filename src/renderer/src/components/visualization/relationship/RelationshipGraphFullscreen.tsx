@@ -46,7 +46,7 @@ import {
 } from '@types/relationship'
 import styles from './RelationshipGraphFullscreen.module.css'
 
-const { Text, Title } = Typography
+const { Title } = Typography
 const { TextArea } = Input
 
 interface RelationshipGraphFullscreenProps {

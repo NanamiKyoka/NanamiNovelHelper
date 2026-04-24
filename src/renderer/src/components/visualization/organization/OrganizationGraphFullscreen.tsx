@@ -39,7 +39,7 @@ import { useUIStore } from '@stores/uiStore'
 import type { OrganizationNode, OrganizationNodeStyle } from '@types/organization'
 import styles from './OrganizationGraphFullscreen.module.css'
 
-const { Text, Title } = Typography
+const { Title } = Typography
 const { TextArea } = Input
 
 interface OrganizationGraphFullscreenProps {

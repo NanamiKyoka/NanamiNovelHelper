@@ -8,7 +8,6 @@ import {
   Layout,
   Button,
   Tabs,
-  List,
   Input,
   Space,
   Typography,
@@ -48,7 +47,6 @@ import {
   HighlightOutlined,
   HolderOutlined,
   ImportOutlined,
-  UploadOutlined,
   FileTextOutlined,
   BarChartOutlined
 } from '@ant-design/icons'

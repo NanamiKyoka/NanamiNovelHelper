@@ -1,7 +1,182 @@
-feat(vocabulary): 浼樺寲鎷栨嫿鎺掑簭浣撻獙
-
-- 娣诲姞鎷栨嫿鐘舵€佹牱寮忕被浠ユ彁渚涙洿濂界殑瑙嗚鍙嶉
-- 鏀硅繘鎷栨嫿瑕嗙洊灞傛牱寮忥紝澧炲ぇ闃村奖鍜岀缉鏀炬晥鏋?
-- 娣诲姞鐩爣浣嶇疆鐨勬嫋鎷芥偓鍋滄牱寮?
-- 鎷栨嫿鎿嶄綔娣诲姞骞虫粦杩囨浮鍔ㄧ敾
-
+以下是无用变量/代码的完整报告，基于 TypeScript 的 --noUnusedLocals --noUnusedParameters 严格检查结果：
+---
+无用代码检查报告
+总计：163 处 (TS6133: 136, TS6196: 26, TS6192: 1)，涉及 66 个文件。
+---
+一、未使用的导入（组件/图标/工具）
+未使用的 Ant Design 组件导入（45 处）
+文件	未使用导入
+renderer/.../editor/EditorToolbar.tsx:7	Input
+renderer/.../editor/EditorContextMenu.tsx:15	PictureOutlined
+renderer/.../editor/EditorContextMenu.tsx:20	FontSizeOutlined
+renderer/.../file-tree/FileTree.tsx:12	Space
+renderer/.../git/BranchManager.tsx:9	List
+renderer/.../git/ChangesList.tsx:6	Input, message
+renderer/.../git/ChangesList.tsx:11	DeleteOutlined
+renderer/.../git/CommitHistory.tsx:6	List, Space
+renderer/.../git/CommitHistory.tsx:9	GitBranchOutlined
+renderer/.../git/CommitHistory.tsx:10	TagOutlined
+renderer/.../git/CommitHistory.tsx:13	UndoOutlined
+renderer/.../git/GitPanel.tsx:6	Space
+renderer/.../git/GitPanel.tsx:15	CloseOutlined
+renderer/.../git/GitPanel.tsx:22	DiffViewer (整个组件)
+renderer/.../layout/ActivityBar.tsx:2	message
+renderer/.../project/WelcomePage.tsx:27	Paragraph
+renderer/.../random-name/RandomNamePanel.tsx:3	BookOutlined, ExperimentOutlined, SettingOutlined
+renderer/.../search/SearchPanel.tsx:11	CloseOutlined
+renderer/.../search/SearchPanel.tsx:17	Paragraph
+renderer/.../settings/ApiSettings.tsx:6	Space
+renderer/.../settings/HighlightSettings.tsx:29	DeleteOutlined
+renderer/.../settings/HighlightSettings.tsx:31	FolderOpenOutlined
+renderer/.../visualization/organization/OrganizationGraphFullscreen.tsx:42	Text
+renderer/.../visualization/organization/OrganizationGraphList.tsx:11	Empty
+renderer/.../visualization/relationship/RelationshipGraphFullscreen.tsx:49	Text
+renderer/.../visualization/map/MapPreview.tsx:18	FullscreenOutlined
+renderer/.../visualization/map/MapPreview.tsx:22	HolderOutlined
+renderer/.../vocabulary/IconPicker.tsx:7	Tabs
+renderer/.../vocabulary/SensitiveWordFullscreen.tsx:17	Tooltip
+renderer/.../vocabulary/SensitiveWordFullscreen.tsx:31	TagsOutlined
+renderer/.../vocabulary/VocabularyExportModal.tsx:2	message
+renderer/.../vocabulary/VocabularyFullscreen.tsx:11	List
+renderer/.../vocabulary/VocabularyFullscreen.tsx:51	UploadOutlined
+renderer/.../vocabulary/VocabularyPanel.tsx:8	Select
+renderer/.../hooks/useProjectActions.ts:9	message
+未使用的工具/库导入（9 处）
+文件	未使用导入
+renderer/.../visualization/sequence-chart/SequenceChartFullscreen.tsx:32-45	DndContext, closestCenter, arrayMove, SortableContext, verticalListSortingStrategy, SortableEventRow
+renderer/.../visualization/map/WorldCanvas.tsx:1	useRef, useEffect
+renderer/.../constants/icons.tsx:82	ThunderboltTwoTone
+未使用的整行导入（TS6192，1 处）
+文件	说明
+renderer/.../settings/HighlightSettings.tsx:34	整行 import 声明均未使用
+---
+二、未使用的类型导入（26 处）
+文件	未使用类型
+renderer/.../editor/extensions/vocabularyHighlight.ts:10	HighlightMatch
+renderer/.../git/DiffViewer.tsx:8	GitDiffLine
+renderer/.../settings/HighlightSettings.tsx:33	HoverCardFieldConfig
+renderer/.../visualization/map/MapEditPanel.tsx:12-13	MapRegion, RegionConnection
+renderer/.../visualization/map/WorldCanvas.tsx:8	Chunk, Point
+renderer/.../visualization/timeline/TimelineFullscreen.tsx:41	ChapterRef
+renderer/.../visualization/map/InnerCanvas.tsx:13	HexPoint
+renderer/.../vocabulary/VocabularyFullscreen.tsx:76	VocabularyEntry
+renderer/.../services/highlightService.ts:12-13	VocabularyMatchOverride, VocabularyTypeMatchOverride
+renderer/.../stores/mapStore.ts:26	Point
+renderer/.../stores/sequenceChartStore.ts:11-14	SequenceTimeInfo, SequenceCharacterRef, SequenceChapterRef, SequenceLocationRef
+renderer/.../stores/timelineStore.ts:10-13	TimeInfo, CharacterRef, ChapterRef, BranchInfo
+main/services/git.ts:19-28	GitDiffLine, GitConfig
+main/services/timeline.ts:16	BaseEntity
+preload/index.ts:27	RecentProject
+---
+三、未使用的解构变量/回调参数（30 处）
+文件:行	变量
+renderer/.../editor/EditorContextMenu.tsx:83	args
+renderer/.../editor/HighlightHoverCard.tsx:60	severity
+renderer/.../editor/HighlightHoverCard.tsx:64	onClose
+renderer/.../editor/HighlightHoverCard.tsx:70-71	entries, types, words
+renderer/.../editor/MarkdownEditor.tsx:130	view
+renderer/.../editor/extensions/vocabularyHighlight.ts:272	oldSet, oldState
+renderer/.../editor/extensions/vocabularyHighlight.ts:315	view, pos
+renderer/.../editor/extensions/vocabularyHighlight.ts:328	view
+renderer/.../layout/MenuBar.tsx:64	menuId, label
+renderer/.../settings/HighlightSettings.tsx:87	changedValues
+renderer/.../settings/SettingsPage.tsx:102	item
+renderer/.../terminal/TerminalInstance.tsx:20	cwd
+renderer/.../visualization/map/WorldCanvas.tsx:69	e
+renderer/.../visualization/organization/OrganizationGraphList.tsx:150	error
+renderer/.../visualization/relationship/RelationshipGraphList.tsx:156	error
+renderer/.../visualization/relationship/RelationshipGraphList.tsx:323	graphId
+renderer/.../visualization/sequence-chart/SequenceChartPreview.tsx:118,240,246	token, e(x2)
+renderer/.../visualization/timeline/TimelineList.tsx:151	error
+renderer/.../vocabulary/FieldDefinitionEditor.tsx:283	record
+renderer/.../vocabulary/TableConfigEditor.tsx:174	record
+renderer/.../stores/sequenceChartStore.ts:614	currentX, currentY
+renderer/.../stores/settingsStore.ts:307	e
+main/index.ts:145	event
+shared/errors.test.ts:1	vi
+---
+四、未使用的 Store 解构/变量（15 处）
+文件:行	变量
+renderer/.../editor/EditorToolbar.tsx:93	highlightColor
+renderer/.../editor/EditorToolbar.tsx:211	fontLabel
+renderer/.../editor/extensions/vocabularyHighlight.ts:122	patterns
+renderer/.../editor/extensions/vocabularyHighlight.ts:410	isSensitive
+renderer/.../editor/SearchReplacePanel.tsx:54	addHighlightMark
+renderer/.../editor/SearchReplacePanel.tsx:151	addVisualHighlights
+renderer/.../file-tree/FileTree.tsx:104	isDark
+renderer/.../file-tree/FileTree.tsx:291	setFocusedKey
+renderer/.../file-tree/FileTree.tsx:302	clearSearch
+renderer/.../file-tree/FileTree.tsx:310	inputRef
+renderer/.../git/ChangesList.tsx:30	getDiff
+renderer/.../git/CommitHistory.tsx:39-40	currentBranch, repository
+renderer/.../layout/MainContent.tsx:16	tabs
+renderer/.../settings/ApiSettings.tsx:33	loading
+renderer/.../terminal/TerminalPanel.tsx:27	isTerminalWindowOpen
+renderer/.../visualization/map/InnerCanvas.tsx:52	currentLevel
+renderer/.../visualization/relationship/RelationshipGraphFullscreen.tsx:208	nodeLabelColor
+renderer/.../visualization/relationship/RelationshipGraphPreview.tsx:71	nodeLabelColor
+renderer/.../vocabulary/VocabularyPanel.tsx:146	updateType
+renderer/.../stores/fileTreeStore.ts:401,449,554,579	roots, isBlur, sortMode, showHiddenFiles, hiddenItems
+renderer/.../stores/mapStore.ts:41-51,117	createDefaultMapData, hexToPixel, pixelToHex, hexDistance, HEX_SIZE, lastSnapshot
+renderer/.../types/theme.ts:5	THEME_COLORS
+renderer/.../utils/randomName.ts:61	allSurnames
+renderer/.../hooks/useEditorExtensions.ts:48	hoverCardConfig
+---
+五、未使用的函数/处理函数（12 处）
+文件:行	函数
+renderer/.../ai-assistant/TemplateEditor.tsx:79	onExecute
+renderer/.../project/WelcomePage.tsx:72	handleBrowse
+renderer/.../visualization/map/MapList.tsx:293	handleImport
+renderer/.../visualization/map/MapPreview.tsx:39,50	saveThumbnail, getLocalUrl
+renderer/.../visualization/map/ChunkGallery.tsx:21	onChunkDrop
+renderer/.../visualization/organization/OrganizationGraphFullscreen.tsx:488,499	handleEditSelectedNode, handleDeleteSelectedNode
+renderer/.../visualization/relationship/RelationshipGraphFullscreen.tsx:543,552,570,578,770	handleEditSelectedNode, handleDeleteSelectedNode, handleEditSelectedEdge, handleDeleteSelectedEdge, handleCloseContextMenu
+renderer/.../visualization/sequence-chart/SequenceChartFullscreen.tsx:163,166,262,280	isReordering, sensors, handleReorderDragEnd, toggleReorderMode
+renderer/.../visualization/sequence-chart/SequenceChartList.tsx:157,163	onCreateChart, updateChart
+renderer/.../vocabulary/ImageUpload.tsx:125	handleFileSelect
+renderer/.../vocabulary/VocabularyTypeSettings.tsx:214,310	saveTypes, handleCreateClick
+renderer/.../layout/Sidebar.tsx:47	onCollapse
+---
+六、Main 进程未使用变量（11 处）
+文件:行	变量
+main/index.ts:23	fileService
+main/ipc/project-handler.ts:20	validators, ValidationError
+main/ipc/sequence-chart-handler.ts:5	app
+main/ipc/vocabulary-handler.ts:3	validators
+main/services/aiAssistant.ts:34	projectPath
+main/services/backup.ts:13,34	Errors, logger
+main/services/base.ts:3,5	JSON5, 整行 import 未使用
+main/services/file.ts:6,19	app, stat
+main/services/git.ts:48,705	MATRIX_STATUS_MAP, repoPath, staged
+main/services/highlight.ts:21	configPath
+main/services/image.ts:7	writeFileSync
+main/services/map.ts:12	MapData
+main/services/project.ts:7	resolve
+main/services/projectSettings.ts:37	projectPath
+main/services/search.ts:6,10	app, handleError, handleErrorAsync
+main/services/sequence-chart.ts:418	getEventType
+main/services/timeline.ts:16,21	BaseEntity, DEFAULT_TIME_INFO
+main/utils/validation.test.ts:5	ParamValidator
+---
+统计摘要
+类别	数量
+未使用的组件/图标导入	45
+未使用的类型导入	26
+未使用的解构变量/回调参数	30
+未使用的 Store 解构变量	24
+未使用的函数/处理函数	16
+未使用的工具/库导入	9
+Main 进程未使用变量	13
+总计	163
+重灾区 Top 10 文件
+排名	文件	无用变量数
+1	SequenceChartFullscreen.tsx	10
+2	CommitHistory.tsx	7
+3	mapStore.ts	7
+4	RelationshipGraphFullscreen.tsx	7
+5	vocabularyHighlight.ts	8
+6	FileTree.tsx	5
+7	HighlightHoverCard.tsx	5
+8	WorldCanvas.tsx	5
+9	ChangesList.tsx	4
+10	HighlightSettings.tsx	5

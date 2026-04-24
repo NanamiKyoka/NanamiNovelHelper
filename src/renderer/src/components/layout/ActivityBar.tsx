@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { Tooltip, message } from 'antd'
+import { Tooltip } from 'antd'
 import {
   FileOutlined,
   SearchOutlined,

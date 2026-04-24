@@ -1,5 +1,5 @@
 import React from 'react'
-import { Modal, Radio, message } from 'antd'
+import { Modal, Radio } from 'antd'
 
 interface VocabularyExportModalProps {
   open: boolean

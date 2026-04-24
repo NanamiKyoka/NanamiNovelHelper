@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Popover, Button, Radio, Input, Select, message, Tooltip, Tabs, Typography, Switch, Divider } from 'antd'
-import { ReloadOutlined, CopyOutlined, UserOutlined, EnvironmentOutlined, BookOutlined, ToolOutlined, ExperimentOutlined, SettingOutlined, RobotOutlined } from '@ant-design/icons'
+import { ReloadOutlined, CopyOutlined, UserOutlined, EnvironmentOutlined, ToolOutlined, RobotOutlined } from '@ant-design/icons'
 import { generateNames, getRandomSurname, copyToClipboard } from '@utils/randomName'
 import { NAME_TYPES, type NameType } from '@constants/names'
 import styles from './RandomNamePanel.module.css'

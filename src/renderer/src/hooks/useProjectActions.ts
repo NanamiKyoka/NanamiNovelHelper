@@ -6,7 +6,6 @@
  */
 
 import { useCallback } from 'react'
-import { message } from 'antd'
 import { useProjectStore } from '@stores/projectStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'

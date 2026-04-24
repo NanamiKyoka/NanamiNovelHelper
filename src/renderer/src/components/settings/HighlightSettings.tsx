@@ -26,18 +26,9 @@ import {
 import type { TreeDataNode, TreeProps } from 'antd'
 import {
   PlusOutlined,
-  DeleteOutlined,
-  FolderOutlined,
-  FolderOpenOutlined
+  FolderOutlined
 } from '@ant-design/icons'
-import type { HighlightConfig, HoverCardTypeConfig, HoverCardFieldConfig } from '@types/highlight'
-import {
-  DEFAULT_HIGHLIGHT_CONFIG,
-  DEFAULT_MATCH_CONFIG,
-  DEFAULT_SCOPE_CONFIG,
-  DEFAULT_STYLE_CONFIG,
-  DEFAULT_PERFORMANCE_CONFIG
-} from '@types/highlight'
+import type { HighlightConfig, HoverCardTypeConfig } from '@types/highlight'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useProjectStore } from '@stores/projectStore'
