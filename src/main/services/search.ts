@@ -7,6 +7,7 @@ import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
 import { minimatch } from 'minimatch'
+import { handleError, handleErrorAsync, Errors } from '../../shared/errors'
 
 /**
  * 搜索选项
@@ -138,7 +139,7 @@ class SearchService {
         results: [],
         totalMatches: 0,
         filesSearched: 0,
-        error: '没有打开的项目',
+        error: Errors.projectNotOpen('SearchService').message,
       }
     }
 
@@ -158,23 +159,19 @@ class SearchService {
       useRegex = false,
       filesToInclude = '',
       filesToExclude = '',
-      maxFileSize = 1024 * 1024, // 默认 1MB
-      maxResults = 1000, // 默认最多 1000 个结果
+      maxFileSize = 1024 * 1024,
+      maxResults = 1000,
     } = options
 
     try {
-      // 构建正则表达式
       const regex = this.buildSearchRegex(query, { caseSensitive, wholeWord, useRegex })
 
-      // 解析文件过滤规则
       const parsedIncludes = this.parsePatterns(filesToInclude)
       const includePatterns = parsedIncludes.length > 0 ? parsedIncludes : DEFAULT_INCLUDES
       const excludePatterns = [...DEFAULT_EXCLUDES, ...this.parsePatterns(filesToExclude)]
 
-      // 收集要搜索的文件
       const filesToSearch = await this.collectFiles(includePatterns, excludePatterns)
 
-      // 执行搜索
       const results: FileSearchResult[] = []
       let totalMatches = 0
       let filesSearched = 0
@@ -220,10 +217,8 @@ class SearchService {
     let pattern: string
 
     if (useRegex) {
-      // 使用用户提供的正则表达式
       pattern = query
     } else {
-      // 转义正则特殊字符
       pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
       if (wholeWord) {
@@ -232,7 +227,11 @@ class SearchService {
     }
 
     const flags = caseSensitive ? 'g' : 'gi'
-    return new RegExp(pattern, flags)
+    try {
+      return new RegExp(pattern, flags)
+    } catch {
+      throw Errors.invalidArgument(`无效的正则表达式: ${query}`, 'SearchService')
+    }
   }
 
   /**
@@ -397,28 +396,24 @@ class SearchService {
     }
   ): Promise<{ success: boolean; error?: string; replacements?: number }> {
     if (!this.currentProjectPath) {
-      return { success: false, error: '没有打开的项目' }
+      return { success: false, error: Errors.projectNotOpen('SearchService').message }
     }
 
     const fullPath = path.join(this.currentProjectPath, filePath)
 
     try {
-      // 读取文件
       let content = fs.readFileSync(fullPath, 'utf-8')
       const { caseSensitive = false, wholeWord = false, useRegex = false, replaceAll = true, line, column } = options
 
-      // 构建正则表达式
       const regex = this.buildSearchRegex(searchQuery, { caseSensitive, wholeWord, useRegex })
 
       let replacements = 0
 
       if (replaceAll) {
-        // 全部替换
         const newContent = content.replace(regex, replaceText)
         replacements = (content.match(regex) || []).length
         content = newContent
       } else if (line !== undefined && column !== undefined) {
-        // 替换单个匹配
         const lines = content.split('\n')
         const targetLine = lines[line - 1]
         if (targetLine) {

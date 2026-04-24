@@ -10,6 +10,7 @@ import { promisify } from 'util'
 import { PROJECT_META_DIR, BACKUP_DIR } from '../types/project'
 import { projectSettingsService } from './projectSettings'
 import { createLogger } from '../utils/logger'
+import { handleError, handleErrorAsync, Errors } from '../../shared/errors'
 
 const gzip = promisify(zlib.gzip)
 const gunzip = promisify(zlib.gunzip)
@@ -86,51 +87,50 @@ class BackupService {
       return null
     }
 
-    this.ensureBackupDir()
+    return handleErrorAsync(async () => {
+      this.ensureBackupDir()
 
-    // 生成备份文件名（时间戳）
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-    const filename = `${timestamp}.nhbak`
-    const backupPath = path.join(this.backupDir, filename)
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+      const filename = `${timestamp}.nhbak`
+      const backupPath = path.join(this.backupDir!, filename)
 
-    // 收集所有配置文件
-    const configDir = path.join(this.projectPath, PROJECT_META_DIR)
-    const configData: Record<string, string> = {}
+      const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
+      const configData: Record<string, string> = {}
 
-    const collectFiles = (dir: string, basePath: string = ''): void => {
-      const items = fs.readdirSync(dir, { withFileTypes: true })
-      for (const item of items) {
-        // 跳过备份目录本身
-        if (item.name === BACKUP_DIR) continue
-        
-        const fullPath = path.join(dir, item.name)
-        const relativePath = basePath ? `${basePath}/${item.name}` : item.name
+      const collectFiles = (dir: string, basePath: string = ''): void => {
+        const items = fs.readdirSync(dir, { withFileTypes: true })
+        for (const item of items) {
+          if (item.name === BACKUP_DIR) continue
+          
+          const fullPath = path.join(dir, item.name)
+          const relativePath = basePath ? `${basePath}/${item.name}` : item.name
 
-        if (item.isDirectory()) {
-          collectFiles(fullPath, relativePath)
-        } else if (item.isFile()) {
-          try {
-            const content = fs.readFileSync(fullPath, 'utf-8')
-            configData[relativePath] = content
-          } catch {
-            // 忽略无法读取的文件
+          if (item.isDirectory()) {
+            collectFiles(fullPath, relativePath)
+          } else if (item.isFile()) {
+            const content = handleError(() => fs.readFileSync(fullPath, 'utf-8'), {
+              module: 'BackupService',
+              operation: `readFile:${relativePath}`,
+              log: false,
+            })
+            if (content) {
+              configData[relativePath] = content
+            }
           }
         }
       }
-    }
 
-    collectFiles(configDir)
+      collectFiles(configDir)
 
-    // 序列化并压缩
-    const jsonStr = JSON.stringify(configData)
-    const compressed = await gzip(Buffer.from(jsonStr, 'utf-8'))
-    
-    fs.writeFileSync(backupPath, compressed)
+      const jsonStr = JSON.stringify(configData)
+      const compressed = await gzip(Buffer.from(jsonStr, 'utf-8'))
+      
+      fs.writeFileSync(backupPath, compressed)
 
-    // 清理旧备份
-    this.cleanupOldBackups()
+      this.cleanupOldBackups()
 
-    return filename
+      return filename
+    }, { module: 'BackupService', operation: 'createBackup' })
   }
 
   /**
@@ -146,14 +146,12 @@ class BackupService {
       return false
     }
 
-    try {
-      // 读取并解压
+    return handleErrorAsync(async () => {
       const compressed = fs.readFileSync(backupPath)
       const decompressed = await gunzip(compressed)
       const configData = JSON.parse(decompressed.toString('utf-8'))
 
-      // 恢复文件
-      const configDir = path.join(this.projectPath, PROJECT_META_DIR)
+      const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
       
       for (const [relativePath, content] of Object.entries(configData)) {
         const fullPath = path.join(configDir, relativePath)
@@ -167,10 +165,7 @@ class BackupService {
       }
 
       return true
-    } catch (error) {
-      this.logger.error('Failed to restore backup', error)
-      return false
-    }
+    }, { module: 'BackupService', operation: 'restoreBackup', defaultValue: false }) ?? false
   }
 
   /**
@@ -205,12 +200,10 @@ class BackupService {
     const backupPath = path.join(this.backupDir, filename)
     if (!fs.existsSync(backupPath)) return false
 
-    try {
+    return handleError(() => {
       fs.unlinkSync(backupPath)
       return true
-    } catch {
-      return false
-    }
+    }, { module: 'BackupService', operation: 'deleteBackup', defaultValue: false }) ?? false
   }
 
   /**
@@ -238,34 +231,26 @@ class BackupService {
     const backupPath = path.join(this.backupDir, filename)
     if (!fs.existsSync(backupPath)) return false
 
-    try {
+    return handleError(() => {
       fs.copyFileSync(backupPath, exportPath)
       return true
-    } catch {
-      return false
-    }
+    }, { module: 'BackupService', operation: 'exportBackup', defaultValue: false }) ?? false
   }
 
-  /**
-   * 从外部文件导入备份
-   */
   async importBackup(importPath: string): Promise<string | null> {
     if (!this.backupDir || !fs.existsSync(importPath)) return null
 
     this.ensureBackupDir()
 
-    // 生成新文件名
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
     const filename = `${timestamp}.nhbak`
     const backupPath = path.join(this.backupDir, filename)
 
-    try {
+    return handleError(() => {
       fs.copyFileSync(importPath, backupPath)
       this.cleanupOldBackups()
       return filename
-    } catch {
-      return null
-    }
+    }, { module: 'BackupService', operation: 'importBackup' })
   }
 }
 
