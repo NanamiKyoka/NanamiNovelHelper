@@ -363,6 +363,10 @@ export class DynamicSkillService {
     return this.skillsCache.get(skillId)
   }
 
+  getWhitelistEntries(): SkillWhitelistEntry[] {
+    return this.whitelistConfig?.entries || []
+  }
+
   /**
    * 获取所有缓存的 SKILL
    */

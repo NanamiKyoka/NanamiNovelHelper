@@ -100,8 +100,7 @@ export function registerDynamicSkillHandlers(): void {
    * 获取白名单
    */
   ipcMain.handle('dynamicSkill:getWhitelist', async (): Promise<SkillWhitelistEntry[]> => {
-    const config = (dynamicSkillService as any).whitelistConfig
-    return config?.entries || []
+    return dynamicSkillService.getWhitelistEntries()
   })
 
   /**

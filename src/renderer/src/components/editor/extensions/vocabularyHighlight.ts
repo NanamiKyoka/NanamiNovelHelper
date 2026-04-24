@@ -6,6 +6,7 @@
 import { Mark, mergeAttributes } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import type { HighlightPattern, HighlightStyleConfig, HighlightMatch } from '@types/highlight'
 import { AhoCorasick } from '@services/ahoCorasick'
 import { useHighlightService } from '@services/highlightService'
@@ -349,7 +350,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
  * 创建高亮装饰（使用 AC 自动机）
  */
 function createHighlightDecorations(
-  doc: any,
+  doc: ProseMirrorNode,
   automaton: AhoCorasick | null,
   patterns: HighlightPattern[],
   styleConfig: HighlightStyleConfig
@@ -360,8 +361,7 @@ function createHighlightDecorations(
     return DecorationSet.empty
   }
 
-  // 遍历文档节点
-  doc.descendants((node: any, pos: number) => {
+  doc.descendants((node: ProseMirrorNode, pos: number) => {
     if (!node.isText || !node.text) return
 
     const text = node.text

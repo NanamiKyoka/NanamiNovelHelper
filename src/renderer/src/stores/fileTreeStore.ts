@@ -5,6 +5,11 @@
 import { create } from 'zustand'
 import type { FileNodeData, FlattenedNode, ClipboardState, SortMode, SortField, SortOrder, SortOptions } from '@types/fileTree'
 
+interface NewItemNode extends FileNodeData {
+  isNewItem: true
+  newItemType: 'file' | 'folder'
+}
+
 // 防抖保存展开状态的计时器
 let saveExpandedFoldersTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -138,7 +143,7 @@ function flattenTree(
         isDirectory: newItemType === 'folder',
         isNewItem: true,
         newItemType
-      } as any,
+      } as NewItemNode,
       depth: 0,
       id: '__new_item__'
     })
@@ -176,7 +181,7 @@ function flattenTree(
             isDirectory: newItemType === 'folder',
             isNewItem: true,
             newItemType
-          } as any,
+          } as NewItemNode,
           depth: depth + 1,
           id: '__new_item__'
         })

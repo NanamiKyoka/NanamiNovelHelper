@@ -1264,7 +1264,7 @@ const api = {
     get: (mapId: string) => ipcRenderer.invoke('map:get', mapId),
     create: (options: { name: string; description?: string; linkedVocabularyTypes?: string[] }) => 
       ipcRenderer.invoke('map:create', options),
-    update: (mapId: string, updates: any) => ipcRenderer.invoke('map:update', mapId, updates),
+    update: (mapId: string, updates: import('@shared/map').UpdateMapOptions) => ipcRenderer.invoke('map:update', mapId, updates),
     delete: (mapId: string) => ipcRenderer.invoke('map:delete', mapId),
     // 缩略图
     saveThumbnail: (mapId: string, dataUrl: string) => 

@@ -18,6 +18,15 @@ import { useOrganizationStore } from '@stores/organizationStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
 import { useHighlightService, updateHighlightPatterns } from '@services/highlightService'
 import type { CreateProjectOptions } from '@shared/project'
+import type { ProjectSettings } from '@shared/settings'
+import type { VocabularyType, VocabularyEntry } from '@shared/vocabulary'
+import type { SensitiveWord } from '@shared/sensitive'
+import type { HighlightConfig } from '@shared/highlight'
+import type { RelationshipGraph } from '@shared/relationship'
+import type { Timeline } from '@types/timeline'
+import type { SequenceChart } from '@types/sequence-chart'
+import type { OrganizationGraph } from '@types/organization'
+import type { FileNodeData } from '@types/fileTree'
 
 interface ProjectInitData {
   project: {
@@ -31,17 +40,17 @@ interface ProjectInitData {
     createdAt: string
     updatedAt: string
   }
-  settings: any
-  vocabularyTypes: any[]
-  vocabularyEntries: any[]
-  sensitiveWords: any[]
-  highlightConfig: any
-  relationshipGraphs: any[]
-  timelines: any[]
-  sequenceCharts: any[]
-  organizationGraphs: any[]
+  settings: ProjectSettings
+  vocabularyTypes: VocabularyType[]
+  vocabularyEntries: VocabularyEntry[]
+  sensitiveWords: SensitiveWord[]
+  highlightConfig: HighlightConfig
+  relationshipGraphs: RelationshipGraph[]
+  timelines: Timeline[]
+  sequenceCharts: SequenceChart[]
+  organizationGraphs: OrganizationGraph[]
   fileTree: {
-    tree: any[]
+    tree: FileNodeData[]
     expandedFolders: string[]
     showHiddenFiles: boolean
     hiddenItems: string[]
