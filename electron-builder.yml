@@ -30,7 +30,6 @@ asarUnpack:
   - node_modules/sharp/**
   - node_modules/node-pty/**
   - node_modules/@electron/**
-  - node_modules/better-sqlite3/**
 
 # 最大压缩
 compression: maximum

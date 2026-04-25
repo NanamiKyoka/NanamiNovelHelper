@@ -52,14 +52,6 @@ class FileService {
   }
 
   /**
-   * 解析路径（支持相对路径和绝对路径）
-   * @deprecated 使用 safeResolvePath 替代
-   */
-  private resolvePath(path: string): string {
-    return this.safeResolvePath(path)
-  }
-
-  /**
    * 检查路径是否在项目目录内（安全检查）
    * 使用多层验证防止路径遍历攻击
    */
@@ -119,7 +111,7 @@ class FileService {
    * 检查文件/目录是否存在
    */
   exists(path: string): boolean {
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
     return existsSync(absolutePath)
   }
 
@@ -127,7 +119,7 @@ class FileService {
    * 读取文件内容
    */
   readFile(path: string, encoding: BufferEncoding = 'utf-8'): string {
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
@@ -154,7 +146,7 @@ class FileService {
     options: { encoding?: BufferEncoding; createParentDir?: boolean } = {}
   ): void {
     const { encoding = 'utf-8', createParentDir = true } = options
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
@@ -175,7 +167,7 @@ class FileService {
    * 创建目录
    */
   mkdir(path: string, recursive: boolean = true): void {
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
@@ -193,7 +185,7 @@ class FileService {
    */
   async delete(path: string, options: { recursive?: boolean; useTrash?: boolean } = {}): Promise<void> {
     const { recursive = false, useTrash = true } = options
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
@@ -236,8 +228,8 @@ class FileService {
    * 重命名/移动文件或目录
    */
   rename(oldPath: string, newPath: string): void {
-    const absoluteOldPath = this.resolvePath(oldPath)
-    const absoluteNewPath = this.resolvePath(newPath)
+    const absoluteOldPath = this.safeResolvePath(oldPath)
+    const absoluteNewPath = this.safeResolvePath(newPath)
 
     if (!this.isPathInProject(absoluteOldPath) || !this.isPathInProject(absoluteNewPath)) {
       throw new Error('路径不在项目目录内')
@@ -269,8 +261,8 @@ class FileService {
    * 复制文件或目录
    */
   copy(source: string, destination: string, overwrite: boolean = false): void {
-    const absoluteSource = this.resolvePath(source)
-    const absoluteDestination = this.resolvePath(destination)
+    const absoluteSource = this.safeResolvePath(source)
+    const absoluteDestination = this.safeResolvePath(destination)
 
     if (!this.isPathInProject(absoluteSource) || !this.isPathInProject(absoluteDestination)) {
       throw new Error('路径不在项目目录内')
@@ -332,7 +324,7 @@ class FileService {
     options: { recursive?: boolean; includeHidden?: boolean } = {}
   ): FileNode[] {
     const { recursive = false, includeHidden = false } = options
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
@@ -446,7 +438,7 @@ class FileService {
    * 获取文件信息
    */
   getFileInfo(path: string): FileNode {
-    const absolutePath = this.resolvePath(path)
+    const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
       throw new Error('路径不在项目目录内')
