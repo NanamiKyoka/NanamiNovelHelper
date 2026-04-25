@@ -29,7 +29,7 @@ import {
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
-import type { SequenceEvent } from '@types/sequence-chart'
+import type { SequenceEvent } from '@shared/sequence-chart'
 import styles from './SequenceChartFullscreen.module.css'
 
 const { TextArea } = Input

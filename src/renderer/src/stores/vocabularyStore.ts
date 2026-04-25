@@ -3,7 +3,7 @@ import type {
   VocabularyType, 
   VocabularyEntry, 
   VocabularySettings 
-} from '../types/vocabulary'
+} from '@shared/vocabulary'
 
 interface VocabularyState {
   // 状态

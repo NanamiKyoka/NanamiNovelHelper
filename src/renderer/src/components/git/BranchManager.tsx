@@ -26,7 +26,7 @@ import {
   SwapOutlined
 } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'
-import type { GitBranch } from '@types/git'
+import type { GitBranch } from '@shared/git'
 import type { MenuProps } from 'antd'
 import styles from './GitPanel.module.css'
 

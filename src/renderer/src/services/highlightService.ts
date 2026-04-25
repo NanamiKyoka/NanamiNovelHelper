@@ -10,12 +10,12 @@ import type {
   HighlightPattern,
   HighlightMatch,
   HoverCardConfig
-} from '@types/highlight'
-import type { VocabularyEntry, VocabularyType } from '@types/vocabulary'
-import type { SensitiveWord } from '@types/sensitive'
+} from '@shared/highlight'
+import type { VocabularyEntry, VocabularyType } from '@shared/vocabulary'
+import type { SensitiveWord } from '@shared/sensitive'
 import {
   DEFAULT_HIGHLIGHT_CONFIG
-} from '@types/highlight'
+} from '@shared/highlight'
 
 interface HighlightServiceState {
   /** 高亮配置 */

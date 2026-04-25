@@ -15,7 +15,7 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 import { useGitStore } from '@stores/gitStore'
-import type { GitCommit } from '@types/git'
+import type { GitCommit } from '@shared/git'
 import type { MenuProps } from 'antd'
 import styles from './GitPanel.module.css'
 

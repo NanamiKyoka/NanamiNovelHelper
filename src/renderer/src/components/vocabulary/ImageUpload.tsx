@@ -10,7 +10,7 @@ import {
   DeleteOutlined,
   UploadOutlined
 } from '@ant-design/icons'
-import type { ImageFieldConfig } from '../../types/vocabulary'
+import type { ImageFieldConfig } from '@shared/vocabulary'
 import styles from './ImageUpload.module.css'
 
 interface ImageUploadProps {

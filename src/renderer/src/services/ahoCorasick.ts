@@ -4,7 +4,7 @@
  * 支持增量更新模式
  */
 
-import type { HighlightPattern, HighlightMatch } from '@types/highlight'
+import type { HighlightPattern, HighlightMatch } from '@shared/highlight'
 
 interface ACNode {
   children: Map<string, ACNode>

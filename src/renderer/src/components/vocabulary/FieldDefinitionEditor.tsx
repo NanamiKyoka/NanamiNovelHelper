@@ -38,7 +38,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { v4 as uuidv4 } from 'uuid'
-import type { FieldType, FieldDefinition, VocabularyType } from '../../types/vocabulary'
+import type { FieldType, FieldDefinition, VocabularyType } from '@shared/vocabulary'
 import styles from './FieldDefinitionEditor.module.css'
 
 interface FieldDefinitionEditorProps {

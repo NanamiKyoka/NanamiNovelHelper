@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { SensitiveWord } from '../types/sensitive'
+import type { SensitiveWord } from '@shared/sensitive'
 
 interface SensitiveState {
   // 状态

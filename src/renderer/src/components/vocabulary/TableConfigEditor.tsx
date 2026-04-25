@@ -28,7 +28,7 @@ import {
   verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { FieldDefinition, TableColumnConfig } from '../../types/vocabulary'
+import type { FieldDefinition, TableColumnConfig } from '@shared/vocabulary'
 import styles from './TableConfigEditor.module.css'
 
 interface TableConfigEditorProps {

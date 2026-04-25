@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'
 import DiffViewer from './DiffViewer'
-import type { GitFileChange } from '@types/git'
+import type { GitFileChange } from '@shared/git'
 import type { MenuProps } from 'antd'
 import styles from './GitPanel.module.css'
 

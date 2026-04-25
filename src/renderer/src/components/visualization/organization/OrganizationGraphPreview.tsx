@@ -27,7 +27,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
-import type { OrganizationNode, OrganizationNodeStyle } from '@types/organization'
+import type { OrganizationNode, OrganizationNodeStyle } from '@shared/organization'
 import styles from './OrganizationGraphPreview.module.css'
 
 const { Title, Text } = Typography

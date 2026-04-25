@@ -5,7 +5,7 @@
 import { Empty, Button, Tooltip } from 'antd'
 import { CloseOutlined, CopyOutlined } from '@ant-design/icons'
 import { message } from 'antd'
-import type { GitFileDiff } from '@types/git'
+import type { GitFileDiff } from '@shared/git'
 import styles from './GitPanel.module.css'
 
 interface DiffViewerProps {

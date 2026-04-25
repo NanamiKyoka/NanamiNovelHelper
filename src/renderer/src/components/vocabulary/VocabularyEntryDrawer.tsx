@@ -1,7 +1,7 @@
 import React from 'react'
 import { Drawer, Form, Input, Select, ColorPicker, Space, Button, Tooltip } from 'antd'
 import { SettingOutlined, FolderOpenOutlined, FileAddOutlined } from '@ant-design/icons'
-import type { VocabularyEntry, VocabularyType, FieldDefinition } from '../../types/vocabulary'
+import type { VocabularyEntry, VocabularyType, FieldDefinition } from '@shared/vocabulary'
 import ImageUpload from './ImageUpload'
 
 interface VocabularyEntryDrawerProps {

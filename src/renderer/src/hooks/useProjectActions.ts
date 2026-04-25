@@ -23,8 +23,8 @@ import type { SensitiveWord } from '@shared/sensitive'
 import type { HighlightConfig } from '@shared/highlight'
 import type { RelationshipGraph } from '@shared/relationship'
 import type { Timeline } from '@types/timeline'
-import type { SequenceChart } from '@types/sequence-chart'
-import type { OrganizationGraph } from '@types/organization'
+import type { SequenceChart } from '@shared/sequence-chart'
+import type { OrganizationGraph } from '@shared/organization'
 import type { FileNodeData } from '@types/fileTree'
 
 interface ProjectInitData {

@@ -16,7 +16,7 @@ import type {
   SequenceChartViewMode,
   DragState,
   ZOOM_LEVELS
-} from '../types/sequence-chart'
+} from '@shared/sequence-chart'
 
 interface SequenceChartState {
   // 状态

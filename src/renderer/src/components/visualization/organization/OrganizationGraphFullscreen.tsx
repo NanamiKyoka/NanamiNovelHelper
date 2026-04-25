@@ -36,7 +36,7 @@ import { Graph } from '@antv/g6'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
-import type { OrganizationNode, OrganizationNodeStyle } from '@types/organization'
+import type { OrganizationNode, OrganizationNodeStyle } from '@shared/organization'
 import styles from './OrganizationGraphFullscreen.module.css'
 
 const { Title } = Typography

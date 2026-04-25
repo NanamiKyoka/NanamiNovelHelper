@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { message } from 'antd'
-import type { VocabularyEntry, VocabularyType } from '../../types/vocabulary'
+import type { VocabularyEntry, VocabularyType } from '@shared/vocabulary'
 
 interface UseVocabularyExportOptions {
   currentTypeDefinition: VocabularyType | undefined

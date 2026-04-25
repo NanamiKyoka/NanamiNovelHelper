@@ -11,7 +11,7 @@ import type {
   UpdateOrganizationGraphOptions,
   CreateOrganizationNodeOptions,
   UpdateOrganizationNodeOptions,
-} from '../types/organization'
+} from '@shared/organization'
 
 interface OrganizationState {
   // 状态

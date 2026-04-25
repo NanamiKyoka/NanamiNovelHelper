@@ -28,7 +28,7 @@ import {
 } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
-import type { BackupInfo } from '@types/settings'
+import type { BackupInfo } from '@shared/settings'
 import dayjs from 'dayjs'
 import baseStyles from './SettingsBase.module.css'
 

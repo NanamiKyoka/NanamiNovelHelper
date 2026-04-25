@@ -8,8 +8,8 @@ import { Card, Tag, Typography, Divider } from 'antd'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
 import { useHighlightService } from '@services/highlightService'
-import type { VocabularyType } from '@types/vocabulary'
-import type { HoverCardConfig } from '@types/highlight'
+import type { VocabularyType } from '@shared/vocabulary'
+import type { HoverCardConfig } from '@shared/highlight'
 import styles from './HighlightHoverCard.module.css'
 
 const { Text } = Typography

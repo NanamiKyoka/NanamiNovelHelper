@@ -28,7 +28,7 @@ import {
   PlusOutlined,
   FolderOutlined
 } from '@ant-design/icons'
-import type { HighlightConfig, HoverCardTypeConfig } from '@types/highlight'
+import type { HighlightConfig, HoverCardTypeConfig } from '@shared/highlight'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useProjectStore } from '@stores/projectStore'

@@ -38,8 +38,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSensitiveStore } from '../../stores/sensitiveStore'
-import type { SensitiveWord } from '../../types/sensitive'
-import { SENSITIVE_CATEGORIES, SEVERITY_LEVELS } from '../../types/sensitive'
+import type { SensitiveWord } from '@shared/sensitive'
+import { SENSITIVE_CATEGORIES, SEVERITY_LEVELS } from '@shared/sensitive'
 import SensitiveWordFullscreen from './SensitiveWordFullscreen'
 import styles from './SensitiveWordPanel.module.css'
 

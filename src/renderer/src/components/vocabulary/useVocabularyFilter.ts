@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import type { VocabularyEntry } from '../../types/vocabulary'
+import type { VocabularyEntry } from '@shared/vocabulary'
 
 interface UseVocabularyFilterOptions {
   entries: VocabularyEntry[]

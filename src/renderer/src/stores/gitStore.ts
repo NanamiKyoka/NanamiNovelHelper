@@ -16,7 +16,7 @@ import type {
   GitResetOptions,
   GitCheckoutOptions,
   GitMergeOptions
-} from '@types/git'
+} from '@shared/git'
 
 /** 视图模式 */
 type GitViewMode = 'changes' | 'history' | 'branches'

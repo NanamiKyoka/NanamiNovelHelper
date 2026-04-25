@@ -51,7 +51,7 @@ import type {
   VocabularyType, 
   FieldDefinition, 
   TableColumnConfig 
-} from '../../types/vocabulary'
+} from '@shared/vocabulary'
 import { 
   getBuiltInVocabularyTypes, 
   VOCABULARY_DEFAULT_COLORS,
@@ -61,7 +61,7 @@ import {
   ITEM_FIELDS,
   MAGIC_FIELDS,
   EVENT_FIELDS
-} from '../../types/vocabulary'
+} from '@shared/vocabulary'
 import FieldDefinitionEditor from './FieldDefinitionEditor'
 import TableConfigEditor from './TableConfigEditor'
 import styles from './VocabularyTypeSettings.module.css'

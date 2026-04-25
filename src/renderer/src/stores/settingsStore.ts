@@ -16,11 +16,11 @@ import type {
   BackupInfo,
   BadgeVisibility,
   SidebarBadgeVisibility
-} from '@types/settings'
+} from '@shared/settings'
 import {
   DEFAULT_GLOBAL_SETTINGS,
   DEFAULT_PROJECT_SETTINGS
-} from '@types/settings'
+} from '@shared/settings'
 
 interface SettingsState {
   isLoading: boolean

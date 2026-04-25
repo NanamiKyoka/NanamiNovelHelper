@@ -42,7 +42,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
-import type { SequenceChartMeta } from '@types/sequence-chart'
+import type { SequenceChartMeta } from '@shared/sequence-chart'
 import styles from './SequenceChartList.module.css'
 
 const { Title, Text } = Typography

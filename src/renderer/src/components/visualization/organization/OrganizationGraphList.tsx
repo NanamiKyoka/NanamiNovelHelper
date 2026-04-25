@@ -43,7 +43,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
-import type { OrganizationGraphMeta } from '@types/organization'
+import type { OrganizationGraphMeta } from '@shared/organization'
 import styles from './OrganizationGraphList.module.css'
 
 const { Text, Title } = Typography

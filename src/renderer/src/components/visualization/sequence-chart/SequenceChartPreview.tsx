@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
-import type { SequenceEvent, SequenceEventType } from '@types/sequence-chart'
+import type { SequenceEvent, SequenceEventType } from '@shared/sequence-chart'
 import styles from './SequenceChartPreview.module.css'
 
 const { Title, Text } = Typography

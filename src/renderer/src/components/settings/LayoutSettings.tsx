@@ -9,8 +9,8 @@ import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, Clock
 import { useSettingsStore } from '@stores/settingsStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
-import type { BadgeVisibility, SidebarBadgeVisibility } from '@types/settings'
-import { DEFAULT_BADGE_VISIBILITY, DEFAULT_SIDEBAR_BADGE_VISIBILITY } from '@types/settings'
+import type { BadgeVisibility, SidebarBadgeVisibility } from '@shared/settings'
+import { DEFAULT_BADGE_VISIBILITY, DEFAULT_SIDEBAR_BADGE_VISIBILITY } from '@shared/settings'
 import baseStyles from './SettingsBase.module.css'
 import styles from './LayoutSettings.module.css'
 

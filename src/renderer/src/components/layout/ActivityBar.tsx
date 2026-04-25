@@ -17,7 +17,7 @@ import {
 import { useSettingsStore } from '@stores/settingsStore'
 import type { SidebarBadgeType } from '@types/badge'
 import { DEFAULT_SIDEBAR_BADGE_ORDER } from '@types/badge'
-import { DEFAULT_SIDEBAR_BADGE_VISIBILITY, type SidebarBadgeVisibility } from '@types/settings'
+import { DEFAULT_SIDEBAR_BADGE_VISIBILITY, type SidebarBadgeVisibility } from '@shared/settings'
 import styles from './ActivityBar.module.css'
 
 interface ActivityBarProps {

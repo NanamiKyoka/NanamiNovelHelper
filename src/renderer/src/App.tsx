@@ -22,7 +22,7 @@ import { useTerminalStore } from '@stores/terminalStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
 import { useLoadingStore } from '@stores/loadingStore'
-import { DEFAULT_BADGE_VISIBILITY } from '@types/settings'
+import { DEFAULT_BADGE_VISIBILITY } from '@shared/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
