@@ -408,19 +408,22 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     const handleRedo = () => {
       editor.chain().focus().redo().run()
     }
-    const handleCut = () => {
-      document.execCommand('cut')
+    const handleCut = async () => {
+      const text = editor.state.selection.content().content.textContent
+      if (text) {
+        await navigator.clipboard.writeText(text)
+        editor.chain().focus().deleteSelection().run()
+      }
     }
-    const handleCopy = () => {
-      document.execCommand('copy')
+    const handleCopy = async () => {
+      const text = editor.state.selection.content().content.textContent
+      if (text) {
+        await navigator.clipboard.writeText(text)
+      }
     }
     const handlePaste = async () => {
-      try {
-        const text = await navigator.clipboard.readText()
-        editor.chain().focus().insertContent(text).run()
-      } catch {
-        document.execCommand('paste')
-      }
+      const text = await navigator.clipboard.readText()
+      editor.chain().focus().insertContent(text).run()
     }
     const handleSelectAll = () => {
       editor.chain().focus().selectAll().run()

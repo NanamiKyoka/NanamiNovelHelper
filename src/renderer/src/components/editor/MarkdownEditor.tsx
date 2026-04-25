@@ -310,15 +310,22 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
     const handleUndo = () => editor.chain().focus().undo().run()
     const handleRedo = () => editor.chain().focus().redo().run()
-    const handleCut = () => document.execCommand('cut')
-    const handleCopy = () => document.execCommand('copy')
-    const handlePaste = async () => {
-      try {
-        const text = await navigator.clipboard.readText()
-        editor.chain().focus().insertContent(text).run()
-      } catch {
-        document.execCommand('paste')
+    const handleCut = async () => {
+      const text = editor.state.selection.content().content.textContent
+      if (text) {
+        await navigator.clipboard.writeText(text)
+        editor.chain().focus().deleteSelection().run()
       }
+    }
+    const handleCopy = async () => {
+      const text = editor.state.selection.content().content.textContent
+      if (text) {
+        await navigator.clipboard.writeText(text)
+      }
+    }
+    const handlePaste = async () => {
+      const text = await navigator.clipboard.readText()
+      editor.chain().focus().insertContent(text).run()
     }
     const handleSelectAll = () => editor.chain().focus().selectAll().run()
     const handleOpenSearch = () => setSearchPanelVisible(true)

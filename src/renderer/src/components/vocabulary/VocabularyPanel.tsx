@@ -61,7 +61,7 @@ import { useVocabularyStore } from '../../stores/vocabularyStore'
 import { useEditorStore } from '../../stores/editorStore'
 import { useFileTreeStore } from '../../stores/fileTreeStore'
 import type { VocabularyEntry } from '../../types/vocabulary'
-import { DEFAULT_COLORS } from '../../types/vocabulary'
+import { VOCABULARY_DEFAULT_COLORS } from '../../types/vocabulary'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
 import VocabularyFullscreen from './VocabularyFullscreen'
 import { getIconPreview } from './IconPicker'
@@ -624,7 +624,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     
     form.setFieldsValue({
       fields: defaultFields,
-      color: currentTypeDefinition?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)],
+      color: currentTypeDefinition?.color || VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)],
       aliases: [],
       tags: []
     })
@@ -645,7 +645,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     try {
       setLoading(true)
       const typeName = types.find(t => t.id === currentType)?.name || '未知'
-      const color = currentTypeDefinition?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
+      const color = currentTypeDefinition?.color || VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
       
       await addEntry({
         name: quickAddName.trim(),

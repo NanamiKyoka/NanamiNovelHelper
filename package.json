@@ -50,7 +50,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "@pixi/unsafe-eval": "^7.4.3",
     "@tanstack/react-virtual": "^3.13.22",
     "@tiptap/extension-code-block-lowlight": "^2.10.3",
     "@tiptap/extension-highlight": "^2.10.3",

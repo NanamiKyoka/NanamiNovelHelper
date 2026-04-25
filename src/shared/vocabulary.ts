@@ -292,9 +292,3 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
  * 默认颜色（使用图表调色板）
  */
 export const VOCABULARY_DEFAULT_COLORS = CHART_PALETTE
-
-
-/**
- * @deprecated 使用 VOCABULARY_DEFAULT_COLORS 代替
- */
-export const DEFAULT_COLORS = VOCABULARY_DEFAULT_COLORS

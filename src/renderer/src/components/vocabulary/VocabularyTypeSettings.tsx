@@ -54,7 +54,7 @@ import type {
 } from '../../types/vocabulary'
 import { 
   getBuiltInVocabularyTypes, 
-  DEFAULT_COLORS,
+  VOCABULARY_DEFAULT_COLORS,
   CHARACTER_FIELDS,
   LOCATION_FIELDS,
   ORGANIZATION_FIELDS,
@@ -335,7 +335,7 @@ function VocabularyTypeSettings({
     } else {
       form.setFieldsValue({
         name: '',
-        color: DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
+        color: VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
       })
     }
     setIsTypeModalOpen(true)

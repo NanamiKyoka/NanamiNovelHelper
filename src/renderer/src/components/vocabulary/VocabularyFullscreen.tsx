@@ -72,7 +72,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
 import type { VocabularyType, FieldDefinition } from '@types/vocabulary'
-import { getBuiltInVocabularyTypes, DEFAULT_COLORS } from '@types/vocabulary'
+import { getBuiltInVocabularyTypes, VOCABULARY_DEFAULT_COLORS } from '@types/vocabulary'
 import VocabularyPanel, { type VocabularyPanelRef } from './VocabularyPanel'
 import { HighlightSettings } from '@components/settings/HighlightSettings'
 import VocabularyTypeSettings from './VocabularyTypeSettings'
@@ -372,7 +372,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     } else {
       form.setFieldsValue({
         name: '',
-        color: DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)]
+        color: VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
       })
     }
     setIsTypeModalOpen(true)
@@ -592,7 +592,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         } = {
           name: '',
           aliases: [],
-          color: currentTypeDef?.color || DEFAULT_COLORS[Math.floor(Math.random() * DEFAULT_COLORS.length)],
+          color: currentTypeDef?.color || VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)],
           typeId: selectedTypeId,
           typeName,
           fields: {},
