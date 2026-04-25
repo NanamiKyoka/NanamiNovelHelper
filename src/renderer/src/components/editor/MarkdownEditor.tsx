@@ -155,6 +155,13 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
   useEffect(() => {
     if (!editor) return
+    
+    const editorWithFilePath = editor as typeof editor & { currentFilePath?: string }
+    editorWithFilePath.currentFilePath = currentFilePath
+  }, [editor, currentFilePath])
+
+  useEffect(() => {
+    if (!editor) return
 
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
@@ -315,6 +322,19 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     }
     const handleSelectAll = () => editor.chain().focus().selectAll().run()
     const handleOpenSearch = () => setSearchPanelVisible(true)
+    const handleOpenRelativeFile = async (event: CustomEvent<{ relativePath: string; currentFilePath: string }>) => {
+      const { relativePath, currentFilePath } = event.detail
+      
+      try {
+        const dirPath = await window.electron.path.dirname(currentFilePath)
+        const targetPath = await window.electron.path.join([dirPath, relativePath])
+        const fileName = await window.electron.path.basename(targetPath)
+        const openFile = useEditorStore.getState().openFile
+        await openFile(targetPath, fileName)
+      } catch (error) {
+        console.error('Failed to open file:', error)
+      }
+    }
 
     window.addEventListener('editor:undo', handleUndo)
     window.addEventListener('editor:redo', handleRedo)
@@ -323,6 +343,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     window.addEventListener('editor:paste', handlePaste)
     window.addEventListener('editor:selectAll', handleSelectAll)
     window.addEventListener('editor:openSearch', handleOpenSearch)
+    window.addEventListener('editor:openRelativeFile', handleOpenRelativeFile as EventListener)
 
     return () => {
       window.removeEventListener('editor:undo', handleUndo)
@@ -332,6 +353,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
       window.removeEventListener('editor:paste', handlePaste)
       window.removeEventListener('editor:selectAll', handleSelectAll)
       window.removeEventListener('editor:openSearch', handleOpenSearch)
+      window.removeEventListener('editor:openRelativeFile', handleOpenRelativeFile as EventListener)
     }
   }, [editor])
 

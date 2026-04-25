@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Highlight from '@tiptap/extension-highlight'
-import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Typography from '@tiptap/extension-typography'
@@ -11,7 +10,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
-import { TabInsert, CustomKeymap } from '@components/editor/extensions'
+import { TabInsert, CustomKeymap, SmartLink } from '@components/editor/extensions'
 
 const lowlight = createLowlight(common)
 
@@ -45,8 +44,8 @@ export function useMarkdownExtensions() {
       Highlight.configure({
         multicolor: true
       }),
-      Link.configure({
-        openOnClick: true,
+      SmartLink.configure({
+        openOnClick: false,
         HTMLAttributes: {
           class: 'editor-link'
         }

@@ -3,6 +3,7 @@
  */
 
 import { ipcMain } from 'electron'
+import path from 'path'
 import { fileService, SortOptions } from '../services/file'
 import { validateParams } from '../utils/validation'
 
@@ -146,6 +147,63 @@ export function registerFileHandlers(): void {
       return fileService.getFileInfo(path)
     } catch (error) {
       console.error('Failed to get file info:', error)
+      throw error
+    }
+  })
+
+  // Path API 处理器
+  // 解析路径
+  ipcMain.handle('path:resolve', async (_, pathSegments: string[]): Promise<string> => {
+    try {
+      return path.resolve(...pathSegments)
+    } catch (error) {
+      console.error('Failed to resolve path:', error)
+      throw error
+    }
+  })
+
+  // 获取路径基础名称
+  ipcMain.handle('path:basename', async (_, filePath: string): Promise<string> => {
+    try {
+      validateParams('path:basename ').nonEmptyString(filePath, 'path').validate()
+      return path.basename(filePath)
+    } catch (error) {
+      console.error('Failed to get basename:', error)
+      throw error
+    }
+  })
+
+  // 获取目录名
+  ipcMain.handle('path:dirname', async (_, filePath: string): Promise<string> => {
+    try {
+      validateParams('path:dirname ').nonEmptyString(filePath, 'path').validate()
+      return path.dirname(filePath)
+    } catch (error) {
+      console.error('Failed to get dirname:', error)
+      throw error
+    }
+  })
+
+  // 连接路径
+  ipcMain.handle('path:join', async (_, pathSegments: string[]): Promise<string> => {
+    try {
+      return path.join(...pathSegments)
+    } catch (error) {
+      console.error('Failed to join paths:', error)
+      throw error
+    }
+  })
+
+  // 获取相对路径
+  ipcMain.handle('path:relative', async (_, from: string, to: string): Promise<string> => {
+    try {
+      validateParams('path:relative ')
+        .nonEmptyString(from, 'from')
+        .nonEmptyString(to, 'to')
+        .validate()
+      return path.relative(from, to)
+    } catch (error) {
+      console.error('Failed to get relative path:', error)
       throw error
     }
   })

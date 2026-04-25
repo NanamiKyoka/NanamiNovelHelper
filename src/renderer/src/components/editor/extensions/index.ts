@@ -8,6 +8,9 @@ import { Extension } from '@tiptap/core'
 // 导出行号扩展
 export { LineNumbers } from './lineNumbers'
 
+// 导出智能链接扩展
+export { SmartLink } from './smartLink'
+
 /**
  * Tab 键扩展 - 插入两个空格
  */

@@ -1531,6 +1531,14 @@ const api = {
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url)
   },
+  // Path API
+  path: {
+    resolve: (pathSegments: string[]) => ipcRenderer.invoke('path:resolve', pathSegments),
+    basename: (path: string) => ipcRenderer.invoke('path:basename', path),
+    dirname: (path: string) => ipcRenderer.invoke('path:dirname', path),
+    join: (pathSegments: string[]) => ipcRenderer.invoke('path:join', pathSegments),
+    relative: (from: string, to: string) => ipcRenderer.invoke('path:relative', from, to)
+  },
   // 自动更新 API
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),
