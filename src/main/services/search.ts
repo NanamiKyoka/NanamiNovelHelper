@@ -79,6 +79,24 @@ export interface SearchResult {
 /**
  * 默认排除的目录和文件
  */
+const HTML_EXTENSIONS = new Set(['.novel', '.html', '.htm'])
+
+function isHtmlFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase()
+  return HTML_EXTENSIONS.has(ext)
+}
+
+function stripHtmlTags(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
 const DEFAULT_EXCLUDES = [
   '**/node_modules/**',
   '**/.git/**',
@@ -329,16 +347,22 @@ class SearchService {
 
       const matches: SearchMatch[] = []
       const lines = content.split('\n')
+      const shouldStripHtml = isHtmlFile(relativePath)
 
       for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
         if (matches.length >= maxMatches) break
 
-        const lineText = lines[lineIndex]
+        let lineText = lines[lineIndex]
         const lineNumber = lineIndex + 1
 
-        // 在当前行搜索
+        if (shouldStripHtml) {
+          lineText = stripHtmlTags(lineText)
+        }
+
+        if (!lineText.trim()) continue
+
         let match: RegExpExecArray | null
-        regex.lastIndex = 0 // 重置每行的搜索位置
+        regex.lastIndex = 0
 
         while ((match = regex.exec(lineText)) !== null && matches.length < maxMatches) {
           const matchText = match[0]
@@ -357,7 +381,6 @@ class SearchService {
             ),
           })
 
-          // 如果不是全局匹配，避免无限循环
           if (!regex.global) break
         }
       }
@@ -408,9 +431,24 @@ class SearchService {
       let replacements = 0
 
       if (replaceAll) {
-        const newContent = content.replace(regex, replaceText)
-        replacements = (content.match(regex) || []).length
-        content = newContent
+        if (isHtmlFile(filePath)) {
+          let count = 0
+          const newContent = content.replace(/(<[^>]*>)|([^<]+)/g, (fullMatch, tagMatch, textMatch) => {
+            if (tagMatch) return tagMatch
+            regex.lastIndex = 0
+            const replaced = textMatch.replace(regex, () => {
+              count++
+              return replaceText
+            })
+            return replaced
+          })
+          replacements = count
+          content = newContent
+        } else {
+          const newContent = content.replace(regex, replaceText)
+          replacements = (content.match(regex) || []).length
+          content = newContent
+        }
       } else if (line !== undefined && column !== undefined) {
         const lines = content.split('\n')
         const targetLine = lines[line - 1]
