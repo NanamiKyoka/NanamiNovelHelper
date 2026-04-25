@@ -15,7 +15,10 @@ import type {
   ViewMode,
   ToolbarMode
 } from '../types/editor'
-import { DEFAULT_EDITOR_SETTINGS as defaultSettings, DEFAULT_STATUS_BAR_CONFIG as defaultStatusBarConfig } from '../types/editor'
+import {
+  DEFAULT_EDITOR_SETTINGS as defaultSettings,
+  DEFAULT_STATUS_BAR_CONFIG as defaultStatusBarConfig
+} from '../types/editor'
 import { LRUCache } from '../utils/lruCache'
 
 const FILE_CACHE_MAX = 20
@@ -84,9 +87,9 @@ const PUNCT_REGEX = /\p{P}/u
 function isAsciiWordChar(code: number): boolean {
   return (
     (code >= 0x30 && code <= 0x39) || // 0-9
-    (code >= 0x41 && code <= 0x5A) || // A-Z
-    (code >= 0x61 && code <= 0x7A) || // a-z
-    code === 0x5F
+    (code >= 0x41 && code <= 0x5a) || // A-Z
+    (code >= 0x61 && code <= 0x7a) || // a-z
+    code === 0x5f
   ) // _
 }
 
@@ -96,15 +99,15 @@ function isAsciiWordChar(code: number): boolean {
  */
 function isHan(code: number): boolean {
   return (
-    (code >= 0x3400 && code <= 0x9FFF) || // CJK Unified Ideographs Ext A + Basic
-    (code >= 0xF900 && code <= 0xFAFF) || // CJK Compatibility Ideographs
-    (code >= 0x20000 && code <= 0x2FFFF)
+    (code >= 0x3400 && code <= 0x9fff) || // CJK Unified Ideographs Ext A + Basic
+    (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility Ideographs
+    (code >= 0x20000 && code <= 0x2ffff)
   ) // CJK Ext B..G（代理对）
 }
 
 /**
  * 计算字数统计（参考 Andrea-novel-helper 的算法）
- * 
+ *
  * 统计规则：
  * - 中文字符（CJK）按字计算
  * - 英文按单词计算（连续的字母数字下划线为一个单词）
@@ -216,6 +219,9 @@ function getFileType(name: string): EditorTab['type'] {
       return 'novel'
     case 'txt':
       return 'text'
+    case 'md':
+    case 'markdown':
+      return 'markdown'
     default:
       return 'other'
   }
@@ -258,9 +264,13 @@ export const useEditorStore = create<EditorState>()(
       externalRefreshRequest: null,
 
       // 预览模式打开文件（单击）- VSCode 风格
-      openPreview: async (path: string, name: string, type: EditorTab['type'] = getFileType(name)) => {
+      openPreview: async (
+        path: string,
+        name: string,
+        type: EditorTab['type'] = getFileType(name)
+      ) => {
         const state = get()
-        
+
         // 检查是否已经打开
         const existingTab = state.tabs.find(tab => tab.path === path)
         if (existingTab) {
@@ -269,9 +279,7 @@ export const useEditorStore = create<EditorState>()(
           // 更新最后激活时间
           set({
             tabs: state.tabs.map(tab =>
-              tab.id === existingTab.id
-                ? { ...tab, lastActiveAt: Date.now() }
-                : tab
+              tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
             )
           })
           // 设为预览标签
@@ -314,7 +322,7 @@ export const useEditorStore = create<EditorState>()(
       // 打开文件（直接打开，不区分预览/固定）
       openFile: async (path: string, name: string, type: EditorTab['type'] = getFileType(name)) => {
         const state = get()
-        
+
         // 检查是否已经打开
         const existingTab = state.tabs.find(tab => tab.path === path)
         if (existingTab) {
@@ -323,9 +331,7 @@ export const useEditorStore = create<EditorState>()(
           // 更新最后激活时间
           set({
             tabs: state.tabs.map(tab =>
-              tab.id === existingTab.id
-                ? { ...tab, lastActiveAt: Date.now() }
-                : tab
+              tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
             )
           })
           return
@@ -356,11 +362,11 @@ export const useEditorStore = create<EditorState>()(
       closeTab: (tabId: string) => {
         const state = get()
         const tabIndex = state.tabs.findIndex(tab => tab.id === tabId)
-        
+
         if (tabIndex === -1) return
 
         const newTabs = state.tabs.filter(tab => tab.id !== tabId)
-        
+
         // 如果关闭的是当前活动标签，切换到其他标签
         let newActiveTabId = state.activeTabId
         if (state.activeTabId === tabId) {
@@ -384,7 +390,7 @@ export const useEditorStore = create<EditorState>()(
       closeOtherTabs: (tabId: string) => {
         const state = get()
         const activeTab = state.tabs.find(tab => tab.id === tabId)
-        
+
         if (!activeTab) return
 
         set({
@@ -403,14 +409,12 @@ export const useEditorStore = create<EditorState>()(
       setActiveTab: (tabId: string) => {
         const state = get()
         const tab = state.tabs.find(t => t.id === tabId)
-        
+
         if (!tab) return
 
         set({
           activeTabId: tabId,
-          tabs: state.tabs.map(t =>
-            t.id === tabId ? { ...t, lastActiveAt: Date.now() } : t
-          )
+          tabs: state.tabs.map(t => (t.id === tabId ? { ...t, lastActiveAt: Date.now() } : t))
         })
       },
 
@@ -427,9 +431,7 @@ export const useEditorStore = create<EditorState>()(
       // 标记为已修改
       markDirty: (tabId: string, isDirty: boolean) => {
         set(state => ({
-          tabs: state.tabs.map(tab =>
-            tab.id === tabId ? { ...tab, isDirty } : tab
-          )
+          tabs: state.tabs.map(tab => (tab.id === tabId ? { ...tab, isDirty } : tab))
         }))
       },
 
@@ -442,14 +444,14 @@ export const useEditorStore = create<EditorState>()(
             content,
             loadedAt: Date.now()
           }
-          
+
           set(state => {
             state.fileContents.set(path, fileContent)
             return { fileContents: state.fileContents }
           })
 
           get().updateWordCount(content)
-          
+
           return content
         } catch (error) {
           console.error('Failed to load file:', error)
@@ -463,14 +465,14 @@ export const useEditorStore = create<EditorState>()(
         set({ isSaving: true })
         try {
           await window.electron.file.write(path, content)
-          
+
           set(state => {
             state.fileContents.set(path, {
               path,
               content,
               loadedAt: Date.now()
             })
-            return { 
+            return {
               fileContents: state.fileContents,
               lastSavedAt: Date.now()
             }
@@ -491,7 +493,7 @@ export const useEditorStore = create<EditorState>()(
       updateContent: (content: string) => {
         const state = get()
         const activeTab = state.getActiveTab()
-        
+
         if (!activeTab) return
 
         set(state => {
@@ -528,7 +530,7 @@ export const useEditorStore = create<EditorState>()(
       getCurrentContent: () => {
         const state = get()
         const activeTab = state.getActiveTab()
-        
+
         if (!activeTab) return ''
 
         const fileContent = state.fileContents.get(activeTab.path)
@@ -616,7 +618,7 @@ export const useEditorStore = create<EditorState>()(
     }),
     {
       name: 'editor-storage',
-      partialize: (state) => ({
+      partialize: state => ({
         // 只持久化设置，不持久化标签和内容
         settings: state.settings
       })

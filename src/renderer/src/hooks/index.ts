@@ -11,6 +11,7 @@ export { useProjectInit } from './useProjectInit'
 
 // 编辑器相关
 export { useEditorExtensions } from './useEditorExtensions'
+export { useMarkdownExtensions } from './useMarkdownExtensions'
 export { useHoverCard } from './useHoverCard'
 
 // 错误处理

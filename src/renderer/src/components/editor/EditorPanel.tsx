@@ -7,22 +7,16 @@ import { useCallback } from 'react'
 import { Empty, message, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
 import { NovelEditor } from './NovelEditor'
+import { MarkdownEditor } from './MarkdownEditor'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './EditorPanel.module.css'
 
 export function EditorPanel() {
-  const {
-    tabs,
-    activeTabId,
-    saveFileContent,
-    isLoading,
-    getCurrentContent,
-    markDirty
-  } = useEditorStore()
+  const { tabs, activeTabId, saveFileContent, isLoading, getCurrentContent, markDirty } =
+    useEditorStore()
 
   const activeTab = tabs.find(tab => tab.id === activeTabId)
 
-  // 保存文件
   const handleSave = useCallback(async () => {
     if (!activeTab) return
 
@@ -37,14 +31,12 @@ export function EditorPanel() {
     }
   }, [activeTab, saveFileContent, getCurrentContent, markDirty])
 
-  // 内容变更回调（仅标记为已修改，自动保存在 NovelEditor 中处理）
   const handleChange = useCallback(() => {
     if (activeTab && !activeTab.isDirty) {
       markDirty(activeTab.id, true)
     }
   }, [activeTab, markDirty])
 
-  // 没有打开的文件
   if (tabs.length === 0) {
     return (
       <div className={styles.emptyState}>
@@ -61,12 +53,12 @@ export function EditorPanel() {
     )
   }
 
+  const isMarkdown = activeTab?.type === 'markdown'
+
   return (
     <div className={styles.panel}>
-      {/* 标签栏 */}
       <EditorTabs />
 
-      {/* 编辑器区域 */}
       <div className={styles.editorArea}>
         {isLoading ? (
           <div className={styles.loading}>
@@ -74,11 +66,11 @@ export function EditorPanel() {
           </div>
         ) : (
           <div className={styles.editorWrapper}>
-            <NovelEditor
-              onChange={handleChange}
-              onSave={handleSave}
-              readonly={false}
-            />
+            {isMarkdown ? (
+              <MarkdownEditor onChange={handleChange} onSave={handleSave} readonly={false} />
+            ) : (
+              <NovelEditor onChange={handleChange} onSave={handleSave} readonly={false} />
+            )}
           </div>
         )}
       </div>

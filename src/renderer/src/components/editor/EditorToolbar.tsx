@@ -89,198 +89,230 @@ const HEADING_LEVELS = [
   { key: 'heading6', label: '标题 6' }
 ]
 
-export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch, fileType }: EditorToolbarProps) {
+export function EditorToolbar({
+  editor,
+  settings,
+  onSettingsChange,
+  onOpenSearch,
+  fileType
+}: EditorToolbarProps) {
   const [, setHighlightColor] = useState('#fef3cd')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPreviewVisible, setAiPreviewVisible] = useState(false)
   const [aiPreviewContent, setAiPreviewContent] = useState('')
   const [aiCurrentAction, setAiCurrentAction] = useState('')
-  
-  // 是否为 Novel 文件，决定是否显示格式化工具
+
   const isNovel = fileType === 'novel'
-  
+  const isMarkdown = fileType === 'markdown'
+  const isRichText = isNovel || isMarkdown
+
   // AI 辅助功能：调用 AI API
-  const callAiApi = useCallback(async (
-    action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize',
-    text: string
-  ): Promise<string | null> => {
-    const prompts: Record<string, { system: string; user: string }> = {
-      polish: {
-        system: '你是一名专业的中文写作编辑，擅长润色网文、小说。请对用户提供的文本进行润色：优化表达、修正语病、增强可读性，保持原意与风格。只输出润色后的内容，不要添加任何解释。',
-        user: `请润色以下文本：\n\n${text}`
-      },
-      continue: {
-        system: '你是一名专业的网络小说作家，擅长续写故事。请根据用户提供的文本，自然地续写后续内容，保持原有的风格和语气。只输出续写的内容，不要添加任何解释。',
-        user: `请续写以下文本：\n\n${text}`
-      },
-      rewrite: {
-        system: '你是一名专业的中文写作编辑，擅长改写文本。请对用户提供的文本进行改写，保持核心意思不变，但用不同的表达方式。只输出改写后的内容，不要添加任何解释。',
-        user: `请改写以下文本：\n\n${text}`
-      },
-      expand: {
-        system: '你是一名专业的网络小说作家，擅长扩充文本。请对用户提供的文本进行扩充，增加细节描写，使内容更加丰富。只输出扩充后的内容，不要添加任何解释。',
-        user: `请扩充以下文本：\n\n${text}`
-      },
-      summarize: {
-        system: '你是一名专业的写作助手，擅长总结和提炼内容。请对用户提供的文本进行总结，提取关键信息和要点。只输出总结内容，不要添加任何解释。',
-        user: `请总结以下文本：\n\n${text}`
+  const callAiApi = useCallback(
+    async (
+      action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize',
+      text: string
+    ): Promise<string | null> => {
+      const prompts: Record<string, { system: string; user: string }> = {
+        polish: {
+          system:
+            '你是一名专业的中文写作编辑，擅长润色网文、小说。请对用户提供的文本进行润色：优化表达、修正语病、增强可读性，保持原意与风格。只输出润色后的内容，不要添加任何解释。',
+          user: `请润色以下文本：\n\n${text}`
+        },
+        continue: {
+          system:
+            '你是一名专业的网络小说作家，擅长续写故事。请根据用户提供的文本，自然地续写后续内容，保持原有的风格和语气。只输出续写的内容，不要添加任何解释。',
+          user: `请续写以下文本：\n\n${text}`
+        },
+        rewrite: {
+          system:
+            '你是一名专业的中文写作编辑，擅长改写文本。请对用户提供的文本进行改写，保持核心意思不变，但用不同的表达方式。只输出改写后的内容，不要添加任何解释。',
+          user: `请改写以下文本：\n\n${text}`
+        },
+        expand: {
+          system:
+            '你是一名专业的网络小说作家，擅长扩充文本。请对用户提供的文本进行扩充，增加细节描写，使内容更加丰富。只输出扩充后的内容，不要添加任何解释。',
+          user: `请扩充以下文本：\n\n${text}`
+        },
+        summarize: {
+          system:
+            '你是一名专业的写作助手，擅长总结和提炼内容。请对用户提供的文本进行总结，提取关键信息和要点。只输出总结内容，不要添加任何解释。',
+          user: `请总结以下文本：\n\n${text}`
+        }
       }
-    }
 
-    const prompt = prompts[action]
-    if (!prompt) return null
+      const prompt = prompts[action]
+      if (!prompt) return null
 
-    try {
-      const result = await window.electron.aiAssistant.callApi(prompt.user, {
-        systemPrompt: prompt.system,
-        temperature: 0.7,
-        maxTokens: 2000
-      })
-      
-      if (result.success && result.content) {
-        return result.content
-      } else {
-        message.error(result.error || 'AI 调用失败')
+      try {
+        const result = await window.electron.aiAssistant.callApi(prompt.user, {
+          systemPrompt: prompt.system,
+          temperature: 0.7,
+          maxTokens: 2000
+        })
+
+        if (result.success && result.content) {
+          return result.content
+        } else {
+          message.error(result.error || 'AI 调用失败')
+          return null
+        }
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : 'AI 调用失败')
         return null
       }
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : 'AI 调用失败')
-      return null
-    }
-  }, [])
+    },
+    []
+  )
 
   // 处理 AI 操作
-  const handleAiAction = useCallback(async (action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize') => {
-    if (!editor) return
-    
-    const actionNames: Record<string, string> = {
-      polish: '润色',
-      continue: '续写',
-      rewrite: '改写',
-      expand: '扩充',
-      summarize: '总结'
-    }
-    
-    // 获取选中文本或整个文档
-    const { from, to } = editor.state.selection
-    const hasSelection = from !== to
-    const text = hasSelection 
-      ? editor.state.doc.textBetween(from, to, '')
-      : editor.getText()
-    
-    if (!text.trim()) {
-      message.warning('请先选择要处理的文本，或确保文档有内容')
-      return
-    }
-    
-    setAiLoading(true)
-    setAiCurrentAction(actionNames[action])
-    
-    try {
-      const result = await callAiApi(action, text)
-      if (result) {
-        setAiPreviewContent(result)
-        setAiPreviewVisible(true)
+  const handleAiAction = useCallback(
+    async (action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize') => {
+      if (!editor) return
+
+      const actionNames: Record<string, string> = {
+        polish: '润色',
+        continue: '续写',
+        rewrite: '改写',
+        expand: '扩充',
+        summarize: '总结'
       }
-    } finally {
-      setAiLoading(false)
-    }
-  }, [editor, callAiApi])
+
+      // 获取选中文本或整个文档
+      const { from, to } = editor.state.selection
+      const hasSelection = from !== to
+      const text = hasSelection ? editor.state.doc.textBetween(from, to, '') : editor.getText()
+
+      if (!text.trim()) {
+        message.warning('请先选择要处理的文本，或确保文档有内容')
+        return
+      }
+
+      setAiLoading(true)
+      setAiCurrentAction(actionNames[action])
+
+      try {
+        const result = await callAiApi(action, text)
+        if (result) {
+          setAiPreviewContent(result)
+          setAiPreviewVisible(true)
+        }
+      } finally {
+        setAiLoading(false)
+      }
+    },
+    [editor, callAiApi]
+  )
 
   // 应用 AI 结果到编辑器
-  const applyAiResult = useCallback((replace: boolean) => {
-    if (!editor || !aiPreviewContent) return
-    
-    const { from, to } = editor.state.selection
-    const hasSelection = from !== to
-    
-    if (replace && hasSelection) {
-      // 替换选中的文本
-      editor.chain().focus().insertContentAt({ from, to }, aiPreviewContent).run()
-    } else {
-      // 在当前位置插入
-      editor.chain().focus().insertContent(aiPreviewContent).run()
-    }
-    
-    setAiPreviewVisible(false)
-    setAiPreviewContent('')
-    message.success('已应用到编辑器')
-  }, [editor, aiPreviewContent])
+  const applyAiResult = useCallback(
+    (replace: boolean) => {
+      if (!editor || !aiPreviewContent) return
+
+      const { from, to } = editor.state.selection
+      const hasSelection = from !== to
+
+      if (replace && hasSelection) {
+        // 替换选中的文本
+        editor.chain().focus().insertContentAt({ from, to }, aiPreviewContent).run()
+      } else {
+        // 在当前位置插入
+        editor.chain().focus().insertContent(aiPreviewContent).run()
+      }
+
+      setAiPreviewVisible(false)
+      setAiPreviewContent('')
+      message.success('已应用到编辑器')
+    },
+    [editor, aiPreviewContent]
+  )
 
   // 执行编辑器命令
-  const execCommand = useCallback((command: string, ...args: unknown[]) => {
-    if (!editor) return
+  const execCommand = useCallback(
+    (command: string, ...args: unknown[]) => {
+      if (!editor) return
 
-    switch (command) {
-      case 'bold':
-        editor.chain().focus().toggleBold().run()
-        break
-      case 'italic':
-        editor.chain().focus().toggleItalic().run()
-        break
-      case 'strike':
-        editor.chain().focus().toggleStrike().run()
-        break
-      case 'underline':
-        editor.chain().focus().toggleUnderline().run()
-        break
-      case 'highlight':
-        editor.chain().focus().toggleHighlight({ color: args[0] as string }).run()
-        break
-      case 'bulletList':
-        editor.chain().focus().toggleBulletList().run()
-        break
-      case 'orderedList':
-        editor.chain().focus().toggleOrderedList().run()
-        break
-      case 'taskList':
-        editor.chain().focus().toggleTaskList().run()
-        break
-      case 'blockquote':
-        editor.chain().focus().toggleBlockquote().run()
-        break
-      case 'codeBlock':
-        editor.chain().focus().toggleCodeBlock().run()
-        break
-      case 'horizontalRule':
-        editor.chain().focus().setHorizontalRule().run()
-        break
-      case 'paragraph':
-        editor.chain().focus().setParagraph().run()
-        break
-      case 'heading':
-        editor.chain().focus().toggleHeading({ level: args[0] as number }).run()
-        break
-      case 'undo':
-        editor.chain().focus().undo().run()
-        break
-      case 'redo':
-        editor.chain().focus().redo().run()
-        break
-      case 'clearFormat':
-        editor.chain().focus().clearNodes().unsetAllMarks().run()
-        break
-      case 'addQuote':
-        const { from, to } = editor.state.selection
-        if (from !== to) {
-          const text = editor.state.doc.textBetween(from, to, '')
-          editor.chain().focus().insertContent(`「${text}」`).run()
+      switch (command) {
+        case 'bold':
+          editor.chain().focus().toggleBold().run()
+          break
+        case 'italic':
+          editor.chain().focus().toggleItalic().run()
+          break
+        case 'strike':
+          editor.chain().focus().toggleStrike().run()
+          break
+        case 'underline':
+          editor.chain().focus().toggleUnderline().run()
+          break
+        case 'highlight':
+          editor
+            .chain()
+            .focus()
+            .toggleHighlight({ color: args[0] as string })
+            .run()
+          break
+        case 'bulletList':
+          editor.chain().focus().toggleBulletList().run()
+          break
+        case 'orderedList':
+          editor.chain().focus().toggleOrderedList().run()
+          break
+        case 'taskList':
+          editor.chain().focus().toggleTaskList().run()
+          break
+        case 'blockquote':
+          editor.chain().focus().toggleBlockquote().run()
+          break
+        case 'codeBlock':
+          editor.chain().focus().toggleCodeBlock().run()
+          break
+        case 'horizontalRule':
+          editor.chain().focus().setHorizontalRule().run()
+          break
+        case 'paragraph':
+          editor.chain().focus().setParagraph().run()
+          break
+        case 'heading':
+          editor
+            .chain()
+            .focus()
+            .toggleHeading({ level: args[0] as number })
+            .run()
+          break
+        case 'undo':
+          editor.chain().focus().undo().run()
+          break
+        case 'redo':
+          editor.chain().focus().redo().run()
+          break
+        case 'clearFormat':
+          editor.chain().focus().clearNodes().unsetAllMarks().run()
+          break
+        case 'addQuote': {
+          const { from, to } = editor.state.selection
+          if (from !== to) {
+            const text = editor.state.doc.textBetween(from, to, '')
+            editor.chain().focus().insertContent(`「${text}」`).run()
+          }
+          break
         }
-        break
-      case 'formatDocument':
-        formatDocument()
-        break
-      case 'setLink':
-        const url = window.prompt('输入链接地址：')
-        if (url) {
-          editor.chain().focus().setLink({ href: url }).run()
+        case 'formatDocument':
+          formatDocument()
+          break
+        case 'setLink': {
+          const url = window.prompt('输入链接地址：')
+          if (url) {
+            editor.chain().focus().setLink({ href: url }).run()
+          }
+          break
         }
-        break
-      case 'unsetLink':
-        editor.chain().focus().unsetLink().run()
-        break
-    }
-  }, [editor])
+        case 'unsetLink':
+          editor.chain().focus().unsetLink().run()
+          break
+      }
+    },
+    [editor]
+  )
 
   // 一键排版
   const formatDocument = useCallback(() => {
@@ -316,10 +348,12 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
       children: FONT_FAMILIES.map(font => ({
         key: `font-${font.value}`,
         label: (
-          <span style={{ 
-            fontFamily: font.value,
-            fontWeight: settings.fontFamily === font.value ? 'bold' : 'normal'
-          }}>
+          <span
+            style={{
+              fontFamily: font.value,
+              fontWeight: settings.fontFamily === font.value ? 'bold' : 'normal'
+            }}
+          >
             {font.label}
             {settings.fontFamily === font.value && ' ✓'}
           </span>
@@ -412,13 +446,15 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
     key: color.value,
     label: (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ 
-          width: 16, 
-          height: 16, 
-          backgroundColor: color.value, 
-          border: '1px solid #d9d9d9',
-          borderRadius: 2 
-        }} />
+        <div
+          style={{
+            width: 16,
+            height: 16,
+            backgroundColor: color.value,
+            border: '1px solid #d9d9d9',
+            borderRadius: 2
+          }}
+        />
         {color.label}
       </div>
     ),
@@ -487,8 +523,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
 
       {/* 字体设置（整合下拉菜单） */}
       <div className={styles.group}>
-        <Dropdown 
-          menu={{ items: fontSettingsMenuItems }} 
+        <Dropdown
+          menu={{ items: fontSettingsMenuItems }}
           trigger={['click']}
           overlayClassName={styles.fontDropdown}
         >
@@ -498,8 +534,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </Dropdown>
       </div>
 
-      {/* Novel 特定功能：标题级别 */}
-      {isNovel && (
+      {/* 富文本功能：标题级别 */}
+      {isRichText && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -512,8 +548,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Novel 特定功能：文本格式 */}
-      {isNovel && (
+      {/* 富文本功能：文本格式 */}
+      {isRichText && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -558,8 +594,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Novel 特定功能：列表 */}
-      {isNovel && (
+      {/* 富文本功能：列表 */}
+      {isRichText && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -603,8 +639,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
         </>
       )}
 
-      {/* Novel 特定功能：插入 */}
-      {isNovel && (
+      {/* 富文本功能：插入 */}
+      {isRichText && (
         <>
           <div className={styles.divider} />
           <div className={styles.group}>
@@ -618,12 +654,7 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
               />
             </Tooltip>
             <Tooltip title="图片">
-              <Button
-                type="text"
-                size="small"
-                icon={<PictureOutlined />}
-                onClick={insertImage}
-              />
+              <Button type="text" size="small" icon={<PictureOutlined />} onClick={insertImage} />
             </Tooltip>
             <Tooltip title="代码块">
               <Button
@@ -651,19 +682,10 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
       {/* 工具（所有文件类型通用） */}
       <div className={styles.group}>
         <Tooltip title="搜索替换 (Ctrl+F)">
-          <Button
-            type="text"
-            size="small"
-            icon={<SearchOutlined />}
-            onClick={onOpenSearch}
-          />
+          <Button type="text" size="small" icon={<SearchOutlined />} onClick={onOpenSearch} />
         </Tooltip>
         <Tooltip title="添加引号「」">
-          <Button
-            type="text"
-            size="small"
-            onClick={() => execCommand('addQuote')}
-          >
+          <Button type="text" size="small" onClick={() => execCommand('addQuote')}>
             「」
           </Button>
         </Tooltip>
@@ -691,8 +713,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
       {/* AI 辅助功能 */}
       <div className={styles.divider} />
       <div className={styles.group}>
-        <Dropdown 
-          menu={{ 
+        <Dropdown
+          menu={{
             items: [
               {
                 key: 'polish',
@@ -735,8 +757,8 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
                   window.dispatchEvent(event)
                 }
               }
-            ] 
-          }} 
+            ]
+          }}
           trigger={['click']}
         >
           <Tooltip title="AI 辅助写作">
@@ -763,24 +785,19 @@ export function EditorToolbar({ editor, settings, onSettingsChange, onOpenSearch
           <Button key="cancel" onClick={() => setAiPreviewVisible(false)}>
             取消
           </Button>,
-          <Button key="copy" onClick={() => {
-            navigator.clipboard.writeText(aiPreviewContent)
-            message.success('已复制到剪贴板')
-          }}>
+          <Button
+            key="copy"
+            onClick={() => {
+              navigator.clipboard.writeText(aiPreviewContent)
+              message.success('已复制到剪贴板')
+            }}
+          >
             复制
           </Button>,
-          <Button 
-            key="insert" 
-            type="default"
-            onClick={() => applyAiResult(false)}
-          >
+          <Button key="insert" type="default" onClick={() => applyAiResult(false)}>
             插入到当前位置
           </Button>,
-          <Button 
-            key="replace" 
-            type="primary"
-            onClick={() => applyAiResult(true)}
-          >
+          <Button key="replace" type="primary" onClick={() => applyAiResult(true)}>
             替换选中内容
           </Button>
         ]}

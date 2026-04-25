@@ -13,7 +13,7 @@ export interface EditorTab {
   /** 文件名 */
   name: string
   /** 文件类型 */
-  type: 'novel' | 'text' | 'other'
+  type: 'novel' | 'text' | 'markdown' | 'other'
   /** 是否已修改 */
   isDirty: boolean
   /** 最后激活时间 */
@@ -146,7 +146,7 @@ export const DEFAULT_SHORTCUTS: ShortcutConfig = {
 
 /**
  * 字数统计（参考 Andrea-novel-helper 的统计算法）
- * 
+ *
  * 统计规则：
  * - 中文字符（CJK）按字计算
  * - 英文按单词计算（连续的字母数字下划线为一个单词）
