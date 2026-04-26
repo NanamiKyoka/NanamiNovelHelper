@@ -632,16 +632,10 @@ function FileTree(): JSX.Element {
       items.push(
         { type: 'divider' },
         {
-          key: 'export',
+          key: 'exportTxt',
           icon: <ExportOutlined />,
-          label: '导出',
-          children: [
-            {
-              key: 'exportTxt',
-              label: '导出为 TXT',
-              onClick: () => handleExportNovel(node)
-            }
-          ]
+          label: '导出为 TXT',
+          onClick: () => handleExportNovel(node)
         }
       )
     }
