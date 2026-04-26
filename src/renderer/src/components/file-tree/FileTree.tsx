@@ -28,7 +28,8 @@ import {
   RightOutlined,
   SortAscendingOutlined,
   SortDescendingOutlined,
-  FieldTimeOutlined
+  FieldTimeOutlined,
+  ExportOutlined
 } from '@ant-design/icons'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
@@ -41,6 +42,30 @@ const { Text } = Typography
 import { Typography } from 'antd'
 
 const SEARCH_DEBOUNCE_MS = 200
+
+function stripHtmlTags(html: string): string {
+  let text = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<h[1-6][^>]*>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<blockquote[^>]*>/gi, '\n')
+    .replace(/<\/blockquote>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
+  
+  return text
+}
 
 // 文件图标映射
 const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): React.ReactNode => {
@@ -506,6 +531,41 @@ function FileTree(): JSX.Element {
     }
   }, [paste, clipboard, message])
   
+  // 导出 .novel 文件为 TXT
+  const handleExportNovel = useCallback(async (node: typeof flattenedNodes[0]['node']) => {
+    try {
+      const content = await window.electron.file.readFile(node.path)
+      if (!content) {
+        message.warning('文件内容为空')
+        return
+      }
+
+      const baseName = node.name.replace(/\.[^.]+$/, '')
+      const filePath = await window.electron.file.showSaveDialog({
+        title: '导出为纯文本',
+        defaultPath: `${baseName}.txt`,
+        filters: [
+          { name: '文本文件', extensions: ['txt'] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      })
+
+      if (!filePath) return
+
+      const plainText = stripHtmlTags(content)
+      const success = await window.electron.file.exportTxt(filePath, plainText)
+      
+      if (success) {
+        message.success('导出成功')
+      } else {
+        message.error('导出失败')
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+      message.error('导出失败')
+    }
+  }, [message])
+  
   // 获取节点上下文菜单
   const getNodeContextMenu = useCallback((node: typeof flattenedNodes[0]['node']): MenuProps['items'] => {
     const items: MenuProps['items'] = []
@@ -566,6 +626,26 @@ function FileTree(): JSX.Element {
       )
     }
     
+    // 检查是否是 .novel 文件，添加导出选项
+    const ext = node.name.split('.').pop()?.toLowerCase()
+    if (!node.isDirectory && ext === 'novel') {
+      items.push(
+        { type: 'divider' },
+        {
+          key: 'export',
+          icon: <ExportOutlined />,
+          label: '导出',
+          children: [
+            {
+              key: 'exportTxt',
+              label: '导出为 TXT',
+              onClick: () => handleExportNovel(node)
+            }
+          ]
+        }
+      )
+    }
+    
     items.push(
       { type: 'divider' },
       {
@@ -578,7 +658,7 @@ function FileTree(): JSX.Element {
     )
     
     return items
-  }, [startNewItem, startRename, copyItems, cutItems, clipboard, handlePaste, confirmDelete, message])
+  }, [startNewItem, startRename, copyItems, cutItems, clipboard, handlePaste, confirmDelete, message, handleExportNovel])
   
   // 空白处上下文菜单
   const emptyAreaContextMenu: MenuProps['items'] = useMemo(() => [
@@ -593,8 +673,15 @@ function FileTree(): JSX.Element {
       icon: <FolderAddOutlined />,
       label: '新建文件夹',
       onClick: () => startNewItem(null, 'folder')
+    },
+    { type: 'divider' },
+    {
+      key: 'refresh',
+      icon: <ReloadOutlined />,
+      label: '刷新',
+      onClick: refreshTree
     }
-  ], [startNewItem])
+  ], [startNewItem, refreshTree])
   
   // 打开文件
   const handleOpenFile = useCallback(async (node: typeof flattenedNodes[0]['node']) => {
