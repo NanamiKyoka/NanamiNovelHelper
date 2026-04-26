@@ -3,11 +3,35 @@
  */
 
 import { useRef, useCallback, useState } from 'react'
-import { Dropdown, MenuProps } from 'antd'
-import { CloseOutlined, CloseCircleFilled } from '@ant-design/icons'
+import { Dropdown, MenuProps, message } from 'antd'
+import { CloseOutlined, CloseCircleFilled, ExportOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorTab } from '@types/editor'
 import styles from './EditorTabs.module.css'
+
+function stripHtmlTags(html: string): string {
+  let text = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<h[1-6][^>]*>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<blockquote[^>]*>/gi, '\n')
+    .replace(/<\/blockquote>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
+  
+  return text
+}
 
 interface EditorTabsProps {
   onContextMenu?: (tab: EditorTab, x: number, y: number) => void
@@ -22,7 +46,8 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
     closeTab,
     closeOtherTabs,
     closeAllTabs,
-    moveTab
+    moveTab,
+    getCurrentContent
   } = useEditorStore()
 
   const dragIndexRef = useRef<number | null>(null)
@@ -114,27 +139,78 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
     setDragOverIndex(null)
   }, [])
 
+  // 导出为 TXT
+  const handleExportTxt = useCallback(async (tab: EditorTab) => {
+    try {
+      const content = getCurrentContent()
+      if (!content) {
+        message.warning('文件内容为空')
+        return
+      }
+
+      const baseName = tab.name.replace(/\.[^.]+$/, '')
+      const filePath = await window.electron.file.showSaveDialog({
+        title: '导出为纯文本',
+        defaultPath: `${baseName}.txt`,
+        filters: [
+          { name: '文本文件', extensions: ['txt'] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      })
+
+      if (!filePath) return
+
+      const plainText = stripHtmlTags(content)
+      const success = await window.electron.file.exportTxt(filePath, plainText)
+      
+      if (success) {
+        message.success('导出成功')
+      } else {
+        message.error('导出失败')
+      }
+    } catch (error) {
+      console.error('Export failed:', error)
+      message.error('导出失败')
+    }
+  }, [getCurrentContent])
+
   // 右键菜单项
   const getContextMenuItems = useCallback(
-    (tab: EditorTab): MenuProps['items'] => [
-      {
-        key: 'close',
-        label: '关闭',
-        icon: <CloseOutlined />,
-        onClick: () => closeTab(tab.id)
-      },
-      {
-        key: 'closeOthers',
-        label: '关闭其他',
-        onClick: () => closeOtherTabs(tab.id)
-      },
-      {
-        key: 'closeAll',
-        label: '关闭所有',
-        onClick: () => closeAllTabs()
+    (tab: EditorTab): MenuProps['items'] => {
+      const items: MenuProps['items'] = [
+        {
+          key: 'close',
+          label: '关闭',
+          icon: <CloseOutlined />,
+          onClick: () => closeTab(tab.id)
+        },
+        {
+          key: 'closeOthers',
+          label: '关闭其他',
+          onClick: () => closeOtherTabs(tab.id)
+        },
+        {
+          key: 'closeAll',
+          label: '关闭所有',
+          onClick: () => closeAllTabs()
+        }
+      ]
+
+      if (tab.type === 'novel') {
+        items.push(
+          { type: 'divider' },
+          {
+            key: 'exportTxt',
+            label: '导出为纯文本 (TXT)',
+            icon: <ExportOutlined />,
+            onClick: () => handleExportTxt(tab)
+          }
+        )
       }
-    ],
-    [closeTab, closeOtherTabs, closeAllTabs]
+
+      return items
+    },
+    [closeTab, closeOtherTabs, closeAllTabs, handleExportTxt]
   )
 
   if (tabs.length === 0) return null

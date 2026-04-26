@@ -1150,6 +1150,12 @@ export interface FileAPI {
   }) => Promise<FileNode[]>
   getTree: (includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]) => Promise<FileNode[]>
   getInfo: (path: string) => Promise<FileNode>
+  showSaveDialog: (options?: {
+    title?: string
+    defaultPath?: string
+    filters?: Array<{ name: string; extensions: string[] }>
+  }) => Promise<string | null>
+  exportTxt: (filePath: string, content: string) => Promise<boolean>
 }
 
 /**

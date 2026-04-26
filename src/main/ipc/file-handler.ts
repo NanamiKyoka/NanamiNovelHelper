@@ -2,8 +2,9 @@
  * 文件系统相关 IPC 处理器
  */
 
-import { ipcMain } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import path from 'path'
+import fs from 'fs'
 import { fileService, SortOptions } from '../services/file'
 import { validateParams } from '../utils/validation'
 
@@ -204,6 +205,40 @@ export function registerFileHandlers(): void {
       return path.relative(from, to)
     } catch (error) {
       console.error('Failed to get relative path:', error)
+      throw error
+    }
+  })
+
+  // 显示保存对话框
+  ipcMain.handle('file:showSaveDialog', async (_, options: {
+    title?: string
+    defaultPath?: string
+    filters?: Array<{ name: string; extensions: string[] }>
+  }): Promise<string | null> => {
+    try {
+      const result = await dialog.showSaveDialog({
+        title: options.title || '保存文件',
+        defaultPath: options.defaultPath,
+        filters: options.filters || [{ name: '所有文件', extensions: ['*'] }]
+      })
+      return result.canceled ? null : result.filePath
+    } catch (error) {
+      console.error('Failed to show save dialog:', error)
+      throw error
+    }
+  })
+
+  // 导出纯文本文件
+  ipcMain.handle('file:exportTxt', async (_, filePath: string, content: string): Promise<boolean> => {
+    try {
+      validateParams('file:exportTxt')
+        .nonEmptyString(filePath, 'filePath')
+        .string(content, 'content')
+        .validate()
+      fs.writeFileSync(filePath, content, 'utf-8')
+      return true
+    } catch (error) {
+      console.error('Failed to export txt file:', error)
       throw error
     }
   })

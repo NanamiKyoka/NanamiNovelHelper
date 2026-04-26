@@ -1308,7 +1308,14 @@ const api = {
     }): Promise<FileNode[]> => ipcRenderer.invoke('file:list', path, options),
     getTree: (includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]): Promise<FileNode[]> => 
       ipcRenderer.invoke('file:get-tree', includeHidden, sortOptions, hiddenItems),
-    getInfo: (path: string): Promise<FileNode> => ipcRenderer.invoke('file:get-info', path)
+    getInfo: (path: string): Promise<FileNode> => ipcRenderer.invoke('file:get-info', path),
+    showSaveDialog: (options?: {
+      title?: string
+      defaultPath?: string
+      filters?: Array<{ name: string; extensions: string[] }>
+    }): Promise<string | null> => ipcRenderer.invoke('file:showSaveDialog', options),
+    exportTxt: (filePath: string, content: string): Promise<boolean> => 
+      ipcRenderer.invoke('file:exportTxt', filePath, content)
   },
   // 图片管理
   image: {
