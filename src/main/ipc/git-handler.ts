@@ -27,7 +27,7 @@ export function registerGitHandlers(): void {
   ipcMain.handle(GIT_CHANNELS.INIT, async (_event, options: GitInitOptions) => {
     validateParams('git:init')
       .object(options, 'options')
-      .nonEmptyString((options as Record<string, unknown>).repoPath as string, 'options.repoPath')
+      .nonEmptyString((options as Record<string, unknown>).path as string, 'options.path')
       .validate()
     return gitService.init(options)
   })
