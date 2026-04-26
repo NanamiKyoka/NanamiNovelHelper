@@ -220,3 +220,8 @@
 .aiStyleSection :global(.ant-select) {
   margin-top: 4px;
 }
+
+.aiStyleSection :global(.ant-select-dropdown) {
+  position: fixed !important;
+  z-index: 1070 !important;
+}

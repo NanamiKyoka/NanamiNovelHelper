@@ -375,6 +375,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
               value={aiStyle}
               onChange={setAiStyle}
               style={{ width: '100%' }}
+              getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
               options={
                 isPersonType
                   ? [
