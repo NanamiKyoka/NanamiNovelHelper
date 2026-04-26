@@ -238,7 +238,7 @@
   color: var(--color-primary-hover);
 }
 
-.editorContent img.editor-image {
+.editorContent :global(img.editor-image) {
   max-width: 100% !important;
   width: auto !important;
   height: auto !important;
@@ -247,7 +247,7 @@
   display: block;
 }
 
-.editorContent img.editor-image:hover {
+.editorContent :global(img.editor-image:hover) {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
 
