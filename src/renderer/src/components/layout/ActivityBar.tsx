@@ -52,16 +52,16 @@ const SIDEBAR_BADGE_CONFIG: Record<SidebarBadgeType, { icon: React.ComponentType
 const DRAG_DATA_TYPE = 'application/sidebar-badge'
 
 function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBarProps): JSX.Element {
-  const projectSettings = useSettingsStore((state) => state.projectSettings)
+  const globalSettings = useSettingsStore((state) => state.globalSettings)
   const updateSidebarBadgeOrder = useSettingsStore((state) => state.updateSidebarBadgeOrder)
   
-  // 从 projectSettings 读取可见性和顺序
+  // 从 globalSettings.layout 读取可见性和顺序
   const visibility: SidebarBadgeVisibility = useMemo(() => {
-    return projectSettings?.sidebarBadgeVisibility || DEFAULT_SIDEBAR_BADGE_VISIBILITY
-  }, [projectSettings?.sidebarBadgeVisibility])
+    return globalSettings.layout?.sidebarBadgeVisibility || DEFAULT_SIDEBAR_BADGE_VISIBILITY
+  }, [globalSettings.layout?.sidebarBadgeVisibility])
   
   const order: SidebarBadgeType[] = useMemo(() => {
-    const savedOrder = projectSettings?.sidebarBadgeOrder
+    const savedOrder = globalSettings.layout?.sidebarBadgeOrder
     if (savedOrder && Array.isArray(savedOrder) && savedOrder.length > 0) {
       // 过滤有效项并补充缺失项
       const validOrder = savedOrder.filter((b): b is SidebarBadgeType => 
@@ -71,14 +71,14 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
       return [...validOrder, ...missingBadges]
     }
     return [...DEFAULT_SIDEBAR_BADGE_ORDER]
-  }, [projectSettings?.sidebarBadgeOrder])
+  }, [globalSettings.layout?.sidebarBadgeOrder])
   
   // 拖拽状态
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [dropPosition, setDropPosition] = useState<'top' | 'bottom' | null>(null)
   
-  // 宋器引用
+  // 容器引用
   const containerRef = useRef<HTMLDivElement>(null)
 
   // 监听 Sidebar 返回事件
