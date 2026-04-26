@@ -26,6 +26,7 @@ import {
 } from '../types/project'
 import { vocabularyService } from './vocabulary'
 import { projectSettingsService } from './projectSettings'
+import { globalSettingsService } from './globalSettings'
 import { highlightService } from './highlight'
 import { relationshipService } from './relationship'
 import { timelineService } from './timeline'
@@ -544,7 +545,7 @@ backup/
     ])
 
     // 获取文件树数据
-    const showHiddenFiles = projectSettingsService.getShowHiddenFiles()
+    const showHiddenFiles = globalSettingsService.getShowHiddenFiles()
     const hiddenItems = projectSettingsService.getHiddenItems()
     const expandedFolders = projectSettingsService.getExpandedFolders()
     const tree = fileService.getFileTree(showHiddenFiles, { field: 'name', order: 'asc' }, hiddenItems)
