@@ -16,7 +16,7 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
-import { TabInsert, CustomKeymap, LineNumbers, ImagePaste, uploadImageWithResize } from '@components/editor/extensions'
+import { TabInsert, CustomKeymap, LineNumbers, ImagePaste, uploadImageOriginal } from '@components/editor/extensions'
 import { VocabularyHighlight } from '@components/editor/extensions/vocabularyHighlight'
 import type { HighlightStyleConfig, HoverCardConfig } from '@shared/highlight'
 
@@ -99,13 +99,10 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
         }
       }),
       ImagePaste.configure({
-        maxWidth: 1200,
-        maxHeight: 800,
-        quality: 85,
-        maxSize: 5 * 1024 * 1024,
+        maxSize: 10 * 1024 * 1024,
         allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-        onUpload: async (file, options) => {
-          return uploadImageWithResize(file, options)
+        onUpload: async (file) => {
+          return uploadImageOriginal(file)
         }
       }),
       Placeholder.configure({

@@ -9,7 +9,7 @@ export { LineNumbers } from './lineNumbers'
 
 export { SmartLink } from './smartLink'
 
-export { ImagePaste, uploadImageWithResize } from './imagePaste'
+export { ImagePaste, uploadImageOriginal } from './imagePaste'
 export type { ImagePasteOptions } from './imagePaste'
 
 /**

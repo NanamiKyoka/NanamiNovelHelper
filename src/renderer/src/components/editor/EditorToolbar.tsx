@@ -336,11 +336,11 @@ export function EditorToolbar({
     setImageLoading(true)
     try {
       const result = await window.electron.image.selectAndUpload({
-        maxSize: 5 * 1024 * 1024,
+        maxSize: 10 * 1024 * 1024,
         allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-        maxWidth: 1200,
-        maxHeight: 800,
-        quality: 85
+        maxWidth: 4096,
+        maxHeight: 4096,
+        quality: 100
       })
       
       if (result) {
