@@ -45,6 +45,73 @@ export const DEFAULT_WINDOW_STATE: WindowState = {
 
 export type Language = 'zh-CN' | 'en-US' | 'ja-JP'
 
+// ============ 徽章可见性 ============
+
+export interface BadgeVisibility {
+  vocabulary: boolean
+  sensitive: boolean
+  randomName: boolean
+  relationship: boolean
+  timeline: boolean
+  sequenceChart: boolean
+  organization: boolean
+  map: boolean
+  terminal: boolean
+}
+
+export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
+
+export const DEFAULT_BADGE_ORDER: BadgeType[] = [
+  'vocabulary',
+  'sensitive',
+  'randomName',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'map',
+  'terminal'
+]
+
+export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
+  vocabulary: true,
+  sensitive: true,
+  randomName: true,
+  relationship: true,
+  timeline: true,
+  sequenceChart: true,
+  organization: true,
+  map: true,
+  terminal: true
+}
+
+// ============ 侧边栏徽章可见性 ============
+
+/** 左侧边栏徽章入口可见性（仅包含有全屏功能的徽章） */
+export interface SidebarBadgeVisibility {
+  vocabulary: boolean
+  sensitive: boolean
+  relationship: boolean
+  timeline: boolean
+  sequenceChart: boolean
+  organization: boolean
+  map: boolean
+  aiAssistant: boolean
+}
+
+export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
+  vocabulary: true,
+  sensitive: true,
+  relationship: true,
+  timeline: true,
+  sequenceChart: true,
+  organization: true,
+  map: true,
+  aiAssistant: true
+}
+
+export const DEFAULT_SIDEBAR_BADGE_ORDER = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'map', 'aiAssistant']
+
 // ============ 全局布局设置 ============
 
 /**
@@ -156,73 +223,6 @@ export const DEFAULT_PROJECT_BACKUP_SETTINGS: ProjectBackupSettings = {
   enabled: true,
   maxCount: 10
 }
-
-// ============ 徽章可见性 ============
-
-export interface BadgeVisibility {
-  vocabulary: boolean
-  sensitive: boolean
-  randomName: boolean
-  relationship: boolean
-  timeline: boolean
-  sequenceChart: boolean
-  organization: boolean
-  map: boolean
-  terminal: boolean
-}
-
-export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
-
-export const DEFAULT_BADGE_ORDER: BadgeType[] = [
-  'vocabulary',
-  'sensitive',
-  'randomName',
-  'relationship',
-  'timeline',
-  'sequenceChart',
-  'organization',
-  'map',
-  'terminal'
-]
-
-export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
-  vocabulary: true,
-  sensitive: true,
-  randomName: true,
-  relationship: true,
-  timeline: true,
-  sequenceChart: true,
-  organization: true,
-  map: true,
-  terminal: true
-}
-
-// ============ 侧边栏徽章可见性 ============
-
-/** 左侧边栏徽章入口可见性（仅包含有全屏功能的徽章） */
-export interface SidebarBadgeVisibility {
-  vocabulary: boolean
-  sensitive: boolean
-  relationship: boolean
-  timeline: boolean
-  sequenceChart: boolean
-  organization: boolean
-  map: boolean
-  aiAssistant: boolean
-}
-
-export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
-  vocabulary: true,
-  sensitive: true,
-  relationship: true,
-  timeline: true,
-  sequenceChart: true,
-  organization: true,
-  map: true,
-  aiAssistant: true
-}
-
-export const DEFAULT_SIDEBAR_BADGE_ORDER = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'map', 'aiAssistant']
 
 // ============ 项目设置 ============
 
