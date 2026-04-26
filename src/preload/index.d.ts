@@ -931,6 +931,19 @@ export interface GlobalSettingsAPI {
   setLanguage: (language: 'zh-CN' | 'en-US' | 'ja-JP') => void
   getSidebarWidth: () => Promise<number>
   setSidebarWidth: (width: number) => void
+  // 布局设置
+  getLayout: () => Promise<GlobalLayoutSettings>
+  updateLayout: (layout: Partial<GlobalLayoutSettings>) => Promise<GlobalLayoutSettings>
+  getBadgeVisibility: () => Promise<BadgeVisibility>
+  updateBadgeVisibility: (settings: Partial<BadgeVisibility>) => Promise<BadgeVisibility>
+  getBadgeOrder: () => Promise<BadgeType[]>
+  updateBadgeOrder: (order: BadgeType[]) => Promise<BadgeType[]>
+  getSidebarBadgeVisibility: () => Promise<SidebarBadgeVisibility>
+  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<SidebarBadgeVisibility>
+  getSidebarBadgeOrder: () => Promise<string[]>
+  updateSidebarBadgeOrder: (order: string[]) => Promise<string[]>
+  getShowHiddenFiles: () => Promise<boolean>
+  setShowHiddenFiles: (value: boolean) => Promise<void>
   // API Key 管理
   getApiKey: (keyName: string) => Promise<string | null>
   setApiKey: (keyName: string, value: string) => void
@@ -953,22 +966,12 @@ export interface ProjectSettingsAPI {
   updateHighlight: (settings: Partial<ProjectHighlightSettings>) => Promise<ProjectHighlightSettings>
   getBackup: () => Promise<ProjectBackupSettings>
   updateBackup: (settings: Partial<ProjectBackupSettings>) => Promise<ProjectBackupSettings>
-  getBadgeVisibility: () => Promise<BadgeVisibility>
-  updateBadgeVisibility: (settings: Partial<BadgeVisibility>) => Promise<BadgeVisibility>
-  getBadgeOrder: () => Promise<BadgeType[]>
-  setBadgeOrder: (order: BadgeType[]) => Promise<BadgeType[]>
-  getShowHiddenFiles: () => Promise<boolean>
-  setShowHiddenFiles: (value: boolean) => Promise<void>
+  getAutoCreateVocabularyFile: () => Promise<boolean>
+  setAutoCreateVocabularyFile: (value: boolean) => Promise<void>
   getExpandedFolders: () => Promise<string[]>
   setExpandedFolders: (folders: string[]) => Promise<void>
   getHiddenItems: () => Promise<string[]>
   setHiddenItems: (items: string[]) => Promise<void>
-  // 左侧边栏徽章入口可见性
-  getSidebarBadgeVisibility: () => Promise<SidebarBadgeVisibility>
-  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<SidebarBadgeVisibility>
-  // 左侧边栏徽章入口排序
-  getSidebarBadgeOrder: () => Promise<string[]>
-  setSidebarBadgeOrder: (order: string[]) => Promise<string[]>
 }
 
 /**
