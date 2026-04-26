@@ -5,11 +5,12 @@
 
 import { Extension } from '@tiptap/core'
 
-// 导出行号扩展
 export { LineNumbers } from './lineNumbers'
 
-// 导出智能链接扩展
 export { SmartLink } from './smartLink'
+
+export { ImagePaste, uploadImageWithResize } from './imagePaste'
+export type { ImagePasteOptions } from './imagePaste'
 
 /**
  * Tab 键扩展 - 插入两个空格

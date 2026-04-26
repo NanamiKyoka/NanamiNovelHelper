@@ -328,15 +328,33 @@ export function EditorToolbar({
     editor.commands.setContent(formatted, false)
   }, [editor])
 
-  // 插入图片
-  const insertImage = useCallback(() => {
-    if (!editor) return
+  const [imageLoading, setImageLoading] = useState(false)
 
-    const url = window.prompt('输入图片地址：')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
+  const insertImage = useCallback(async () => {
+    if (!editor || imageLoading) return
+
+    setImageLoading(true)
+    try {
+      const result = await window.electron.image.selectAndUpload({
+        maxSize: 5 * 1024 * 1024,
+        allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        maxWidth: 1200,
+        maxHeight: 800,
+        quality: 85
+      })
+      
+      if (result) {
+        const base64 = await window.electron.image.readAsBase64(result.path)
+        editor.chain().focus().setImage({ src: base64, alt: result.originalName }).run()
+        message.success('图片插入成功')
+      }
+    } catch (error) {
+      console.error('Failed to insert image:', error)
+      message.error(error instanceof Error ? error.message : '图片插入失败')
+    } finally {
+      setImageLoading(false)
     }
-  }, [editor])
+  }, [editor, imageLoading])
 
   // 字体设置下拉菜单
   const fontSettingsMenuItems: MenuProps['items'] = [
@@ -654,7 +672,7 @@ export function EditorToolbar({
               />
             </Tooltip>
             <Tooltip title="图片">
-              <Button type="text" size="small" icon={<PictureOutlined />} onClick={insertImage} />
+              <Button type="text" size="small" icon={<PictureOutlined />} onClick={insertImage} loading={imageLoading} />
             </Tooltip>
             <Tooltip title="代码块">
               <Button

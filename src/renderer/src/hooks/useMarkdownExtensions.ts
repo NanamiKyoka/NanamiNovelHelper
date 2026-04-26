@@ -10,7 +10,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Markdown } from 'tiptap-markdown'
 import { common, createLowlight } from 'lowlight'
-import { TabInsert, CustomKeymap, SmartLink } from '@components/editor/extensions'
+import { TabInsert, CustomKeymap, SmartLink, ImagePaste, uploadImageWithResize } from '@components/editor/extensions'
 
 const lowlight = createLowlight(common)
 
@@ -55,6 +55,16 @@ export function useMarkdownExtensions() {
         allowBase64: true,
         HTMLAttributes: {
           class: 'editor-image'
+        }
+      }),
+      ImagePaste.configure({
+        maxWidth: 1200,
+        maxHeight: 800,
+        quality: 85,
+        maxSize: 5 * 1024 * 1024,
+        allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+        onUpload: async (file, options) => {
+          return uploadImageWithResize(file, options)
         }
       }),
       Placeholder.configure({

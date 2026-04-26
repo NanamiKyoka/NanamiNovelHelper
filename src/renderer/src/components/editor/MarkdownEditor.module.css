@@ -230,10 +230,19 @@
 }
 
 .editorContent img.editor-image {
-  max-width: 100%;
+  max-width: 80%;
+  max-height: 600px;
+  width: auto;
   height: auto;
-  border-radius: 4px;
-  margin: 1em 0;
+  border-radius: 8px;
+  margin: 1em auto;
+  display: block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: default;
+}
+
+.editorContent img.editor-image:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .editorContent mark {

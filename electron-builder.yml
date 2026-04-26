@@ -1,6 +1,6 @@
 appId: com.nanami.novel-helper
 productName: NanamiNovelHelper
-copyright: Copyright © 2024 NanamiNovelHelper Team
+copyright: Copyright © 2026 NanamiKyoka
 
 directories:
   buildResources: resources
@@ -75,5 +75,5 @@ linux:
 
 publish:
   provider: github
-  owner: nanami-novel-helper
-  repo: nanami-novel-helper
+  owner: NanamiKyoka
+  repo: NanamiNovelHelper
