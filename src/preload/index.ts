@@ -172,12 +172,21 @@ interface WindowState {
   height: number
 }
 
+interface GlobalLayoutSettings {
+  badgeVisibility: BadgeVisibility
+  badgeOrder: BadgeType[]
+  sidebarBadgeVisibility: SidebarBadgeVisibility
+  sidebarBadgeOrder: string[]
+  showHiddenFiles: boolean
+}
+
 interface GlobalSettings {
   theme: GlobalThemeConfig
   window: WindowState
   language: 'zh-CN' | 'en-US' | 'ja-JP'
   sidebarWidth: number
   showWelcome: boolean
+  layout: GlobalLayoutSettings
 }
 
 interface ProjectEditorSettings {
@@ -234,9 +243,8 @@ interface ProjectSettings {
   highlight: ProjectHighlightSettings
   autoCreateVocabularyFile: boolean
   backup: ProjectBackupSettings
-  badgeVisibility: BadgeVisibility
-  badgeOrder: BadgeType[]
-  showHiddenFiles: boolean
+  expandedFolders: string[]
+  hiddenItems: string[]
 }
 
 interface BackupInfo {
@@ -955,6 +963,31 @@ const api = {
         ipcRenderer.invoke('settings:global:getSidebarWidth'),
       setSidebarWidth: (width: number) => 
         ipcRenderer.invoke('settings:global:setSidebarWidth', width),
+      // 布局设置
+      getLayout: (): Promise<GlobalLayoutSettings> => 
+        ipcRenderer.invoke('settings:global:getLayout'),
+      updateLayout: (layout: Partial<GlobalLayoutSettings>): Promise<GlobalLayoutSettings> => 
+        ipcRenderer.invoke('settings:global:updateLayout', layout),
+      getBadgeVisibility: (): Promise<BadgeVisibility> => 
+        ipcRenderer.invoke('settings:global:getBadgeVisibility'),
+      updateBadgeVisibility: (settings: Partial<BadgeVisibility>): Promise<BadgeVisibility> => 
+        ipcRenderer.invoke('settings:global:updateBadgeVisibility', settings),
+      getBadgeOrder: (): Promise<BadgeType[]> => 
+        ipcRenderer.invoke('settings:global:getBadgeOrder'),
+      updateBadgeOrder: (order: BadgeType[]): Promise<BadgeType[]> => 
+        ipcRenderer.invoke('settings:global:updateBadgeOrder', order),
+      getSidebarBadgeVisibility: (): Promise<SidebarBadgeVisibility> => 
+        ipcRenderer.invoke('settings:global:getSidebarBadgeVisibility'),
+      updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>): Promise<SidebarBadgeVisibility> => 
+        ipcRenderer.invoke('settings:global:updateSidebarBadgeVisibility', settings),
+      getSidebarBadgeOrder: (): Promise<string[]> => 
+        ipcRenderer.invoke('settings:global:getSidebarBadgeOrder'),
+      updateSidebarBadgeOrder: (order: string[]): Promise<string[]> => 
+        ipcRenderer.invoke('settings:global:updateSidebarBadgeOrder', order),
+      getShowHiddenFiles: (): Promise<boolean> => 
+        ipcRenderer.invoke('settings:global:getShowHiddenFiles'),
+      setShowHiddenFiles: (value: boolean): Promise<void> => 
+        ipcRenderer.invoke('settings:global:setShowHiddenFiles', value),
       // API Key 管理
       getApiKey: (keyName: string): Promise<string | null> => 
         ipcRenderer.invoke('settings:global:getApiKey', keyName),
@@ -983,41 +1016,19 @@ const api = {
       updateHighlight: (settings: Partial<ProjectHighlightSettings>): Promise<ProjectHighlightSettings> => 
         ipcRenderer.invoke('settings:project:updateHighlight', settings),
       getBackup: (): Promise<ProjectBackupSettings> =>
-              ipcRenderer.invoke('settings:project:getBackup'),
-            updateBackup: (settings: Partial<ProjectBackupSettings>): Promise<ProjectBackupSettings> =>
-              ipcRenderer.invoke('settings:project:updateBackup', settings),
-            getBadgeVisibility: (): Promise<BadgeVisibility> =>
-              ipcRenderer.invoke('settings:project:getBadgeVisibility'),
-            updateBadgeVisibility: (settings: Partial<BadgeVisibility>): Promise<BadgeVisibility> =>
-              ipcRenderer.invoke('settings:project:updateBadgeVisibility', settings),
-            getBadgeOrder: (): Promise<BadgeType[]> =>
-              ipcRenderer.invoke('settings:project:getBadgeOrder'),
-            setBadgeOrder: (order: BadgeType[]): Promise<BadgeType[]> =>
-              ipcRenderer.invoke('settings:project:updateBadgeOrder', order),
-            getShowHiddenFiles: (): Promise<boolean> =>
-              ipcRenderer.invoke('settings:project:getShowHiddenFiles'),
-            setShowHiddenFiles: (value: boolean): Promise<void> =>
-              ipcRenderer.invoke('settings:project:setShowHiddenFiles', value),
-            getExpandedFolders: (): Promise<string[]> =>
-              ipcRenderer.invoke('settings:project:getExpandedFolders'),
-            setExpandedFolders: (folders: string[]): Promise<void> =>
-              ipcRenderer.invoke('settings:project:setExpandedFolders', folders),
-            getHiddenItems: (): Promise<string[]> =>
-              ipcRenderer.invoke('settings:project:getHiddenItems'),
-            setHiddenItems: (items: string[]): Promise<void> =>
-              ipcRenderer.invoke('settings:project:setHiddenItems', items),
-            // 左侧边栏徽章入口可见性
-            getSidebarBadgeVisibility: (): Promise<SidebarBadgeVisibility> =>
-              ipcRenderer.invoke('settings:project:getSidebarBadgeVisibility'),
-            updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>): Promise<SidebarBadgeVisibility> =>
-              ipcRenderer.invoke('settings:project:updateSidebarBadgeVisibility', settings),
-            // 左侧边栏徽章入口排序
-            getSidebarBadgeOrder: (): Promise<string[]> =>
-              ipcRenderer.invoke('settings:project:getSidebarBadgeOrder'),
-            setSidebarBadgeOrder: (order: string[]): Promise<string[]> =>
-              ipcRenderer.invoke('settings:project:setSidebarBadgeOrder', order)
-          }
-        },  // 备份管理
+        ipcRenderer.invoke('settings:project:getBackup'),
+      updateBackup: (settings: Partial<ProjectBackupSettings>): Promise<ProjectBackupSettings> =>
+        ipcRenderer.invoke('settings:project:updateBackup', settings),
+      getExpandedFolders: (): Promise<string[]> =>
+        ipcRenderer.invoke('settings:project:getExpandedFolders'),
+      setExpandedFolders: (folders: string[]): Promise<void> =>
+        ipcRenderer.invoke('settings:project:setExpandedFolders', folders),
+      getHiddenItems: (): Promise<string[]> =>
+        ipcRenderer.invoke('settings:project:getHiddenItems'),
+      setHiddenItems: (items: string[]): Promise<void> =>
+        ipcRenderer.invoke('settings:project:setHiddenItems', items)
+    }
+  },  // 备份管理
   backup: {
     create: (): Promise<string | null> => ipcRenderer.invoke('backup:create'),
     list: (): Promise<BackupInfo[]> => ipcRenderer.invoke('backup:list'),

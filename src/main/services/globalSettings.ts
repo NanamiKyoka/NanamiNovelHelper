@@ -11,7 +11,14 @@ import {
   WindowState,
   GlobalThemeConfig,
   Language,
-  EncryptedKeys
+  EncryptedKeys,
+  GlobalLayoutSettings,
+  BadgeVisibility,
+  BadgeType,
+  SidebarBadgeVisibility,
+  DEFAULT_GLOBAL_LAYOUT_SETTINGS,
+  DEFAULT_BADGE_ORDER,
+  DEFAULT_SIDEBAR_BADGE_ORDER
 } from '../types/settings'
 
 /**
@@ -144,6 +151,126 @@ class GlobalSettingsService {
    */
   setShowWelcome(show: boolean): void {
     globalSettingsStore.set('showWelcome', show)
+  }
+
+  // 布局设置
+
+  /**
+   * 获取布局设置
+   */
+  getLayout(): GlobalLayoutSettings {
+    return globalSettingsStore.get('layout')
+  }
+
+  /**
+   * 更新布局设置
+   */
+  updateLayout(layout: Partial<GlobalLayoutSettings>): GlobalLayoutSettings {
+    const currentLayout = globalSettingsStore.get('layout')
+    const newLayout = { ...currentLayout, ...layout }
+    globalSettingsStore.set('layout', newLayout)
+    return newLayout
+  }
+
+  /**
+   * 获取徽章可见性
+   */
+  getBadgeVisibility(): BadgeVisibility {
+    return globalSettingsStore.get('layout').badgeVisibility
+  }
+
+  /**
+   * 更新徽章可见性
+   */
+  updateBadgeVisibility(settings: Partial<BadgeVisibility>): BadgeVisibility {
+    const layout = globalSettingsStore.get('layout')
+    const newBadgeVisibility = { ...layout.badgeVisibility, ...settings }
+    globalSettingsStore.set('layout', { ...layout, badgeVisibility: newBadgeVisibility })
+    return newBadgeVisibility
+  }
+
+  /**
+   * 获取徽章顺序
+   */
+  getBadgeOrder(): BadgeType[] {
+    return globalSettingsStore.get('layout').badgeOrder
+  }
+
+  /**
+   * 更新徽章顺序
+   */
+  updateBadgeOrder(order: BadgeType[]): BadgeType[] {
+    const layout = globalSettingsStore.get('layout')
+    const validatedOrder = this.validateBadgeOrder(order)
+    globalSettingsStore.set('layout', { ...layout, badgeOrder: validatedOrder })
+    return validatedOrder
+  }
+
+  /**
+   * 获取侧边栏徽章可见性
+   */
+  getSidebarBadgeVisibility(): SidebarBadgeVisibility {
+    return globalSettingsStore.get('layout').sidebarBadgeVisibility
+  }
+
+  /**
+   * 更新侧边栏徽章可见性
+   */
+  updateSidebarBadgeVisibility(settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility {
+    const layout = globalSettingsStore.get('layout')
+    const newVisibility = { ...layout.sidebarBadgeVisibility, ...settings }
+    globalSettingsStore.set('layout', { ...layout, sidebarBadgeVisibility: newVisibility })
+    return newVisibility
+  }
+
+  /**
+   * 获取侧边栏徽章顺序
+   */
+  getSidebarBadgeOrder(): string[] {
+    return globalSettingsStore.get('layout').sidebarBadgeOrder
+  }
+
+  /**
+   * 更新侧边栏徽章顺序
+   */
+  updateSidebarBadgeOrder(order: string[]): string[] {
+    const layout = globalSettingsStore.get('layout')
+    const validatedOrder = this.validateSidebarBadgeOrder(order)
+    globalSettingsStore.set('layout', { ...layout, sidebarBadgeOrder: validatedOrder })
+    return validatedOrder
+  }
+
+  /**
+   * 获取是否显示隐藏文件
+   */
+  getShowHiddenFiles(): boolean {
+    return globalSettingsStore.get('layout').showHiddenFiles
+  }
+
+  /**
+   * 设置是否显示隐藏文件
+   */
+  setShowHiddenFiles(show: boolean): void {
+    const layout = globalSettingsStore.get('layout')
+    globalSettingsStore.set('layout', { ...layout, showHiddenFiles: show })
+  }
+
+  /**
+   * 验证徽章顺序
+   */
+  private validateBadgeOrder(order: BadgeType[]): BadgeType[] {
+    const validOrder = order.filter((b) => DEFAULT_BADGE_ORDER.includes(b))
+    const missingBadges = DEFAULT_BADGE_ORDER.filter((b) => !validOrder.includes(b))
+    return [...validOrder, ...missingBadges]
+  }
+
+  /**
+   * 验证侧边栏徽章顺序
+   */
+  private validateSidebarBadgeOrder(order: string[]): string[] {
+    const validOrder = order.filter((b) => DEFAULT_SIDEBAR_BADGE_ORDER.includes(b))
+    const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter((b) => !validOrder.includes(b))
+    return [...validOrder, ...missingBadges]
   }
 
   // 敏感信息加密存储

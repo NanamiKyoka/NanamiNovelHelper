@@ -14,7 +14,7 @@ import { globalSettingsService } from '../services/globalSettings'
 import { projectSettingsService } from '../services/projectSettings'
 import { backupService } from '../services/backup'
 import { validateParams } from '../utils/validation'
-import type { GlobalSettings, ProjectSettings, BadgeVisibility, BadgeType, SidebarBadgeVisibility } from '../types/settings'
+import type { GlobalSettings, ProjectSettings, BadgeVisibility, BadgeType, SidebarBadgeVisibility, GlobalLayoutSettings } from '../types/settings'
 
 /**
  * 注册设置相关 IPC 处理器
@@ -72,6 +72,64 @@ export function registerSettingsHandlers(): void {
   ipcMain.handle('settings:global:setSidebarWidth', (_, width: number) => {
     validateParams('settings:global:setSidebarWidth').number(width, 'width').validate()
     globalSettingsService.setSidebarWidth(width)
+  })
+
+  // ============================================
+  // 全局布局设置
+  // ============================================
+
+  ipcMain.handle('settings:global:getLayout', (): GlobalLayoutSettings => {
+    return globalSettingsService.getLayout()
+  })
+
+  ipcMain.handle('settings:global:updateLayout', (_, layout: Partial<GlobalLayoutSettings>): GlobalLayoutSettings => {
+    validateParams('settings:global:updateLayout').object(layout, 'layout').validate()
+    return globalSettingsService.updateLayout(layout)
+  })
+
+  ipcMain.handle('settings:global:getBadgeVisibility', (): BadgeVisibility => {
+    return globalSettingsService.getBadgeVisibility()
+  })
+
+  ipcMain.handle('settings:global:updateBadgeVisibility', (_, settings: Partial<BadgeVisibility>): BadgeVisibility => {
+    validateParams('settings:global:updateBadgeVisibility').object(settings, 'settings').validate()
+    return globalSettingsService.updateBadgeVisibility(settings)
+  })
+
+  ipcMain.handle('settings:global:getBadgeOrder', (): BadgeType[] => {
+    return globalSettingsService.getBadgeOrder()
+  })
+
+  ipcMain.handle('settings:global:updateBadgeOrder', (_, order: BadgeType[]): BadgeType[] => {
+    validateParams('settings:global:updateBadgeOrder').array(order, 'order').validate()
+    return globalSettingsService.updateBadgeOrder(order)
+  })
+
+  ipcMain.handle('settings:global:getSidebarBadgeVisibility', (): SidebarBadgeVisibility => {
+    return globalSettingsService.getSidebarBadgeVisibility()
+  })
+
+  ipcMain.handle('settings:global:updateSidebarBadgeVisibility', (_, settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility => {
+    validateParams('settings:global:updateSidebarBadgeVisibility').object(settings, 'settings').validate()
+    return globalSettingsService.updateSidebarBadgeVisibility(settings)
+  })
+
+  ipcMain.handle('settings:global:getSidebarBadgeOrder', (): string[] => {
+    return globalSettingsService.getSidebarBadgeOrder()
+  })
+
+  ipcMain.handle('settings:global:updateSidebarBadgeOrder', (_, order: string[]): string[] => {
+    validateParams('settings:global:updateSidebarBadgeOrder').stringArray(order, 'order').validate()
+    return globalSettingsService.updateSidebarBadgeOrder(order)
+  })
+
+  ipcMain.handle('settings:global:getShowHiddenFiles', (): boolean => {
+    return globalSettingsService.getShowHiddenFiles()
+  })
+
+  ipcMain.handle('settings:global:setShowHiddenFiles', (_, value: boolean): void => {
+    validateParams('settings:global:setShowHiddenFiles').boolean(value, 'value').validate()
+    globalSettingsService.setShowHiddenFiles(value)
   })
 
   // ============================================
@@ -148,51 +206,6 @@ export function registerSettingsHandlers(): void {
   ipcMain.handle('settings:project:updateBackup', (_, settings) => {
     validateParams('settings:project:updateBackup').object(settings, 'settings').validate()
     return projectSettingsService.updateBackupSettings(settings)
-  })
-
-  ipcMain.handle('settings:project:getBadgeVisibility', (): BadgeVisibility => {
-    return projectSettingsService.getBadgeVisibility()
-  })
-
-  ipcMain.handle('settings:project:updateBadgeVisibility', (_, settings: Partial<BadgeVisibility>): BadgeVisibility => {
-    validateParams('settings:project:updateBadgeVisibility').object(settings, 'settings').validate()
-    return projectSettingsService.updateBadgeVisibility(settings)
-  })
-
-  ipcMain.handle('settings:project:getBadgeOrder', (): BadgeType[] => {
-    return projectSettingsService.getBadgeOrder()
-  })
-
-  ipcMain.handle('settings:project:updateBadgeOrder', (_, order: BadgeType[]): BadgeType[] => {
-    validateParams('settings:project:updateBadgeOrder').array(order, 'order').validate()
-    return projectSettingsService.updateBadgeOrder(order)
-  })
-
-  ipcMain.handle('settings:project:getSidebarBadgeVisibility', (): SidebarBadgeVisibility => {
-    return projectSettingsService.getSidebarBadgeVisibility()
-  })
-
-  ipcMain.handle('settings:project:updateSidebarBadgeVisibility', (_, settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility => {
-    validateParams('settings:project:updateSidebarBadgeVisibility').object(settings, 'settings').validate()
-    return projectSettingsService.updateSidebarBadgeVisibility(settings)
-  })
-
-  ipcMain.handle('settings:project:getSidebarBadgeOrder', (): string[] => {
-    return projectSettingsService.getSidebarBadgeOrder()
-  })
-
-  ipcMain.handle('settings:project:setSidebarBadgeOrder', (_, order: string[]): string[] => {
-    validateParams('settings:project:setSidebarBadgeOrder').stringArray(order, 'order').validate()
-    return projectSettingsService.setSidebarBadgeOrder(order)
-  })
-
-  ipcMain.handle('settings:project:getShowHiddenFiles', (): boolean => {
-    return projectSettingsService.getShowHiddenFiles()
-  })
-
-  ipcMain.handle('settings:project:setShowHiddenFiles', (_, value: boolean): void => {
-    validateParams('settings:project:setShowHiddenFiles').boolean(value, 'value').validate()
-    projectSettingsService.setShowHiddenFiles(value)
   })
 
   ipcMain.handle('settings:project:getExpandedFolders', (): string[] => {
@@ -291,6 +304,18 @@ export function unregisterSettingsHandlers(): void {
     'settings:global:setLanguage',
     'settings:global:getSidebarWidth',
     'settings:global:setSidebarWidth',
+    'settings:global:getLayout',
+    'settings:global:updateLayout',
+    'settings:global:getBadgeVisibility',
+    'settings:global:updateBadgeVisibility',
+    'settings:global:getBadgeOrder',
+    'settings:global:updateBadgeOrder',
+    'settings:global:getSidebarBadgeVisibility',
+    'settings:global:updateSidebarBadgeVisibility',
+    'settings:global:getSidebarBadgeOrder',
+    'settings:global:updateSidebarBadgeOrder',
+    'settings:global:getShowHiddenFiles',
+    'settings:global:setShowHiddenFiles',
     'settings:global:getApiKey',
     'settings:global:setApiKey',
     'settings:global:deleteApiKey',
@@ -306,16 +331,6 @@ export function unregisterSettingsHandlers(): void {
     'settings:project:updateHighlight',
     'settings:project:getBackup',
     'settings:project:updateBackup',
-    'settings:project:getBadgeVisibility',
-    'settings:project:updateBadgeVisibility',
-    'settings:project:getBadgeOrder',
-    'settings:project:updateBadgeOrder',
-    'settings:project:getSidebarBadgeVisibility',
-    'settings:project:updateSidebarBadgeVisibility',
-    'settings:project:getSidebarBadgeOrder',
-    'settings:project:setSidebarBadgeOrder',
-    'settings:project:getShowHiddenFiles',
-    'settings:project:setShowHiddenFiles',
     'settings:project:getExpandedFolders',
     'settings:project:setExpandedFolders',
     'settings:project:getHiddenItems',

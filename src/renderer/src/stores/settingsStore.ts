@@ -15,7 +15,8 @@ import type {
   ProjectBackupSettings,
   BackupInfo,
   BadgeVisibility,
-  SidebarBadgeVisibility
+  SidebarBadgeVisibility,
+  GlobalLayoutSettings
 } from '@shared/settings'
 import {
   DEFAULT_GLOBAL_SETTINGS,
@@ -40,6 +41,13 @@ interface SettingsState {
   setLanguage: (language: Language) => Promise<void>
   setSidebarWidth: (width: number) => Promise<void>
   setShowWelcome: (show: boolean) => Promise<void>
+  // 全局布局设置
+  updateLayoutSettings: (layout: Partial<GlobalLayoutSettings>) => Promise<void>
+  updateBadgeVisibility: (settings: Partial<BadgeVisibility>) => Promise<void>
+  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<void>
+  updateSidebarBadgeOrder: (order: string[]) => Promise<void>
+  setShowHiddenFiles: (show: boolean) => Promise<void>
+  // 项目设置
   initProjectSettings: () => Promise<void>
   clearProjectSettings: () => void
   updateProjectSettings: (settings: Partial<ProjectSettings>) => Promise<void>
@@ -47,12 +55,11 @@ interface SettingsState {
   updateEditorSettings: (settings: Partial<ProjectEditorSettings>) => Promise<void>
   updateHighlightSettings: (settings: Partial<ProjectHighlightSettings>) => Promise<void>
   updateBackupSettings: (settings: Partial<ProjectBackupSettings>) => Promise<void>
-  updateBadgeVisibility: (settings: Partial<BadgeVisibility>) => Promise<void>
-  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<void>
-  updateSidebarBadgeOrder: (order: string[]) => Promise<void>
+  // API Key
   getApiKey: (keyName: string) => Promise<string | null>
   setApiKey: (keyName: string, value: string) => Promise<void>
   deleteApiKey: (keyName: string) => Promise<void>
+  // 备份
   createBackup: () => Promise<string | null>
   listBackups: () => Promise<BackupInfo[]>
   restoreBackup: (filename: string) => Promise<boolean>
@@ -156,6 +163,62 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await get().updateGlobalSettings({ showWelcome })
   },
 
+  // 全局布局设置
+  updateLayoutSettings: async (layout) => {
+    try {
+      const newLayout = await window.electron.settings.global.updateLayout(layout)
+      const { globalSettings } = get()
+      set({ globalSettings: { ...globalSettings, layout: newLayout } })
+    } catch (error) {
+      console.error('Failed to update layout settings:', error)
+      throw error
+    }
+  },
+
+  updateBadgeVisibility: async (updates) => {
+    try {
+      const newBadgeVisibility = await window.electron.settings.global.updateBadgeVisibility(updates)
+      const { globalSettings } = get()
+      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, badgeVisibility: newBadgeVisibility } } })
+    } catch (error) {
+      console.error('Failed to update badge visibility:', error)
+      throw error
+    }
+  },
+
+  updateSidebarBadgeVisibility: async (updates) => {
+    try {
+      const newSidebarBadgeVisibility = await window.electron.settings.global.updateSidebarBadgeVisibility(updates)
+      const { globalSettings } = get()
+      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, sidebarBadgeVisibility: newSidebarBadgeVisibility } } })
+    } catch (error) {
+      console.error('Failed to update sidebar badge visibility:', error)
+      throw error
+    }
+  },
+
+  updateSidebarBadgeOrder: async (order) => {
+    try {
+      const newOrder = await window.electron.settings.global.updateSidebarBadgeOrder(order)
+      const { globalSettings } = get()
+      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, sidebarBadgeOrder: newOrder } } })
+    } catch (error) {
+      console.error('Failed to update sidebar badge order:', error)
+      throw error
+    }
+  },
+
+  setShowHiddenFiles: async (show) => {
+    try {
+      await window.electron.settings.global.setShowHiddenFiles(show)
+      const { globalSettings } = get()
+      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, showHiddenFiles: show } } })
+    } catch (error) {
+      console.error('Failed to set show hidden files:', error)
+      throw error
+    }
+  },
+
   initProjectSettings: async () => {
     set({ isLoading: true })
     try {
@@ -215,45 +278,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (!projectSettings) return
     const newBackup = { ...projectSettings.backup, ...updates }
     await get().updateProjectSettings({ backup: newBackup })
-  },
-
-  updateBadgeVisibility: async (updates) => {
-    try {
-      const newBadgeVisibility = await window.electron.settings.project.updateBadgeVisibility(updates)
-      const { projectSettings } = get()
-      if (projectSettings) {
-        set({ projectSettings: { ...projectSettings, badgeVisibility: newBadgeVisibility } })
-      }
-    } catch (error) {
-      console.error('Failed to update badge visibility:', error)
-      throw error
-    }
-  },
-
-  updateSidebarBadgeVisibility: async (updates) => {
-    try {
-      const newSidebarBadgeVisibility = await window.electron.settings.project.updateSidebarBadgeVisibility(updates)
-      const { projectSettings } = get()
-      if (projectSettings) {
-        set({ projectSettings: { ...projectSettings, sidebarBadgeVisibility: newSidebarBadgeVisibility } })
-      }
-    } catch (error) {
-      console.error('Failed to update sidebar badge visibility:', error)
-      throw error
-    }
-  },
-
-  updateSidebarBadgeOrder: async (order) => {
-    try {
-      await window.electron.settings.project.setSidebarBadgeOrder(order)
-      const { projectSettings } = get()
-      if (projectSettings) {
-        set({ projectSettings: { ...projectSettings, sidebarBadgeOrder: order } })
-      }
-    } catch (error) {
-      console.error('Failed to update sidebar badge order:', error)
-      throw error
-    }
   },
 
   getApiKey: async (keyName) => {

@@ -18,13 +18,7 @@ import {
   ProjectEditorSettings,
   ProjectHighlightSettings,
   ProjectBackupSettings,
-  BadgeVisibility,
-  BadgeType,
-  SidebarBadgeVisibility,
-  DEFAULT_PROJECT_SETTINGS,
-  DEFAULT_BADGE_ORDER,
-  DEFAULT_SIDEBAR_BADGE_VISIBILITY,
-  DEFAULT_SIDEBAR_BADGE_ORDER
+  DEFAULT_PROJECT_SETTINGS
 } from '../types/settings'
 import { PROJECT_META_DIR, PROJECT_SETTINGS_FILE } from '../types/project'
 import { createLogger } from '../utils/logger'
@@ -64,11 +58,6 @@ class ProjectSettingsService {
         highlight: { ...DEFAULT_PROJECT_SETTINGS.highlight, ...saved.highlight },
         autoCreateVocabularyFile: saved.autoCreateVocabularyFile ?? DEFAULT_PROJECT_SETTINGS.autoCreateVocabularyFile,
         backup: { ...DEFAULT_PROJECT_SETTINGS.backup, ...saved.backup },
-        badgeVisibility: { ...DEFAULT_PROJECT_SETTINGS.badgeVisibility, ...saved.badgeVisibility },
-        badgeOrder: this.validateBadgeOrder(saved.badgeOrder),
-        sidebarBadgeVisibility: { ...DEFAULT_SIDEBAR_BADGE_VISIBILITY, ...saved.sidebarBadgeVisibility },
-        sidebarBadgeOrder: this.validateSidebarBadgeOrder(saved.sidebarBadgeOrder),
-        showHiddenFiles: saved.showHiddenFiles ?? DEFAULT_PROJECT_SETTINGS.showHiddenFiles,
         expandedFolders: saved.expandedFolders ?? DEFAULT_PROJECT_SETTINGS.expandedFolders,
         hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
       }
@@ -76,28 +65,6 @@ class ProjectSettingsService {
       this.logger.error('加载项目设置失败', error)
       this.settings = { ...DEFAULT_PROJECT_SETTINGS }
     }
-  }
-
-  /**
-   * 验证徽章顺序：过滤无效类型 + 补充缺失徽章
-   * 确保旧配置不丢失，新徽章能自动出现
-   */
-  private validateBadgeOrder(order: unknown): BadgeType[] {
-    if (!Array.isArray(order)) {
-      return [...DEFAULT_BADGE_ORDER]
-    }
-    const validOrder = order.filter((b): b is BadgeType => DEFAULT_BADGE_ORDER.includes(b))
-    const missingBadges = DEFAULT_BADGE_ORDER.filter(b => !validOrder.includes(b))
-    return [...validOrder, ...missingBadges]
-  }
-
-  private validateSidebarBadgeOrder(order: unknown): string[] {
-    if (!Array.isArray(order)) {
-      return [...DEFAULT_SIDEBAR_BADGE_ORDER]
-    }
-    const validOrder = order.filter((b): b is string => DEFAULT_SIDEBAR_BADGE_ORDER.includes(b))
-    const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter(b => !validOrder.includes(b))
-    return [...validOrder, ...missingBadges]
   }
 
   private saveSettingsSync(): void {
@@ -138,11 +105,6 @@ class ProjectSettingsService {
     if (source.highlight) result.highlight = { ...target.highlight, ...source.highlight }
     if (source.backup) result.backup = { ...target.backup, ...source.backup }
     if (source.autoCreateVocabularyFile !== undefined) result.autoCreateVocabularyFile = source.autoCreateVocabularyFile
-    if (source.badgeVisibility) result.badgeVisibility = { ...target.badgeVisibility, ...source.badgeVisibility }
-    if (source.badgeOrder) result.badgeOrder = source.badgeOrder
-    if (source.sidebarBadgeVisibility) result.sidebarBadgeVisibility = { ...target.sidebarBadgeVisibility, ...source.sidebarBadgeVisibility }
-    if (source.sidebarBadgeOrder) result.sidebarBadgeOrder = source.sidebarBadgeOrder
-    if (source.showHiddenFiles !== undefined) result.showHiddenFiles = source.showHiddenFiles
     if (source.expandedFolders !== undefined) result.expandedFolders = source.expandedFolders
     if (source.hiddenItems !== undefined) result.hiddenItems = source.hiddenItems
     
@@ -212,34 +174,7 @@ class ProjectSettingsService {
     this.update({ autoCreateVocabularyFile: value })
   }
 
-  // 徽章设置
-  getBadgeVisibility(): BadgeVisibility {
-    return { ...this.settings.badgeVisibility }
-  }
-
-  updateBadgeVisibility(settings: Partial<BadgeVisibility>): BadgeVisibility {
-    const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
-    return this.update({ badgeVisibility: { ...currentSettings.badgeVisibility, ...settings } }).badgeVisibility
-  }
-
-  getBadgeOrder(): BadgeType[] {
-    return [...this.settings.badgeOrder]
-  }
-
-  updateBadgeOrder(order: BadgeType[]): BadgeType[] {
-    const validatedOrder = this.validateBadgeOrder(order)
-    return this.update({ badgeOrder: validatedOrder }).badgeOrder
-  }
-
   // 文件树设置
-  getShowHiddenFiles(): boolean {
-    return this.settings.showHiddenFiles
-  }
-
-  setShowHiddenFiles(value: boolean): void {
-    this.update({ showHiddenFiles: value })
-  }
-
   getExpandedFolders(): string[] {
     return [...this.settings.expandedFolders]
   }
@@ -254,25 +189,6 @@ class ProjectSettingsService {
 
   setHiddenItems(items: string[]): void {
     this.update({ hiddenItems: items })
-  }
-
-  // 左侧边栏徽章入口
-  getSidebarBadgeVisibility(): SidebarBadgeVisibility {
-    return { ...this.settings.sidebarBadgeVisibility }
-  }
-
-  updateSidebarBadgeVisibility(settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility {
-    const currentSettings = this.mergeSettings(this.settings, this.pendingChanges)
-    return this.update({ sidebarBadgeVisibility: { ...currentSettings.sidebarBadgeVisibility, ...settings } }).sidebarBadgeVisibility
-  }
-
-  getSidebarBadgeOrder(): string[] {
-    return [...this.settings.sidebarBadgeOrder]
-  }
-
-  setSidebarBadgeOrder(order: string[]): string[] {
-    const validatedOrder = this.validateSidebarBadgeOrder(order)
-    return this.update({ sidebarBadgeOrder: validatedOrder }).sidebarBadgeOrder
   }
 }
 

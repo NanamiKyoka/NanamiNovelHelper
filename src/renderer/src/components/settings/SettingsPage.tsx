@@ -10,7 +10,8 @@ import {
   ApiOutlined,
   DatabaseOutlined,
   CloudServerOutlined,
-  SearchOutlined
+  SearchOutlined,
+  EyeOutlined
 } from '@ant-design/icons'
 import AppearanceSettings from './AppearanceSettings'
 import { EditorSettings } from './EditorSettings'
@@ -20,17 +21,19 @@ import { ShortcutsSettings } from './ShortcutsSettings'
 import { ApiSettings } from './ApiSettings'
 import { BackupSettings } from './BackupSettings'
 import { DataManagementSettings } from './DataManagementSettings'
+import GlobalLayoutSettings from './GlobalLayoutSettings'
 import styles from './SettingsPage.module.css'
 
 const { Sider, Content } = Layout
 
 type SettingsKey = 
   | 'appearance' 
+  | 'layout'
   | 'shortcuts' 
   | 'api' 
   | 'data-management'
   | 'editor' 
-  | 'layout' 
+  | 'file-display' 
   | 'highlight' 
   | 'backup'
 
@@ -45,12 +48,13 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   // 全局设置
   { key: 'appearance', icon: <BgColorsOutlined />, label: '外观设置', group: 'global', keywords: ['主题', '颜色', '字体', '外观', 'theme', 'color'] },
+  { key: 'layout', icon: <LayoutOutlined />, label: '界面布局', group: 'global', keywords: ['布局', '徽章', '侧边栏', 'layout', 'badge', 'sidebar', '隐藏文件'] },
   { key: 'shortcuts', icon: <KeyOutlined />, label: '快捷键设置', group: 'global', keywords: ['快捷键', '热键', 'shortcut', 'hotkey'] },
   { key: 'api', icon: <ApiOutlined />, label: 'AI/API 设置', group: 'global', keywords: ['AI', 'API', '密钥', 'key', '人工智能'] },
   { key: 'data-management', icon: <DatabaseOutlined />, label: '数据管理', group: 'global', keywords: ['导入', '导出', '重置', '备份', 'import', 'export', 'reset'] },
   // 项目设置
   { key: 'editor', icon: <EditOutlined />, label: '编辑器设置', group: 'project', keywords: ['编辑器', '字体', '行高', 'editor', 'font'] },
-  { key: 'layout', icon: <LayoutOutlined />, label: '界面布局', group: 'project', keywords: ['布局', '徽章', '侧边栏', 'layout', 'badge'] },
+  { key: 'file-display', icon: <EyeOutlined />, label: '文件显示', group: 'project', keywords: ['隐藏', '文件', '过滤', 'hide', 'filter', '排除'] },
   { key: 'highlight', icon: <HighlightOutlined />, label: '词汇高亮', group: 'project', keywords: ['高亮', '词汇', '匹配', 'highlight', 'vocabulary'] },
   { key: 'backup', icon: <CloudServerOutlined />, label: '备份与恢复', group: 'project', keywords: ['备份', '恢复', 'backup', 'restore'] }
 ]
@@ -110,6 +114,16 @@ function SettingsPage(): JSX.Element {
             <AppearanceSettings />
           </div>
         )
+      case 'layout':
+        return (
+          <div className={styles.panel}>
+            <h2>界面布局</h2>
+            <p className={styles.description}>
+              调整界面布局偏好，包括徽章显示和文件可见性。这些设置将应用于所有项目。
+            </p>
+            <GlobalLayoutSettings />
+          </div>
+        )
       case 'shortcuts':
         return (
           <div className={styles.panel}>
@@ -150,12 +164,12 @@ function SettingsPage(): JSX.Element {
             <EditorSettings />
           </div>
         )
-      case 'layout':
+      case 'file-display':
         return (
           <div className={styles.panel}>
-            <h2>界面布局</h2>
+            <h2>文件显示</h2>
             <p className={styles.description}>
-              调整界面的布局方式，包括侧边栏位置、工具栏显示、徽章显示等。
+              配置当前项目的文件显示规则，如隐藏特定文件或文件夹。
             </p>
             <LayoutSettings />
           </div>

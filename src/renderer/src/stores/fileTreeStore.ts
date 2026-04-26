@@ -281,8 +281,8 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
     const { sortOptions } = get()
     set({ loading: true, error: null })
     try {
-      // 从设置中获取是否显示隐藏文件和隐藏项列表
-      const showHiddenFiles = await window.electron.settings.project.getShowHiddenFiles()
+      // 从全局设置中获取是否显示隐藏文件，从项目设置获取隐藏项列表
+      const showHiddenFiles = await window.electron.settings.global.getShowHiddenFiles()
       const hiddenItems = await window.electron.settings.project.getHiddenItems()
       const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
       

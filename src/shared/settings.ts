@@ -45,6 +45,28 @@ export const DEFAULT_WINDOW_STATE: WindowState = {
 
 export type Language = 'zh-CN' | 'en-US' | 'ja-JP'
 
+// ============ 全局布局设置 ============
+
+/**
+ * 全局布局设置
+ * 控制界面布局偏好，跨项目共享
+ */
+export interface GlobalLayoutSettings {
+  badgeVisibility: BadgeVisibility
+  badgeOrder: BadgeType[]
+  sidebarBadgeVisibility: SidebarBadgeVisibility
+  sidebarBadgeOrder: string[]
+  showHiddenFiles: boolean
+}
+
+export const DEFAULT_GLOBAL_LAYOUT_SETTINGS: GlobalLayoutSettings = {
+  badgeVisibility: DEFAULT_BADGE_VISIBILITY,
+  badgeOrder: DEFAULT_BADGE_ORDER,
+  sidebarBadgeVisibility: DEFAULT_SIDEBAR_BADGE_VISIBILITY,
+  sidebarBadgeOrder: DEFAULT_SIDEBAR_BADGE_ORDER,
+  showHiddenFiles: false
+}
+
 // ============ 全局设置 ============
 
 /**
@@ -60,6 +82,7 @@ export interface GlobalSettings {
   language: Language
   sidebarWidth: number
   showWelcome: boolean
+  layout: GlobalLayoutSettings
 }
 
 export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
@@ -67,7 +90,8 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   window: DEFAULT_WINDOW_STATE,
   language: 'zh-CN',
   sidebarWidth: 280,
-  showWelcome: true
+  showWelcome: true,
+  layout: DEFAULT_GLOBAL_LAYOUT_SETTINGS
 }
 
 // ============ 项目编辑器设置 ============
@@ -213,13 +237,8 @@ export interface ProjectSettings {
   highlight: ProjectHighlightSettings
   autoCreateVocabularyFile: boolean
   backup: ProjectBackupSettings
-  badgeVisibility: BadgeVisibility
-  badgeOrder: BadgeType[]
-  sidebarBadgeVisibility: SidebarBadgeVisibility
-  sidebarBadgeOrder: string[]
-  showHiddenFiles: boolean // 以.开头的文件/目录
-  expandedFolders: string[] // 文件树展开的文件夹路径
-  hiddenItems: string[] // 用户自定义隐藏的文件/文件夹（相对路径）
+  expandedFolders: string[]
+  hiddenItems: string[]
 }
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
@@ -227,11 +246,6 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   highlight: DEFAULT_PROJECT_HIGHLIGHT_SETTINGS,
   autoCreateVocabularyFile: false,
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
-  badgeVisibility: DEFAULT_BADGE_VISIBILITY,
-  badgeOrder: DEFAULT_BADGE_ORDER,
-  sidebarBadgeVisibility: DEFAULT_SIDEBAR_BADGE_VISIBILITY,
-  sidebarBadgeOrder: DEFAULT_SIDEBAR_BADGE_ORDER,
-  showHiddenFiles: false,
   expandedFolders: [],
   hiddenItems: []
 }

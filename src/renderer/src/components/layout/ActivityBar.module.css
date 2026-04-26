@@ -88,17 +88,9 @@
   font-size: 24px;
 }
 
-/* ========================================
-   拖拽相关样式（参考 VSCode）
-   ======================================== */
-
 /* 可拖拽元素 */
 .button[draggable="true"] {
   -webkit-user-drag: element;
-}
-
-.button[draggable="true"]:active {
-  cursor: grabbing;
 }
 
 /* 拖拽时的视觉反馈 */

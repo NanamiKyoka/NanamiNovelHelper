@@ -214,12 +214,21 @@ interface WindowState {
   height: number
 }
 
+interface GlobalLayoutSettings {
+  badgeVisibility: BadgeVisibility
+  badgeOrder: BadgeType[]
+  sidebarBadgeVisibility: SidebarBadgeVisibility
+  sidebarBadgeOrder: string[]
+  showHiddenFiles: boolean
+}
+
 interface GlobalSettings {
   theme: GlobalThemeConfig
   window: WindowState
   language: 'zh-CN' | 'en-US' | 'ja-JP'
   sidebarWidth: number
   showWelcome: boolean
+  layout: GlobalLayoutSettings
 }
 
 interface ProjectEditorSettings {
@@ -285,9 +294,6 @@ interface ProjectSettings {
   highlight: ProjectHighlightSettings
   autoCreateVocabularyFile: boolean
   backup: ProjectBackupSettings
-  badgeVisibility: BadgeVisibility
-  badgeOrder: BadgeType[]
-  showHiddenFiles: boolean
   expandedFolders: string[]
   hiddenItems: string[]
 }
