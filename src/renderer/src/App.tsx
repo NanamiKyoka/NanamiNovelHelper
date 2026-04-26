@@ -80,8 +80,8 @@ function App(): JSX.Element {
   const endLoading = useLoadingStore((s) => s.endLoading)
   
   // 徽章可见性设置
-  const projectSettings = useSettingsStore((state) => state.projectSettings)
-  const badgeVisibility = projectSettings?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
+  const globalSettings = useSettingsStore((state) => state.globalSettings)
+  const badgeVisibility = globalSettings.layout?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
 
   // 错误提示
   useEffect(() => {
