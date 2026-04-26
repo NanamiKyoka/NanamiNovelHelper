@@ -534,7 +534,7 @@ function FileTree(): JSX.Element {
   // 导出 .novel 文件为 TXT
   const handleExportNovel = useCallback(async (node: typeof flattenedNodes[0]['node']) => {
     try {
-      const content = await window.electron.file.readFile(node.path)
+      const content = await window.electron.file.read(node.path)
       if (!content) {
         message.warning('文件内容为空')
         return
