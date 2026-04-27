@@ -108,6 +108,12 @@ interface SequenceChartState {
   setCharts: (charts: SequenceChartMeta[]) => void
   // 排序方法
   reorderCharts: (chartIds: string[]) => Promise<boolean>
+
+  // 撤销重做
+  undo: () => void
+  redo: () => void
+  canUndo: () => boolean
+  canRedo: () => boolean
 }
 
 export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
@@ -137,6 +143,11 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   // 编辑状态
   editingEventId: null,
+
+  // 撤销重做
+  _history: [] as Array<{ events: SequenceEvent[] }>,
+  _historyIndex: -1,
+  _maxHistorySize: 50,
 
   // 事序图管理
   loadList: async () => {
@@ -253,6 +264,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return null
 
     try {
+      get()._pushHistory()
       const newEvent = await window.electron.sequenceChart.addEvent(currentChart.id, event)
       if (newEvent) {
         set((state) => ({
@@ -289,6 +301,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
+      get()._pushHistory()
       const updatedEvent = await window.electron.sequenceChart.updateEvent(
         currentChart.id,
         eventId,
@@ -318,6 +331,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
+      get()._pushHistory()
       const success = await window.electron.sequenceChart.deleteEvent(currentChart.id, eventId)
       if (success) {
         set((state) => ({
@@ -343,6 +357,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return 0
 
     try {
+      get()._pushHistory()
       const deletedCount = await window.electron.sequenceChart.batchDeleteEvents(
         currentChart.id,
         eventIds
@@ -845,7 +860,6 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const success = await window.electron.sequenceChart.reorderCharts(chartIds)
       if (success) {
-        // 根据 chartIds 的顺序更新本地状态
         set((state) => {
           const reorderedCharts = chartIds.map((id, index) => {
             const chart = state.charts.find((c) => c.id === id)
@@ -862,5 +876,47 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
       set({ error: errorMessage })
       return false
     }
+  },
+
+  _pushHistory: () => {
+    const { currentChart, _history, _historyIndex, _maxHistorySize } = get()
+    if (!currentChart) return
+    const snapshot = { events: JSON.parse(JSON.stringify(currentChart.events)) }
+    const newHistory = _history.slice(0, _historyIndex + 1)
+    newHistory.push(snapshot)
+    if (newHistory.length > _maxHistorySize) {
+      newHistory.shift()
+    }
+    set({ _history: newHistory, _historyIndex: newHistory.length - 1 })
+  },
+
+  undo: () => {
+    const { _history, _historyIndex, currentChart } = get()
+    if (_historyIndex < 0 || !currentChart) return
+    const snapshot = _history[_historyIndex]
+    set((state) => ({
+      currentChart: state.currentChart ? { ...state.currentChart, events: snapshot.events } : null,
+      _historyIndex: _historyIndex - 1,
+    }))
+  },
+
+  redo: () => {
+    const { _history, _historyIndex, currentChart } = get()
+    if (_historyIndex >= _history.length - 1 || !currentChart) return
+    const snapshot = _history[_historyIndex + 1]
+    set((state) => ({
+      currentChart: state.currentChart ? { ...state.currentChart, events: snapshot.events } : null,
+      _historyIndex: _historyIndex + 1,
+    }))
+  },
+
+  canUndo: () => {
+    const { _historyIndex } = get()
+    return _historyIndex >= 0
+  },
+
+  canRedo: () => {
+    const { _history, _historyIndex } = get()
+    return _historyIndex < _history.length - 1
   },
 }))

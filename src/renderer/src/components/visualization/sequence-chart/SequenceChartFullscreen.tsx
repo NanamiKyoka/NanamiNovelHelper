@@ -27,6 +27,8 @@ import {
   ExpandOutlined,
   EditOutlined,
   SearchOutlined,
+  UndoOutlined,
+  RedoOutlined,
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
@@ -57,6 +59,10 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     updateEventTime,
     updateAxisConfig,
     toggleLeftPanel,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useSequenceChartStore()
   
   const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
@@ -536,6 +542,18 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             e.preventDefault()
             message.success('已自动保存')
             break
+          case 'z':
+            e.preventDefault()
+            if (e.shiftKey) {
+              redo()
+            } else {
+              undo()
+            }
+            break
+          case 'y':
+            e.preventDefault()
+            redo()
+            break
         }
       } else {
         switch (e.key) {
@@ -562,7 +580,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [addModalVisible, editModalVisible, expandModalVisible, contextMenu.visible, editingEvent, message])
+  }, [addModalVisible, editModalVisible, expandModalVisible, contextMenu.visible, editingEvent, message, undo, redo])
 
   // 合并拖拽中的实时状态
   const displayEvents = currentChart.events.map(e => 
@@ -609,6 +627,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
           <h3 className={styles.chartTitle}>{currentChart.name}</h3>
         </div>
         <div className={styles.toolbarRight}>
+          <Button icon={<UndoOutlined />} disabled={!canUndo()} onClick={undo} />
+          <Button icon={<RedoOutlined />} disabled={!canRedo()} onClick={redo} />
           <Input
             placeholder="搜索事件..."
             prefix={<SearchOutlined />}
