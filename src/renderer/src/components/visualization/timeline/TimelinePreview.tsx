@@ -247,43 +247,6 @@ function TimelinePreview({
 
   // 导出用ref
   const contentRef = useRef<HTMLDivElement>(null)
-  const [nodePositions, setNodePositions] = useState<Map<string, DOMRect>>(new Map())
-
-  // 计算因果连线
-  const causalLines = useMemo(() => {
-    const lines: Array<{ from: DOMRect; to: DOMRect; label?: string }> = []
-    for (const node of sortedNodes) {
-      if (!node.causalLinks || node.causalLinks.length === 0) continue
-      const fromRect = nodePositions.get(node.id)
-      if (!fromRect) continue
-      for (const link of node.causalLinks) {
-        const toRect = nodePositions.get(link.targetId)
-        if (!toRect) continue
-        lines.push({ from: fromRect, to: toRect, label: link.label })
-      }
-    }
-    return lines
-  }, [sortedNodes, nodePositions])
-
-  // 更新节点位置
-  useEffect(() => {
-    if (!contentRef.current) return
-    const containerRect = contentRef.current.getBoundingClientRect()
-    const positions = new Map<string, DOMRect>()
-    for (const node of sortedNodes) {
-      const el = contentRef.current.querySelector(`[data-node-id="${node.id}"]`)
-      if (el) {
-        const rect = el.getBoundingClientRect()
-        positions.set(node.id, new DOMRect(
-          rect.left - containerRect.left,
-          rect.top - containerRect.top,
-          rect.width,
-          rect.height
-        ))
-      }
-    }
-    setNodePositions(positions)
-  }, [sortedNodes, isEditMode])
 
   // 导出为图片
   const handleExportImage = useCallback(async () => {
@@ -383,6 +346,43 @@ function TimelinePreview({
   const sortedNodes: TimelineNode[] = useMemo(() => {
     return currentTimeline ? [...currentTimeline.nodes].sort((a, b) => a.order - b.order) : []
   }, [currentTimeline])
+
+  // 因果连线相关
+  const [nodePositions, setNodePositions] = useState<Map<string, DOMRect>>(new Map())
+
+  const causalLines = useMemo(() => {
+    const lines: Array<{ from: DOMRect; to: DOMRect; label?: string }> = []
+    for (const node of sortedNodes) {
+      if (!node.causalLinks || node.causalLinks.length === 0) continue
+      const fromRect = nodePositions.get(node.id)
+      if (!fromRect) continue
+      for (const link of node.causalLinks) {
+        const toRect = nodePositions.get(link.targetId)
+        if (!toRect) continue
+        lines.push({ from: fromRect, to: toRect, label: link.label })
+      }
+    }
+    return lines
+  }, [sortedNodes, nodePositions])
+
+  useEffect(() => {
+    if (!contentRef.current) return
+    const containerRect = contentRef.current.getBoundingClientRect()
+    const positions = new Map<string, DOMRect>()
+    for (const node of sortedNodes) {
+      const el = contentRef.current.querySelector(`[data-node-id="${node.id}"]`)
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        positions.set(node.id, new DOMRect(
+          rect.left - containerRect.left,
+          rect.top - containerRect.top,
+          rect.width,
+          rect.height
+        ))
+      }
+    }
+    setNodePositions(positions)
+  }, [sortedNodes, isEditMode])
 
   // 行内快速编辑处理
   const handleStartEdit = useCallback((nodeId: string, field: 'title' | 'description') => {
