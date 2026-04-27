@@ -3,8 +3,8 @@
  * 以只读模式展示时间线，可进入编辑模式
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Typography, Button, Spin, App, Tag, Empty } from 'antd'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Typography, Button, Spin, App, Tag, Empty, Input } from 'antd'
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -48,6 +48,11 @@ interface SortableTimelineItemProps {
   index: number
   totalCount: number
   isEditMode: boolean
+  editingField: { nodeId: string; field: 'title' | 'description' } | null
+  onStartEdit: (nodeId: string, field: 'title' | 'description') => void
+  onFinishEdit: (nodeId: string, field: 'title' | 'description', value: string) => void
+  onEditChange: (value: string) => void
+  editValue: string
   formatTimeInfo: (timeInfo: TimeInfo) => string
   getTimeIcon: (format: string) => JSX.Element
 }
@@ -57,6 +62,11 @@ function SortableTimelineItem({
   index,
   totalCount,
   isEditMode,
+  editingField,
+  onStartEdit,
+  onFinishEdit,
+  onEditChange,
+  editValue,
   formatTimeInfo,
   getTimeIcon,
 }: SortableTimelineItemProps): JSX.Element {
@@ -94,9 +104,26 @@ function SortableTimelineItem({
         </div>
         <div className={styles.timelineContent}>
           <div className={styles.nodeHeader}>
-            <Text strong className={styles.nodeTitle}>
-              {node.title}
-            </Text>
+            {editingField?.nodeId === node.id && editingField.field === 'title' ? (
+              <Input
+                size="small"
+                value={editValue}
+                onChange={(e) => onEditChange(e.target.value)}
+                onBlur={() => onFinishEdit(node.id, 'title', editValue)}
+                onPressEnter={() => onFinishEdit(node.id, 'title', editValue)}
+                autoFocus
+                style={{ flex: 1, fontWeight: 600 }}
+              />
+            ) : (
+              <Text
+                strong
+                className={styles.nodeTitle}
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onStartEdit(node.id, 'title')}
+              >
+                {node.title}
+              </Text>
+            )}
             {node.timeInfo && (
               <div className={styles.nodeTime}>
                 {getTimeIcon(node.timeInfo.format)}
@@ -105,8 +132,27 @@ function SortableTimelineItem({
             )}
           </div>
 
-          {node.description && (
-            <div className={styles.nodeDescription}>{node.description}</div>
+          {editingField?.nodeId === node.id && editingField.field === 'description' ? (
+            <Input.TextArea
+              size="small"
+              value={editValue}
+              onChange={(e) => onEditChange(e.target.value)}
+              onBlur={() => onFinishEdit(node.id, 'description', editValue)}
+              onPressEnter={() => onFinishEdit(node.id, 'description', editValue)}
+              autoFocus
+              rows={2}
+              style={{ marginTop: 4 }}
+            />
+          ) : (
+            node.description && (
+              <div
+                className={styles.nodeDescription}
+                style={{ cursor: 'pointer' }}
+                onDoubleClick={() => onStartEdit(node.id, 'description')}
+              >
+                {node.description}
+              </div>
+            )
           )}
 
           {/* 关联角色 */}
@@ -157,10 +203,14 @@ function TimelinePreview({
 }: TimelinePreviewProps): JSX.Element {
   const { message } = App.useApp()
 
-  const { currentTimeline, isLoading, loadTimeline, updateNodesOrder } = useTimelineStore()
+  const { currentTimeline, isLoading, loadTimeline, updateNodesOrder, updateNode } = useTimelineStore()
 
   // 编辑模式状态
   const [isEditMode, setIsEditMode] = useState(false)
+
+  // 行内快速编辑状态
+  const [editingField, setEditingField] = useState<{ nodeId: string; field: 'title' | 'description' } | null>(null)
+  const [editValue, setEditValue] = useState('')
 
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -212,6 +262,36 @@ function TimelinePreview({
   const sortedNodes: TimelineNode[] = useMemo(() => {
     return currentTimeline ? [...currentTimeline.nodes].sort((a, b) => a.order - b.order) : []
   }, [currentTimeline])
+
+  // 行内快速编辑处理
+  const handleStartEdit = useCallback((nodeId: string, field: 'title' | 'description') => {
+    const node = sortedNodes.find(n => n.id === nodeId)
+    if (node) {
+      setEditingField({ nodeId, field })
+      setEditValue(field === 'title' ? node.title : (node.description || ''))
+    }
+  }, [sortedNodes])
+
+  const handleFinishEdit = useCallback(async (nodeId: string, field: 'title' | 'description', value: string) => {
+    if (editingField?.nodeId === nodeId && editingField.field === field) {
+      const trimmedValue = value.trim()
+      if (field === 'title' && !trimmedValue) {
+        message.warning('标题不能为空')
+        setEditingField(null)
+        return
+      }
+      const node = sortedNodes.find(n => n.id === nodeId)
+      if (node) {
+        const originalValue = field === 'title' ? node.title : (node.description || '')
+        if (trimmedValue !== originalValue) {
+          await updateNode(nodeId, { [field]: trimmedValue })
+          message.success('已更新')
+        }
+      }
+    }
+    setEditingField(null)
+    setEditValue('')
+  }, [editingField, sortedNodes, updateNode, message])
 
   // 拖拽开始
   const handleDragStart = useCallback((event: DragStartEvent): void => {
@@ -353,6 +433,11 @@ function TimelinePreview({
                     index={index}
                     totalCount={sortedNodes.length}
                     isEditMode={isEditMode}
+                    editingField={editingField}
+                    onStartEdit={handleStartEdit}
+                    onFinishEdit={handleFinishEdit}
+                    onEditChange={setEditValue}
+                    editValue={editValue}
                     formatTimeInfo={formatTimeInfo}
                     getTimeIcon={getTimeIcon}
                   />
