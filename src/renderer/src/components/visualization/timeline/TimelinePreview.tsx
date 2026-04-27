@@ -37,6 +37,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
+import { useEditorStore } from '@stores/editorStore'
+import { useUIStore } from '@stores/uiStore'
 import type { TimelineNode, TimeInfo } from '@renderer/types/timeline'
 import styles from './TimelinePreview.module.css'
 
@@ -53,6 +55,7 @@ interface SortableTimelineItemProps {
   onFinishEdit: (nodeId: string, field: 'title' | 'description', value: string) => void
   onEditChange: (value: string) => void
   editValue: string
+  onChapterClick: (path: string, title: string) => void
   formatTimeInfo: (timeInfo: TimeInfo) => string
   getTimeIcon: (format: string) => JSX.Element
 }
@@ -67,6 +70,7 @@ function SortableTimelineItem({
   onFinishEdit,
   onEditChange,
   editValue,
+  onChapterClick,
   formatTimeInfo,
   getTimeIcon,
 }: SortableTimelineItemProps): JSX.Element {
@@ -171,9 +175,14 @@ function SortableTimelineItem({
 
           {/* 关联章节 */}
           {node.chapter && (
-            <div className={styles.nodeChapter}>
+            <div
+              className={styles.nodeChapter}
+              style={{ cursor: 'pointer' }}
+              onClick={() => onChapterClick(node.chapter!.path, node.chapter!.title)}
+              title="点击跳转到章节"
+            >
               <FileTextOutlined />
-              <Text type="secondary">{node.chapter.title}</Text>
+              <Text type="secondary" style={{ textDecoration: 'underline' }}>{node.chapter.title}</Text>
             </div>
           )}
 
@@ -204,6 +213,18 @@ function TimelinePreview({
   const { message } = App.useApp()
 
   const { currentTimeline, isLoading, loadTimeline, updateNodesOrder, updateNode } = useTimelineStore()
+  const { openFile } = useEditorStore()
+  const { exitFullscreen } = useUIStore()
+
+  // 章节跳转处理
+  const handleChapterClick = useCallback(async (path: string, title: string) => {
+    try {
+      await openFile(path, title)
+      exitFullscreen()
+    } catch (error) {
+      message.error('无法打开章节文件')
+    }
+  }, [openFile, exitFullscreen, message])
 
   // 编辑模式状态
   const [isEditMode, setIsEditMode] = useState(false)
@@ -438,6 +459,7 @@ function TimelinePreview({
                     onFinishEdit={handleFinishEdit}
                     onEditChange={setEditValue}
                     editValue={editValue}
+                    onChapterClick={handleChapterClick}
                     formatTimeInfo={formatTimeInfo}
                     getTimeIcon={getTimeIcon}
                   />
