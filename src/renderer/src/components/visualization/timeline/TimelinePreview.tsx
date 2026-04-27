@@ -103,7 +103,10 @@ function SortableTimelineItem({
       )}
       <div className={styles.timelineItem}>
         <div className={styles.timelineLine}>
-          <div className={styles.timelineDot} style={{ backgroundColor: node.color || '#1890ff' }} />
+          <div
+            className={`${styles.timelineDot} ${node.isBranchPoint ? styles.branchDot : ''}`}
+            style={{ backgroundColor: node.color || '#1890ff' }}
+          />
           {index < totalCount - 1 && <div className={styles.timelineConnector} />}
         </div>
         <div className={styles.timelineContent}>
@@ -189,8 +192,15 @@ function SortableTimelineItem({
           {/* 分支标记 */}
           {node.isBranchPoint && node.branchedTimelineIds && node.branchedTimelineIds.length > 0 && (
             <div className={styles.branchMark}>
-              <BranchesOutlined />
-              <Text type="secondary">此处有 {node.branchedTimelineIds.length} 个分支</Text>
+              <BranchesOutlined style={{ color: '#722ed1' }} />
+              <Text style={{ color: '#722ed1' }}>
+                {node.branchedTimelineIds.length} 个分支
+              </Text>
+              {node.branchedTimelineIds.map((id, idx) => (
+                <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
+                  分支 {idx + 1}
+                </Tag>
+              ))}
             </div>
           )}
         </div>
