@@ -123,6 +123,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   // 批量选择状态
   const [selectedNodes, setSelectedNodes] = useState<string[]>([])
   const [isBatchMode, setIsBatchMode] = useState(false)
+  const lastSelectedNodeId = useRef<string | null>(null)
 
   // 拖拽状态
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
@@ -328,11 +329,28 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     setSelectedNodes([])
   }
 
-  // 选择/取消选择节点
-  const toggleNodeSelection = (nodeId: string) => {
+  // 选择/取消选择节点（支持Shift范围选择）
+  const toggleNodeSelection = (nodeId: string, shiftKey: boolean = false) => {
+    if (shiftKey && lastSelectedNodeId.current) {
+      const startIdx = sortedNodes.findIndex(n => n.id === lastSelectedNodeId.current)
+      const endIdx = sortedNodes.findIndex(n => n.id === nodeId)
+      if (startIdx !== -1 && endIdx !== -1) {
+        const [from, to] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx]
+        const rangeIds = sortedNodes.slice(from, to + 1).map(n => n.id)
+        setSelectedNodes(prev => {
+          const newSet = new Set(prev)
+          rangeIds.forEach(id => newSet.add(id))
+          return Array.from(newSet)
+        })
+        lastSelectedNodeId.current = nodeId
+        return
+      }
+    }
+
     setSelectedNodes((prev) =>
       prev.includes(nodeId) ? prev.filter((id) => id !== nodeId) : [...prev, nodeId]
     )
+    lastSelectedNodeId.current = nodeId
   }
 
   // 缩放控制
@@ -597,7 +615,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, node.id)}
                 onDragEnd={handleDragEnd}
-                onClick={() => isBatchMode && toggleNodeSelection(node.id)}
+                onClick={(e) => isBatchMode && toggleNodeSelection(node.id, e.shiftKey)}
                 onContextMenu={(e) => handleContextMenu(e, node)}
               >
                 <div className={styles.timelineLine}>
