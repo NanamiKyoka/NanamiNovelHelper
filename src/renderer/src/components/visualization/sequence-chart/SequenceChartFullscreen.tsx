@@ -73,6 +73,34 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     loadChart(chartId)
   }, [chartId, loadChart])
 
+  // 左右面板垂直滚动同步
+  useEffect(() => {
+    const leftEl = leftContentRef.current
+    const rightEl = timelineBodyRef.current
+    if (!leftEl || !rightEl) return
+
+    const syncLeftToRight = () => {
+      if (isSyncingScroll.current) return
+      isSyncingScroll.current = true
+      rightEl.scrollTop = leftEl.scrollTop
+      isSyncingScroll.current = false
+    }
+
+    const syncRightToLeft = () => {
+      if (isSyncingScroll.current) return
+      isSyncingScroll.current = true
+      leftEl.scrollTop = rightEl.scrollTop
+      isSyncingScroll.current = false
+    }
+
+    leftEl.addEventListener('scroll', syncLeftToRight)
+    rightEl.addEventListener('scroll', syncRightToLeft)
+    return () => {
+      leftEl.removeEventListener('scroll', syncLeftToRight)
+      rightEl.removeEventListener('scroll', syncRightToLeft)
+    }
+  }, [currentChart])
+
   // 弹窗状态
   const [addModalVisible, setAddModalVisible] = useState(false)
   const [editModalVisible, setEditModalVisible] = useState(false)
@@ -113,6 +141,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   })
 
   const timelineBodyRef = useRef<HTMLDivElement>(null)
+  const leftContentRef = useRef<HTMLDivElement>(null)
+  const isSyncingScroll = useRef(false)
   const cellWidth = 40
 
   // 添加事件
@@ -501,7 +531,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               <div className={styles.colIntro}>简介</div>
               <div className={styles.colProgress}>进度</div>
             </div>
-            <div className={styles.leftContent}>
+            <div className={styles.leftContent} ref={leftContentRef}>
               {currentChart.events.length === 0 ? (
                 <div className={styles.emptyEvents}>
                   <span>暂无事件</span>
