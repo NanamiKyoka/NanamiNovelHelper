@@ -520,6 +520,27 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     )
   }, [displayEvents, eventSearchKeyword])
 
+  // 时间冲突检测
+  const conflictEventIds = useMemo(() => {
+    const conflicts = new Set<string>()
+    const events = displayEvents
+    for (let i = 0; i < events.length; i++) {
+      for (let j = i + 1; j < events.length; j++) {
+        const a = events[i]
+        const b = events[j]
+        const aStart = a.timeInfo.cellStart
+        const aEnd = a.timeInfo.cellEnd
+        const bStart = b.timeInfo.cellStart
+        const bEnd = b.timeInfo.cellEnd
+        if (aStart <= bEnd && bStart <= aEnd) {
+          conflicts.add(a.id)
+          conflicts.add(b.id)
+        }
+      }
+    }
+    return conflicts
+  }, [displayEvents])
+
   return (
     <div className={styles.container}>
       {/* 工具栏 */}
@@ -606,9 +627,9 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               <div className={styles.eventsLayer}>
                 {filteredEvents.map(event => (
                   <div key={event.id} className={styles.eventBarContainer} style={{ height: `${40 + (eventLanes.get(event.id) || 0) * 20}px` }}>
-                    <Tooltip title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`} placement="top">
+                    <Tooltip title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})${conflictEventIds.has(event.id) ? ' ⚠ 时间冲突' : ''}`} placement="top">
                       <div
-                        className={`${styles.eventBar} ${draggingEvent?.id === event.id ? styles.dragging : ''}`}
+                        className={`${styles.eventBar} ${draggingEvent?.id === event.id ? styles.dragging : ''} ${conflictEventIds.has(event.id) ? styles.conflict : ''}`}
                         style={getEventBarStyle(event, eventLanes.get(event.id) || 0)}
                         onContextMenu={(e) => handleEventContextMenu(e, event)}
                       >
