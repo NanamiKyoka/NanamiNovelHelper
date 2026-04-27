@@ -208,6 +208,13 @@
   gap: 6px;
 }
 
+.nodeTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--spacing-3);
+}
+
 .nodeChapter {
   display: flex;
   align-items: center;

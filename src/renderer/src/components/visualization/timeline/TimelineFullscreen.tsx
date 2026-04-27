@@ -293,6 +293,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         color: nodeEdit.node.color || '#1890ff',
         order: nodeEdit.node.order || 0,
         isBranchPoint: nodeEdit.node.isBranchPoint,
+        tags: nodeEdit.node.tags,
       })
     } else if (nodeEdit.node.id) {
       await updateNode(nodeEdit.node.id, nodeEdit.node as Partial<TimelineNode>)
@@ -722,6 +723,14 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                     </div>
                   )}
 
+                  {node.tags && node.tags.length > 0 && (
+                    <div className={styles.nodeTags}>
+                      {node.tags.map((tag) => (
+                        <Tag key={tag} color="blue" style={{ fontSize: 11 }}>{tag}</Tag>
+                      ))}
+                    </div>
+                  )}
+
                   {node.chapter && (
                     <div className={styles.nodeChapter}>
                       <FileTextOutlined />
@@ -871,6 +880,23 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                 .flat()
                 .map((e) => ({ label: e.name, value: e.id }))}
               style={{ width: '100%' }}
+            />
+          </div>
+
+          <div className={styles.formItem}>
+            <label className={styles.formLabel}>标签</label>
+            <Select
+              mode="tags"
+              placeholder="输入标签后按回车添加"
+              value={nodeEdit.node?.tags || []}
+              onChange={(tags) =>
+                setNodeEdit((prev) => ({
+                  ...prev,
+                  node: { ...prev.node, tags },
+                }))
+              }
+              style={{ width: '100%' }}
+              tokenSeparators={[',']}
             />
           </div>
 
