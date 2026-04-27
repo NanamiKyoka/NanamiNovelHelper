@@ -521,14 +521,6 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     ))
   }
 
-  if (isLoading) {
-    return <div className={styles.container}><div className={styles.loading}><Spin size="large" /></div></div>
-  }
-
-  if (!currentChart) {
-    return <div className={styles.container}><div className={styles.emptyState}><span>事序图不存在</span><Button onClick={onBack}>返回列表</Button></div></div>
-  }
-
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -581,6 +573,14 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [addModalVisible, editModalVisible, expandModalVisible, contextMenu.visible, editingEvent, message, undo, redo])
+
+  if (isLoading) {
+    return <div className={styles.container}><div className={styles.loading}><Spin size="large" /></div></div>
+  }
+
+  if (!currentChart) {
+    return <div className={styles.container}><div className={styles.emptyState}><span>事序图不存在</span><Button onClick={onBack}>返回列表</Button></div></div>
+  }
 
   // 合并拖拽中的实时状态
   const displayEvents = currentChart.events.map(e => 
