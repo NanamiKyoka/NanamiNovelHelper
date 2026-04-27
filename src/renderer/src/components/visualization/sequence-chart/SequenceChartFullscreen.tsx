@@ -241,16 +241,49 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   }, [dragType, draggingEvent, dragStartX, originalStart, originalEnd, hasMoved, currentChart, cellWidth, updateEventTime, message])
 
   // 获取事件条样式
-  const getEventBarStyle = useCallback((event: SequenceEvent): React.CSSProperties => {
+  const getEventBarStyle = useCallback((event: SequenceEvent, lane: number = 0): React.CSSProperties => {
     const start = event.timeInfo.cellStart || 1
     const end = event.timeInfo.cellEnd || 10
     const color = event.color || '#409EFF'
     return {
       left: `${(start - 1) * cellWidth}px`,
       width: `${(end - start + 1) * cellWidth}px`,
+      top: `${2 + lane * 20}px`,
+      height: lane > 0 ? '18px' : '36px',
       background: `linear-gradient(135deg, ${color} 0%, ${adjustBrightness(color, -20)} 100%)`,
     }
   }, [cellWidth])
+
+  // 计算重叠事件的层级分配
+  const eventLanes = useMemo(() => {
+    if (!currentChart) return new Map<string, number>()
+    const lanes = new Map<string, number>()
+    const sorted = [...currentChart.events].sort((a, b) => {
+      const aStart = a.timeInfo.cellStart || 1
+      const bStart = b.timeInfo.cellStart || 1
+      return aStart - bStart || (a.timeInfo.cellEnd || 1) - (b.timeInfo.cellEnd || 1)
+    })
+    const laneEnds: number[] = []
+
+    for (const event of sorted) {
+      const start = event.timeInfo.cellStart || 1
+      let assignedLane = -1
+      for (let i = 0; i < laneEnds.length; i++) {
+        if (laneEnds[i] < start) {
+          assignedLane = i
+          break
+        }
+      }
+      if (assignedLane === -1) {
+        assignedLane = laneEnds.length
+        laneEnds.push(0)
+      }
+      lanes.set(event.id, assignedLane)
+      laneEnds[assignedLane] = event.timeInfo.cellEnd || 1
+    }
+
+    return lanes
+  }, [currentChart])
 
   // 调整颜色亮度
   const adjustBrightness = (hex: string, percent: number): string => {
@@ -472,11 +505,11 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               {/* 事件条层 */}
               <div className={styles.eventsLayer}>
                 {displayEvents.map(event => (
-                  <div key={event.id} className={styles.eventBarContainer}>
+                  <div key={event.id} className={styles.eventBarContainer} style={{ height: `${40 + (eventLanes.get(event.id) || 0) * 20}px` }}>
                     <Tooltip title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`} placement="top">
                       <div
                         className={`${styles.eventBar} ${draggingEvent?.id === event.id ? styles.dragging : ''}`}
-                        style={getEventBarStyle(event)}
+                        style={getEventBarStyle(event, eventLanes.get(event.id) || 0)}
                         onContextMenu={(e) => handleEventContextMenu(e, event)}
                       >
                         {draggingEvent?.id === event.id && (
