@@ -110,31 +110,6 @@
   composes: emptyIcon from '../common.module.css';
 }
 
-/* 右键菜单样式 */
-.contextMenu {
-  composes: contextMenu from '../common.module.css';
-}
-
-.contextMenuItem {
-  composes: contextMenuItem from '../common.module.css';
-}
-
-.contextMenuItemDanger {
-  composes: contextMenuItemDanger from '../common.module.css';
-}
-
-.contextMenuDivider {
-  composes: contextMenuDivider from '../common.module.css';
-}
-
-.contextMenuSubmenu {
-  composes: contextMenuSubmenu from '../common.module.css';
-}
-
-.contextMenuSubmenuItems {
-  composes: contextMenuSubmenuItems from '../common.module.css';
-}
-
 /* 创建模态框 */
 .modalContent {
   composes: modalContent from '../common.module.css';

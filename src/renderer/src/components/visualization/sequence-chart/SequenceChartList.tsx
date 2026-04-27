@@ -3,7 +3,7 @@
  * 展示所有事序图，支持创建、编辑、删除、导入导出、拖拽排序
  */
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Typography,
   Button,
@@ -13,7 +13,9 @@ import {
   Input,
   Spin,
   Tag,
+  Dropdown,
 } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -53,7 +55,6 @@ interface SequenceChartListProps {
   onCreateChart?: () => void
 }
 
-// 右键菜单状态
 interface ContextMenuState {
   visible: boolean
   x: number
@@ -61,7 +62,6 @@ interface ContextMenuState {
   chart: SequenceChartMeta | null
 }
 
-// 可排序的卡片组件
 interface SortableCardProps {
   chart: SequenceChartMeta
   getLocalUrl: (filePath: string) => string
@@ -113,7 +113,6 @@ function SortableCard({
           ) : (
             <TableOutlined className={styles.thumbnailPlaceholder} />
           )}
-          {/* 拖拽手柄 */}
           <div
             className={styles.dragHandle}
             {...attributes}
@@ -151,9 +150,6 @@ function SortableCard({
   )
 }
 
-/**
- * 事序图列表组件
- */
 function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: SequenceChartListProps): JSX.Element {
   const {
     charts,
@@ -168,13 +164,11 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
   } = useSequenceChartStore()
   const { message, modal } = App.useApp()
 
-  // 创建模态框状态
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [newChartName, setNewChartName] = useState('')
   const [newChartDescription, setNewChartDescription] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
-  // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -182,9 +176,6 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     chart: null,
   })
 
-  const contextMenuRef = useRef<HTMLDivElement>(null)
-
-  // DnD 传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -196,38 +187,20 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     })
   )
 
-  // 按 order 排序的图表列表
   const sortedCharts = useMemo(() => {
     return [...charts].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [charts])
 
-  // 加载列表
   useEffect(() => {
     loadList()
   }, [loadList])
 
-  // 将本地路径转换为 local:// URL
   const getLocalUrl = (filePath: string): string => {
     const normalizedPath = filePath.replace(/\\/g, '/')
     const encodedPath = encodeURIComponent(normalizedPath)
     return `local://file/${encodedPath}`
   }
 
-  // 点击外部关闭右键菜单
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu((prev) => ({ ...prev, visible: false }))
-      }
-    }
-
-    if (contextMenu.visible) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [contextMenu.visible])
-
-  // 处理右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent, chart: SequenceChartMeta) => {
     e.preventDefault()
     setContextMenu({
@@ -238,19 +211,16 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     })
   }, [])
 
-  // 打开图表
   const handleOpenChart = useCallback((chartId: string) => {
     if (onOpenChart) {
       onOpenChart(chartId)
     }
   }, [onOpenChart])
 
-  // 双击打开
   const handleDoubleClick = (chartId: string) => {
     handleOpenChart(chartId)
   }
 
-  // 创建新事序图
   const handleCreate = async () => {
     if (!newChartName.trim()) {
       message.warning('请输入事序图名称')
@@ -268,7 +238,6 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
         setCreateModalVisible(false)
         setNewChartName('')
         setNewChartDescription('')
-        // 创建后打开编辑
         if (onOpenChart) {
           onOpenChart(chart.id)
         }
@@ -278,7 +247,6 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     }
   }
 
-  // 删除事序图
   const handleDelete = (chart: SequenceChartMeta) => {
     setContextMenu((prev) => ({ ...prev, visible: false }))
     modal.confirm({
@@ -298,7 +266,6 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     })
   }
 
-  // 导出事序图
   const handleExport = async (chart: SequenceChartMeta, format: 'json' | 'markdown' = 'json') => {
     try {
       const filePath = await window.electron.sequenceChart.showExportDialog(chart.name, format)
@@ -318,7 +285,6 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     setContextMenu((prev) => ({ ...prev, visible: false }))
   }
 
-  // 导入事序图
   const handleImport = async () => {
     try {
       const filePath = await window.electron.sequenceChart.showImportDialog()
@@ -336,7 +302,48 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     }
   }
 
-  // 拖拽结束
+  const getContextMenuItems = useCallback((): MenuProps['items'] => {
+    const chart = contextMenu.chart
+    if (!chart) return []
+
+    return [
+      {
+        key: 'edit',
+        icon: <EditOutlined />,
+        label: '编辑',
+        onClick: () => {
+          handleOpenChart(chart.id)
+          setContextMenu((prev) => ({ ...prev, visible: false }))
+        },
+      },
+      {
+        key: 'export',
+        icon: <ExportOutlined />,
+        label: '导出',
+        children: [
+          {
+            key: 'export-json',
+            label: '导出为 JSON',
+            onClick: () => handleExport(chart, 'json'),
+          },
+          {
+            key: 'export-markdown',
+            label: '导出为 Markdown',
+            onClick: () => handleExport(chart, 'markdown'),
+          },
+        ],
+      },
+      { type: 'divider' },
+      {
+        key: 'delete',
+        icon: <DeleteOutlined />,
+        label: '删除',
+        danger: true,
+        onClick: () => handleDelete(chart),
+      },
+    ]
+  }, [contextMenu.chart, handleOpenChart, handleExport, handleDelete])
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event
@@ -346,11 +353,9 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
         const newIndex = sortedCharts.findIndex((c) => c.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
-          // 乐观更新：先本地排序
           const newCharts = arrayMove(sortedCharts, oldIndex, newIndex)
           const newChartIds = newCharts.map((c) => c.id)
 
-          // 保存到后端
           const success = await reorderCharts(newChartIds)
           if (!success) {
             message.error('排序保存失败')
@@ -418,51 +423,24 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
         )}
       </div>
 
-      {/* 右键菜单 */}
-      {contextMenu.visible && contextMenu.chart && (
-        <div
-          ref={contextMenuRef}
-          className={styles.contextMenu}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          <div
-            className={styles.contextMenuItem}
-            onClick={() => {
-              handleOpenChart(contextMenu.chart!.id)
-              setContextMenu((prev) => ({ ...prev, visible: false }))
-            }}
-          >
-            <EditOutlined />
-            <span>编辑</span>
-          </div>
-          <div className={styles.contextMenuSubmenu}>
-            <ExportOutlined />
-            <span>导出</span>
-            <div className={styles.contextMenuSubmenuItems}>
-              <div
-                className={styles.contextMenuItem}
-                onClick={() => handleExport(contextMenu.chart!, 'json')}
-              >
-                导出为 JSON
-              </div>
-              <div
-                className={styles.contextMenuItem}
-                onClick={() => handleExport(contextMenu.chart!, 'markdown')}
-              >
-                导出为 Markdown
-              </div>
-            </div>
-          </div>
-          <div className={styles.contextMenuDivider} />
-          <div
-            className={`${styles.contextMenuItem} ${styles.contextMenuItemDanger}`}
-            onClick={() => handleDelete(contextMenu.chart!)}
-          >
-            <DeleteOutlined />
-            <span>删除</span>
-          </div>
-        </div>
-      )}
+      {/* 右键菜单 - 使用 Ant Design Dropdown */}
+      <Dropdown
+        menu={{ items: getContextMenuItems() }}
+        open={contextMenu.visible}
+        onOpenChange={(open) => {
+          if (!open) {
+            setContextMenu((prev) => ({ ...prev, visible: false }))
+          }
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+          zIndex: 1050,
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
 
       {/* 创建模态框 */}
       <Modal

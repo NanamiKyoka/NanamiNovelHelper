@@ -13,7 +13,9 @@ import {
   Input,
   Spin,
   Tag,
+  Dropdown,
 } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -53,7 +55,6 @@ interface TimelineListProps {
   onSelectTimeline: (timelineId: string) => void
 }
 
-// 右键菜单位置
 interface ContextMenuState {
   visible: boolean
   x: number
@@ -61,7 +62,6 @@ interface ContextMenuState {
   timeline: TimelineMeta | null
 }
 
-// 可排序的卡片组件
 interface SortableCardProps {
   timeline: TimelineMeta
   onContextMenu: (e: React.MouseEvent, timeline: TimelineMeta) => void
@@ -115,7 +115,6 @@ function SortableCard({
           ) : (
             <ClockCircleOutlined className={styles.thumbnailPlaceholder} />
           )}
-          {/* 拖拽手柄 */}
           <div
             className={styles.dragHandle}
             {...attributes}
@@ -157,13 +156,11 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     reorderTimelines,
   } = useTimelineStore()
 
-  // 创建模态框状态
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [newTimelineName, setNewTimelineName] = useState('')
   const [newTimelineDescription, setNewTimelineDescription] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
-  // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
     x: 0,
@@ -171,9 +168,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     timeline: null,
   })
 
-  const contextMenuRef = useRef<HTMLDivElement>(null)
-
-  // DnD 传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -185,33 +179,16 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     })
   )
 
-  // 加载列表
   useEffect(() => {
     loadList()
   }, [loadList])
 
-  // 将本地路径转换为 local:// URL
   const getLocalUrl = (filePath: string): string => {
     const normalizedPath = filePath.replace(/\\/g, '/')
     const encodedPath = encodeURIComponent(normalizedPath)
     return `local://file/${encodedPath}`
   }
 
-  // 点击外部关闭右键菜单
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu((prev) => ({ ...prev, visible: false }))
-      }
-    }
-
-    if (contextMenu.visible) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [contextMenu.visible])
-
-  // 处理右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent, timeline: TimelineMeta) => {
     e.preventDefault()
     setContextMenu({
@@ -222,7 +199,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     })
   }, [])
 
-  // 创建新时间线
   const handleCreate = async () => {
     if (!newTimelineName.trim()) {
       message.warning('请输入时间线名称')
@@ -247,7 +223,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     }
   }
 
-  // 删除时间线
   const handleDelete = (timeline: TimelineMeta) => {
     setContextMenu((prev) => ({ ...prev, visible: false }))
     modal.confirm({
@@ -271,7 +246,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     })
   }
 
-  // 导出时间线
   const handleExport = async (timeline: TimelineMeta, format: 'json' | 'markdown' = 'json') => {
     try {
       const filePath = await window.electron.timeline.showExportDialog(timeline.name, format)
@@ -291,7 +265,6 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     setContextMenu((prev) => ({ ...prev, visible: false }))
   }
 
-  // 导入时间线
   const handleImport = async () => {
     try {
       const filePath = await window.electron.timeline.showImportDialog()
@@ -309,12 +282,10 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     }
   }
 
-  // 双击打开
   const handleDoubleClick = (timelineId: string) => {
     onSelectTimeline(timelineId)
   }
 
-  // 获取分支类型标签
   const getBranchTypeTag = (timeline: TimelineMeta) => {
     if (timeline.branchInfo.type === 'branch') {
       return (
@@ -326,7 +297,48 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     return null
   }
 
-  // 拖拽结束
+  const getContextMenuItems = useCallback((): MenuProps['items'] => {
+    const timeline = contextMenu.timeline
+    if (!timeline) return []
+
+    return [
+      {
+        key: 'edit',
+        icon: <EditOutlined />,
+        label: '编辑',
+        onClick: () => {
+          onSelectTimeline(timeline.id)
+          setContextMenu((prev) => ({ ...prev, visible: false }))
+        },
+      },
+      {
+        key: 'export',
+        icon: <ExportOutlined />,
+        label: '导出',
+        children: [
+          {
+            key: 'export-json',
+            label: '导出为 JSON',
+            onClick: () => handleExport(timeline, 'json'),
+          },
+          {
+            key: 'export-markdown',
+            label: '导出为 Markdown',
+            onClick: () => handleExport(timeline, 'markdown'),
+          },
+        ],
+      },
+      { type: 'divider' },
+      {
+        key: 'delete',
+        icon: <DeleteOutlined />,
+        label: '删除',
+        danger: true,
+        onClick: () => handleDelete(timeline),
+      },
+    ]
+  }, [contextMenu.timeline, onSelectTimeline, handleExport, handleDelete])
+
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       const { active, over } = event
@@ -336,11 +348,9 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
         const newIndex = timelines.findIndex((t) => t.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
-          // 乐观更新：先本地排序
           const newTimelines = arrayMove(timelines, oldIndex, newIndex)
           const newTimelineIds = newTimelines.map((t) => t.id)
 
-          // 保存到后端
           const success = await reorderTimelines(newTimelineIds)
           if (!success) {
             message.error('排序保存失败')
@@ -406,51 +416,24 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
         )}
       </div>
 
-      {/* 右键菜单 */}
-      {contextMenu.visible && contextMenu.timeline && (
-        <div
-          ref={contextMenuRef}
-          className={styles.contextMenu}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          <div
-            className={styles.contextMenuItem}
-            onClick={() => {
-              onSelectTimeline(contextMenu.timeline!.id)
-              setContextMenu((prev) => ({ ...prev, visible: false }))
-            }}
-          >
-            <EditOutlined />
-            <span>编辑</span>
-          </div>
-          <div className={styles.contextMenuSubmenu}>
-            <ExportOutlined />
-            <span>导出</span>
-            <div className={styles.contextMenuSubmenuItems}>
-              <div
-                className={styles.contextMenuItem}
-                onClick={() => handleExport(contextMenu.timeline!, 'json')}
-              >
-                导出为 JSON
-              </div>
-              <div
-                className={styles.contextMenuItem}
-                onClick={() => handleExport(contextMenu.timeline!, 'markdown')}
-              >
-                导出为 Markdown
-              </div>
-            </div>
-          </div>
-          <div className={styles.contextMenuDivider} />
-          <div
-            className={`${styles.contextMenuItem} ${styles.contextMenuItemDanger}`}
-            onClick={() => handleDelete(contextMenu.timeline!)}
-          >
-            <DeleteOutlined />
-            <span>删除</span>
-          </div>
-        </div>
-      )}
+      {/* 右键菜单 - 使用 Ant Design Dropdown */}
+      <Dropdown
+        menu={{ items: getContextMenuItems() }}
+        open={contextMenu.visible}
+        onOpenChange={(open) => {
+          if (!open) {
+            setContextMenu((prev) => ({ ...prev, visible: false }))
+          }
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+          zIndex: 1050,
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
 
       {/* 创建模态框 */}
       <Modal
