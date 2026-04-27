@@ -362,6 +362,47 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     return <div className={styles.container}><div className={styles.emptyState}><span>事序图不存在</span><Button onClick={onBack}>返回列表</Button></div></div>
   }
 
+  // 键盘快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      if (isInputFocused) return
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 's':
+            e.preventDefault()
+            message.success('已自动保存')
+            break
+        }
+      } else {
+        switch (e.key) {
+          case 'Escape':
+            if (addModalVisible) {
+              setAddModalVisible(false)
+              resetAddForm()
+            } else if (editModalVisible) {
+              setEditModalVisible(false)
+              setEditingEvent(null)
+            } else if (expandModalVisible) {
+              setExpandModalVisible(false)
+            } else if (contextMenu.visible) {
+              setContextMenu(prev => ({ ...prev, visible: false }))
+            }
+            break
+          case 'Delete':
+          case 'Backspace':
+            if (editingEvent && editModalVisible) return
+            break
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [addModalVisible, editModalVisible, expandModalVisible, contextMenu.visible, editingEvent, message])
+
   // 合并拖拽中的实时状态
   const displayEvents = currentChart.events.map(e => 
     draggingEvent?.id === e.id ? draggingEvent : e

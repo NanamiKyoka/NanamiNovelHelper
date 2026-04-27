@@ -398,6 +398,84 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     })
   }
 
+  // 键盘快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      if (isInputFocused) return
+
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'z':
+            e.preventDefault()
+            if (e.shiftKey) {
+              redo()
+            } else {
+              undo()
+            }
+            break
+          case 'y':
+            e.preventDefault()
+            redo()
+            break
+          case 'a':
+            e.preventDefault()
+            if (isBatchMode) {
+              setSelectedNodes(sortedNodes.map(n => n.id))
+            }
+            break
+          case 's':
+            e.preventDefault()
+            message.success('已自动保存')
+            break
+        }
+      } else {
+        switch (e.key) {
+          case 'Delete':
+          case 'Backspace':
+            if (selectedNodes.length > 0 && isBatchMode) {
+              e.preventDefault()
+              handleBatchDelete()
+            }
+            break
+          case 'Escape':
+            if (nodeEdit.visible) {
+              setNodeEdit({ visible: false, node: null, isNew: false })
+            } else if (contextMenu.visible) {
+              setContextMenu(prev => ({ ...prev, visible: false }))
+            } else if (isBatchMode) {
+              setIsBatchMode(false)
+              setSelectedNodes([])
+            }
+            break
+          case '+':
+          case '=':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault()
+              handleZoomIn()
+            }
+            break
+          case '-':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault()
+              handleZoomOut()
+            }
+            break
+          case '0':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault()
+              handleZoomReset()
+            }
+            break
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [undo, redo, isBatchMode, sortedNodes, selectedNodes, nodeEdit.visible, contextMenu.visible, handleBatchDelete, handleZoomIn, handleZoomOut, handleZoomReset, message])
+
   if (isLoading) {
     return (
       <div className={styles.container}>
