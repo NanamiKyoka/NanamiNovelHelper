@@ -206,6 +206,7 @@
 .gridBackground {
   position: relative;
   margin-top: 40px;
+  cursor: crosshair;
 }
 
 .gridRow {

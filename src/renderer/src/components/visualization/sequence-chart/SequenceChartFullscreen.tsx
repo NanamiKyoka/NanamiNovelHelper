@@ -142,6 +142,21 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setNewEventProgress(0)
   }
 
+  // 双击网格空白区域快速添加事件
+  const handleGridDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left + (timelineBodyRef.current?.scrollLeft || 0)
+    const cellIndex = Math.floor(x / cellWidth) + 1
+    const maxCell = currentChart?.axisConfig.initialCellCount || 50
+    if (cellIndex < 1 || cellIndex > maxCell) return
+    setNewEventStart(cellIndex)
+    setNewEventEnd(Math.min(cellIndex + 2, maxCell))
+    setNewEventTitle('')
+    setNewEventDescription('')
+    setNewEventProgress(0)
+    setAddModalVisible(true)
+  }, [currentChart])
+
   // 更新事件
   const handleUpdateEvent = async () => {
     if (!editingEvent?.title.trim()) {
@@ -521,7 +536,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               {/* 时间标签行 */}
               <div className={styles.rightHeader}>{renderTimelineLabels()}</div>
               {/* 背景网格 */}
-              <div className={styles.gridBackground}>
+              <div className={styles.gridBackground} onDoubleClick={handleGridDoubleClick}>
                 {filteredEvents.map(event => (
                   <div key={event.id} className={styles.gridRow}>{renderGridCells()}</div>
                 ))}
