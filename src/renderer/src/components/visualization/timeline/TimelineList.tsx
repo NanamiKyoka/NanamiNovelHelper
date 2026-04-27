@@ -413,7 +413,10 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
           <div className={styles.emptyState}>
             <ClockCircleOutlined className={styles.emptyIcon} />
             <Text>暂无时间线</Text>
-            <Text type="secondary">点击"新建"创建第一个时间线</Text>
+            <Text type="secondary">创建时间线来追踪故事中的事件发展</Text>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
+              创建第一个时间线
+            </Button>
           </div>
         ) : filteredTimelines.length === 0 ? (
           <div className={styles.emptyState}>

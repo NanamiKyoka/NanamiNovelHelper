@@ -578,7 +578,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               {currentChart.events.length === 0 ? (
                 <div className={styles.emptyEvents}>
                   <span>暂无事件</span>
-                  <span>点击"添加事件"创建</span>
+                  <span>双击右侧网格或点击"添加事件"创建</span>
                 </div>
               ) : filteredEvents.length === 0 ? (
                 <div className={styles.emptyEvents}>

@@ -418,7 +418,10 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
           <div className={styles.emptyState}>
             <TableOutlined className={styles.emptyIcon} />
             <Text>暂无事序图</Text>
-            <Text type="secondary">点击"新建"创建第一个事序图</Text>
+            <Text type="secondary">创建事序图来规划故事中的事件顺序</Text>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
+              创建第一个事序图
+            </Button>
           </div>
         ) : filteredCharts.length === 0 ? (
           <div className={styles.emptyState}>
