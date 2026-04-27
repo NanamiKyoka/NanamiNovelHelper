@@ -25,6 +25,7 @@ import {
   ScheduleOutlined,
   TableOutlined,
   HolderOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -168,6 +169,7 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
   const [newChartName, setNewChartName] = useState('')
   const [newChartDescription, setNewChartDescription] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [searchKeyword, setSearchKeyword] = useState('')
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -200,6 +202,16 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
     const encodedPath = encodeURIComponent(normalizedPath)
     return `local://file/${encodedPath}`
   }
+
+  // 搜索过滤
+  const filteredCharts = useMemo(() => {
+    if (!searchKeyword.trim()) return sortedCharts
+    const keyword = searchKeyword.trim().toLowerCase()
+    return sortedCharts.filter(c =>
+      c.name.toLowerCase().includes(keyword) ||
+      (c.description && c.description.toLowerCase().includes(keyword))
+    )
+  }, [sortedCharts, searchKeyword])
 
   const handleContextMenu = useCallback((e: React.MouseEvent, chart: SequenceChartMeta) => {
     e.preventDefault()
@@ -377,6 +389,17 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
           <Text type="secondary">({charts.length})</Text>
         </div>
         <div className={styles.headerActions}>
+          {charts.length > 0 && (
+            <Input
+              placeholder="搜索事序图..."
+              prefix={<SearchOutlined />}
+              size="small"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              allowClear
+              style={{ width: 180 }}
+            />
+          )}
           <Button icon={<ImportOutlined />} onClick={handleImport}>
             导入
           </Button>
@@ -397,6 +420,12 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
             <Text>暂无事序图</Text>
             <Text type="secondary">点击"新建"创建第一个事序图</Text>
           </div>
+        ) : filteredCharts.length === 0 ? (
+          <div className={styles.emptyState}>
+            <SearchOutlined className={styles.emptyIcon} />
+            <Text>未找到匹配的事序图</Text>
+            <Text type="secondary">尝试其他关键词</Text>
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -404,11 +433,11 @@ function SequenceChartList({ onOpenChart, onCreateChart: _onCreateChart }: Seque
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={sortedCharts.map((c) => c.id)}
+              items={filteredCharts.map((c) => c.id)}
               strategy={rectSortingStrategy}
             >
               <div className={styles.grid}>
-                {sortedCharts.map((chart) => (
+                {filteredCharts.map((chart) => (
                   <SortableCard
                     key={chart.id}
                     chart={chart}

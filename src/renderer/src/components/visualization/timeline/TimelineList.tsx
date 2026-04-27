@@ -3,7 +3,7 @@
  * 展示所有时间线，支持创建、编辑、删除、导入导出、拖拽排序
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Typography,
   Button,
@@ -26,6 +26,7 @@ import {
   BranchesOutlined,
   FileTextOutlined,
   HolderOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -160,6 +161,7 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   const [newTimelineName, setNewTimelineName] = useState('')
   const [newTimelineDescription, setNewTimelineDescription] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [searchKeyword, setSearchKeyword] = useState('')
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -188,6 +190,16 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     const encodedPath = encodeURIComponent(normalizedPath)
     return `local://file/${encodedPath}`
   }
+
+  // 搜索过滤
+  const filteredTimelines = useMemo(() => {
+    if (!searchKeyword.trim()) return timelines
+    const keyword = searchKeyword.trim().toLowerCase()
+    return timelines.filter(t =>
+      t.name.toLowerCase().includes(keyword) ||
+      (t.description && t.description.toLowerCase().includes(keyword))
+    )
+  }, [timelines, searchKeyword])
 
   const handleContextMenu = useCallback((e: React.MouseEvent, timeline: TimelineMeta) => {
     e.preventDefault()
@@ -372,6 +384,17 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
           <Text type="secondary">({timelines.length})</Text>
         </div>
         <div className={styles.headerActions}>
+          {timelines.length > 0 && (
+            <Input
+              placeholder="搜索时间线..."
+              prefix={<SearchOutlined />}
+              size="small"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              allowClear
+              style={{ width: 180 }}
+            />
+          )}
           <Button icon={<ImportOutlined />} onClick={handleImport}>
             导入
           </Button>
@@ -392,15 +415,21 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
             <Text>暂无时间线</Text>
             <Text type="secondary">点击"新建"创建第一个时间线</Text>
           </div>
+        ) : filteredTimelines.length === 0 ? (
+          <div className={styles.emptyState}>
+            <SearchOutlined className={styles.emptyIcon} />
+            <Text>未找到匹配的时间线</Text>
+            <Text type="secondary">尝试其他关键词</Text>
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={timelines.map((t) => t.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={filteredTimelines.map((t) => t.id)} strategy={rectSortingStrategy}>
               <div className={styles.grid}>
-                {timelines.map((timeline) => (
+                {filteredTimelines.map((timeline) => (
                   <SortableCard
                     key={timeline.id}
                     timeline={timeline}
