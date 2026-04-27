@@ -574,20 +574,13 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [addModalVisible, editModalVisible, expandModalVisible, contextMenu.visible, editingEvent, message, undo, redo])
 
-  if (isLoading) {
-    return <div className={styles.container}><div className={styles.loading}><Spin size="large" /></div></div>
-  }
+  const displayEvents = useMemo(() => {
+    if (!currentChart) return []
+    return currentChart.events.map(e =>
+      draggingEvent?.id === e.id ? draggingEvent : e
+    )
+  }, [currentChart, draggingEvent])
 
-  if (!currentChart) {
-    return <div className={styles.container}><div className={styles.emptyState}><span>事序图不存在</span><Button onClick={onBack}>返回列表</Button></div></div>
-  }
-
-  // 合并拖拽中的实时状态
-  const displayEvents = currentChart.events.map(e => 
-    draggingEvent?.id === e.id ? draggingEvent : e
-  )
-
-  // 事件搜索过滤
   const filteredEvents = useMemo(() => {
     if (!eventSearchKeyword.trim()) return displayEvents
     const keyword = eventSearchKeyword.trim().toLowerCase()
@@ -597,7 +590,6 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     )
   }, [displayEvents, eventSearchKeyword])
 
-  // 时间冲突检测
   const conflictEventIds = useMemo(() => {
     const conflicts = new Set<string>()
     const events = displayEvents
@@ -617,6 +609,14 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     }
     return conflicts
   }, [displayEvents])
+
+  if (isLoading) {
+    return <div className={styles.container}><div className={styles.loading}><Spin size="large" /></div></div>
+  }
+
+  if (!currentChart) {
+    return <div className={styles.container}><div className={styles.emptyState}><span>事序图不存在</span><Button onClick={onBack}>返回列表</Button></div></div>
+  }
 
   return (
     <div className={styles.container}>
