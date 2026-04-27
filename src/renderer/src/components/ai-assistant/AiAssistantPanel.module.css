@@ -46,7 +46,7 @@
 .listToolbar {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   align-content: flex-start;
   margin-bottom: 12px;
@@ -59,6 +59,10 @@
   flex: 1;
   max-width: 200px;
   min-width: 120px;
+}
+
+.listToolbar :global(.ant-btn:last-child) {
+  margin-left: auto;
 }
 
 @container ai-list-toolbar (max-width: 280px) {
@@ -74,6 +78,10 @@
   .listToolbar :global(.ant-btn) {
     padding: 4px 8px;
     font-size: 12px;
+  }
+
+  .listToolbar :global(.ant-btn:last-child) {
+    margin-left: 0;
   }
 }
 
