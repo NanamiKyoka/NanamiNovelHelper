@@ -21,6 +21,7 @@ import { registerSearchHandlers } from './ipc/search-handler'
 import { terminalService } from './services/terminal'
 import { dynamicSkillService } from './services/dynamicSkill'
 import { aiAssistantService } from './services/aiAssistant'
+import { fileWatcherService } from './services/fileWatcher'
 
 // 注册 local:// 协议为特权协议（必须在 app.ready 之前）
 // 只能调用一次，所以添加标志防止重复
@@ -62,6 +63,8 @@ function createWindow(): void {
       nodeIntegration: false
     }
   })
+
+  fileWatcherService.setMainWindow(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()

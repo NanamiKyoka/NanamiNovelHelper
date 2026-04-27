@@ -871,6 +871,12 @@ const api = {
     },
     removeFullScreenListener: () => {
       ipcRenderer.removeAllListeners('window-fullscreen-change')
+    },
+    onFileChange: (callback: (event: { type: 'add' | 'change' | 'unlink'; path: string }) => void) => {
+      ipcRenderer.on('file-change', (_, event) => callback(event))
+    },
+    removeFileChangeListener: () => {
+      ipcRenderer.removeAllListeners('file-change')
     }
   },
   // 项目管理

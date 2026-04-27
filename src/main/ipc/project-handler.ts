@@ -16,6 +16,7 @@ import { mapService } from '../services/map'
 import { aiAssistantService } from '../services/aiAssistant'
 import { initProject as initDynamicSkill, clearProject as clearDynamicSkill } from '../services/dynamicSkill'
 import { searchService } from '../services/search'
+import { fileWatcherService } from '../services/fileWatcher'
 import { CreateProjectOptions, Project, RecentProject } from '../types/project'
 import { validateParams } from '../utils/validation'
 
@@ -57,6 +58,8 @@ export function registerProjectHandlers(): void {
       await initDynamicSkill(project.path)
       // 初始化搜索服务
       searchService.init(project.path)
+      // 启动文件监听
+      fileWatcherService.start(project.path)
       return project
     } catch (error) {
       console.error('Failed to create project:', error)
@@ -105,6 +108,8 @@ export function registerProjectHandlers(): void {
   // 关闭项目
   ipcMain.handle('project:close', async (): Promise<void> => {
     projectService.closeProject()
+    // 停止文件监听
+    fileWatcherService.stop()
     // 清理 AI 写作助手服务
     aiAssistantService.clearProject()
     // 清理动态 SKILL 服务

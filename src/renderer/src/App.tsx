@@ -22,6 +22,7 @@ import { useTerminalStore } from '@stores/terminalStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
 import { useLoadingStore } from '@stores/loadingStore'
+import { useEditorStore } from '@stores/editorStore'
 import { DEFAULT_BADGE_VISIBILITY } from '@shared/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
@@ -102,6 +103,23 @@ function App(): JSX.Element {
       endLoading('project-init')
     }
   }, [projectLoading, startLoading, endLoading])
+
+  // 文件变化监听（外部修改文件时刷新编辑器）
+  useEffect(() => {
+    if (!currentProject) return
+
+    const handleFileChange = (event: { type: 'add' | 'change' | 'unlink'; path: string }) => {
+      if (event.type === 'change') {
+        useEditorStore.getState().handleExternalFileChange(event.path)
+      }
+    }
+
+    window.electron?.window.onFileChange(handleFileChange)
+
+    return () => {
+      window.electron?.window.removeFileChangeListener()
+    }
+  }, [currentProject])
 
   // 全局快捷键
   const shortcuts: ShortcutConfig[] = useMemo(() => [

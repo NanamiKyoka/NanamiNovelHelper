@@ -72,6 +72,7 @@ interface EditorState {
   refreshAllOpenFiles: () => Promise<void>
   lastRefreshTime: number
   triggerEditorRefresh: () => void
+  handleExternalFileChange: (filePath: string) => void
 
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
@@ -656,6 +657,17 @@ export const useEditorStore = create<EditorState>()(
       // 触发编辑器刷新（更新时间戳）
       triggerEditorRefresh: () => {
         set({ lastRefreshTime: Date.now() })
+      },
+
+      // 处理外部文件变化（文件系统监听触发）
+      handleExternalFileChange: (filePath: string) => {
+        const state = get()
+        const tab = state.tabs.find(t => t.path === filePath)
+
+        if (tab) {
+          state.fileContents.delete(filePath)
+          get().triggerEditorRefresh()
+        }
       }
     }),
     {

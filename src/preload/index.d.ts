@@ -851,6 +851,8 @@ export interface WindowAPI {
   removeMaximizeListener: () => void
   onFullScreenChange: (callback: (isFullscreen: boolean) => void) => void
   removeFullScreenListener: () => void
+  onFileChange: (callback: (event: { type: 'add' | 'change' | 'unlink'; path: string }) => void) => void
+  removeFileChangeListener: () => void
 }
 
 /**
