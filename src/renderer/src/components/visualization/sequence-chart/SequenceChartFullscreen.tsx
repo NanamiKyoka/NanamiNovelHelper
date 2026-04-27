@@ -479,6 +479,11 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                         style={getEventBarStyle(event)}
                         onContextMenu={(e) => handleEventContextMenu(e, event)}
                       >
+                        {draggingEvent?.id === event.id && (
+                          <div className={styles.dragHint}>
+                            {event.timeInfo.cellStart} → {event.timeInfo.cellEnd}
+                          </div>
+                        )}
                         {/* 左边缘拖拽手柄 */}
                         <div
                           className={`${styles.resizeHandle} ${styles.resizeHandleLeft}`}
