@@ -115,6 +115,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const [newEventProgress, setNewEventProgress] = useState(0)
   const [newEventColor, setNewEventColor] = useState('#409EFF')
   const [expandCellCount, setExpandCellCount] = useState(100)
+  const [editingLabelPos, setEditingLabelPos] = useState<number | null>(null)
+  const [editingLabelText, setEditingLabelText] = useState('')
 
   // 拖拽状态
   const [dragType, setDragType] = useState<DragType>(null)
@@ -243,6 +245,33 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setExpandCellCount(100)
     message.success(`扩展到 ${newTotal} 格`)
   }
+
+  // 标签编辑
+  const handleLabelDoubleClick = useCallback((position: number) => {
+    const existing = currentChart?.axisConfig.timeLabels?.find(l => l.position === position)
+    setEditingLabelPos(position)
+    setEditingLabelText(existing?.label || '')
+  }, [currentChart?.axisConfig.timeLabels])
+
+  const handleLabelSave = useCallback(async () => {
+    if (editingLabelPos === null || !currentChart) return
+    const existingLabels = currentChart.axisConfig.timeLabels || []
+    let newLabels: Array<{ position: number; label: string }>
+    if (editingLabelText.trim() === '') {
+      newLabels = existingLabels.filter(l => l.position !== editingLabelPos)
+    } else {
+      const idx = existingLabels.findIndex(l => l.position === editingLabelPos)
+      if (idx >= 0) {
+        newLabels = [...existingLabels]
+        newLabels[idx] = { position: editingLabelPos, label: editingLabelText.trim() }
+      } else {
+        newLabels = [...existingLabels, { position: editingLabelPos, label: editingLabelText.trim() }]
+      }
+    }
+    await updateAxisConfig({ timeLabels: newLabels })
+    setEditingLabelPos(null)
+    setEditingLabelText('')
+  }, [editingLabelPos, editingLabelText, currentChart, updateAxisConfig])
 
   // 开始拖拽
   const startDrag = useCallback((e: React.MouseEvent, event: SequenceEvent, type: DragType) => {
@@ -439,11 +468,38 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   // 渲染时间轴标签（每格一个）
   const renderTimelineLabels = () => {
     const cellCount = currentChart?.axisConfig.initialCellCount || 100
-    return Array.from({ length: cellCount }, (_, i) => (
-      <div key={i + 1} className={styles.timeCell} style={{ width: cellWidth }}>
-        {i + 1}
-      </div>
-    ))
+    const timeLabels = currentChart?.axisConfig.timeLabels
+    return Array.from({ length: cellCount }, (_, i) => {
+      const position = i + 1
+      const customLabel = timeLabels?.find(l => l.position === position)
+      if (editingLabelPos === position) {
+        return (
+          <div key={position} className={styles.timeCell} style={{ width: cellWidth }}>
+            <Input
+              size="small"
+              value={editingLabelText}
+              onChange={e => setEditingLabelText(e.target.value)}
+              onBlur={handleLabelSave}
+              onPressEnter={handleLabelSave}
+              autoFocus
+              style={{ width: cellWidth - 8, fontSize: 11 }}
+              placeholder={`${position}`}
+            />
+          </div>
+        )
+      }
+      return (
+        <Tooltip key={position} title="双击编辑标签">
+          <div
+            className={styles.timeCell}
+            style={{ width: cellWidth, cursor: 'pointer' }}
+            onDoubleClick={() => handleLabelDoubleClick(position)}
+          >
+            {customLabel ? customLabel.label : position}
+          </div>
+        </Tooltip>
+      )
+    })
   }
 
   // 渲染网格单元格
