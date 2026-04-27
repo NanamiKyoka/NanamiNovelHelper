@@ -16,6 +16,7 @@ import {
   TagOutlined,
   HolderOutlined,
   CheckOutlined,
+  CameraOutlined,
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -243,6 +244,57 @@ function TimelinePreview({
   const [editingField, setEditingField] = useState<{ nodeId: string; field: 'title' | 'description' } | null>(null)
   const [editValue, setEditValue] = useState('')
 
+  // 导出用ref
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  // 导出为图片
+  const handleExportImage = useCallback(async () => {
+    if (!contentRef.current) return
+    try {
+      const element = contentRef.current
+      const canvas = document.createElement('canvas')
+      const rect = element.getBoundingClientRect()
+      const scale = 2
+      canvas.width = rect.width * scale
+      canvas.height = rect.height * scale
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.scale(scale, scale)
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() || '#ffffff'
+      ctx.fillRect(0, 0, rect.width, rect.height)
+
+      const svgData = new XMLSerializer().serializeToString(
+        new DOMParser().parseFromString(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
+            <foreignObject width="100%" height="100%">
+              <div xmlns="http://www.w3.org/1999/xhtml">${element.outerHTML}</div>
+            </foreignObject>
+          </svg>`,
+          'image/svg+xml'
+        ).documentElement
+      )
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(svgBlob)
+      const img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, rect.width, rect.height)
+        URL.revokeObjectURL(url)
+        const link = document.createElement('a')
+        link.download = `${currentTimeline?.name || '时间线'}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+        message.success('导出成功')
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        message.error('导出失败，请尝试截图工具')
+      }
+      img.src = url
+    } catch {
+      message.error('导出失败')
+    }
+  }, [currentTimeline?.name, message])
+
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -422,6 +474,9 @@ function TimelinePreview({
           <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
             编辑
           </Button>
+          <Button icon={<CameraOutlined />} onClick={handleExportImage}>
+            导出图片
+          </Button>
         </div>
       </div>
 
@@ -439,7 +494,7 @@ function TimelinePreview({
       )}
 
       {/* 时间线主体 */}
-      <div className={styles.content}>
+      <div className={styles.content} ref={contentRef}>
         {sortedNodes.length === 0 ? (
           <div className={styles.emptyNodes}>
             <ClockCircleOutlined className={styles.emptyIcon} />
