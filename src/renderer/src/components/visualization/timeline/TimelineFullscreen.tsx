@@ -36,6 +36,24 @@ import {
   ClockCircleOutlined,
   EditOutlined,
 } from '@ant-design/icons'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
@@ -56,6 +74,115 @@ interface NodeEditState {
   visible: boolean
   node: Partial<TimelineNode> | null
   isNew: boolean
+}
+
+// 可排序节点组件
+interface SortableTimelineNodeProps {
+  node: TimelineNode
+  index: number
+  totalCount: number
+  isBatchMode: boolean
+  isSelected: boolean
+  onToggleSelect: (shiftKey: boolean) => void
+  onContextMenu: (e: React.MouseEvent) => void
+  onEdit: () => void
+  formatTimeInfo: (timeInfo: TimeInfo) => string
+  getTimeIcon: (format: string) => JSX.Element
+}
+
+function SortableTimelineNode({
+  node,
+  index,
+  totalCount,
+  isBatchMode,
+  isSelected,
+  onToggleSelect,
+  onContextMenu,
+  onEdit,
+  formatTimeInfo,
+  getTimeIcon,
+}: SortableTimelineNodeProps): JSX.Element {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: node.id, disabled: isBatchMode })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`${styles.timelineItem} ${isSelected ? styles.selected : ''}`}
+      onClick={() => isBatchMode && onToggleSelect(false)}
+      onContextMenu={onContextMenu}
+    >
+      <div className={styles.timelineLine}>
+        <div
+          className={styles.timelineDot}
+          style={{ backgroundColor: node.color || '#1890ff' }}
+        />
+        {index < totalCount - 1 && <div className={styles.timelineConnector} />}
+      </div>
+      <div className={styles.timelineContent}>
+        <div className={styles.nodeHeader}>
+          <div className={styles.nodeTitleRow}>
+            <Text strong className={styles.nodeTitle}>{node.title}</Text>
+            {node.isBranchPoint && <Tag color="blue">分支点</Tag>}
+          </div>
+          <div className={styles.nodeActions}>
+            {!isBatchMode && (
+              <>
+                <span {...attributes} {...listeners} style={{ cursor: 'grab' }}>
+                  <MenuOutlined style={{ color: 'var(--text-tertiary)' }} />
+                </span>
+                <Button type="text" size="small" icon={<EditOutlined />} onClick={onEdit} />
+              </>
+            )}
+            {isBatchMode && isSelected && <CheckOutlined className={styles.checkIcon} />}
+          </div>
+        </div>
+        {node.timeInfo && formatTimeInfo(node.timeInfo) && (
+          <div className={styles.nodeTime}>
+            {getTimeIcon(node.timeInfo.format)}
+            <Text type="secondary">{formatTimeInfo(node.timeInfo)}</Text>
+          </div>
+        )}
+        {node.description && <div className={styles.nodeDescription}>{node.description}</div>}
+        {node.characters && node.characters.length > 0 && (
+          <div className={styles.nodeCharacters}>
+            <UserOutlined />
+            <div className={styles.characterList}>
+              {node.characters.map((char) => (
+                <Tag key={char.id} color={char.color || 'default'}>{char.name}</Tag>
+              ))}
+            </div>
+          </div>
+        )}
+        {node.tags && node.tags.length > 0 && (
+          <div className={styles.nodeTags}>
+            {node.tags.map((tag) => (
+              <Tag key={tag} color="blue" style={{ fontSize: 11 }}>{tag}</Tag>
+            ))}
+          </div>
+        )}
+        {node.chapter && (
+          <div className={styles.nodeChapter}>
+            <FileTextOutlined />
+            <Text type="secondary">{node.chapter.title}</Text>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JSX.Element {
@@ -126,8 +253,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   const lastSelectedNodeId = useRef<string | null>(null)
 
   // 拖拽状态
-  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null)
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null)
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -327,40 +453,28 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   }
 
   // 拖拽开始
-  const handleDragStart = useCallback((e: React.DragEvent, nodeId: string) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', nodeId)
-    setDraggedNodeId(nodeId)
-  }, [])
+  // DnD 传感器
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
-  // 拖拽经过 - 使用 ref 避免频繁状态更新
-  const handleDragOver = useCallback((e: React.DragEvent, nodeId: string) => {
-    e.preventDefault()
-    if (draggedNodeId !== nodeId && dropTargetId !== nodeId) {
-      setDropTargetId(nodeId)
-    }
-  }, [draggedNodeId, dropTargetId])
-
-  // 拖拽离开
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-  }, [])
-
-  // 拖拽结束
-  const handleDrop = useCallback(async (e: React.DragEvent, targetId: string) => {
-    e.preventDefault()
-    const sourceId = e.dataTransfer.getData('text/plain')
-    if (sourceId && sourceId !== targetId) {
-      await moveNode(sourceId, targetId)
-    }
-    setDraggedNodeId(null)
-    setDropTargetId(null)
+  // DnD 拖拽结束
+  const handleDndDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveDragId(null)
+    if (!over || active.id === over.id) return
+    await moveNode(active.id as string, over.id as string)
   }, [moveNode])
 
-  // 拖拽结束（取消）
-  const handleDragEnd = useCallback(() => {
-    setDraggedNodeId(null)
-    setDropTargetId(null)
+  const handleDndDragStart = useCallback((event: DragEndEvent) => {
+    setActiveDragId(event.active.id as string)
   }, [])
 
   // 切换批量选择模式
@@ -647,109 +761,50 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             </Button>
           </div>
         ) : (
-          <div className={styles.timeline}>
-            {sortedNodes.map((node, index) => (
-              <div
-                key={node.id}
-                className={`${styles.timelineItem} ${
-                  dropTargetId === node.id ? styles.dropTarget : ''
-                } ${selectedNodes.includes(node.id) ? styles.selected : ''}`}
-                draggable={!isBatchMode}
-                onDragStart={(e) => handleDragStart(e, node.id)}
-                onDragOver={(e) => handleDragOver(e, node.id)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, node.id)}
-                onDragEnd={handleDragEnd}
-                onClick={(e) => isBatchMode && toggleNodeSelection(node.id, e.shiftKey)}
-                onContextMenu={(e) => handleContextMenu(e, node)}
-              >
-                <div className={styles.timelineLine}>
-                  <div
-                    className={styles.timelineDot}
-                    style={{ backgroundColor: node.color || '#1890ff' }}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDndDragStart}
+            onDragEnd={handleDndDragEnd}
+          >
+            <SortableContext
+              items={sortedNodes.map((n) => n.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className={styles.timeline}>
+                {sortedNodes.map((node, index) => (
+                  <SortableTimelineNode
+                    key={node.id}
+                    node={node}
+                    index={index}
+                    totalCount={sortedNodes.length}
+                    isBatchMode={isBatchMode}
+                    isSelected={selectedNodes.includes(node.id)}
+                    onToggleSelect={(shiftKey) => toggleNodeSelection(node.id, shiftKey)}
+                    onContextMenu={(e) => handleContextMenu(e, node)}
+                    onEdit={() => handleEditNode(node)}
+                    formatTimeInfo={formatTimeInfo}
+                    getTimeIcon={getTimeIcon}
                   />
-                  {index < sortedNodes.length - 1 && <div className={styles.timelineConnector} />}
-                </div>
-                <div className={styles.timelineContent}>
-                  <div className={styles.nodeHeader}>
-                    <div className={styles.nodeTitleRow}>
-                      <Text strong className={styles.nodeTitle}>
-                        {node.title}
-                      </Text>
-                      {node.isBranchPoint && (
-                        <Tag color="blue">
-                          分支点
-                        </Tag>
-                      )}
-                    </div>
-                    <div className={styles.nodeActions}>
-                      {!isBatchMode && (
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<EditOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditNode(node)
-                          }}
-                        />
-                      )}
-                      {isBatchMode && selectedNodes.includes(node.id) && (
-                        <CheckOutlined className={styles.checkIcon} />
-                      )}
-                    </div>
+                ))}
+
+                {!isBatchMode && (
+                  <div className={styles.addNodeButton}>
+                    <Button type="dashed" icon={<PlusOutlined />} onClick={handleAddNode} block>
+                      添加节点
+                    </Button>
                   </div>
-
-                  {node.timeInfo && formatTimeInfo(node.timeInfo) && (
-                    <div className={styles.nodeTime}>
-                      {getTimeIcon(node.timeInfo.format)}
-                      <Text type="secondary">{formatTimeInfo(node.timeInfo)}</Text>
-                    </div>
-                  )}
-
-                  {node.description && (
-                    <div className={styles.nodeDescription}>{node.description}</div>
-                  )}
-
-                  {node.characters && node.characters.length > 0 && (
-                    <div className={styles.nodeCharacters}>
-                      <UserOutlined />
-                      <div className={styles.characterList}>
-                        {node.characters.map((char) => (
-                          <Tag key={char.id} color={char.color || 'default'}>
-                            {char.name}
-                          </Tag>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {node.tags && node.tags.length > 0 && (
-                    <div className={styles.nodeTags}>
-                      {node.tags.map((tag) => (
-                        <Tag key={tag} color="blue" style={{ fontSize: 11 }}>{tag}</Tag>
-                      ))}
-                    </div>
-                  )}
-
-                  {node.chapter && (
-                    <div className={styles.nodeChapter}>
-                      <FileTextOutlined />
-                      <Text type="secondary">{node.chapter.title}</Text>
-                    </div>
-                  )}
+                )}
+              </div>
+            </SortableContext>
+            <DragOverlay>
+              {activeDragId ? (
+                <div style={{ opacity: 0.5, padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                  <Text strong>{sortedNodes.find(n => n.id === activeDragId)?.title}</Text>
                 </div>
-              </div>
-            ))}
-
-            {/* 添加节点按钮（底部） */}
-            {!isBatchMode && (
-              <div className={styles.addNodeButton}>
-                <Button type="dashed" icon={<PlusOutlined />} onClick={handleAddNode} block>
-                  添加节点
-                </Button>
-              </div>
-            )}
+              ) : null}
+            </DragOverlay>
+          </DndContext>
           </div>
         )}
       </div>
