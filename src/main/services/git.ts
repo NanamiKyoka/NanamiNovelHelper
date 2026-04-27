@@ -709,6 +709,240 @@ class GitService {
     }
   }
 
+  /** 获取某个提交修改的文件列表 */
+  async getCommitFiles(repoPath: string, commitHash: string): Promise<GitResult<GitFileChange[]>> {
+    try {
+      if (this.useSystemGit) {
+        return await this.getCommitFilesSystem(repoPath, commitHash)
+      } else {
+        return await this.getCommitFilesIso(repoPath, commitHash)
+      }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
+  }
+
+  /** 使用系统 Git 获取提交文件列表 */
+  private async getCommitFilesSystem(repoPath: string, commitHash: string): Promise<GitResult<GitFileChange[]>> {
+    const changes: GitFileChange[] = []
+    
+    const output = await this.execGit(repoPath, [
+      'diff-tree',
+      '--no-commit-id',
+      '--name-status',
+      '-r',
+      commitHash
+    ])
+    
+    const lines = output.split('\n').filter(line => line.trim())
+    
+    for (const line of lines) {
+      const parts = line.split('\t')
+      const statusChar = parts[0]
+      let status: GitFileStatus = 'modified'
+      let statusShort: GitFileStatusShort = 'M'
+      let path = parts[1] || ''
+      let oldPath: string | undefined
+      
+      switch (statusChar) {
+        case 'A':
+          status = 'added'
+          statusShort = 'A'
+          break
+        case 'D':
+          status = 'deleted'
+          statusShort = 'D'
+          break
+        case 'M':
+          status = 'modified'
+          statusShort = 'M'
+          break
+        case 'R':
+          status = 'renamed'
+          statusShort = 'R'
+          oldPath = parts[1]
+          path = parts[2] || ''
+          break
+        case 'C':
+          status = 'copied'
+          statusShort = 'C'
+          break
+      }
+      
+      changes.push({
+        path,
+        oldPath,
+        status,
+        statusShort,
+        staged: false,
+        additions: 0,
+        deletions: 0
+      })
+    }
+    
+    return { success: true, data: changes }
+  }
+
+  /** 使用 isomorphic-git 获取提交文件列表 */
+  private async getCommitFilesIso(repoPath: string, commitHash: string): Promise<GitResult<GitFileChange[]>> {
+    const changes: GitFileChange[] = []
+    
+    try {
+      const commit = await git.readCommit({ fs, dir: repoPath, oid: commitHash })
+      const parentOid = commit.commit.parent[0]
+      
+      if (parentOid) {
+        const diffs = await git.walk({
+          fs,
+          dir: repoPath,
+          trees: [git.TREE({ ref: parentOid }), git.TREE({ ref: commitHash })],
+          map: async (filepath, [parentEntry, currentEntry]) => {
+            if (filepath === '.') return
+            
+            const parentExists = parentEntry !== null
+            const currentExists = currentEntry !== null
+            
+            if (parentExists && !currentExists) {
+              changes.push({
+                path: filepath,
+                status: 'deleted',
+                statusShort: 'D',
+                staged: false,
+                additions: 0,
+                deletions: 0
+              })
+            } else if (!parentExists && currentExists) {
+              changes.push({
+                path: filepath,
+                status: 'added',
+                statusShort: 'A',
+                staged: false,
+                additions: 0,
+                deletions: 0
+              })
+            } else if (parentExists && currentExists) {
+              const parentOid = await parentEntry.oid()
+              const currentOid = await currentEntry.oid()
+              if (parentOid !== currentOid) {
+                changes.push({
+                  path: filepath,
+                  status: 'modified',
+                  statusShort: 'M',
+                  staged: false,
+                  additions: 0,
+                  deletions: 0
+                })
+              }
+            }
+          }
+        })
+      } else {
+        const files = await git.listFiles({ fs, dir: repoPath, ref: commitHash })
+        for (const file of files) {
+          changes.push({
+            path: file,
+            status: 'added',
+            statusShort: 'A',
+            staged: false,
+            additions: 0,
+            deletions: 0
+          })
+        }
+      }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
+    
+    return { success: true, data: changes }
+  }
+
+  /** 获取某个提交中某个文件的差异 */
+  async getCommitFileDiff(repoPath: string, commitHash: string, filepath: string): Promise<GitResult<GitFileDiff>> {
+    try {
+      if (this.useSystemGit) {
+        return await this.getCommitFileDiffSystem(repoPath, commitHash, filepath)
+      } else {
+        return { success: false, error: 'isomorphic-git 不支持此功能' }
+      }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
+  }
+
+  /** 使用系统 Git 获取提交文件差异 */
+  private async getCommitFileDiffSystem(repoPath: string, commitHash: string, filepath: string): Promise<GitResult<GitFileDiff>> {
+    const output = await this.execGit(repoPath, ['show', '--format=', commitHash, '--', filepath])
+    const hunks: GitDiffHunk[] = []
+    let additions = 0
+    let deletions = 0
+    
+    const lines = output.split('\n')
+    let currentHunk: GitDiffHunk | null = null
+    let oldLine = 0
+    let newLine = 0
+    
+    for (const line of lines) {
+      const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/)
+      if (hunkMatch) {
+        if (currentHunk) {
+          hunks.push(currentHunk)
+        }
+        oldLine = parseInt(hunkMatch[1])
+        newLine = parseInt(hunkMatch[3])
+        currentHunk = {
+          oldStart: oldLine,
+          oldLines: parseInt(hunkMatch[2] || '1'),
+          newStart: newLine,
+          newLines: parseInt(hunkMatch[4] || '1'),
+          header: hunkMatch[5].trim(),
+          lines: []
+        }
+        continue
+      }
+      
+      if (currentHunk) {
+        if (line.startsWith('+')) {
+          currentHunk.lines.push({
+            type: 'add',
+            newLineNumber: newLine++,
+            content: line.substring(1)
+          })
+          additions++
+        } else if (line.startsWith('-')) {
+          currentHunk.lines.push({
+            type: 'delete',
+            oldLineNumber: oldLine++,
+            content: line.substring(1)
+          })
+          deletions++
+        } else if (line.startsWith(' ')) {
+          currentHunk.lines.push({
+            type: 'context',
+            oldLineNumber: oldLine++,
+            newLineNumber: newLine++,
+            content: line.substring(1)
+          })
+        }
+      }
+    }
+    
+    if (currentHunk) {
+      hunks.push(currentHunk)
+    }
+    
+    return {
+      success: true,
+      data: {
+        path: filepath,
+        status: 'modified',
+        binary: false,
+        hunks,
+        additions,
+        deletions
+      }
+    }
+  }
+
   /** 获取分支列表 */
   async getBranches(repoPath: string): Promise<GitResult<GitBranch[]>> {
     try {

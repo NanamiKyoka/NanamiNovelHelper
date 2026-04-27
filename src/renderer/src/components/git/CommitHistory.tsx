@@ -9,7 +9,8 @@ import {
   UserOutlined,
   ClockCircleOutlined,
   MoreOutlined,
-  EyeOutlined
+  EyeOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -17,6 +18,7 @@ import 'dayjs/locale/zh-cn'
 import { useGitStore } from '@stores/gitStore'
 import type { GitCommit } from '@shared/git'
 import type { MenuProps } from 'antd'
+import CommitDetailPanel from './CommitDetailPanel'
 import styles from './GitPanel.module.css'
 
 dayjs.extend(relativeTime)
@@ -37,6 +39,7 @@ function CommitHistory(): JSX.Element {
 
   const [searchKeyword, setSearchKeyword] = useState('')
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [selectedCommit, setSelectedCommit] = useState<GitCommit | null>(null)
 
   // 加载提交历史
   useEffect(() => {
@@ -113,6 +116,12 @@ function CommitHistory(): JSX.Element {
 
   // 提交操作菜单
   const getCommitMenuItems = (commit: GitCommit): MenuProps['items'] => [
+    {
+      key: 'detail',
+      label: '查看详情',
+      icon: <InfoCircleOutlined />,
+      onClick: () => setSelectedCommit(commit)
+    },
     {
       key: 'view',
       label: '查看此版本',
@@ -256,6 +265,14 @@ function CommitHistory(): JSX.Element {
             </Dropdown>
           ))}
         </ul>
+      )}
+
+      {/* 提交详情面板 */}
+      {selectedCommit && (
+        <CommitDetailPanel
+          commit={selectedCommit}
+          onClose={() => setSelectedCommit(null)}
+        />
       )}
     </div>
   )

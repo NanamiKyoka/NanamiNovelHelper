@@ -1458,7 +1458,12 @@ const api = {
     // 模式
     setMode: (mode: 'system' | 'isomorphic' | 'auto') => 
       ipcRenderer.invoke('git:setMode', mode),
-    getMode: () => ipcRenderer.invoke('git:getMode')
+    getMode: () => ipcRenderer.invoke('git:getMode'),
+    // 提交详情
+    getCommitFiles: (repoPath: string, commitHash: string) =>
+      ipcRenderer.invoke('git:commit:files', repoPath, commitHash),
+    getCommitFileDiff: (repoPath: string, commitHash: string, filepath: string) =>
+      ipcRenderer.invoke('git:commit:fileDiff', repoPath, commitHash, filepath)
   },
   // 搜索功能
   search: {

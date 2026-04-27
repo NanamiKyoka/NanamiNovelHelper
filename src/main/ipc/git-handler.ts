@@ -163,4 +163,21 @@ export function registerGitHandlers(): void {
       useSystemGit: gitService.isUsingSystemGit()
     }
   })
+
+  ipcMain.handle(GIT_CHANNELS.COMMIT_FILES, async (_event, repoPath: string, commitHash: string) => {
+    validateParams('git:commitFiles')
+      .nonEmptyString(repoPath, 'repoPath')
+      .nonEmptyString(commitHash, 'commitHash')
+      .validate()
+    return gitService.getCommitFiles(repoPath, commitHash)
+  })
+
+  ipcMain.handle(GIT_CHANNELS.COMMIT_FILE_DIFF, async (_event, repoPath: string, commitHash: string, filepath: string) => {
+    validateParams('git:commitFileDiff')
+      .nonEmptyString(repoPath, 'repoPath')
+      .nonEmptyString(commitHash, 'commitHash')
+      .nonEmptyString(filepath, 'filepath')
+      .validate()
+    return gitService.getCommitFileDiff(repoPath, commitHash, filepath)
+  })
 }

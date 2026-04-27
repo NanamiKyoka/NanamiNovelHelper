@@ -1236,6 +1236,9 @@ export interface GitAPI {
   // 模式
   setMode: (mode: GitMode) => Promise<GitResult<void>>
   getMode: () => Promise<{ mode: GitMode; useSystemGit: boolean }>
+  // 提交详情
+  getCommitFiles: (repoPath: string, commitHash: string) => Promise<GitResult<GitFileChange[]>>
+  getCommitFileDiff: (repoPath: string, commitHash: string, filepath: string) => Promise<GitResult<GitFileDiff>>
 }
 
 declare global {

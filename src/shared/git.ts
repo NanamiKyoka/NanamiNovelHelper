@@ -284,6 +284,8 @@ export const GIT_CHANNELS = {
   COMMIT: 'git:commit',
   RESET: 'git:reset',
   REVERT: 'git:revert',
+  COMMIT_FILES: 'git:commit:files',
+  COMMIT_FILE_DIFF: 'git:commit:fileDiff',
 
   // 文件操作
   ADD: 'git:add',

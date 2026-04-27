@@ -503,3 +503,109 @@
   white-space: nowrap;
   max-width: 200px;
 }
+
+/* 提交详情面板样式 */
+.commitDetailHeader {
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.commitDetailTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.commitDetailMessage {
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  white-space: pre-wrap;
+  margin-bottom: 8px;
+}
+
+.commitDetailMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.commitDetailRefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.commitDetailFiles {
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.commitDetailFilesHeader {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-bg-layout);
+}
+
+.commitDetailLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.commitFileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.commitFileItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.commitFileItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.commitFilePath {
+  flex: 1;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commitDetailDiff {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.commitDetailDiffHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.commitDetailDiffStats {
+  display: flex;
+  gap: 12px;
+}

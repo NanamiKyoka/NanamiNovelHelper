@@ -22,6 +22,13 @@ import type {
 /** 视图模式 */
 type GitViewMode = 'changes' | 'history' | 'branches'
 
+/** 提交详情 */
+interface CommitDetail {
+  commit: GitCommit
+  files: GitFileChange[]
+  loading: boolean
+}
+
 /** Git 状态接口 */
 interface GitState {
   // 仓库状态
@@ -43,6 +50,9 @@ interface GitState {
   // 当前选中的文件差异
   currentDiff: GitFileDiff | null
   selectedFile: GitFileChange | null
+
+  // 提交详情
+  commitDetail: CommitDetail | null
 
   // 视图状态
   viewMode: GitViewMode
@@ -89,6 +99,11 @@ interface GitState {
   startAutoCommit: () => void
   stopAutoCommit: () => void
   setAutoCommitConfig: (enabled: boolean, interval: number) => void
+
+  // 提交详情
+  getCommitDetail: (commit: GitCommit) => Promise<void>
+  getCommitFileDiff: (commitHash: string, filepath: string) => Promise<GitFileDiff | null>
+  clearCommitDetail: () => void
 }
 
 export const useGitStore = create<GitState>((set, get) => ({
@@ -105,6 +120,7 @@ export const useGitStore = create<GitState>((set, get) => ({
   currentBranch: null,
   currentDiff: null,
   selectedFile: null,
+  commitDetail: null,
   viewMode: 'changes',
   logOptions: { maxCount: 50 },
   autoCommitEnabled: false,
@@ -514,5 +530,49 @@ export const useGitStore = create<GitState>((set, get) => ({
     } else {
       get().stopAutoCommit()
     }
+  },
+
+  // 获取提交详情
+  getCommitDetail: async (commit: GitCommit) => {
+    const project = useProjectStore.getState().currentProject
+    if (!project?.path) return
+
+    set({ commitDetail: { commit, files: [], loading: true } })
+
+    try {
+      const result = await window.electron.git.getCommitFiles(project.path, commit.hash)
+      if (result.success && result.data) {
+        set({ commitDetail: { commit, files: result.data, loading: false } })
+      } else {
+        set({ commitDetail: { commit, files: [], loading: false }, error: result.error || '获取提交详情失败' })
+      }
+    } catch (error) {
+      set({ commitDetail: { commit, files: [], loading: false }, error: String(error) })
+    }
+  },
+
+  // 获取提交中文件的差异
+  getCommitFileDiff: async (commitHash: string, filepath: string) => {
+    const project = useProjectStore.getState().currentProject
+    if (!project?.path) return null
+
+    try {
+      const result = await window.electron.git.getCommitFileDiff(project.path, commitHash, filepath)
+      if (result.success && result.data) {
+        set({ currentDiff: result.data })
+        return result.data
+      } else {
+        set({ error: result.error || '获取文件差异失败' })
+        return null
+      }
+    } catch (error) {
+      set({ error: String(error) })
+      return null
+    }
+  },
+
+  // 清除提交详情
+  clearCommitDetail: () => {
+    set({ commitDetail: null, currentDiff: null })
   }
 }))
