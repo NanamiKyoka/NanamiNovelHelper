@@ -69,6 +69,9 @@ interface EditorState {
   externalRefreshRequest: string | null
   requestExternalRefresh: (filePath: string) => void
   clearExternalRefreshRequest: () => void
+  refreshAllOpenFiles: () => Promise<void>
+  lastRefreshTime: number
+  triggerEditorRefresh: () => void
 
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
@@ -261,7 +264,8 @@ export const useEditorStore = create<EditorState>()(
       isLoading: false,
       lastSavedAt: null,
       goToPositionRequest: null,
-      externalRefreshRequest: null,
+  externalRefreshRequest: null,
+  lastRefreshTime: 0,
 
       // 预览模式打开文件（单击）- VSCode 风格
       openPreview: async (
@@ -614,6 +618,44 @@ export const useEditorStore = create<EditorState>()(
       // 清除外部刷新请求
       clearExternalRefreshRequest: () => {
         set({ externalRefreshRequest: null })
+      },
+
+      // 刷新所有打开的文件（用于Git操作后同步文件内容）
+      refreshAllOpenFiles: async () => {
+        const state = get()
+        const tabs = state.tabs
+
+        for (const tab of tabs) {
+          try {
+            const content = await window.electron.file.read(tab.path)
+            state.fileContents.set(tab.path, {
+              path: tab.path,
+              content,
+              loadedAt: Date.now()
+            })
+          } catch (error) {
+            console.error(`Failed to refresh file ${tab.path}:`, error)
+          }
+        }
+
+        set({ fileContents: state.fileContents })
+
+        if (state.activeTabId) {
+          const activeTab = state.tabs.find(t => t.id === state.activeTabId)
+          if (activeTab) {
+            const fileContent = state.fileContents.get(activeTab.path)
+            if (fileContent) {
+              get().updateWordCount(fileContent.content)
+            }
+          }
+        }
+
+        get().triggerEditorRefresh()
+      },
+
+      // 触发编辑器刷新（更新时间戳）
+      triggerEditorRefresh: () => {
+        set({ lastRefreshTime: Date.now() })
       }
     }),
     {

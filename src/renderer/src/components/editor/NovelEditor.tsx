@@ -385,6 +385,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   // 处理外部刷新请求
   const externalRefreshRequest = useEditorStore((state) => state.externalRefreshRequest)
   const clearExternalRefreshRequest = useEditorStore((state) => state.clearExternalRefreshRequest)
+  const lastRefreshTime = useEditorStore((state) => state.lastRefreshTime)
   
   useEffect(() => {
     if (!editor || !externalRefreshRequest) return
@@ -398,6 +399,20 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     }
     clearExternalRefreshRequest()
   }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest, updateWordCount])
+
+  // 监听全局刷新时间戳变化（Git操作后触发）
+  useEffect(() => {
+    if (!editor || lastRefreshTime === 0) return
+
+    const filePath = currentFilePathRef.current
+    if (filePath) {
+      loadFileContent(filePath).then(content => {
+        restoreEditorContent(editor, content)
+        const textContent = editor.getText()
+        updateWordCount(textContent)
+      })
+    }
+  }, [editor, lastRefreshTime, loadFileContent, updateWordCount])
 
   useEffect(() => {
     if (!editor) return

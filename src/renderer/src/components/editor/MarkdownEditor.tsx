@@ -285,6 +285,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
   const externalRefreshRequest = useEditorStore(state => state.externalRefreshRequest)
   const clearExternalRefreshRequest = useEditorStore(state => state.clearExternalRefreshRequest)
+  const lastRefreshTime = useEditorStore(state => state.lastRefreshTime)
 
   useEffect(() => {
     if (!editor || !externalRefreshRequest) return
@@ -304,6 +305,20 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     clearExternalRefreshRequest,
     updateWordCount
   ])
+
+  // 监听全局刷新时间戳变化（Git操作后触发）
+  useEffect(() => {
+    if (!editor || lastRefreshTime === 0) return
+
+    const filePath = currentFilePathRef.current
+    if (filePath) {
+      loadFileContent(filePath).then(content => {
+        editor.commands.setContent(content, false)
+        const textContent = editor.getText()
+        updateWordCount(textContent)
+      })
+    }
+  }, [editor, lastRefreshTime, loadFileContent, updateWordCount])
 
   useEffect(() => {
     if (!editor) return

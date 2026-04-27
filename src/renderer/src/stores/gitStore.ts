@@ -4,6 +4,7 @@
 
 import { create } from 'zustand'
 import { useProjectStore } from './projectStore'
+import { useEditorStore } from './editorStore'
 import type {
   GitMode,
   GitFileChange,
@@ -258,6 +259,7 @@ export const useGitStore = create<GitState>((set, get) => ({
       if (result.success) {
         await get().refresh()
         await get().getLog()
+        await useEditorStore.getState().refreshAllOpenFiles()
         return true
       } else {
         set({ error: result.error || '回退失败', loading: false })
@@ -308,6 +310,7 @@ export const useGitStore = create<GitState>((set, get) => ({
       const result = await window.electron.git.restore(project.path, filepaths, source)
       if (result.success) {
         await get().refresh()
+        await useEditorStore.getState().refreshAllOpenFiles()
         return true
       } else {
         set({ error: result.error || '恢复失败' })
@@ -417,6 +420,7 @@ export const useGitStore = create<GitState>((set, get) => ({
         await get().refresh()
         await get().getBranches()
         await get().getLog()
+        await useEditorStore.getState().refreshAllOpenFiles()
         return true
       } else {
         set({ error: result.error || '切换分支失败', loading: false })
@@ -440,6 +444,7 @@ export const useGitStore = create<GitState>((set, get) => ({
       if (result.success) {
         await get().refresh()
         await get().getLog()
+        await useEditorStore.getState().refreshAllOpenFiles()
         return true
       } else {
         set({ error: result.error || '合并失败', loading: false })
