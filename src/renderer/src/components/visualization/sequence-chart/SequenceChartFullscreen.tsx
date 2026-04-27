@@ -4,7 +4,7 @@
  * 支持：拖动移动事件、拖动边缘调整时长、拖拽排序事件行
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Button,
   Input,
@@ -26,6 +26,7 @@ import {
   RightOutlined,
   ExpandOutlined,
   EditOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
@@ -89,6 +90,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   // 拖拽状态
   const [dragType, setDragType] = useState<DragType>(null)
   const [draggingEvent, setDraggingEvent] = useState<SequenceEvent | null>(null)
+  const [eventSearchKeyword, setEventSearchKeyword] = useState('')
   const [dragStartX, setDragStartX] = useState(0)
   const [originalStart, setOriginalStart] = useState(1)
   const [originalEnd, setOriginalEnd] = useState(10)
@@ -441,6 +443,16 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     draggingEvent?.id === e.id ? draggingEvent : e
   )
 
+  // 事件搜索过滤
+  const filteredEvents = useMemo(() => {
+    if (!eventSearchKeyword.trim()) return displayEvents
+    const keyword = eventSearchKeyword.trim().toLowerCase()
+    return displayEvents.filter(e =>
+      e.title.toLowerCase().includes(keyword) ||
+      (e.description && e.description.toLowerCase().includes(keyword))
+    )
+  }, [displayEvents, eventSearchKeyword])
+
   return (
     <div className={styles.container}>
       {/* 工具栏 */}
@@ -450,6 +462,15 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
           <h3 className={styles.chartTitle}>{currentChart.name}</h3>
         </div>
         <div className={styles.toolbarRight}>
+          <Input
+            placeholder="搜索事件..."
+            prefix={<SearchOutlined />}
+            size="small"
+            value={eventSearchKeyword}
+            onChange={(e) => setEventSearchKeyword(e.target.value)}
+            allowClear
+            style={{ width: 160 }}
+          />
           <Button icon={<ExpandOutlined />} onClick={() => setExpandModalVisible(true)}>扩展单元格</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddModalVisible(true)}>添加事件</Button>
         </div>
@@ -471,8 +492,12 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                   <span>暂无事件</span>
                   <span>点击"添加事件"创建</span>
                 </div>
+              ) : filteredEvents.length === 0 ? (
+                <div className={styles.emptyEvents}>
+                  <span>未找到匹配事件</span>
+                </div>
               ) : (
-                currentChart.events.map(event => (
+                filteredEvents.map(event => (
                   <div key={event.id} className={styles.eventRow}>
                     <div className={styles.colIndex}>{event.order + 1}</div>
                     <div className={styles.colIntro}>
@@ -497,14 +522,14 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               <div className={styles.rightHeader}>{renderTimelineLabels()}</div>
               {/* 背景网格 */}
               <div className={styles.gridBackground}>
-                {displayEvents.map(event => (
+                {filteredEvents.map(event => (
                   <div key={event.id} className={styles.gridRow}>{renderGridCells()}</div>
                 ))}
               </div>
 
               {/* 事件条层 */}
               <div className={styles.eventsLayer}>
-                {displayEvents.map(event => (
+                {filteredEvents.map(event => (
                   <div key={event.id} className={styles.eventBarContainer} style={{ height: `${40 + (eventLanes.get(event.id) || 0) * 20}px` }}>
                     <Tooltip title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`} placement="top">
                       <div
