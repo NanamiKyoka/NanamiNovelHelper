@@ -805,7 +805,6 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               ) : null}
             </DragOverlay>
           </DndContext>
-          </div>
         )}
       </div>
 
