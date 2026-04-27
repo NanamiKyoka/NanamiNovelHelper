@@ -229,6 +229,44 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     })
   }, [currentTimeline?.nodes])
 
+  // 快速添加模板
+  const handleQuickAdd = useCallback(async (template: { title: string; description: string; color: string }) => {
+    const nodes = currentTimeline?.nodes || []
+    const maxOrder = nodes.length > 0 ? Math.max(...nodes.map((n) => n.order)) : -1
+    await addNode({
+      title: template.title,
+      description: template.description,
+      timeInfo: { format: 'custom' },
+      characters: [],
+      order: maxOrder + 1,
+      color: template.color,
+    })
+    message.success(`已添加: ${template.title}`)
+  }, [currentTimeline?.nodes, addNode, message])
+
+  const quickAddMenu: MenuProps['items'] = useMemo(() => [
+    { key: 'event', label: '事件节点', icon: <ClockCircleOutlined /> },
+    { key: 'turning', label: '转折点', icon: <EditOutlined /> },
+    { key: 'climax', label: '高潮', icon: <TagOutlined /> },
+    { key: 'ending', label: '结局', icon: <CheckOutlined /> },
+    { type: 'divider' },
+    { key: 'custom', label: '自定义...', icon: <PlusOutlined /> },
+  ], [])
+
+  const handleQuickAddClick: MenuProps['onClick'] = useCallback((info) => {
+    const templates: Record<string, { title: string; description: string; color: string }> = {
+      event: { title: '新事件', description: '', color: '#1890ff' },
+      turning: { title: '转折点', description: '故事方向发生重大变化', color: '#fa8c16' },
+      climax: { title: '高潮', description: '故事的紧张巅峰', color: '#f5222d' },
+      ending: { title: '结局', description: '', color: '#52c41a' },
+    }
+    if (info.key === 'custom') {
+      handleAddNode()
+    } else if (templates[info.key]) {
+      handleQuickAdd(templates[info.key])
+    }
+  }, [handleAddNode, handleQuickAdd])
+
   // 打开编辑节点弹窗
   const handleEditNode = useCallback((node: TimelineNode) => {
     setNodeEdit({
@@ -583,8 +621,13 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               <Button icon={<MenuOutlined />} onClick={toggleBatchMode}>
                 批量操作
               </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddNode}>
-                添加节点
+              <Dropdown menu={{ items: quickAddMenu, onClick: handleQuickAddClick }} trigger={['click']}>
+                <Button icon={<PlusOutlined />}>
+                  快速添加
+                </Button>
+              </Dropdown>
+              <Button type="primary" onClick={handleAddNode}>
+                自定义节点
               </Button>
             </>
           )}
