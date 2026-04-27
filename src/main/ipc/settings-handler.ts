@@ -208,7 +208,7 @@ export function registerSettingsHandlers(): void {
     return projectSettingsService.updateBackupSettings(settings)
   })
 
-  ipcMain.handle('settings:project:getExpandedFolders', (): string[] => {
+  ipcMain.handle('settings:project:getExpandedFolders', (): string[] | null => {
     return projectSettingsService.getExpandedFolders()
   })
 

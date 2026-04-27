@@ -45,8 +45,8 @@ export interface SortOptions {
 export interface FileTreeInitData {
   /** 文件树 */
   tree: FileNode[]
-  /** 展开的文件夹路径 */
-  expandedFolders: string[]
+  /** 展开的文件夹路径，null 表示从未设置过 */
+  expandedFolders: string[] | null
   /** 是否显示隐藏文件 */
   showHiddenFiles: boolean
   /** 用户隐藏的项目 */

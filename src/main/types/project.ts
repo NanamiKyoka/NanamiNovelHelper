@@ -142,7 +142,7 @@ export interface OrganizationGraphMeta {
  */
 export interface FileTreeInitData {
   tree: FileNode[]
-  expandedFolders: string[]
+  expandedFolders: string[] | null
   showHiddenFiles: boolean
   hiddenItems: string[]
 }

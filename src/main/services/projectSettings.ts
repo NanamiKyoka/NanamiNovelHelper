@@ -175,8 +175,8 @@ class ProjectSettingsService {
   }
 
   // 文件树设置
-  getExpandedFolders(): string[] {
-    return [...this.settings.expandedFolders]
+  getExpandedFolders(): string[] | null {
+    return this.settings.expandedFolders
   }
 
   setExpandedFolders(folders: string[]): void {

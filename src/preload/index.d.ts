@@ -968,7 +968,7 @@ export interface ProjectSettingsAPI {
   updateBackup: (settings: Partial<ProjectBackupSettings>) => Promise<ProjectBackupSettings>
   getAutoCreateVocabularyFile: () => Promise<boolean>
   setAutoCreateVocabularyFile: (value: boolean) => Promise<void>
-  getExpandedFolders: () => Promise<string[]>
+  getExpandedFolders: () => Promise<string[] | null>
   setExpandedFolders: (folders: string[]) => Promise<void>
   getHiddenItems: () => Promise<string[]>
   setHiddenItems: (items: string[]) => Promise<void>

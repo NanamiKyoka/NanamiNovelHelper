@@ -237,7 +237,7 @@ export interface ProjectSettings {
   highlight: ProjectHighlightSettings
   autoCreateVocabularyFile: boolean
   backup: ProjectBackupSettings
-  expandedFolders: string[]
+  expandedFolders: string[] | null
   hiddenItems: string[]
 }
 
@@ -246,7 +246,7 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   highlight: DEFAULT_PROJECT_HIGHLIGHT_SETTINGS,
   autoCreateVocabularyFile: false,
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
-  expandedFolders: [],
+  expandedFolders: null,
   hiddenItems: []
 }
 

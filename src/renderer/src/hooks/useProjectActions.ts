@@ -50,7 +50,7 @@ interface ProjectInitData {
   organizationGraphs: OrganizationGraph[]
   fileTree: {
     tree: FileNodeData[]
-    expandedFolders: string[]
+    expandedFolders: string[] | null
     showHiddenFiles: boolean
     hiddenItems: string[]
   }

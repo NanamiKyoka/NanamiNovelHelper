@@ -70,7 +70,7 @@ interface FileTreeState {
   getParentNode: (key: string) => FileNodeData | null
   getFlattenedNodes: () => FlattenedNode[]
   // 批量设置方法（用于聚合接口）
-  setData: (roots: FileNodeData[], expandedFolders: string[], showHiddenFiles: boolean, hiddenItems: string[]) => void
+  setData: (roots: FileNodeData[], expandedFolders: string[] | null, showHiddenFiles: boolean, hiddenItems: string[]) => void
   clearFileTreeData: () => void
 }
 
@@ -288,12 +288,15 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
       
       // 从项目设置中读取展开状态
       const savedExpandedFolders = await window.electron.settings.project.getExpandedFolders()
-      const expandedKeys = new Set(savedExpandedFolders)
       
-      // 如果没有保存的展开状态，默认展开根目录
-      if (expandedKeys.size === 0) {
-        const rootKeys = tree.filter(n => n.isDirectory).map(n => n.key)
-        rootKeys.forEach(k => expandedKeys.add(k))
+      // null 表示从未设置过，默认展开根目录
+      // 空数组表示用户主动折叠了所有文件夹，保持折叠
+      // 非空数组表示用户设置了特定的展开状态
+      let expandedKeys: Set<string>
+      if (savedExpandedFolders === null) {
+        expandedKeys = new Set(tree.filter(n => n.isDirectory).map(n => n.key))
+      } else {
+        expandedKeys = new Set(savedExpandedFolders)
       }
       
       set({ 
@@ -576,13 +579,15 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => ({
   },
 
   // 批量设置数据（用于聚合接口）
-  setData: (roots: FileNodeData[], expandedFolders: string[], _showHiddenFiles: boolean, _hiddenItems: string[]) => {
-    const expandedKeys = new Set(expandedFolders)
-    
-    // 如果没有保存的展开状态，默认展开根目录
-    if (expandedKeys.size === 0) {
-      const rootKeys = roots.filter(n => n.isDirectory).map(n => n.key)
-      rootKeys.forEach(k => expandedKeys.add(k))
+  setData: (roots: FileNodeData[], expandedFolders: string[] | null, _showHiddenFiles: boolean, _hiddenItems: string[]) => {
+    // null 表示从未设置过，默认展开根目录
+    // 空数组表示用户主动折叠了所有文件夹，保持折叠
+    // 非空数组表示用户设置了特定的展开状态
+    let expandedKeys: Set<string>
+    if (expandedFolders === null) {
+      expandedKeys = new Set(roots.filter(n => n.isDirectory).map(n => n.key))
+    } else {
+      expandedKeys = new Set(expandedFolders)
     }
     
     set({ 
