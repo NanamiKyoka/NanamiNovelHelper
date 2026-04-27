@@ -96,6 +96,23 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   const [zoom, setZoom] = useState(1)
   const contentRef = useRef<HTMLDivElement>(null)
 
+  // Ctrl+滚轮缩放
+  useEffect(() => {
+    const contentEl = contentRef.current
+    if (!contentEl) return
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const delta = e.deltaY > 0 ? -0.05 : 0.05
+        setZoom((prev) => Math.min(Math.max(prev + delta, 0.3), 3))
+      }
+    }
+
+    contentEl.addEventListener('wheel', handleWheel, { passive: false })
+    return () => contentEl.removeEventListener('wheel', handleWheel)
+  }, [])
+
   // 节点编辑弹窗状态
   const [nodeEdit, setNodeEdit] = useState<NodeEditState>({
     visible: false,
