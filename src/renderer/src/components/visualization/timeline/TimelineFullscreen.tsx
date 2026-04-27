@@ -294,6 +294,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         order: nodeEdit.node.order || 0,
         isBranchPoint: nodeEdit.node.isBranchPoint,
         tags: nodeEdit.node.tags,
+        causalLinks: nodeEdit.node.causalLinks,
       })
     } else if (nodeEdit.node.id) {
       await updateNode(nodeEdit.node.id, nodeEdit.node as Partial<TimelineNode>)
@@ -938,6 +939,26 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               />
               <span>标记为分支点</span>
             </label>
+          </div>
+
+          <div className={styles.formItem}>
+            <label className={styles.formLabel}>因果关系</label>
+            <Select
+              mode="multiple"
+              placeholder="选择此节点导致的结果节点"
+              value={nodeEdit.node?.causalLinks?.map(l => l.targetId) || []}
+              onChange={(targetIds) => {
+                const links = targetIds.map(id => ({ targetId: id }))
+                setNodeEdit((prev) => ({
+                  ...prev,
+                  node: { ...prev.node, causalLinks: links },
+                }))
+              }}
+              options={sortedNodes
+                .filter(n => n.id !== nodeEdit.node?.id)
+                .map(n => ({ label: n.title, value: n.id }))}
+              style={{ width: '100%' }}
+            />
           </div>
         </div>
       </Drawer>

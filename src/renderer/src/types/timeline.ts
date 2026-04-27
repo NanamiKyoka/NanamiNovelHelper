@@ -57,6 +57,16 @@ export interface ChapterRef {
   path: string
 }
 
+/**
+ * 因果关系连线
+ */
+export interface CausalLink {
+  /** 目标节点ID */
+  targetId: string
+  /** 关系描述 */
+  label?: string
+}
+
 // ============================================
 // 时间线节点定义
 // ============================================
@@ -82,6 +92,8 @@ export interface TimelineNode {
   isBranchPoint?: boolean
   /** 分支出的时间线 ID */
   branchedTimelineIds?: string[]
+  /** 因果关系连线 */
+  causalLinks?: CausalLink[]
   createdAt: string
   updatedAt: string
 }

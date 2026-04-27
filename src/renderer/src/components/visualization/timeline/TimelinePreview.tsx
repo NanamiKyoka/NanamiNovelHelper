@@ -95,6 +95,7 @@ function SortableTimelineItem({
       ref={setNodeRef} 
       style={style} 
       className={`${styles.timelineItemWrapper}${isEditMode ? ` ${styles.editing}` : ''}`}
+      data-node-id={node.id}
     >
       {/* 拖拽手柄 */}
       {isEditMode && (
@@ -246,6 +247,43 @@ function TimelinePreview({
 
   // 导出用ref
   const contentRef = useRef<HTMLDivElement>(null)
+  const [nodePositions, setNodePositions] = useState<Map<string, DOMRect>>(new Map())
+
+  // 计算因果连线
+  const causalLines = useMemo(() => {
+    const lines: Array<{ from: DOMRect; to: DOMRect; label?: string }> = []
+    for (const node of sortedNodes) {
+      if (!node.causalLinks || node.causalLinks.length === 0) continue
+      const fromRect = nodePositions.get(node.id)
+      if (!fromRect) continue
+      for (const link of node.causalLinks) {
+        const toRect = nodePositions.get(link.targetId)
+        if (!toRect) continue
+        lines.push({ from: fromRect, to: toRect, label: link.label })
+      }
+    }
+    return lines
+  }, [sortedNodes, nodePositions])
+
+  // 更新节点位置
+  useEffect(() => {
+    if (!contentRef.current) return
+    const containerRect = contentRef.current.getBoundingClientRect()
+    const positions = new Map<string, DOMRect>()
+    for (const node of sortedNodes) {
+      const el = contentRef.current.querySelector(`[data-node-id="${node.id}"]`)
+      if (el) {
+        const rect = el.getBoundingClientRect()
+        positions.set(node.id, new DOMRect(
+          rect.left - containerRect.left,
+          rect.top - containerRect.top,
+          rect.width,
+          rect.height
+        ))
+      }
+    }
+    setNodePositions(positions)
+  }, [sortedNodes, isEditMode])
 
   // 导出为图片
   const handleExportImage = useCallback(async () => {
@@ -494,7 +532,48 @@ function TimelinePreview({
       )}
 
       {/* 时间线主体 */}
-      <div className={styles.content} ref={contentRef}>
+      <div className={styles.content} ref={contentRef} style={{ position: 'relative' }}>
+        {causalLines.length > 0 && (
+          <svg className={styles.causalSvg} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
+            <defs>
+              <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#722ed1" />
+              </marker>
+            </defs>
+            {causalLines.map((line, idx) => {
+              const fromX = line.from.left + line.from.width / 2
+              const fromY = line.from.top + line.from.height
+              const toX = line.to.left + line.to.width / 2
+              const toY = line.to.top
+              const midY = (fromY + toY) / 2
+              return (
+                <g key={idx}>
+                  <path
+                    d={`M ${fromX} ${fromY} C ${fromX} ${midY}, ${toX} ${midY}, ${toX} ${toY}`}
+                    stroke="#722ed1"
+                    strokeWidth="2"
+                    strokeDasharray="6 3"
+                    fill="none"
+                    markerEnd="url(#arrowhead)"
+                    opacity="0.6"
+                  />
+                  {line.label && (
+                    <text
+                      x={(fromX + toX) / 2}
+                      y={midY}
+                      textAnchor="middle"
+                      fill="#722ed1"
+                      fontSize="11"
+                      opacity="0.8"
+                    >
+                      {line.label}
+                    </text>
+                  )}
+                </g>
+              )
+            })}
+          </svg>
+        )}
         {sortedNodes.length === 0 ? (
           <div className={styles.emptyNodes}>
             <ClockCircleOutlined className={styles.emptyIcon} />
