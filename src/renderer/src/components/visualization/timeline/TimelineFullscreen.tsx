@@ -16,6 +16,7 @@ import {
   Tooltip,
   DatePicker,
   Dropdown,
+  Drawer,
   theme,
 } from 'antd'
 import {
@@ -665,18 +666,19 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         )}
       </div>
 
-      {/* 节点编辑弹窗 */}
-      <Modal
+      {/* 节点编辑抽屉 */}
+      <Drawer
         title={nodeEdit.isNew ? '添加节点' : '编辑节点'}
         open={nodeEdit.visible}
-        onCancel={() => setNodeEdit({ visible: false, node: null, isNew: false })}
-        onOk={handleSaveNode}
-        okText="保存"
-        cancelText="取消"
-        width={600}
-        zIndex={10000}
+        onClose={() => setNodeEdit({ visible: false, node: null, isNew: false })}
+        width={480}
+        extra={
+          <Button type="primary" onClick={handleSaveNode}>
+            保存
+          </Button>
+        }
       >
-        <div className={styles.modalContent}>
+        <div className={styles.drawerContent}>
           <div className={styles.formItem}>
             <label className={styles.formLabel}>标题 *</label>
             <Input
@@ -834,7 +836,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             </label>
           </div>
         </div>
-      </Modal>
+      </Drawer>
 
       {/* 右键菜单 */}
       <Dropdown

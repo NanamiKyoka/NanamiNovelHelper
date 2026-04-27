@@ -224,7 +224,13 @@
   padding-bottom: var(--spacing-4);
 }
 
-/* 模态框样式 */
+/* 抽屉样式 */
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
 .modalContent {
   composes: modalContent from '../common.module.css';
 }
