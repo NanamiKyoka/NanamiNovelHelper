@@ -94,21 +94,67 @@
 
 .listHeader {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  align-content: flex-start;
   padding: var(--spacing-4);
   border-bottom: 1px solid var(--ant-color-border);
+  gap: var(--spacing-2);
+  container-type: inline-size;
+  container-name: list-header;
 }
 
 .listHeaderLeft {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  flex-shrink: 0;
 }
 
 .listHeaderActions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-2);
+  align-items: center;
+}
+
+@container list-header (max-width: 350px) {
+  .listHeader {
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+  }
+
+  .listHeaderLeft {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .listHeaderActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .listHeaderActions :global(.ant-btn) {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+@container list-header (max-width: 280px) {
+  .listHeader {
+    padding: var(--spacing-1);
+    gap: var(--spacing-1);
+  }
+
+  .listHeaderActions :global(.ant-btn) {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  .listHeaderActions :global(.ant-btn .anticon) {
+    margin-right: 2px;
+  }
 }
 
 .listContent {

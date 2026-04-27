@@ -9,7 +9,36 @@
 }
 
 .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
+  gap: 8px;
   margin-bottom: 16px;
+  container-type: inline-size;
+  container-name: sensitive-toolbar;
+}
+
+@container sensitive-toolbar (max-width: 280px) {
+  .toolbar {
+    gap: 6px;
+  }
+
+  .toolbar :global(.ant-btn) {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+@container sensitive-toolbar (max-width: 200px) {
+  .toolbar {
+    gap: 4px;
+  }
+
+  .toolbar :global(.ant-btn) {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
 }
 
 .tableContainer {

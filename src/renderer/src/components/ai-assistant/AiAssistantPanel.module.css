@@ -45,15 +45,47 @@
 
 .listToolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  align-content: flex-start;
   margin-bottom: 12px;
   gap: 8px;
+  container-type: inline-size;
+  container-name: ai-list-toolbar;
 }
 
 .listToolbar :global(.ant-input-search) {
   flex: 1;
   max-width: 200px;
+  min-width: 120px;
+}
+
+@container ai-list-toolbar (max-width: 280px) {
+  .listToolbar {
+    gap: 6px;
+  }
+
+  .listToolbar :global(.ant-input-search) {
+    max-width: none;
+    width: 100%;
+  }
+
+  .listToolbar :global(.ant-btn) {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+@container ai-list-toolbar (max-width: 200px) {
+  .listToolbar {
+    gap: 4px;
+  }
+
+  .listToolbar :global(.ant-btn) {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
 }
 
 .itemDescription {
