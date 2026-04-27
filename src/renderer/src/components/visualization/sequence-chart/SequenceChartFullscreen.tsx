@@ -187,6 +187,28 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setAddModalVisible(true)
   }, [currentChart])
 
+  // 进度条拖拽调整
+  const handleProgressDragStart = useCallback((e: React.MouseEvent, event: SequenceEvent) => {
+    e.preventDefault()
+    const trackEl = e.currentTarget as HTMLDivElement
+    const updateProgress = (clientX: number) => {
+      const rect = trackEl.getBoundingClientRect()
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width))
+      const newProgress = Math.round(ratio * 100)
+      if (newProgress !== event.progress) {
+        updateEvent(event.id, { progress: newProgress })
+      }
+    }
+    const onMouseMove = (ev: MouseEvent) => updateProgress(ev.clientX)
+    const onMouseUp = (ev: MouseEvent) => {
+      updateProgress(ev.clientX)
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+    }
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  }, [updateEvent])
+
   // 更新事件
   const handleUpdateEvent = async () => {
     if (!editingEvent?.title.trim()) {
@@ -548,7 +570,15 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                     <div className={styles.colIntro}>
                       <Tooltip title={event.title}><span className={styles.introText}>{event.title}</span></Tooltip>
                     </div>
-                    <div className={styles.colProgress}>{event.progress}%</div>
+                    <div className={styles.colProgress}>
+                      <div
+                        className={styles.progressTrack}
+                        onMouseDown={(e) => handleProgressDragStart(e, event)}
+                      >
+                        <div className={styles.progressFill} style={{ width: `${event.progress}%` }} />
+                        <span className={styles.progressLabel}>{event.progress}%</span>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
