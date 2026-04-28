@@ -7,6 +7,7 @@ import { spawn } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as git from 'isomorphic-git'
+import { fileWatcherService } from './fileWatcher'
 import type {
   GitMode,
   GitFileChange,
@@ -30,10 +31,10 @@ import type {
 const STATUS_MAP: Record<string, { status: GitFileStatus; short: GitFileStatusShort }> = {
   ' M': { status: 'modified', short: 'M' },
   'M ': { status: 'modified', short: 'M' },
-  'MM': { status: 'modified', short: 'M' },
+  MM: { status: 'modified', short: 'M' },
   ' A': { status: 'added', short: 'A' },
   'A ': { status: 'added', short: 'A' },
-  'AM': { status: 'added', short: 'A' },
+  AM: { status: 'added', short: 'A' },
   ' D': { status: 'deleted', short: 'D' },
   'D ': { status: 'deleted', short: 'D' },
   'R ': { status: 'renamed', short: 'R' },
@@ -91,29 +92,29 @@ class GitService {
       const proc = spawn('git', args, {
         cwd,
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env,
+        env: process.env
       })
-      
+
       let stdout = ''
       let stderr = ''
-      
+
       proc.stdout.on('data', (data: Buffer) => {
         stdout += data.toString('utf-8')
       })
-      
+
       proc.stderr.on('data', (data: Buffer) => {
         stderr += data.toString('utf-8')
       })
-      
-      proc.on('close', (code) => {
+
+      proc.on('close', code => {
         if (code === 0) {
           resolve(stdout)
         } else {
           reject(new Error(`git ${args[0]} failed with code ${code}: ${stderr}`))
         }
       })
-      
-      proc.on('error', (err) => {
+
+      proc.on('error', err => {
         reject(err)
       })
     })
@@ -129,7 +130,10 @@ class GitService {
         return false
       }
     } else {
-      return git.findRoot({ fs, filepath: repoPath }).then(() => true).catch(() => false)
+      return git
+        .findRoot({ fs, filepath: repoPath })
+        .then(() => true)
+        .catch(() => false)
     }
   }
 
@@ -142,14 +146,14 @@ class GitService {
           args.push('-b', options.defaultBranch)
         }
         await this.execGit(options.path, args)
-        
+
         if (options.initialCommit) {
           await this.execGit(options.path, ['add', '.'])
           await this.execGit(options.path, ['commit', '-m', options.initialCommit])
         }
       } else {
         await git.init({ fs, dir: options.path, defaultBranch: options.defaultBranch || 'main' })
-        
+
         if (options.initialCommit) {
           await git.add({ fs, dir: options.path, filepath: '.' })
           await git.commit({
@@ -193,15 +197,15 @@ class GitService {
     const statusOutput = await this.execGit(repoPath, ['status', '--porcelain=v1', '-z'])
     const changes: GitFileChange[] = []
     const stagedChanges: GitFileChange[] = []
-    
+
     const entries = statusOutput.split('\0').filter(Boolean)
     for (const entry of entries) {
       if (entry.length < 3) continue
-      
+
       const statusCode = entry.substring(0, 2)
       let filePath = entry.substring(3)
       let oldPath: string | undefined
-      
+
       // 处理重命名
       if (statusCode.startsWith('R') || statusCode.startsWith('C')) {
         const parts = filePath.split('\0')
@@ -210,11 +214,12 @@ class GitService {
           filePath = parts[1]
         }
       }
-      
+
       const statusInfo = STATUS_MAP[statusCode]
       if (statusInfo) {
-        const isStaged = statusCode.trim() === statusCode || statusCode[0] !== ' ' || statusCode[1] !== ' '
-        
+        const isStaged =
+          statusCode.trim() === statusCode || statusCode[0] !== ' ' || statusCode[1] !== ' '
+
         // 获取行数统计
         let additions = 0
         let deletions = 0
@@ -251,7 +256,12 @@ class GitService {
     let ahead = 0
     let behind = 0
     try {
-      const trackingOutput = await this.execGit(repoPath, ['rev-list', '--left-right', '@{upstream}...HEAD', '--count'])
+      const trackingOutput = await this.execGit(repoPath, [
+        'rev-list',
+        '--left-right',
+        '@{upstream}...HEAD',
+        '--count'
+      ])
       const match = trackingOutput.trim().match(/^(\d+)\s+(\d+)$/)
       if (match) {
         behind = parseInt(match[1])
@@ -268,14 +278,19 @@ class GitService {
     const conflicts: string[] = []
 
     try {
-      rebasing = fs.existsSync(path.join(gitDir, 'rebase-merge')) || 
-                 fs.existsSync(path.join(gitDir, 'rebase-apply'))
+      rebasing =
+        fs.existsSync(path.join(gitDir, 'rebase-merge')) ||
+        fs.existsSync(path.join(gitDir, 'rebase-apply'))
       merging = fs.existsSync(path.join(gitDir, 'MERGE_HEAD'))
 
       if (merging) {
         // 获取冲突文件
         try {
-          const conflictOutput = await this.execGit(repoPath, ['diff', '--name-only', '--diff-filter=U'])
+          const conflictOutput = await this.execGit(repoPath, [
+            'diff',
+            '--name-only',
+            '--diff-filter=U'
+          ])
           conflicts.push(...conflictOutput.split('\n').filter(Boolean))
         } catch {
           // 忽略
@@ -306,13 +321,13 @@ class GitService {
   private async getStatusIso(repoPath: string): Promise<GitResult<GitRepositoryStatus>> {
     const changes: GitFileChange[] = []
     const stagedChanges: GitFileChange[] = []
-    
+
     const matrix = await git.statusMatrix({ fs, dir: repoPath })
-    
+
     for (const [filepath, head, workdir, stage] of matrix) {
       // head: HEAD 状态, workdir: 工作目录状态, stage: 暂存区状态
       // 0: absent, 1: present, 2: present with different content, 3: merged/conflict
-      
+
       let status: GitFileStatus = 'unmodified'
       let short: GitFileStatusShort = ' '
       let staged = false
@@ -348,7 +363,7 @@ class GitService {
           additions: 0, // isomorphic-git 不直接提供
           deletions: 0
         }
-        
+
         if (staged) {
           stagedChanges.push(change)
         } else {
@@ -396,9 +411,12 @@ class GitService {
   }
 
   /** 使用系统 Git 获取日志 */
-  private async getLogSystem(repoPath: string, options: GitLogOptions): Promise<GitResult<GitCommit[]>> {
+  private async getLogSystem(
+    repoPath: string,
+    options: GitLogOptions
+  ): Promise<GitResult<GitCommit[]>> {
     const args = ['log', '--pretty=format:%H%n%h%n%s%n%an%n%ae%n%at%n%P%n%D', '--date-order']
-    
+
     if (options.maxCount) {
       args.push(`-n${options.maxCount}`)
     }
@@ -418,12 +436,12 @@ class GitService {
     const output = await this.execGit(repoPath, args)
     const commits: GitCommit[] = []
     const lines = output.split('\n')
-    
+
     let i = 0
     while (i < lines.length) {
       const hash = lines[i++]
       if (!hash) break
-      
+
       const shortHash = lines[i++] || ''
       const message = lines[i++] || ''
       const authorName = lines[i++] || ''
@@ -431,9 +449,12 @@ class GitService {
       const timestamp = parseInt(lines[i++] || '0')
       const parentHashes = (lines[i++] || '').split(' ').filter(Boolean)
       const refsStr = lines[i++] || ''
-      
-      const refs = refsStr.split(',').map(r => r.trim()).filter(Boolean)
-      
+
+      const refs = refsStr
+        .split(',')
+        .map(r => r.trim())
+        .filter(Boolean)
+
       commits.push({
         hash,
         shortHash,
@@ -452,9 +473,12 @@ class GitService {
   }
 
   /** 使用 isomorphic-git 获取日志 */
-  private async getLogIso(repoPath: string, options: GitLogOptions): Promise<GitResult<GitCommit[]>> {
+  private async getLogIso(
+    repoPath: string,
+    options: GitLogOptions
+  ): Promise<GitResult<GitCommit[]>> {
     const commits: GitCommit[] = []
-    
+
     const logOptions: git.LogResponse = await git.log({
       fs,
       dir: repoPath,
@@ -525,7 +549,7 @@ class GitService {
           args.push('--author', `${options.authorName} <${options.authorEmail}>`)
         }
         await this.execGit(repoPath, args)
-        
+
         // 获取新提交的哈希
         const hash = (await this.execGit(repoPath, ['rev-parse', 'HEAD'])).trim()
         return { success: true, data: hash }
@@ -534,7 +558,7 @@ class GitService {
           name: options.authorName || 'NanamiNovelHelper',
           email: options.authorEmail || 'nanami@example.com'
         }
-        
+
         const hash = await git.commit({
           fs,
           dir: repoPath,
@@ -550,9 +574,12 @@ class GitService {
 
   /** 回退 */
   async reset(repoPath: string, options: GitResetOptions): Promise<GitResult<void>> {
+    const isBulkOperation = options.mode === 'hard'
+    if (isBulkOperation) fileWatcherService.pause()
     try {
       if (this.useSystemGit) {
-        const modeFlag = options.mode === 'soft' ? '--soft' : options.mode === 'hard' ? '--hard' : '--mixed'
+        const modeFlag =
+          options.mode === 'soft' ? '--soft' : options.mode === 'hard' ? '--hard' : '--mixed'
         await this.execGit(repoPath, ['reset', modeFlag, options.commit])
       } else {
         // isomorphic-git 只支持部分 reset 功能
@@ -566,6 +593,8 @@ class GitService {
       return { success: true }
     } catch (error) {
       return { success: false, error: String(error) }
+    } finally {
+      if (isBulkOperation) fileWatcherService.resume()
     }
   }
 
@@ -598,7 +627,11 @@ class GitService {
   }
 
   /** 获取文件差异 */
-  async getDiff(repoPath: string, filepath: string, staged: boolean = false): Promise<GitResult<GitFileDiff>> {
+  async getDiff(
+    repoPath: string,
+    filepath: string,
+    staged: boolean = false
+  ): Promise<GitResult<GitFileDiff>> {
     try {
       if (this.useSystemGit) {
         return await this.getDiffSystem(repoPath, filepath, staged)
@@ -611,24 +644,28 @@ class GitService {
   }
 
   /** 使用系统 Git 获取差异 */
-  private async getDiffSystem(repoPath: string, filepath: string, staged: boolean): Promise<GitResult<GitFileDiff>> {
+  private async getDiffSystem(
+    repoPath: string,
+    filepath: string,
+    staged: boolean
+  ): Promise<GitResult<GitFileDiff>> {
     const args = ['diff']
     if (staged) {
       args.push('--staged')
     }
     args.push('--', filepath)
-    
+
     const output = await this.execGit(repoPath, args)
     const hunks: GitDiffHunk[] = []
     let additions = 0
     let deletions = 0
-    
+
     // 解析 diff 输出
     const lines = output.split('\n')
     let currentHunk: GitDiffHunk | null = null
     let oldLine = 0
     let newLine = 0
-    
+
     for (const line of lines) {
       const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/)
       if (hunkMatch) {
@@ -647,7 +684,7 @@ class GitService {
         }
         continue
       }
-      
+
       if (currentHunk) {
         if (line.startsWith('+')) {
           currentHunk.lines.push({
@@ -673,7 +710,7 @@ class GitService {
         }
       }
     }
-    
+
     if (currentHunk) {
       hunks.push(currentHunk)
     }
@@ -692,10 +729,14 @@ class GitService {
   }
 
   /** 使用 isomorphic-git 获取差异 */
-  private async getDiffIso(_repoPath: string, filepath: string, _staged: boolean): Promise<GitResult<GitFileDiff>> {
+  private async getDiffIso(
+    _repoPath: string,
+    filepath: string,
+    _staged: boolean
+  ): Promise<GitResult<GitFileDiff>> {
     // isomorphic-git 的 diff 功能较有限
     const hunks: GitDiffHunk[] = []
-    
+
     return {
       success: true,
       data: {
@@ -723,9 +764,12 @@ class GitService {
   }
 
   /** 使用系统 Git 获取提交文件列表 */
-  private async getCommitFilesSystem(repoPath: string, commitHash: string): Promise<GitResult<GitFileChange[]>> {
+  private async getCommitFilesSystem(
+    repoPath: string,
+    commitHash: string
+  ): Promise<GitResult<GitFileChange[]>> {
     const changes: GitFileChange[] = []
-    
+
     const output = await this.execGit(repoPath, [
       'diff-tree',
       '--no-commit-id',
@@ -733,9 +777,9 @@ class GitService {
       '-r',
       commitHash
     ])
-    
+
     const lines = output.split('\n').filter(line => line.trim())
-    
+
     for (const line of lines) {
       const parts = line.split('\t')
       const statusChar = parts[0]
@@ -743,7 +787,7 @@ class GitService {
       let statusShort: GitFileStatusShort = 'M'
       let path = parts[1] || ''
       let oldPath: string | undefined
-      
+
       switch (statusChar) {
         case 'A':
           status = 'added'
@@ -768,7 +812,7 @@ class GitService {
           statusShort = 'C'
           break
       }
-      
+
       changes.push({
         path,
         oldPath,
@@ -779,18 +823,21 @@ class GitService {
         deletions: 0
       })
     }
-    
+
     return { success: true, data: changes }
   }
 
   /** 使用 isomorphic-git 获取提交文件列表 */
-  private async getCommitFilesIso(repoPath: string, commitHash: string): Promise<GitResult<GitFileChange[]>> {
+  private async getCommitFilesIso(
+    repoPath: string,
+    commitHash: string
+  ): Promise<GitResult<GitFileChange[]>> {
     const changes: GitFileChange[] = []
-    
+
     try {
       const commit = await git.readCommit({ fs, dir: repoPath, oid: commitHash })
       const parentOid = commit.commit.parent[0]
-      
+
       if (parentOid) {
         const diffs = await git.walk({
           fs,
@@ -798,10 +845,10 @@ class GitService {
           trees: [git.TREE({ ref: parentOid }), git.TREE({ ref: commitHash })],
           map: async (filepath, [parentEntry, currentEntry]) => {
             if (filepath === '.') return
-            
+
             const parentExists = parentEntry !== null
             const currentExists = currentEntry !== null
-            
+
             if (parentExists && !currentExists) {
               changes.push({
                 path: filepath,
@@ -852,12 +899,16 @@ class GitService {
     } catch (error) {
       return { success: false, error: String(error) }
     }
-    
+
     return { success: true, data: changes }
   }
 
   /** 获取某个提交中某个文件的差异 */
-  async getCommitFileDiff(repoPath: string, commitHash: string, filepath: string): Promise<GitResult<GitFileDiff>> {
+  async getCommitFileDiff(
+    repoPath: string,
+    commitHash: string,
+    filepath: string
+  ): Promise<GitResult<GitFileDiff>> {
     try {
       if (this.useSystemGit) {
         return await this.getCommitFileDiffSystem(repoPath, commitHash, filepath)
@@ -870,17 +921,21 @@ class GitService {
   }
 
   /** 使用系统 Git 获取提交文件差异 */
-  private async getCommitFileDiffSystem(repoPath: string, commitHash: string, filepath: string): Promise<GitResult<GitFileDiff>> {
+  private async getCommitFileDiffSystem(
+    repoPath: string,
+    commitHash: string,
+    filepath: string
+  ): Promise<GitResult<GitFileDiff>> {
     const output = await this.execGit(repoPath, ['show', '--format=', commitHash, '--', filepath])
     const hunks: GitDiffHunk[] = []
     let additions = 0
     let deletions = 0
-    
+
     const lines = output.split('\n')
     let currentHunk: GitDiffHunk | null = null
     let oldLine = 0
     let newLine = 0
-    
+
     for (const line of lines) {
       const hunkMatch = line.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/)
       if (hunkMatch) {
@@ -899,7 +954,7 @@ class GitService {
         }
         continue
       }
-      
+
       if (currentHunk) {
         if (line.startsWith('+')) {
           currentHunk.lines.push({
@@ -925,11 +980,11 @@ class GitService {
         }
       }
     }
-    
+
     if (currentHunk) {
       hunks.push(currentHunk)
     }
-    
+
     return {
       success: true,
       data: {
@@ -959,11 +1014,11 @@ class GitService {
   /** 使用系统 Git 获取分支 */
   private async getBranchesSystem(repoPath: string): Promise<GitResult<GitBranch[]>> {
     const branches: GitBranch[] = []
-    
+
     // 获取本地分支
     const output = await this.execGit(repoPath, ['branch', '-v', '--no-abbrev'])
     const lines = output.split('\n')
-    
+
     for (const line of lines) {
       const match = line.match(/^([* ]) (.+?)\s+([a-f0-9]+) (.+)$/)
       if (match) {
@@ -991,9 +1046,9 @@ class GitService {
     // 获取远程分支
     const remoteOutput = await this.execGit(repoPath, ['branch', '-r', '-v', '--no-abbrev'])
     const remoteLines = remoteOutput.split('\n')
-    
+
     for (const line of remoteLines) {
-      const match = line.match(/^  (.+?)\s+([a-f0-9]+) (.+)$/)
+      const match = line.match(/^ {2}(.+?)\s+([a-f0-9]+) (.+)$/)
       if (match) {
         branches.push({
           name: match[1],
@@ -1021,10 +1076,10 @@ class GitService {
   /** 使用 isomorphic-git 获取分支 */
   private async getBranchesIso(repoPath: string): Promise<GitResult<GitBranch[]>> {
     const branches: GitBranch[] = []
-    
+
     const branchNames = await git.listBranches({ fs, dir: repoPath })
     const currentBranch = await git.currentBranch({ fs, dir: repoPath })
-    
+
     for (const name of branchNames) {
       branches.push({
         name,
@@ -1037,7 +1092,11 @@ class GitService {
   }
 
   /** 创建分支 */
-  async createBranch(repoPath: string, name: string, startPoint?: string): Promise<GitResult<void>> {
+  async createBranch(
+    repoPath: string,
+    name: string,
+    startPoint?: string
+  ): Promise<GitResult<void>> {
     try {
       if (this.useSystemGit) {
         const args = ['branch', name]
@@ -1055,7 +1114,11 @@ class GitService {
   }
 
   /** 删除分支 */
-  async deleteBranch(repoPath: string, name: string, force: boolean = false): Promise<GitResult<void>> {
+  async deleteBranch(
+    repoPath: string,
+    name: string,
+    force: boolean = false
+  ): Promise<GitResult<void>> {
     try {
       if (this.useSystemGit) {
         const args = ['branch', force ? '-D' : '-d', name]
@@ -1071,6 +1134,8 @@ class GitService {
 
   /** 切换分支 */
   async checkout(repoPath: string, options: GitCheckoutOptions): Promise<GitResult<void>> {
+    const isBulkOperation = !options.paths || options.force
+    if (isBulkOperation) fileWatcherService.pause()
     try {
       if (this.useSystemGit) {
         const args = ['checkout']
@@ -1098,11 +1163,14 @@ class GitService {
       return { success: true }
     } catch (error) {
       return { success: false, error: String(error) }
+    } finally {
+      if (isBulkOperation) fileWatcherService.resume()
     }
   }
 
   /** 合并分支 */
   async merge(repoPath: string, options: GitMergeOptions): Promise<GitResult<void>> {
+    fileWatcherService.pause()
     try {
       if (this.useSystemGit) {
         const args = ['merge', options.branch]
@@ -1126,6 +1194,8 @@ class GitService {
       return { success: true }
     } catch (error) {
       return { success: false, error: String(error) }
+    } finally {
+      fileWatcherService.resume()
     }
   }
 
@@ -1166,14 +1236,14 @@ class GitService {
         } catch {
           content = ''
         }
-        
+
         const regex = new RegExp(`^\\s*${key}\\s*=\\s*.+$`, 'm')
         if (regex.test(content)) {
           content = content.replace(regex, `\t${key} = ${value}`)
         } else {
           content += `\n\t${key} = ${value}`
         }
-        
+
         await fs.promises.writeFile(configPath, content, 'utf-8')
       }
       return { success: true }

@@ -24,6 +24,7 @@ class FileWatcherService extends ServiceCore {
   private debounceTimers: Map<string, NodeJS.Timeout> = new Map()
   private pendingEvents: Map<string, FileChangeEvent> = new Map()
   private mainWindow: BrowserWindow | null = null
+  private paused: boolean = false
   private defaultOptions: WatchOptions = {
     ignored: [
       '**/node_modules/**',
@@ -73,7 +74,7 @@ class FileWatcherService extends ServiceCore {
         }
       )
 
-      this.watcher.on('error', (error) => {
+      this.watcher.on('error', error => {
         this.logger.error('文件监听错误:', error)
       })
 
@@ -92,7 +93,7 @@ class FileWatcherService extends ServiceCore {
       this.logger.info('文件监听已停止')
     }
 
-    this.debounceTimers.forEach((timer) => clearTimeout(timer))
+    this.debounceTimers.forEach(timer => clearTimeout(timer))
     this.debounceTimers.clear()
     this.pendingEvents.clear()
     this.watchedPath = null
@@ -112,9 +113,7 @@ class FileWatcherService extends ServiceCore {
     for (const pattern of ignored) {
       const normalizedPattern = pattern.replace(/\\/g, '/')
       if (normalizedPattern.includes('**')) {
-        const regexPattern = normalizedPattern
-          .replace(/\*\*/g, '.*')
-          .replace(/\*/g, '[^/]*')
+        const regexPattern = normalizedPattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*')
         if (new RegExp(regexPattern).test(normalizedPath)) {
           return true
         }
@@ -126,7 +125,9 @@ class FileWatcherService extends ServiceCore {
     return false
   }
 
-  private handleFileEvent(eventType: string, filePath: string, filename: string): void {
+  private handleFileEvent(eventType: string, filePath: string, _filename: string): void {
+    if (this.paused) return
+
     let type: FileChangeEvent['type']
 
     if (eventType === 'rename') {
@@ -161,9 +162,25 @@ class FileWatcherService extends ServiceCore {
   }
 
   private notifyRenderer(event: FileChangeEvent): void {
+    if (this.paused) return
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send('file-change', event)
     }
+  }
+
+  pause(): void {
+    this.paused = true
+  }
+
+  resume(): void {
+    this.paused = false
+    this.pendingEvents.clear()
+    this.debounceTimers.forEach(timer => clearTimeout(timer))
+    this.debounceTimers.clear()
+  }
+
+  isPaused(): boolean {
+    return this.paused
   }
 }
 

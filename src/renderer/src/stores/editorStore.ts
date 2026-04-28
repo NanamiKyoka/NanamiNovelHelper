@@ -240,436 +240,454 @@ function createFileCache(): LRUCache<string, EditorFileContent> {
 
 export const useEditorStore = create<EditorState>()(
   persist(
-    (set, get) => ({
-      tabs: [],
-      activeTabId: null,
-      previewTabId: null,
-      fileContents: createFileCache(),
-      settings: defaultSettings,
-      wordCount: {
-        cjkChars: 0,
-        asciiChars: 0,
-        words: 0,
-        nonWSChars: 0,
-        nonWSNoPunct: 0,
-        total: 0,
-        lines: 0,
-        paragraphs: 0
-      },
-      cursorPosition: {
-        line: 1,
-        column: 1
-      },
-      statusBarConfig: defaultStatusBarConfig,
-      isSaving: false,
-      isLoading: false,
-      lastSavedAt: null,
-      goToPositionRequest: null,
-  externalRefreshRequest: null,
-  lastRefreshTime: 0,
+    (set, get) => {
+      let refreshing = false
 
-      // 预览模式打开文件（单击）- VSCode 风格
-      openPreview: async (
-        path: string,
-        name: string,
-        type: EditorTab['type'] = getFileType(name)
-      ) => {
-        const state = get()
+      return {
+        tabs: [],
+        activeTabId: null,
+        previewTabId: null,
+        fileContents: createFileCache(),
+        settings: defaultSettings,
+        wordCount: {
+          cjkChars: 0,
+          asciiChars: 0,
+          words: 0,
+          nonWSChars: 0,
+          nonWSNoPunct: 0,
+          total: 0,
+          lines: 0,
+          paragraphs: 0
+        },
+        cursorPosition: {
+          line: 1,
+          column: 1
+        },
+        statusBarConfig: defaultStatusBarConfig,
+        isSaving: false,
+        isLoading: false,
+        lastSavedAt: null,
+        goToPositionRequest: null,
+        externalRefreshRequest: null,
+        lastRefreshTime: 0,
 
-        // 检查是否已经打开
-        const existingTab = state.tabs.find(tab => tab.path === path)
-        if (existingTab) {
-          // 已打开，切换到该标签
-          set({ activeTabId: existingTab.id })
-          // 更新最后激活时间
-          set({
-            tabs: state.tabs.map(tab =>
-              tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
-            )
-          })
-          // 设为预览标签
-          set({ previewTabId: existingTab.id })
-          return
-        }
+        // 预览模式打开文件（单击）- VSCode 风格
+        openPreview: async (
+          path: string,
+          name: string,
+          type: EditorTab['type'] = getFileType(name)
+        ) => {
+          const state = get()
 
-        // 关闭之前的预览标签（如果存在且未修改）
-        if (state.previewTabId) {
-          const previewTab = state.tabs.find(t => t.id === state.previewTabId)
-          // 只有未修改的预览标签才会被替换
-          if (previewTab && !previewTab.isDirty) {
-            set(state => ({
-              tabs: state.tabs.filter(t => t.id !== state.previewTabId)
-            }))
+          // 检查是否已经打开
+          const existingTab = state.tabs.find(tab => tab.path === path)
+          if (existingTab) {
+            // 已打开，切换到该标签
+            set({ activeTabId: existingTab.id })
+            // 更新最后激活时间
+            set({
+              tabs: state.tabs.map(tab =>
+                tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
+              )
+            })
+            // 设为预览标签
+            set({ previewTabId: existingTab.id })
+            return
           }
-        }
 
-        // 创建新标签
-        const newTab: EditorTab = {
-          id: uuidv4(),
-          path,
-          name,
-          type,
-          isDirty: false,
-          lastActiveAt: Date.now()
-        }
-
-        // 加载文件内容
-        await get().loadFileContent(path)
-
-        // 添加标签并设为预览
-        set(state => ({
-          tabs: [...state.tabs, newTab],
-          activeTabId: newTab.id,
-          previewTabId: newTab.id
-        }))
-      },
-
-      // 打开文件（直接打开，不区分预览/固定）
-      openFile: async (path: string, name: string, type: EditorTab['type'] = getFileType(name)) => {
-        const state = get()
-
-        // 检查是否已经打开
-        const existingTab = state.tabs.find(tab => tab.path === path)
-        if (existingTab) {
-          // 已打开，切换到该标签
-          set({ activeTabId: existingTab.id })
-          // 更新最后激活时间
-          set({
-            tabs: state.tabs.map(tab =>
-              tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
-            )
-          })
-          return
-        }
-
-        // 创建新标签
-        const newTab: EditorTab = {
-          id: uuidv4(),
-          path,
-          name,
-          type,
-          isDirty: false,
-          lastActiveAt: Date.now()
-        }
-
-        // 加载文件内容
-        await get().loadFileContent(path)
-
-        // 添加标签
-        set(state => ({
-          tabs: [...state.tabs, newTab],
-          activeTabId: newTab.id,
-          previewTabId: null
-        }))
-      },
-
-      // 关闭标签
-      closeTab: (tabId: string) => {
-        const state = get()
-        const tabIndex = state.tabs.findIndex(tab => tab.id === tabId)
-
-        if (tabIndex === -1) return
-
-        const newTabs = state.tabs.filter(tab => tab.id !== tabId)
-
-        // 如果关闭的是当前活动标签，切换到其他标签
-        let newActiveTabId = state.activeTabId
-        if (state.activeTabId === tabId) {
-          if (newTabs.length > 0) {
-            // 优先切换到右边的标签，否则切换到左边
-            const rightTab = newTabs[tabIndex]
-            const leftTab = newTabs[tabIndex - 1]
-            newActiveTabId = rightTab?.id || leftTab?.id || null
-          } else {
-            newActiveTabId = null
+          // 关闭之前的预览标签（如果存在且未修改）
+          if (state.previewTabId) {
+            const previewTab = state.tabs.find(t => t.id === state.previewTabId)
+            // 只有未修改的预览标签才会被替换
+            if (previewTab && !previewTab.isDirty) {
+              set(state => ({
+                tabs: state.tabs.filter(t => t.id !== state.previewTabId)
+              }))
+            }
           }
-        }
 
-        // 如果关闭的是预览标签，清除预览状态
-        const newPreviewTabId = state.previewTabId === tabId ? null : state.previewTabId
-
-        set({ tabs: newTabs, activeTabId: newActiveTabId, previewTabId: newPreviewTabId })
-      },
-
-      // 关闭其他标签
-      closeOtherTabs: (tabId: string) => {
-        const state = get()
-        const activeTab = state.tabs.find(tab => tab.id === tabId)
-
-        if (!activeTab) return
-
-        set({
-          tabs: [activeTab],
-          activeTabId: tabId,
-          previewTabId: state.previewTabId === tabId ? tabId : null
-        })
-      },
-
-      // 关闭所有标签
-      closeAllTabs: () => {
-        set({ tabs: [], activeTabId: null, previewTabId: null })
-      },
-
-      // 设置活动标签
-      setActiveTab: (tabId: string) => {
-        const state = get()
-        const tab = state.tabs.find(t => t.id === tabId)
-
-        if (!tab) return
-
-        set({
-          activeTabId: tabId,
-          tabs: state.tabs.map(t => (t.id === tabId ? { ...t, lastActiveAt: Date.now() } : t))
-        })
-      },
-
-      // 移动标签
-      moveTab: (fromIndex: number, toIndex: number) => {
-        set(state => {
-          const newTabs = [...state.tabs]
-          const [movedTab] = newTabs.splice(fromIndex, 1)
-          newTabs.splice(toIndex, 0, movedTab)
-          return { tabs: newTabs }
-        })
-      },
-
-      // 标记为已修改
-      markDirty: (tabId: string, isDirty: boolean) => {
-        set(state => ({
-          tabs: state.tabs.map(tab => (tab.id === tabId ? { ...tab, isDirty } : tab))
-        }))
-      },
-
-      loadFileContent: async (path: string) => {
-        set({ isLoading: true })
-        try {
-          const content = await window.electron.file.read(path)
-          const fileContent: EditorFileContent = {
+          // 创建新标签
+          const newTab: EditorTab = {
+            id: uuidv4(),
             path,
-            content,
-            loadedAt: Date.now()
+            name,
+            type,
+            isDirty: false,
+            lastActiveAt: Date.now()
           }
 
-          set(state => {
-            state.fileContents.set(path, fileContent)
-            return { fileContents: state.fileContents }
+          // 加载文件内容
+          await get().loadFileContent(path)
+
+          // 添加标签并设为预览
+          set(state => ({
+            tabs: [...state.tabs, newTab],
+            activeTabId: newTab.id,
+            previewTabId: newTab.id
+          }))
+        },
+
+        // 打开文件（直接打开，不区分预览/固定）
+        openFile: async (
+          path: string,
+          name: string,
+          type: EditorTab['type'] = getFileType(name)
+        ) => {
+          const state = get()
+
+          // 检查是否已经打开
+          const existingTab = state.tabs.find(tab => tab.path === path)
+          if (existingTab) {
+            // 已打开，切换到该标签
+            set({ activeTabId: existingTab.id })
+            // 更新最后激活时间
+            set({
+              tabs: state.tabs.map(tab =>
+                tab.id === existingTab.id ? { ...tab, lastActiveAt: Date.now() } : tab
+              )
+            })
+            return
+          }
+
+          // 创建新标签
+          const newTab: EditorTab = {
+            id: uuidv4(),
+            path,
+            name,
+            type,
+            isDirty: false,
+            lastActiveAt: Date.now()
+          }
+
+          // 加载文件内容
+          await get().loadFileContent(path)
+
+          // 添加标签
+          set(state => ({
+            tabs: [...state.tabs, newTab],
+            activeTabId: newTab.id,
+            previewTabId: null
+          }))
+        },
+
+        // 关闭标签
+        closeTab: (tabId: string) => {
+          const state = get()
+          const tabIndex = state.tabs.findIndex(tab => tab.id === tabId)
+
+          if (tabIndex === -1) return
+
+          const newTabs = state.tabs.filter(tab => tab.id !== tabId)
+
+          // 如果关闭的是当前活动标签，切换到其他标签
+          let newActiveTabId = state.activeTabId
+          if (state.activeTabId === tabId) {
+            if (newTabs.length > 0) {
+              // 优先切换到右边的标签，否则切换到左边
+              const rightTab = newTabs[tabIndex]
+              const leftTab = newTabs[tabIndex - 1]
+              newActiveTabId = rightTab?.id || leftTab?.id || null
+            } else {
+              newActiveTabId = null
+            }
+          }
+
+          // 如果关闭的是预览标签，清除预览状态
+          const newPreviewTabId = state.previewTabId === tabId ? null : state.previewTabId
+
+          set({ tabs: newTabs, activeTabId: newActiveTabId, previewTabId: newPreviewTabId })
+        },
+
+        // 关闭其他标签
+        closeOtherTabs: (tabId: string) => {
+          const state = get()
+          const activeTab = state.tabs.find(tab => tab.id === tabId)
+
+          if (!activeTab) return
+
+          set({
+            tabs: [activeTab],
+            activeTabId: tabId,
+            previewTabId: state.previewTabId === tabId ? tabId : null
           })
+        },
 
-          get().updateWordCount(content)
+        // 关闭所有标签
+        closeAllTabs: () => {
+          set({ tabs: [], activeTabId: null, previewTabId: null })
+        },
 
-          return content
-        } catch (error) {
-          console.error('Failed to load file:', error)
-          throw error
-        } finally {
-          set({ isLoading: false })
-        }
-      },
+        // 设置活动标签
+        setActiveTab: (tabId: string) => {
+          const state = get()
+          const tab = state.tabs.find(t => t.id === tabId)
 
-      saveFileContent: async (path: string, content: string) => {
-        set({ isSaving: true })
-        try {
-          await window.electron.file.write(path, content)
+          if (!tab) return
 
+          set({
+            activeTabId: tabId,
+            tabs: state.tabs.map(t => (t.id === tabId ? { ...t, lastActiveAt: Date.now() } : t))
+          })
+        },
+
+        // 移动标签
+        moveTab: (fromIndex: number, toIndex: number) => {
           set(state => {
-            state.fileContents.set(path, {
+            const newTabs = [...state.tabs]
+            const [movedTab] = newTabs.splice(fromIndex, 1)
+            newTabs.splice(toIndex, 0, movedTab)
+            return { tabs: newTabs }
+          })
+        },
+
+        // 标记为已修改
+        markDirty: (tabId: string, isDirty: boolean) => {
+          set(state => ({
+            tabs: state.tabs.map(tab => (tab.id === tabId ? { ...tab, isDirty } : tab))
+          }))
+        },
+
+        loadFileContent: async (path: string) => {
+          set({ isLoading: true })
+          try {
+            const content = await window.electron.file.read(path)
+            const fileContent: EditorFileContent = {
               path,
               content,
               loadedAt: Date.now()
-            })
-            return {
-              fileContents: state.fileContents,
-              lastSavedAt: Date.now()
             }
-          })
 
-          const tab = get().getTabByPath(path)
-          if (tab) {
-            get().markDirty(tab.id, false)
-          }
-        } catch (error) {
-          console.error('Failed to save file:', error)
-          throw error
-        } finally {
-          set({ isSaving: false })
-        }
-      },
-
-      updateContent: (content: string) => {
-        const state = get()
-        const activeTab = state.getActiveTab()
-
-        if (!activeTab) return
-
-        set(state => {
-          state.fileContents.set(activeTab.path, {
-            path: activeTab.path,
-            content,
-            loadedAt: Date.now()
-          })
-          return { fileContents: state.fileContents }
-        })
-
-        get().markDirty(activeTab.id, true)
-      },
-
-      saveEditorState: (path: string, editorState: unknown) => {
-        set(state => {
-          const existing = state.fileContents.get(path)
-          if (existing) {
-            state.fileContents.set(path, {
-              ...existing,
-              editorState
+            set(state => {
+              state.fileContents.set(path, fileContent)
+              return { fileContents: state.fileContents }
             })
+
+            get().updateWordCount(content)
+
+            return content
+          } catch (error) {
+            console.error('Failed to load file:', error)
+            throw error
+          } finally {
+            set({ isLoading: false })
           }
-          return { fileContents: state.fileContents }
-        })
-      },
+        },
 
-      getEditorState: (path: string) => {
-        const state = get()
-        const fileContent = state.fileContents.get(path)
-        return fileContent?.editorState
-      },
-
-      getCurrentContent: () => {
-        const state = get()
-        const activeTab = state.getActiveTab()
-
-        if (!activeTab) return ''
-
-        const fileContent = state.fileContents.get(activeTab.path)
-        return fileContent?.content || ''
-      },
-
-      // 更新设置
-      updateSettings: (newSettings: Partial<EditorSettings>) => {
-        set(state => ({
-          settings: { ...state.settings, ...newSettings }
-        }))
-      },
-
-      // 设置视图模式
-      setViewMode: (mode: ViewMode) => {
-        get().updateSettings({ viewMode: mode })
-      },
-
-      // 设置工具栏模式
-      setToolbarMode: (mode: ToolbarMode) => {
-        get().updateSettings({ toolbarMode: mode })
-      },
-
-      // 更新字数统计
-      updateWordCount: (content: string) => {
-        const wordCount = calculateWordCount(content)
-        set({ wordCount })
-      },
-
-      // 更新光标位置
-      updateCursorPosition: (position: CursorPosition) => {
-        set({ cursorPosition: position })
-      },
-
-      // 更新状态栏配置
-      updateStatusBarConfig: (config: Partial<StatusBarConfig>) => {
-        set(state => ({
-          statusBarConfig: { ...state.statusBarConfig, ...config }
-        }))
-      },
-
-      // 获取活动标签
-      getActiveTab: () => {
-        const state = get()
-        return state.tabs.find(tab => tab.id === state.activeTabId) || null
-      },
-
-      // 检查是否有未保存的更改
-      hasUnsavedChanges: () => {
-        const state = get()
-        return state.tabs.some(tab => tab.isDirty)
-      },
-
-      // 根据路径获取标签
-      getTabByPath: (path: string) => {
-        const state = get()
-        return state.tabs.find(tab => tab.path === path) || null
-      },
-
-      // 判断是否是预览标签
-      isPreviewTab: (tabId: string) => {
-        const state = get()
-        return state.previewTabId === tabId
-      },
-
-      // 请求跳转到指定匹配文本（包含文件路径和匹配索引）
-      requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => {
-        set({ goToPositionRequest: { filePath, matchText, matchIndex } })
-      },
-
-      // 清除跳转请求
-      clearGoToPositionRequest: () => {
-        set({ goToPositionRequest: null })
-      },
-
-      // 请求外部刷新
-      requestExternalRefresh: (filePath: string) => {
-        set({ externalRefreshRequest: filePath })
-      },
-
-      // 清除外部刷新请求
-      clearExternalRefreshRequest: () => {
-        set({ externalRefreshRequest: null })
-      },
-
-      // 刷新所有打开的文件（用于Git操作后同步文件内容）
-      refreshAllOpenFiles: async () => {
-        const state = get()
-        const tabs = state.tabs
-
-        for (const tab of tabs) {
+        saveFileContent: async (path: string, content: string) => {
+          set({ isSaving: true })
           try {
-            const content = await window.electron.file.read(tab.path)
-            state.fileContents.set(tab.path, {
-              path: tab.path,
+            await window.electron.file.write(path, content)
+
+            set(state => {
+              state.fileContents.set(path, {
+                path,
+                content,
+                loadedAt: Date.now()
+              })
+              return {
+                fileContents: state.fileContents,
+                lastSavedAt: Date.now()
+              }
+            })
+
+            const tab = get().getTabByPath(path)
+            if (tab) {
+              get().markDirty(tab.id, false)
+            }
+          } catch (error) {
+            console.error('Failed to save file:', error)
+            throw error
+          } finally {
+            set({ isSaving: false })
+          }
+        },
+
+        updateContent: (content: string) => {
+          const state = get()
+          const activeTab = state.getActiveTab()
+
+          if (!activeTab) return
+
+          set(state => {
+            state.fileContents.set(activeTab.path, {
+              path: activeTab.path,
               content,
               loadedAt: Date.now()
             })
-          } catch (error) {
-            console.error(`Failed to refresh file ${tab.path}:`, error)
-          }
-        }
+            return { fileContents: state.fileContents }
+          })
 
-        set({ fileContents: state.fileContents })
+          get().markDirty(activeTab.id, true)
+        },
 
-        if (state.activeTabId) {
-          const activeTab = state.tabs.find(t => t.id === state.activeTabId)
-          if (activeTab) {
-            const fileContent = state.fileContents.get(activeTab.path)
-            if (fileContent) {
-              get().updateWordCount(fileContent.content)
+        saveEditorState: (path: string, editorState: unknown) => {
+          set(state => {
+            const existing = state.fileContents.get(path)
+            if (existing) {
+              state.fileContents.set(path, {
+                ...existing,
+                editorState
+              })
             }
+            return { fileContents: state.fileContents }
+          })
+        },
+
+        getEditorState: (path: string) => {
+          const state = get()
+          const fileContent = state.fileContents.get(path)
+          return fileContent?.editorState
+        },
+
+        getCurrentContent: () => {
+          const state = get()
+          const activeTab = state.getActiveTab()
+
+          if (!activeTab) return ''
+
+          const fileContent = state.fileContents.get(activeTab.path)
+          return fileContent?.content || ''
+        },
+
+        // 更新设置
+        updateSettings: (newSettings: Partial<EditorSettings>) => {
+          set(state => ({
+            settings: { ...state.settings, ...newSettings }
+          }))
+        },
+
+        // 设置视图模式
+        setViewMode: (mode: ViewMode) => {
+          get().updateSettings({ viewMode: mode })
+        },
+
+        // 设置工具栏模式
+        setToolbarMode: (mode: ToolbarMode) => {
+          get().updateSettings({ toolbarMode: mode })
+        },
+
+        // 更新字数统计
+        updateWordCount: (content: string) => {
+          const wordCount = calculateWordCount(content)
+          set({ wordCount })
+        },
+
+        // 更新光标位置
+        updateCursorPosition: (position: CursorPosition) => {
+          set({ cursorPosition: position })
+        },
+
+        // 更新状态栏配置
+        updateStatusBarConfig: (config: Partial<StatusBarConfig>) => {
+          set(state => ({
+            statusBarConfig: { ...state.statusBarConfig, ...config }
+          }))
+        },
+
+        // 获取活动标签
+        getActiveTab: () => {
+          const state = get()
+          return state.tabs.find(tab => tab.id === state.activeTabId) || null
+        },
+
+        // 检查是否有未保存的更改
+        hasUnsavedChanges: () => {
+          const state = get()
+          return state.tabs.some(tab => tab.isDirty)
+        },
+
+        // 根据路径获取标签
+        getTabByPath: (path: string) => {
+          const state = get()
+          return state.tabs.find(tab => tab.path === path) || null
+        },
+
+        // 判断是否是预览标签
+        isPreviewTab: (tabId: string) => {
+          const state = get()
+          return state.previewTabId === tabId
+        },
+
+        // 请求跳转到指定匹配文本（包含文件路径和匹配索引）
+        requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => {
+          set({ goToPositionRequest: { filePath, matchText, matchIndex } })
+        },
+
+        // 清除跳转请求
+        clearGoToPositionRequest: () => {
+          set({ goToPositionRequest: null })
+        },
+
+        // 请求外部刷新
+        requestExternalRefresh: (filePath: string) => {
+          set({ externalRefreshRequest: filePath })
+        },
+
+        // 清除外部刷新请求
+        clearExternalRefreshRequest: () => {
+          set({ externalRefreshRequest: null })
+        },
+
+        // 刷新所有打开的文件（用于Git操作后同步文件内容）
+        refreshAllOpenFiles: async () => {
+          if (refreshing) return
+          refreshing = true
+          try {
+            const state = get()
+            const tabs = state.tabs
+
+            const results = await Promise.allSettled(
+              tabs.map(async tab => {
+                const content = await window.electron.file.read(tab.path)
+                return { path: tab.path, content }
+              })
+            )
+
+            for (const result of results) {
+              if (result.status === 'fulfilled') {
+                state.fileContents.set(result.value.path, {
+                  path: result.value.path,
+                  content: result.value.content,
+                  loadedAt: Date.now()
+                })
+              }
+            }
+
+            set({ fileContents: state.fileContents })
+
+            if (state.activeTabId) {
+              const activeTab = state.tabs.find(t => t.id === state.activeTabId)
+              if (activeTab) {
+                const fileContent = state.fileContents.get(activeTab.path)
+                if (fileContent) {
+                  get().updateWordCount(fileContent.content)
+                }
+              }
+            }
+
+            get().triggerEditorRefresh()
+          } finally {
+            refreshing = false
           }
-        }
+        },
 
-        get().triggerEditorRefresh()
-      },
+        // 触发编辑器刷新（更新时间戳）
+        triggerEditorRefresh: () => {
+          set({ lastRefreshTime: Date.now() })
+        },
 
-      // 触发编辑器刷新（更新时间戳）
-      triggerEditorRefresh: () => {
-        set({ lastRefreshTime: Date.now() })
-      },
+        // 处理外部文件变化（文件系统监听触发）
+        handleExternalFileChange: (filePath: string) => {
+          const state = get()
+          const tab = state.tabs.find(t => t.path === filePath)
 
-      // 处理外部文件变化（文件系统监听触发）
-      handleExternalFileChange: (filePath: string) => {
-        const state = get()
-        const tab = state.tabs.find(t => t.path === filePath)
-
-        if (tab) {
-          state.fileContents.delete(filePath)
-          get().triggerEditorRefresh()
+          if (tab) {
+            state.fileContents.delete(filePath)
+            get().triggerEditorRefresh()
+          }
         }
       }
-    }),
+    },
     {
       name: 'editor-storage',
       partialize: state => ({
