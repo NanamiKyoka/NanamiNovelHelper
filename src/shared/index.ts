@@ -28,3 +28,6 @@ export * from './logger'
 
 // 错误处理
 export * from './errors'
+
+// 异步工具
+export * from './async'

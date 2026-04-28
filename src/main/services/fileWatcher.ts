@@ -1,40 +1,46 @@
-/**
- * 文件监听服务
- * 监听项目目录的文件变化，通知渲染进程刷新
- */
-
 import * as fs from 'fs'
 import * as path from 'path'
 import { BrowserWindow } from 'electron'
 import { ServiceCore } from './service-core'
 
-interface WatchOptions {
-  ignored?: string[]
-  debounceMs?: number
-}
-
-interface FileChangeEvent {
+export interface FileChangeEvent {
   type: 'add' | 'change' | 'unlink'
   path: string
+}
+
+export interface BatchFileChangeEvent {
+  changes: FileChangeEvent[]
+  timestamp: number
+}
+
+interface WatchOptions {
+  ignored?: string[]
+  batchDebounceMs?: number
 }
 
 class FileWatcherService extends ServiceCore {
   private watcher: fs.FSWatcher | null = null
   private watchedPath: string | null = null
-  private debounceTimers: Map<string, NodeJS.Timeout> = new Map()
-  private pendingEvents: Map<string, FileChangeEvent> = new Map()
   private mainWindow: BrowserWindow | null = null
-  private paused: boolean = false
+
+  private paused = false
+  private operationCount = 0
+
+  private pendingEvents: Map<string, FileChangeEvent> = new Map()
+  private batchTimer: ReturnType<typeof setTimeout> | null = null
+
   private defaultOptions: WatchOptions = {
     ignored: [
       '**/node_modules/**',
-      '**/.git/**',
+      '**/.git/objects/**',
+      '**/.git/refs/**',
+      '**/.git/logs/**',
       '**/dist/**',
       '**/build/**',
       '**/.DS_Store',
       '**/Thumbs.db'
     ],
-    debounceMs: 300
+    batchDebounceMs: 500
   }
 
   setMainWindow(window: BrowserWindow): void {
@@ -70,7 +76,7 @@ class FileWatcherService extends ServiceCore {
             return
           }
 
-          this.handleFileEvent(eventType, filePath, filename)
+          this.handleFileEvent(eventType, filePath)
         }
       )
 
@@ -93,8 +99,7 @@ class FileWatcherService extends ServiceCore {
       this.logger.info('文件监听已停止')
     }
 
-    this.debounceTimers.forEach(timer => clearTimeout(timer))
-    this.debounceTimers.clear()
+    this.flushBatch()
     this.pendingEvents.clear()
     this.watchedPath = null
   }
@@ -105,6 +110,24 @@ class FileWatcherService extends ServiceCore {
 
   getWatchedPath(): string | null {
     return this.watchedPath
+  }
+
+  pause(): void {
+    this.paused = true
+    this.operationCount++
+  }
+
+  resume(): void {
+    this.operationCount = Math.max(0, this.operationCount - 1)
+    if (this.operationCount === 0) {
+      this.paused = false
+      this.pendingEvents.clear()
+      this.flushBatch()
+    }
+  }
+
+  isPaused(): boolean {
+    return this.paused
   }
 
   private shouldIgnore(filePath: string, ignored: string[]): boolean {
@@ -125,7 +148,7 @@ class FileWatcherService extends ServiceCore {
     return false
   }
 
-  private handleFileEvent(eventType: string, filePath: string, _filename: string): void {
+  private handleFileEvent(eventType: string, filePath: string): void {
     if (this.paused) return
 
     let type: FileChangeEvent['type']
@@ -140,47 +163,53 @@ class FileWatcherService extends ServiceCore {
       type = 'change'
     }
 
-    const event: FileChangeEvent = { type, path: filePath }
-
-    this.pendingEvents.set(filePath, event)
-
-    const existingTimer = this.debounceTimers.get(filePath)
-    if (existingTimer) {
-      clearTimeout(existingTimer)
+    const existing = this.pendingEvents.get(filePath)
+    if (existing) {
+      if (existing.type === 'add' && type === 'unlink') {
+        this.pendingEvents.delete(filePath)
+      } else if (existing.type === 'unlink' && type === 'add') {
+        existing.type = 'change'
+      } else {
+        existing.type = type
+      }
+    } else {
+      this.pendingEvents.set(filePath, { type, path: filePath })
     }
 
-    const timer = setTimeout(() => {
-      const pendingEvent = this.pendingEvents.get(filePath)
-      if (pendingEvent) {
-        this.notifyRenderer(pendingEvent)
-        this.pendingEvents.delete(filePath)
-      }
-      this.debounceTimers.delete(filePath)
-    }, this.defaultOptions.debounceMs)
-
-    this.debounceTimers.set(filePath, timer)
+    this.scheduleBatch()
   }
 
-  private notifyRenderer(event: FileChangeEvent): void {
+  private scheduleBatch(): void {
+    if (this.batchTimer) return
+
+    this.batchTimer = setTimeout(() => {
+      this.batchTimer = null
+      this.flushBatch()
+    }, this.defaultOptions.batchDebounceMs)
+  }
+
+  private flushBatch(): void {
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer)
+      this.batchTimer = null
+    }
+
+    if (this.pendingEvents.size === 0) return
+
+    const changes = Array.from(this.pendingEvents.values())
+    this.pendingEvents.clear()
+
+    this.notifyRenderer({
+      changes,
+      timestamp: Date.now()
+    })
+  }
+
+  private notifyRenderer(event: BatchFileChangeEvent): void {
     if (this.paused) return
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send('file-change', event)
     }
-  }
-
-  pause(): void {
-    this.paused = true
-  }
-
-  resume(): void {
-    this.paused = false
-    this.pendingEvents.clear()
-    this.debounceTimers.forEach(timer => clearTimeout(timer))
-    this.debounceTimers.clear()
-  }
-
-  isPaused(): boolean {
-    return this.paused
   }
 }
 

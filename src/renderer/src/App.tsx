@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { Layout, theme, Button, Tooltip, Spin } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined } from '@ant-design/icons'
+import {
+  TagOutlined,
+  WarningOutlined,
+  UserAddOutlined,
+  ApartmentOutlined,
+  ClockCircleOutlined,
+  TableOutlined,
+  TeamOutlined,
+  EnvironmentOutlined,
+  CodeOutlined
+} from '@ant-design/icons'
 import ActivityBar from '@components/layout/ActivityBar'
 import Sidebar from '@components/layout/Sidebar'
 import MainContent from '@components/layout/MainContent'
@@ -27,61 +37,77 @@ import { DEFAULT_BADGE_VISIBILITY } from '@shared/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
-const VocabularyPanel = lazy(() => import('@components/vocabulary/VocabularyPanel').then(m => ({ default: m.VocabularyPanel })))
-const SensitiveWordPanel = lazy(() => import('@components/vocabulary/SensitiveWordPanel').then(m => ({ default: m.SensitiveWordPanel })))
-const RelationshipPanel = lazy(() => import('@components/visualization/relationship/RelationshipPanel'))
+const VocabularyPanel = lazy(() =>
+  import('@components/vocabulary/VocabularyPanel').then(m => ({ default: m.VocabularyPanel }))
+)
+const SensitiveWordPanel = lazy(() =>
+  import('@components/vocabulary/SensitiveWordPanel').then(m => ({ default: m.SensitiveWordPanel }))
+)
+const RelationshipPanel = lazy(
+  () => import('@components/visualization/relationship/RelationshipPanel')
+)
 const TimelinePanel = lazy(() => import('@components/visualization/timeline/TimelinePanel'))
-const SequenceChartPanel = lazy(() => import('@components/visualization/sequence-chart/SequenceChartPanel'))
-const OrganizationPanel = lazy(() => import('@components/visualization/organization/OrganizationPanel'))
+const SequenceChartPanel = lazy(
+  () => import('@components/visualization/sequence-chart/SequenceChartPanel')
+)
+const OrganizationPanel = lazy(
+  () => import('@components/visualization/organization/OrganizationPanel')
+)
 const MapPanel = lazy(() => import('@components/visualization/map/MapPanel'))
-const TerminalPanel = lazy(() => import('@components/terminal/TerminalPanel').then(m => ({ default: m.TerminalPanel })))
+const TerminalPanel = lazy(() =>
+  import('@components/terminal/TerminalPanel').then(m => ({ default: m.TerminalPanel }))
+)
 
 const BADGE_COUNT_THRESHOLD = 0
 
 const { Content } = Layout
 
 // 右侧面板类型
-type RightPanelKey = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal' | null
+type RightPanelKey =
+  | 'vocabulary'
+  | 'sensitive'
+  | 'relationship'
+  | 'timeline'
+  | 'sequenceChart'
+  | 'organization'
+  | 'map'
+  | 'terminal'
+  | null
 
 function App(): JSX.Element {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<string>('files')
   const [rightPanelKey, setRightPanelKey] = useState<RightPanelKey>(null)
-  
+
   const {
     token: { colorBgContainer }
   } = theme.useToken()
-  
+
   // 项目状态（使用 useProjectActions 统一管理）
-  const { 
-    currentProject, 
-    error, 
-    isLoading: projectLoading,
-    clearError 
-  } = useProjectActions()
+  const { currentProject, error, isLoading: projectLoading, clearError } = useProjectActions()
 
   // 词汇和敏感词数量（只订阅数量，避免订阅整个数组导致不必要的重渲染）
-  const entriesCount = useVocabularyStore((state) => state.entries.length)
-  const wordsCount = useSensitiveStore((state) => state.words.length)
-  const graphsCount = useRelationshipStore((state) => state.graphs.length)
-  const timelinesCount = useTimelineStore((state) => state.timelines.length)
-  const chartsCount = useSequenceChartStore((state) => state.charts.length)
-  const organizationsCount = useOrganizationStore((state) => state.graphs.length)
-  const mapsCount = useMapStore((state) => state.maps.length)
-  const terminalsCount = useTerminalStore((state) => state.terminals.length)
-  
-  const selectedText = useUIStore((state) => state.selectedText)
-  const createProjectModalOpen = useUIStore((state) => state.createProjectModalOpen)
-  const openProjectModalOpen = useUIStore((state) => state.openProjectModalOpen)
-  const closeCreateProjectModal = useUIStore((state) => state.closeCreateProjectModal)
-  const closeOpenProjectModal = useUIStore((state) => state.closeOpenProjectModal)
-  
+  const entriesCount = useVocabularyStore(state => state.entries.length)
+  const wordsCount = useSensitiveStore(state => state.words.length)
+  const graphsCount = useRelationshipStore(state => state.graphs.length)
+  const timelinesCount = useTimelineStore(state => state.timelines.length)
+  const chartsCount = useSequenceChartStore(state => state.charts.length)
+  const organizationsCount = useOrganizationStore(state => state.graphs.length)
+  const mapsCount = useMapStore(state => state.maps.length)
+  const terminalsCount = useTerminalStore(state => state.terminals.length)
+
+  const selectedText = useUIStore(state => state.selectedText)
+  const createProjectModalOpen = useUIStore(state => state.createProjectModalOpen)
+  const openProjectModalOpen = useUIStore(state => state.openProjectModalOpen)
+  const closeCreateProjectModal = useUIStore(state => state.closeCreateProjectModal)
+  const closeOpenProjectModal = useUIStore(state => state.closeOpenProjectModal)
+
   // 全局加载状态
-  const startLoading = useLoadingStore((s) => s.startLoading)
-  const endLoading = useLoadingStore((s) => s.endLoading)
-  
+  const startLoading = useLoadingStore(s => s.startLoading)
+  const endLoading = useLoadingStore(s => s.endLoading)
+
   // 徽章可见性设置
-  const globalSettings = useSettingsStore((state) => state.globalSettings)
+  const globalSettings = useSettingsStore(state => state.globalSettings)
   const badgeVisibility = globalSettings.layout?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
 
   // 错误提示
@@ -108,9 +134,26 @@ function App(): JSX.Element {
   useEffect(() => {
     if (!currentProject) return
 
-    const handleFileChange = (event: { type: 'add' | 'change' | 'unlink'; path: string }) => {
-      if (event.type === 'change') {
-        useEditorStore.getState().handleExternalFileChange(event.path)
+    const handleFileChange = (event: {
+      changes: { type: 'add' | 'change' | 'unlink'; path: string }[]
+      timestamp: number
+    }) => {
+      const changedPaths: string[] = []
+      const deletedPaths: string[] = []
+
+      for (const change of event.changes) {
+        if (change.type === 'change' || change.type === 'add') {
+          changedPaths.push(change.path)
+        } else if (change.type === 'unlink') {
+          deletedPaths.push(change.path)
+        }
+      }
+
+      if (changedPaths.length > 0) {
+        useEditorStore.getState().handleExternalFileChanges(changedPaths)
+      }
+      if (deletedPaths.length > 0) {
+        useEditorStore.getState().handleExternalFileDeletions(deletedPaths)
       }
     }
 
@@ -122,66 +165,69 @@ function App(): JSX.Element {
   }, [currentProject])
 
   // 全局快捷键
-  const shortcuts: ShortcutConfig[] = useMemo(() => [
-    // 文件操作
-    {
-      id: 'file.save',
-      key: 'Ctrl+S',
-      action: () => {
-        // 触发保存当前文件
-        window.dispatchEvent(new CustomEvent('shortcut:save'))
+  const shortcuts: ShortcutConfig[] = useMemo(
+    () => [
+      // 文件操作
+      {
+        id: 'file.save',
+        key: 'Ctrl+S',
+        action: () => {
+          // 触发保存当前文件
+          window.dispatchEvent(new CustomEvent('shortcut:save'))
+        },
+        description: '保存当前文件',
+        category: '文件'
       },
-      description: '保存当前文件',
-      category: '文件'
-    },
-    {
-      id: 'file.saveAll',
-      key: 'Ctrl+Shift+S',
-      action: () => {
-        window.dispatchEvent(new CustomEvent('shortcut:saveAll'))
+      {
+        id: 'file.saveAll',
+        key: 'Ctrl+Shift+S',
+        action: () => {
+          window.dispatchEvent(new CustomEvent('shortcut:saveAll'))
+        },
+        description: '保存所有文件',
+        category: '文件'
       },
-      description: '保存所有文件',
-      category: '文件'
-    },
-    // 视图操作
-    {
-      id: 'view.sidebar',
-      key: 'Ctrl+B',
-      action: () => setSidebarCollapsed(prev => !prev),
-      description: '切换侧边栏',
-      category: '视图'
-    },
-    // 工具面板切换
-    {
-      id: 'tools.vocabulary',
-      key: 'Ctrl+Shift+V',
-      action: () => toggleRightPanel('vocabulary'),
-      description: '词汇面板',
-      category: '工具'
-    },
-    {
-      id: 'tools.relationship',
-      key: 'Ctrl+Shift+R',
-      action: () => toggleRightPanel('relationship'),
-      description: '关系图面板',
-      category: '工具'
-    },
-    {
-      id: 'tools.timeline',
-      key: 'Ctrl+Shift+T',
-      action: () => toggleRightPanel('timeline'),
-      description: '时间线面板',
-      category: '工具'
-    },
-    {
-      id: 'tools.terminal',
-      key: 'Ctrl+`',
-      action: () => toggleRightPanel('terminal'),
-      description: '终端面板',
-      category: '工具'
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [])
+      // 视图操作
+      {
+        id: 'view.sidebar',
+        key: 'Ctrl+B',
+        action: () => setSidebarCollapsed(prev => !prev),
+        description: '切换侧边栏',
+        category: '视图'
+      },
+      // 工具面板切换
+      {
+        id: 'tools.vocabulary',
+        key: 'Ctrl+Shift+V',
+        action: () => toggleRightPanel('vocabulary'),
+        description: '词汇面板',
+        category: '工具'
+      },
+      {
+        id: 'tools.relationship',
+        key: 'Ctrl+Shift+R',
+        action: () => toggleRightPanel('relationship'),
+        description: '关系图面板',
+        category: '工具'
+      },
+      {
+        id: 'tools.timeline',
+        key: 'Ctrl+Shift+T',
+        action: () => toggleRightPanel('timeline'),
+        description: '时间线面板',
+        category: '工具'
+      },
+      {
+        id: 'tools.terminal',
+        key: 'Ctrl+`',
+        action: () => toggleRightPanel('terminal'),
+        description: '终端面板',
+        category: '工具'
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ],
+    []
+  )
 
   useShortcuts(shortcuts, [])
 
@@ -190,14 +236,14 @@ function App(): JSX.Element {
       setActivePanel('settings')
       setSidebarCollapsed(false)
     }
-    
+
     const handleToggleSidebar = () => {
       setSidebarCollapsed(prev => !prev)
     }
 
     window.addEventListener('menu:openSettings', handleOpenSettings)
     window.addEventListener('menu:toggleSidebar', handleToggleSidebar)
-    
+
     return () => {
       window.removeEventListener('menu:openSettings', handleOpenSettings)
       window.removeEventListener('menu:toggleSidebar', handleToggleSidebar)
@@ -217,7 +263,7 @@ function App(): JSX.Element {
 
   // 切换右侧面板
   const toggleRightPanel = useCallback((key: Exclude<RightPanelKey, null>) => {
-    setRightPanelKey(prev => prev === key ? null : key)
+    setRightPanelKey(prev => (prev === key ? null : key))
   }, [])
 
   // 关闭右侧面板
@@ -378,9 +424,21 @@ function App(): JSX.Element {
         )
       }
     ]
-    
+
     return items.filter(item => item.visible)
-  }, [entriesCount, wordsCount, graphsCount, timelinesCount, chartsCount, organizationsCount, mapsCount, terminalsCount, rightPanelKey, toggleRightPanel, badgeVisibility])
+  }, [
+    entriesCount,
+    wordsCount,
+    graphsCount,
+    timelinesCount,
+    chartsCount,
+    organizationsCount,
+    mapsCount,
+    terminalsCount,
+    rightPanelKey,
+    toggleRightPanel,
+    badgeVisibility
+  ])
 
   // 如果没有打开项目，显示欢迎页面
   if (!currentProject) {
@@ -388,7 +446,7 @@ function App(): JSX.Element {
       <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
         {window.electron?.platform !== 'darwin' && <TitleBar />}
         <div className={styles.mainLayout}>
-          <Content 
+          <Content
             className={styles.mainContent}
             style={{ background: colorBgContainer }}
             role="main"
@@ -396,10 +454,10 @@ function App(): JSX.Element {
             <WelcomePage />
           </Content>
         </div>
-        
+
         {/* 全局加载指示器 */}
         <GlobalLoading />
-        
+
         {/* 全局模态框 */}
         <CreateProjectModal
           open={createProjectModalOpen}
@@ -419,7 +477,7 @@ function App(): JSX.Element {
     <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
       {/* 自定义标题栏 - 仅在 Windows/Linux 显示 */}
       {window.electron?.platform !== 'darwin' && <TitleBar />}
-      
+
       {/* 主布局区域 */}
       <div className={styles.mainLayout}>
         <nav aria-label="主导航">
@@ -458,83 +516,86 @@ function App(): JSX.Element {
 
       {/* 右侧面板 */}
       {rightPanelKey && (
-        <aside 
-          className={styles.rightSidebar} 
-          aria-label={`${rightPanelKey === 'vocabulary' ? '词汇查询' : 
-            rightPanelKey === 'sensitive' ? '敏感词管理' : 
-            rightPanelKey === 'relationship' ? '关系图' : 
-            rightPanelKey === 'timeline' ? '时间线' : 
-            rightPanelKey === 'sequenceChart' ? '事序图' : 
-            rightPanelKey === 'organization' ? '组织架构' : 
-            rightPanelKey === 'map' ? '地图设计' :
-            rightPanelKey === 'terminal' ? '终端' : '面板'}面板`}
+        <aside
+          className={styles.rightSidebar}
+          aria-label={`${
+            rightPanelKey === 'vocabulary'
+              ? '词汇查询'
+              : rightPanelKey === 'sensitive'
+                ? '敏感词管理'
+                : rightPanelKey === 'relationship'
+                  ? '关系图'
+                  : rightPanelKey === 'timeline'
+                    ? '时间线'
+                    : rightPanelKey === 'sequenceChart'
+                      ? '事序图'
+                      : rightPanelKey === 'organization'
+                        ? '组织架构'
+                        : rightPanelKey === 'map'
+                          ? '地图设计'
+                          : rightPanelKey === 'terminal'
+                            ? '终端'
+                            : '面板'
+          }面板`}
         >
           <div className={styles.rightSidebarHeader}>
             <span id={`right-panel-title-${rightPanelKey}`}>
-              {rightPanelKey === 'vocabulary' ? '词汇查询' : 
-               rightPanelKey === 'sensitive' ? '敏感词管理' : 
-               rightPanelKey === 'relationship' ? '关系图' : 
-               rightPanelKey === 'timeline' ? '时间线' : 
-               rightPanelKey === 'sequenceChart' ? '事序图' : 
-               rightPanelKey === 'organization' ? '组织架构' : 
-               rightPanelKey === 'map' ? '地图设计' :
-               rightPanelKey === 'terminal' ? '终端' :
-               '面板'}
+              {rightPanelKey === 'vocabulary'
+                ? '词汇查询'
+                : rightPanelKey === 'sensitive'
+                  ? '敏感词管理'
+                  : rightPanelKey === 'relationship'
+                    ? '关系图'
+                    : rightPanelKey === 'timeline'
+                      ? '时间线'
+                      : rightPanelKey === 'sequenceChart'
+                        ? '事序图'
+                        : rightPanelKey === 'organization'
+                          ? '组织架构'
+                          : rightPanelKey === 'map'
+                            ? '地图设计'
+                            : rightPanelKey === 'terminal'
+                              ? '终端'
+                              : '面板'}
             </span>
-            <Button 
-              type="text" 
-              size="small" 
-              onClick={closeRightPanel}
-              aria-label="关闭面板"
-            >
+            <Button type="text" size="small" onClick={closeRightPanel} aria-label="关闭面板">
               关闭
             </Button>
           </div>
-          <div 
+          <div
             className={styles.rightSidebarBody}
             role="region"
             aria-labelledby={`right-panel-title-${rightPanelKey}`}
           >
             <ErrorBoundary moduleName={rightPanelKey}>
-              <Suspense fallback={<div className={styles.panelLoading}><Spin /></div>}>
+              <Suspense
+                fallback={
+                  <div className={styles.panelLoading}>
+                    <Spin />
+                  </div>
+                }
+              >
                 {rightPanelKey === 'vocabulary' && (
-                  <VocabularyPanel 
-                    readOnly={false} 
-                    externalSearchText={selectedText}
-                  />
+                  <VocabularyPanel readOnly={false} externalSearchText={selectedText} />
                 )}
-                {rightPanelKey === 'sensitive' && (
-                  <SensitiveWordPanel readOnly={false} />
-                )}
-                {rightPanelKey === 'relationship' && (
-                  <RelationshipPanel />
-                )}
-                {rightPanelKey === 'timeline' && (
-                  <TimelinePanel />
-                )}
-                {rightPanelKey === 'sequenceChart' && (
-                  <SequenceChartPanel />
-                )}
-                {rightPanelKey === 'organization' && (
-                  <OrganizationPanel />
-                )}
-                {rightPanelKey === 'map' && (
-                  <MapPanel />
-                )}
-                {rightPanelKey === 'terminal' && (
-                  <TerminalPanel onClose={closeRightPanel} />
-                )}
+                {rightPanelKey === 'sensitive' && <SensitiveWordPanel readOnly={false} />}
+                {rightPanelKey === 'relationship' && <RelationshipPanel />}
+                {rightPanelKey === 'timeline' && <TimelinePanel />}
+                {rightPanelKey === 'sequenceChart' && <SequenceChartPanel />}
+                {rightPanelKey === 'organization' && <OrganizationPanel />}
+                {rightPanelKey === 'map' && <MapPanel />}
+                {rightPanelKey === 'terminal' && <TerminalPanel onClose={closeRightPanel} />}
               </Suspense>
             </ErrorBoundary>
           </div>
         </aside>
       )}
-      
+
       <StatusBar />
-      
+
       {/* 全局加载指示器 */}
       <GlobalLoading />
-      
+
       {/* 全局模态框 */}
       <CreateProjectModal
         open={createProjectModalOpen}

@@ -1,11 +1,8 @@
-/**
- * Git 状态管理
- */
-
 import { create } from 'zustand'
 import { useProjectStore } from './projectStore'
 import { useEditorStore } from './editorStore'
 import { useFileTreeStore } from './fileTreeStore'
+import { Sequencer, Throttler, CancellationTokenSource, CancellationError } from '@shared/async'
 import type {
   GitMode,
   GitFileChange,
@@ -20,66 +17,197 @@ import type {
   GitMergeOptions
 } from '@shared/git'
 
-/** 视图模式 */
 type GitViewMode = 'changes' | 'history' | 'branches'
 
-/** 提交详情 */
 interface CommitDetail {
   commit: GitCommit
   files: GitFileChange[]
   loading: boolean
 }
 
-/** Git 状态接口 */
+enum OperationKind {
+  Status = 'Status',
+  Log = 'Log',
+  Commit = 'Commit',
+  Reset = 'Reset',
+  Add = 'Add',
+  Restore = 'Restore',
+  Checkout = 'Checkout',
+  Merge = 'Merge',
+  Branch = 'Branch',
+  Diff = 'Diff'
+}
+
+interface Operation {
+  kind: OperationKind
+  blocking: boolean
+  readOnly: boolean
+  refreshAfter: boolean
+  refreshTree: boolean
+  refreshEditor: boolean
+}
+
+const Operations = {
+  Status: {
+    kind: OperationKind.Status,
+    blocking: false,
+    readOnly: true,
+    refreshAfter: false,
+    refreshTree: false,
+    refreshEditor: false
+  },
+  Log: {
+    kind: OperationKind.Log,
+    blocking: false,
+    readOnly: true,
+    refreshAfter: false,
+    refreshTree: false,
+    refreshEditor: false
+  },
+  Commit: {
+    kind: OperationKind.Commit,
+    blocking: true,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: false,
+    refreshEditor: false
+  },
+  Reset: {
+    kind: OperationKind.Reset,
+    blocking: true,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: true,
+    refreshEditor: true
+  },
+  Add: {
+    kind: OperationKind.Add,
+    blocking: false,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: false,
+    refreshEditor: false
+  },
+  Restore: {
+    kind: OperationKind.Restore,
+    blocking: false,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: true,
+    refreshEditor: true
+  },
+  Checkout: {
+    kind: OperationKind.Checkout,
+    blocking: true,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: true,
+    refreshEditor: true
+  },
+  Merge: {
+    kind: OperationKind.Merge,
+    blocking: true,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: true,
+    refreshEditor: true
+  },
+  Branch: {
+    kind: OperationKind.Branch,
+    blocking: false,
+    readOnly: false,
+    refreshAfter: true,
+    refreshTree: false,
+    refreshEditor: false
+  },
+  Diff: {
+    kind: OperationKind.Diff,
+    blocking: false,
+    readOnly: true,
+    refreshAfter: false,
+    refreshTree: false,
+    refreshEditor: false
+  }
+}
+
+class OperationManager {
+  private running = new Map<OperationKind, number>()
+
+  start(op: Operation): void {
+    this.running.set(op.kind, (this.running.get(op.kind) || 0) + 1)
+  }
+
+  end(op: Operation): void {
+    const count = (this.running.get(op.kind) || 0) - 1
+    if (count <= 0) {
+      this.running.delete(op.kind)
+    } else {
+      this.running.set(op.kind, count)
+    }
+  }
+
+  isIdle(): boolean {
+    for (const [, count] of this.running) {
+      if (count > 0) return false
+    }
+    return true
+  }
+
+  isRunning(kind: OperationKind): boolean {
+    return (this.running.get(kind) || 0) > 0
+  }
+
+  shouldDisableCommands(): boolean {
+    for (const [kind, count] of this.running) {
+      if (count > 0) {
+        const op = Object.values(Operations).find(o => o.kind === kind)
+        if (op?.blocking) return true
+      }
+    }
+    return false
+  }
+}
+
 interface GitState {
-  // 仓库状态
   initialized: boolean
   isRepo: boolean
   loading: boolean
   error: string | null
 
-  // Git 模式
   mode: GitMode
   useSystemGit: boolean
 
-  // 仓库数据
   repository: GitRepositoryStatus | null
   branches: GitBranch[]
   commits: GitCommit[]
   currentBranch: string | null
 
-  // 当前选中的文件差异
   currentDiff: GitFileDiff | null
   selectedFile: GitFileChange | null
 
-  // 提交详情
   commitDetail: CommitDetail | null
 
-  // 视图状态
   viewMode: GitViewMode
   logOptions: GitLogOptions
 
-  // 自动提交配置
   autoCommitEnabled: boolean
-  autoCommitInterval: number // 分钟
+  autoCommitInterval: number
   autoCommitTimer: NodeJS.Timeout | null
 
-  // Actions
+  operationsRunning: boolean
+
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   setViewMode: (mode: GitViewMode) => void
 
-  // 初始化和状态刷新
   init: () => Promise<void>
   refresh: () => Promise<void>
   checkRepo: () => Promise<boolean>
 
-  // 提交操作
   getLog: (options?: GitLogOptions) => Promise<void>
   commit: (options: GitCommitOptions) => Promise<boolean>
   reset: (options: GitResetOptions) => Promise<boolean>
 
-  // 文件操作
   add: (filepaths: string[]) => Promise<boolean>
   addAll: () => Promise<boolean>
   unstage: (filepaths: string[]) => Promise<boolean>
@@ -87,45 +215,83 @@ interface GitState {
   getDiff: (filepath: string, staged?: boolean) => Promise<GitFileDiff | null>
   selectFile: (file: GitFileChange | null) => void
 
-  // 分支操作
   getBranches: () => Promise<void>
   createBranch: (name: string, startPoint?: string) => Promise<boolean>
   deleteBranch: (name: string, force?: boolean) => Promise<boolean>
   checkout: (options: GitCheckoutOptions) => Promise<boolean>
   merge: (options: GitMergeOptions) => Promise<boolean>
 
-  // 模式设置
   setMode: (mode: GitMode) => Promise<void>
 
-  // 自动提交
   startAutoCommit: () => void
   stopAutoCommit: () => void
   setAutoCommitConfig: (enabled: boolean, interval: number) => void
 
-  // 提交详情
   getCommitDetail: (commit: GitCommit) => Promise<void>
   getCommitFileDiff: (commitHash: string, filepath: string) => Promise<GitFileDiff | null>
   clearCommitDetail: () => void
 }
 
 export const useGitStore = create<GitState>((set, get) => {
-  let refreshing = false
+  const opManager = new OperationManager()
+  const statusSequencer = new Sequencer()
+  const refreshThrottler = new Throttler()
+  let currentCts = new CancellationTokenSource()
 
-  const _postBulkOperation = async (needsLog = true): Promise<void> => {
-    if (refreshing) return
-    refreshing = true
+  const runOperation = async <T>(operation: Operation, task: () => Promise<T>): Promise<T> => {
+    currentCts.cancel()
+    currentCts = new CancellationTokenSource()
+
+    opManager.start(operation)
+    set({ operationsRunning: !opManager.isIdle() })
+
     try {
-      await get().refresh()
-      if (needsLog) await get().getLog()
-      await useFileTreeStore.getState().refreshTree()
-      await useEditorStore.getState().refreshAllOpenFiles()
+      const result = await task()
+
+      if (!operation.readOnly) {
+        await postOperationRefresh(operation)
+      }
+
+      return result
+    } catch (error) {
+      if (error instanceof CancellationError) {
+        return undefined as T
+      }
+
+      if (!operation.readOnly) {
+        await postOperationRefresh(operation)
+      }
+
+      throw error
     } finally {
-      refreshing = false
+      opManager.end(operation)
+      set({ operationsRunning: !opManager.isIdle() })
     }
   }
 
+  const postOperationRefresh = async (operation: Operation): Promise<void> => {
+    const tasks: Promise<void>[] = []
+
+    if (operation.refreshAfter) {
+      tasks.push(
+        refreshThrottler.queue(async () => {
+          await get().refresh()
+        })
+      )
+    }
+
+    if (operation.refreshTree) {
+      tasks.push(useFileTreeStore.getState().refreshTree())
+    }
+
+    if (operation.refreshEditor) {
+      tasks.push(useEditorStore.getState().refreshAllOpenFiles())
+    }
+
+    await Promise.allSettled(tasks)
+  }
+
   return {
-    // 初始状态
     initialized: false,
     isRepo: false,
     loading: false,
@@ -144,12 +310,12 @@ export const useGitStore = create<GitState>((set, get) => {
     autoCommitEnabled: false,
     autoCommitInterval: 10,
     autoCommitTimer: null,
+    operationsRunning: false,
 
     setLoading: (loading: boolean) => set({ loading }),
     setError: (error: string | null) => set({ error }),
     setViewMode: (mode: GitViewMode) => set({ viewMode: mode }),
 
-    // 初始化
     init: async () => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) {
@@ -160,26 +326,18 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        // 获取 Git 模式
         const modeResult = await window.electron.git.getMode()
         if (modeResult) {
           set({ mode: modeResult.mode, useSystemGit: modeResult.useSystemGit })
         }
 
-        // 检查是否是 Git 仓库
         const isRepo = await window.electron.git.isRepo(project.path)
 
         if (!isRepo) {
-          set({
-            initialized: true,
-            isRepo: false,
-            repository: null,
-            loading: false
-          })
+          set({ initialized: true, isRepo: false, repository: null, loading: false })
           return
         }
 
-        // 获取仓库状态
         const statusResult = await window.electron.git.status(project.path)
         if (statusResult.success && statusResult.data) {
           set({
@@ -198,39 +356,34 @@ export const useGitStore = create<GitState>((set, get) => {
           })
         }
       } catch (error) {
-        set({
-          initialized: true,
-          isRepo: false,
-          error: String(error),
-          loading: false
-        })
+        set({ initialized: true, isRepo: false, error: String(error), loading: false })
       }
     },
 
-    // 刷新状态
     refresh: async () => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path || !get().isRepo) return
 
-      set({ loading: true, error: null })
+      await statusSequencer.queue(async () => {
+        set({ loading: true, error: null })
 
-      try {
-        const statusResult = await window.electron.git.status(project.path)
-        if (statusResult.success && statusResult.data) {
-          set({
-            repository: statusResult.data,
-            currentBranch: statusResult.data.branch,
-            loading: false
-          })
-        } else {
-          set({ error: statusResult.error || '刷新状态失败', loading: false })
+        try {
+          const statusResult = await window.electron.git.status(project.path)
+          if (statusResult.success && statusResult.data) {
+            set({
+              repository: statusResult.data,
+              currentBranch: statusResult.data.branch,
+              loading: false
+            })
+          } else {
+            set({ error: statusResult.error || '刷新状态失败', loading: false })
+          }
+        } catch (error) {
+          set({ error: String(error), loading: false })
         }
-      } catch (error) {
-        set({ error: String(error), loading: false })
-      }
+      })
     },
 
-    // 检查是否是仓库
     checkRepo: async () => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -240,7 +393,6 @@ export const useGitStore = create<GitState>((set, get) => {
       return isRepo
     },
 
-    // 获取提交历史
     getLog: async (options?: GitLogOptions) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return
@@ -258,7 +410,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 提交
     commit: async (options: GitCommitOptions) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -266,22 +417,23 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        const result = await window.electron.git.commit(project.path, options)
-        if (result.success) {
-          await get().refresh()
-          await get().getLog()
-          return true
-        } else {
-          set({ error: result.error || '提交失败', loading: false })
-          return false
-        }
+        return await runOperation(Operations.Commit, async () => {
+          const result = await window.electron.git.commit(project.path, options)
+          if (result.success) {
+            await get().getLog()
+            set({ loading: false })
+            return true
+          } else {
+            set({ error: result.error || '提交失败', loading: false })
+            return false
+          }
+        })
       } catch (error) {
         set({ error: String(error), loading: false })
         return false
       }
     },
 
-    // 回退
     reset: async (options: GitResetOptions) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -289,41 +441,41 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        const result = await window.electron.git.reset(project.path, options)
-        if (result.success) {
-          await _postBulkOperation()
-          return true
-        } else {
-          set({ error: result.error || '回退失败', loading: false })
-          return false
-        }
+        return await runOperation(Operations.Reset, async () => {
+          const result = await window.electron.git.reset(project.path, options)
+          if (result.success) {
+            await get().getLog()
+            set({ loading: false })
+            return true
+          } else {
+            set({ error: result.error || '回退失败', loading: false })
+            return false
+          }
+        })
       } catch (error) {
         set({ error: String(error), loading: false })
         return false
       }
     },
 
-    // 添加文件到暂存区
     add: async (filepaths: string[]) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
 
       try {
-        const result = await window.electron.git.add(project.path, filepaths)
-        if (result.success) {
-          await get().refresh()
-          return true
-        } else {
-          set({ error: result.error || '添加失败' })
-          return false
-        }
+        return await runOperation(Operations.Add, async () => {
+          const result = await window.electron.git.add(project.path, filepaths)
+          if (!result.success) {
+            set({ error: result.error || '添加失败' })
+          }
+          return result.success
+        })
       } catch (error) {
         set({ error: String(error) })
         return false
       }
     },
 
-    // 添加所有文件
     addAll: async () => {
       const repository = get().repository
       if (!repository) return false
@@ -333,68 +485,63 @@ export const useGitStore = create<GitState>((set, get) => {
       return get().add(filePaths)
     },
 
-    // 撤销暂存
     unstage: async (filepaths: string[]) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
 
       try {
-        const result = await window.electron.git.restoreStaged(project.path, filepaths)
-        if (result.success) {
-          await get().refresh()
-          return true
-        } else {
-          set({ error: result.error || '撤销暂存失败' })
-          return false
-        }
+        return await runOperation(Operations.Add, async () => {
+          const result = await window.electron.git.restoreStaged(project.path, filepaths)
+          if (!result.success) {
+            set({ error: result.error || '撤销暂存失败' })
+          }
+          return result.success
+        })
       } catch (error) {
         set({ error: String(error) })
         return false
       }
     },
 
-    // 恢复文件
     restore: async (filepaths: string[], source?: string) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
 
       try {
-        const result = await window.electron.git.restore(project.path, filepaths, source)
-        if (result.success) {
-          await get().refresh()
-          await useEditorStore.getState().refreshAllOpenFiles()
-          return true
-        } else {
-          set({ error: result.error || '恢复失败' })
-          return false
-        }
+        return await runOperation(Operations.Restore, async () => {
+          const result = await window.electron.git.restore(project.path, filepaths, source)
+          if (!result.success) {
+            set({ error: result.error || '恢复失败' })
+          }
+          return result.success
+        })
       } catch (error) {
         set({ error: String(error) })
         return false
       }
     },
 
-    // 获取文件差异
     getDiff: async (filepath: string, staged: boolean = false) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return null
 
       try {
-        const result = await window.electron.git.diff(project.path, filepath, staged)
-        if (result.success && result.data) {
-          set({ currentDiff: result.data })
-          return result.data
-        } else {
-          set({ error: result.error || '获取差异失败' })
-          return null
-        }
+        return await runOperation(Operations.Diff, async () => {
+          const result = await window.electron.git.diff(project.path, filepath, staged)
+          if (result.success && result.data) {
+            set({ currentDiff: result.data })
+            return result.data
+          } else {
+            set({ error: result.error || '获取差异失败' })
+            return null
+          }
+        })
       } catch (error) {
         set({ error: String(error) })
         return null
       }
     },
 
-    // 选中文件
     selectFile: (file: GitFileChange | null) => {
       set({ selectedFile: file })
       if (file) {
@@ -404,7 +551,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 获取分支列表
     getBranches: async () => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return
@@ -419,27 +565,27 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 创建分支
     createBranch: async (name: string, startPoint?: string) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
 
       try {
-        const result = await window.electron.git.branchCreate(project.path, name, startPoint)
-        if (result.success) {
-          await get().getBranches()
-          return true
-        } else {
-          set({ error: result.error || '创建分支失败' })
-          return false
-        }
+        return await runOperation(Operations.Branch, async () => {
+          const result = await window.electron.git.branchCreate(project.path, name, startPoint)
+          if (result.success) {
+            await get().getBranches()
+            return true
+          } else {
+            set({ error: result.error || '创建分支失败' })
+            return false
+          }
+        })
       } catch (error) {
         set({ error: String(error) })
         return false
       }
     },
 
-    // 删除分支
     deleteBranch: async (name: string, force?: boolean) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -459,7 +605,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 切换分支
     checkout: async (options: GitCheckoutOptions) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -467,22 +612,24 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        const result = await window.electron.git.checkout(project.path, options)
-        if (result.success) {
-          await _postBulkOperation()
-          await get().getBranches()
-          return true
-        } else {
-          set({ error: result.error || '切换分支失败', loading: false })
-          return false
-        }
+        return await runOperation(Operations.Checkout, async () => {
+          const result = await window.electron.git.checkout(project.path, options)
+          if (result.success) {
+            await get().getBranches()
+            await get().getLog()
+            set({ loading: false })
+            return true
+          } else {
+            set({ error: result.error || '切换分支失败', loading: false })
+            return false
+          }
+        })
       } catch (error) {
         set({ error: String(error), loading: false })
         return false
       }
     },
 
-    // 合并分支
     merge: async (options: GitMergeOptions) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
@@ -490,21 +637,23 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        const result = await window.electron.git.merge(project.path, options)
-        if (result.success) {
-          await _postBulkOperation()
-          return true
-        } else {
-          set({ error: result.error || '合并失败', loading: false })
-          return false
-        }
+        return await runOperation(Operations.Merge, async () => {
+          const result = await window.electron.git.merge(project.path, options)
+          if (result.success) {
+            await get().getLog()
+            set({ loading: false })
+            return true
+          } else {
+            set({ error: result.error || '合并失败', loading: false })
+            return false
+          }
+        })
       } catch (error) {
         set({ error: String(error), loading: false })
         return false
       }
     },
 
-    // 设置 Git 模式
     setMode: async (mode: GitMode) => {
       try {
         const result = await window.electron.git.setMode(mode)
@@ -519,23 +668,18 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 启动自动提交
     startAutoCommit: () => {
       const { autoCommitTimer, autoCommitInterval } = get()
 
-      // 清除现有定时器
       if (autoCommitTimer) {
         clearInterval(autoCommitTimer)
       }
 
-      // 创建新定时器
       const timer = setInterval(
         async () => {
           const repository = get().repository
           if (repository && (repository.hasChanges || repository.hasStagedChanges)) {
-            // 添加所有更改
             await get().addAll()
-            // 提交
             const now = new Date()
             const message = `自动保存 - ${now.toLocaleString('zh-CN')}`
             await get().commit({ message, all: true })
@@ -547,7 +691,6 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ autoCommitTimer: timer, autoCommitEnabled: true })
     },
 
-    // 停止自动提交
     stopAutoCommit: () => {
       const { autoCommitTimer } = get()
       if (autoCommitTimer) {
@@ -556,7 +699,6 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ autoCommitTimer: null, autoCommitEnabled: false })
     },
 
-    // 设置自动提交配置
     setAutoCommitConfig: (enabled: boolean, interval: number) => {
       set({ autoCommitEnabled: enabled, autoCommitInterval: interval })
 
@@ -567,7 +709,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 获取提交详情
     getCommitDetail: async (commit: GitCommit) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return
@@ -589,7 +730,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 获取提交中文件的差异
     getCommitFileDiff: async (commitHash: string, filepath: string) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return null
@@ -613,7 +753,6 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    // 清除提交详情
     clearCommitDetail: () => {
       set({ commitDetail: null, currentDiff: null })
     }
