@@ -35,8 +35,7 @@ function GitPanel(): JSX.Element {
     setViewMode,
     init,
     refresh,
-    commit,
-    addAll
+    commit
   } = useGitStore()
 
   const { currentProject } = useProjectStore()
@@ -91,11 +90,13 @@ function GitPanel(): JSX.Element {
       return
     }
 
+    if (!repository?.hasStagedChanges) {
+      message.warning('没有已暂存的更改，请先暂存要提交的文件')
+      return
+    }
+
     setCommitting(true)
     try {
-      // 先添加所有更改
-      await addAll()
-      // 然后提交
       const success = await commit({ message: commitMessage.trim() })
       if (success) {
         message.success('提交成功')
@@ -236,7 +237,7 @@ function GitPanel(): JSX.Element {
               icon={<CheckOutlined />}
               onClick={handleCommit}
               loading={committing}
-              disabled={totalChanges === 0 || !commitMessage.trim()}
+              disabled={stagedCount === 0 || !commitMessage.trim()}
             >
               提交
             </Button>

@@ -215,13 +215,17 @@
 }
 
 .fileActions {
-  display: none;
+  display: flex;
   gap: 4px;
   margin-left: 8px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 
 .fileItem:hover .fileActions {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
 }
 
 /* 差异查看器样式 */
