@@ -217,14 +217,16 @@ class GitService {
 
       const statusInfo = STATUS_MAP[statusCode]
       if (statusInfo) {
-        const isStaged =
-          statusCode.trim() === statusCode || statusCode[0] !== ' ' || statusCode[1] !== ' '
+        const staged = statusCode[0] !== ' ' && statusCode[0] !== '?'
 
         // 获取行数统计
         let additions = 0
         let deletions = 0
         try {
-          const numstat = await this.execGit(repoPath, ['diff', '--numstat', '--', filePath])
+          const numstatArgs = staged
+            ? ['diff', '--numstat', '--staged', '--', filePath]
+            : ['diff', '--numstat', '--', filePath]
+          const numstat = await this.execGit(repoPath, numstatArgs)
           const match = numstat.trim().match(/^(\d+|-)\t(\d+|-)/)
           if (match) {
             additions = match[1] === '-' ? 0 : parseInt(match[1])
@@ -239,7 +241,7 @@ class GitService {
           oldPath,
           status: statusInfo.status,
           statusShort: statusInfo.short,
-          staged: isStaged && statusCode[0] !== ' ',
+          staged,
           additions,
           deletions
         }
@@ -526,9 +528,8 @@ class GitService {
       if (this.useSystemGit) {
         await this.execGit(repoPath, ['restore', '--staged', ...filepaths])
       } else {
-        // isomorphic-git 没有 unstage，需要 reset
         for (const filepath of filepaths) {
-          await git.remove({ fs, dir: repoPath, filepath, force: true })
+          await git.resetIndex({ fs, dir: repoPath, filepath })
         }
       }
       return { success: true }
