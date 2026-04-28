@@ -82,26 +82,26 @@ export interface FileTreeState {
   roots: FileNodeData[]
   loading: boolean
   error: string | null
-  
+
   // UI 状态
   expandedKeys: Set<string>
   selectedKeys: Set<string>
   focusedKey: string | null
-  
+
   // 编辑状态
   editingKey: string | null
   editingName: string
-  newItemParent: string | null | undefined  // undefined = 未开始新建, null = 在根目录新建
+  newItemParent: string | null | undefined // undefined = 未开始新建, null = 在根目录新建
   newItemType: 'file' | 'folder'
   newItemName: string
-  
+
   // 剪贴板
   clipboard: ClipboardState | null
-  
+
   // 搜索
   searchPattern: string
   filteredKeys: Set<string> | null
-  
+
   // 排序
   sortMode: SortMode
 }
@@ -113,39 +113,39 @@ export interface FileTreeActions {
   // 数据加载
   loadTree: () => Promise<void>
   refreshTree: () => Promise<void>
-  
+
   // 展开/折叠
   toggleExpand: (key: string) => void
   expandAll: () => void
   collapseAll: () => void
   expandToPath: (path: string) => void
-  
+
   // 选择
   select: (key: string, mode?: 'single' | 'toggle' | 'range') => void
   selectAll: () => void
   clearSelection: () => void
   setFocusedKey: (key: string | null) => void
-  
+
   // 编辑
   startRename: (key: string) => void
   finishRename: (newName: string) => Promise<void>
   cancelEdit: () => void
   startNewItem: (parentKey: string | null, type: 'file' | 'folder') => void
   finishNewItem: (name: string) => Promise<void>
-  
+
   // 文件操作
   deleteItems: (keys: string[], permanent: boolean) => Promise<void>
   copyItems: (keys: string[]) => void
   cutItems: (keys: string[]) => void
   paste: (targetKey: string | null) => Promise<void>
-  
+
   // 搜索
   search: (pattern: string) => void
   clearSearch: () => void
-  
+
   // 排序
   setSortMode: (mode: SortMode) => void
-  
+
   // 工具方法
   findNode: (key: string) => FileNodeData | null
   getParentNode: (key: string) => FileNodeData | null

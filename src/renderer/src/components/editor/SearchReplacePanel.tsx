@@ -4,12 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Input, Button, Typography } from 'antd'
-import {
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  CloseOutlined,
-  RightOutlined
-} from '@ant-design/icons'
+import { ArrowUpOutlined, ArrowDownOutlined, CloseOutlined, RightOutlined } from '@ant-design/icons'
 import type { Editor } from '@tiptap/react'
 import styles from './EditorToolbar.module.css'
 
@@ -32,9 +27,9 @@ function clearAllHighlights(editor: Editor) {
   const { view, state } = editor
   const { tr, doc, schema } = state
   const highlightMark = schema.marks.highlight
-  
+
   if (!highlightMark) return
-  
+
   // 移除文档中所有高亮标记
   doc.descendants((node, pos) => {
     if (node.marks) {
@@ -45,7 +40,7 @@ function clearAllHighlights(editor: Editor) {
       })
     }
   })
-  
+
   tr.setMeta('addToHistory', false)
   view.dispatch(tr)
 }
@@ -55,16 +50,16 @@ function addHighlightMarks(editor: Editor, matches: MatchInfo[], currentIndex: n
   const { view, state } = editor
   const { tr, schema } = state
   const highlightMark = schema.marks.highlight
-  
+
   if (!highlightMark) return
-  
+
   matches.forEach((match, index) => {
-    const mark = highlightMark.create({ 
-      color: index === currentIndex ? '#409eff' : '#ffeb3b' 
+    const mark = highlightMark.create({
+      color: index === currentIndex ? '#409eff' : '#ffeb3b'
     })
     tr.addMark(match.from, match.to, mark)
   })
-  
+
   tr.setMeta('addToHistory', false)
   view.dispatch(tr)
 }
@@ -151,10 +146,10 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
     if (foundMatches.length > 0) {
       // 先清除所有高亮
       clearAllHighlights(editor)
-      
+
       // 添加高亮
       addHighlightMarks(editor, foundMatches, 0)
-      
+
       // 设置当前选中并滚动
       editor.commands.setTextSelection({
         from: foundMatches[0].from,
@@ -208,7 +203,7 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
     if (totalMatches === 0 || !editor) return
     const nextIndex = (currentIndex + 1) % totalMatches
     setCurrentIndex(nextIndex)
-    
+
     // 更新高亮
     clearAllHighlights(editor)
     addHighlightMarks(editor, matches, nextIndex)
@@ -276,9 +271,9 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
 
     // 从后往前替换
     const sortedMatches = [...matches].sort((a, b) => b.from - a.from)
-    
+
     editor.commands.focus()
-    
+
     sortedMatches.forEach(match => {
       editor.commands.setTextSelection({
         from: match.from,
@@ -316,16 +311,12 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
     <div className={styles.searchPanel}>
       {/* 展开/收起按钮 */}
       <div className={styles.searchToggle}>
-        <Button
-          type="text"
-          size="small"
-          onClick={() => setShowReplace(!showReplace)}
-        >
-          <RightOutlined 
-            style={{ 
+        <Button type="text" size="small" onClick={() => setShowReplace(!showReplace)}>
+          <RightOutlined
+            style={{
               transition: 'transform 0.2s',
               transform: showReplace ? 'rotate(90deg)' : 'none'
-            }} 
+            }}
           />
         </Button>
       </div>
@@ -338,21 +329,19 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
             ref={searchInputRef}
             placeholder="查找"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={e => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
             size="small"
             style={{ width: 180 }}
           />
-          <Button
-            size="small"
-            disabled={!searchText.trim()}
-            onClick={performSearch}
-          >
+          <Button size="small" disabled={!searchText.trim()} onClick={performSearch}>
             搜索
           </Button>
           <div className={styles.searchResults}>
             {totalMatches > 0 ? (
-              <Text>{currentIndex + 1}/{totalMatches}</Text>
+              <Text>
+                {currentIndex + 1}/{totalMatches}
+              </Text>
             ) : (
               <Text type="secondary">无结果</Text>
             )}
@@ -371,12 +360,7 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
             onClick={findNext}
             title="下一个"
           />
-          <Button
-            size="small"
-            icon={<CloseOutlined />}
-            onClick={onClose}
-            title="关闭"
-          />
+          <Button size="small" icon={<CloseOutlined />} onClick={onClose} title="关闭" />
         </div>
 
         {/* 替换行 */}
@@ -385,23 +369,15 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
             <Input
               placeholder="替换"
               value={replaceText}
-              onChange={(e) => setReplaceText(e.target.value)}
+              onChange={e => setReplaceText(e.target.value)}
               onKeyDown={handleKeyDown}
               size="small"
               style={{ width: 180 }}
             />
-            <Button
-              size="small"
-              disabled={totalMatches === 0}
-              onClick={replaceCurrent}
-            >
+            <Button size="small" disabled={totalMatches === 0} onClick={replaceCurrent}>
               替换
             </Button>
-            <Button
-              size="small"
-              disabled={totalMatches === 0}
-              onClick={replaceAll}
-            >
+            <Button size="small" disabled={totalMatches === 0} onClick={replaceAll}>
               全部替换
             </Button>
           </div>

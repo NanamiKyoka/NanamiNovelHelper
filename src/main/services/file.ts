@@ -71,10 +71,12 @@ class FileService {
       const realProject = realpathSync(normalizedProject)
 
       const relativePath = relative(realProject, realPath)
-      
-      return !relativePath.startsWith('..') && 
-             !relativePath.startsWith('/') && 
-             !relativePath.startsWith('\\')
+
+      return (
+        !relativePath.startsWith('..') &&
+        !relativePath.startsWith('/') &&
+        !relativePath.startsWith('\\')
+      )
     } catch (error) {
       this.logger.warn('路径验证失败', error)
       return false
@@ -90,7 +92,7 @@ class FileService {
     }
 
     const normalizedInput = inputPath.replace(/[/\\]/g, sep)
-    
+
     if (normalizedInput.match(/^[A-Za-z]:/) || normalizedInput.startsWith(sep)) {
       const resolved = resolve(normalizedInput)
       if (!this.isPathInProject(resolved)) {
@@ -103,7 +105,7 @@ class FileService {
     if (!this.isPathInProject(resolved)) {
       throw new Error('路径不在项目目录内')
     }
-    
+
     return resolved
   }
 
@@ -183,7 +185,10 @@ class FileService {
   /**
    * 删除文件或目录
    */
-  async delete(path: string, options: { recursive?: boolean; useTrash?: boolean } = {}): Promise<void> {
+  async delete(
+    path: string,
+    options: { recursive?: boolean; useTrash?: boolean } = {}
+  ): Promise<void> {
     const { recursive = false, useTrash = true } = options
     const absolutePath = this.safeResolvePath(path)
 
@@ -385,7 +390,13 @@ class FileService {
       }
 
       if (recursive && isDirectory) {
-        node.children = this.scanDirectory(absolutePath, recursive, includeHidden, sortOptions, hiddenItems)
+        node.children = this.scanDirectory(
+          absolutePath,
+          recursive,
+          includeHidden,
+          sortOptions,
+          hiddenItems
+        )
       }
 
       nodes.push(node)
@@ -400,7 +411,7 @@ class FileService {
    */
   private sortNodes(nodes: FileNode[], sortOptions?: SortOptions): FileNode[] {
     const { field = 'name', order = 'asc' } = sortOptions || {}
-    
+
     return nodes.sort((a, b) => {
       // 目录始终在前
       if (a.isDirectory !== b.isDirectory) {
@@ -408,7 +419,7 @@ class FileService {
       }
 
       let comparison = 0
-      
+
       if (field === 'name') {
         // 使用中文拼音排序
         comparison = a.name.localeCompare(b.name, 'zh-CN')
@@ -426,12 +437,22 @@ class FileService {
   /**
    * 获取文件树
    */
-  getFileTree(includeHidden: boolean = false, sortOptions?: SortOptions, hiddenItems?: string[]): FileNode[] {
+  getFileTree(
+    includeHidden: boolean = false,
+    sortOptions?: SortOptions,
+    hiddenItems?: string[]
+  ): FileNode[] {
     if (!this.currentProjectPath) {
       throw new Error('没有打开的项目')
     }
 
-    return this.scanDirectory(this.currentProjectPath, true, includeHidden, sortOptions, hiddenItems)
+    return this.scanDirectory(
+      this.currentProjectPath,
+      true,
+      includeHidden,
+      sortOptions,
+      hiddenItems
+    )
   }
 
   /**

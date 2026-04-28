@@ -12,7 +12,7 @@ import type {
   RelationshipEdge,
   RelationType,
   CreateRelationshipGraphOptions,
-  UpdateRelationshipGraphOptions,
+  UpdateRelationshipGraphOptions
 } from '@shared/relationship'
 
 // 创建带前缀的错误处理器
@@ -34,18 +34,24 @@ interface RelationshipState {
   clearCurrentGraph: () => void
 
   // 节点管理
-  addNode: (node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>) => Promise<RelationshipNode | null>
+  addNode: (
+    node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<RelationshipNode | null>
   updateNode: (nodeId: string, updates: Partial<RelationshipNode>) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
 
   // 边管理
-  addEdge: (edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>) => Promise<RelationshipEdge | null>
+  addEdge: (
+    edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<RelationshipEdge | null>
   updateEdge: (edgeId: string, updates: Partial<RelationshipEdge>) => Promise<void>
   deleteEdge: (edgeId: string) => Promise<void>
 
   // 关系类型管理
   getRelationTypes: () => RelationType[]
-  addRelationType: (type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>) => Promise<RelationType | null>
+  addRelationType: (
+    type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>
+  ) => Promise<RelationType | null>
   updateRelationType: (typeId: string, updates: Partial<RelationType>) => Promise<void>
   deleteRelationType: (typeId: string) => Promise<void>
 
@@ -101,22 +107,25 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const graph = await window.electron.relationship.create(options)
-      set((state) => ({
-        graphs: [...state.graphs, {
-          id: graph.id,
-          name: graph.name,
-          description: graph.description,
-          thumbnail: graph.thumbnail,
-          linkedVocabularyTypes: graph.linkedVocabularyTypes,
-          customRelationTypes: graph.customRelationTypes,
-          nodeStyle: graph.nodeStyle,
-          nodeCount: graph.nodeCount,
-          edgeCount: graph.edgeCount,
-          createdAt: graph.createdAt,
-          updatedAt: graph.updatedAt,
-        }],
+      set(state => ({
+        graphs: [
+          ...state.graphs,
+          {
+            id: graph.id,
+            name: graph.name,
+            description: graph.description,
+            thumbnail: graph.thumbnail,
+            linkedVocabularyTypes: graph.linkedVocabularyTypes,
+            customRelationTypes: graph.customRelationTypes,
+            nodeStyle: graph.nodeStyle,
+            nodeCount: graph.nodeCount,
+            edgeCount: graph.edgeCount,
+            createdAt: graph.createdAt,
+            updatedAt: graph.updatedAt
+          }
+        ],
         currentGraph: graph,
-        isLoading: false,
+        isLoading: false
       }))
       return graph
     } catch (error) {
@@ -130,8 +139,8 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const updatedGraph = await window.electron.relationship.update(graphId, updates)
       if (updatedGraph) {
-        set((state) => ({
-          graphs: state.graphs.map((g) =>
+        set(state => ({
+          graphs: state.graphs.map(g =>
             g.id === graphId
               ? {
                   ...g,
@@ -143,11 +152,11 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
                   nodeStyle: updatedGraph.nodeStyle,
                   nodeCount: updatedGraph.nodeCount,
                   edgeCount: updatedGraph.edgeCount,
-                  updatedAt: updatedGraph.updatedAt,
+                  updatedAt: updatedGraph.updatedAt
                 }
               : g
           ),
-          currentGraph: state.currentGraph?.id === graphId ? updatedGraph : state.currentGraph,
+          currentGraph: state.currentGraph?.id === graphId ? updatedGraph : state.currentGraph
         }))
       }
     } catch (error) {
@@ -160,9 +169,9 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const success = await window.electron.relationship.delete(graphId)
       if (success) {
-        set((state) => ({
-          graphs: state.graphs.filter((g) => g.id !== graphId),
-          currentGraph: state.currentGraph?.id === graphId ? null : state.currentGraph,
+        set(state => ({
+          graphs: state.graphs.filter(g => g.id !== graphId),
+          currentGraph: state.currentGraph?.id === graphId ? null : state.currentGraph
         }))
       }
     } catch (error) {
@@ -183,14 +192,14 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const newNode = await window.electron.relationship.addNode(currentGraph.id, node)
       if (newNode) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
                 nodes: [...state.currentGraph.nodes, newNode],
-                nodeCount: state.currentGraph.nodeCount + 1,
+                nodeCount: state.currentGraph.nodeCount + 1
               }
-            : null,
+            : null
         }))
       }
       return newNode
@@ -207,17 +216,19 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.relationship.updateNode(currentGraph.id, nodeId, updates)
+      const updatedNode = await window.electron.relationship.updateNode(
+        currentGraph.id,
+        nodeId,
+        updates
+      )
       if (updatedNode) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map((n) =>
-                  n.id === nodeId ? updatedNode : n
-                ),
+                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -234,17 +245,17 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const success = await window.electron.relationship.deleteNode(currentGraph.id, nodeId)
       if (success) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.filter((n) => n.id !== nodeId),
+                nodes: state.currentGraph.nodes.filter(n => n.id !== nodeId),
                 edges: state.currentGraph.edges.filter(
-                  (e) => e.source !== nodeId && e.target !== nodeId
+                  e => e.source !== nodeId && e.target !== nodeId
                 ),
-                nodeCount: state.currentGraph.nodeCount - 1,
+                nodeCount: state.currentGraph.nodeCount - 1
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -262,14 +273,14 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const newEdge = await window.electron.relationship.addEdge(currentGraph.id, edge)
       if (newEdge) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
                 edges: [...state.currentGraph.edges, newEdge],
-                edgeCount: state.currentGraph.edgeCount + 1,
+                edgeCount: state.currentGraph.edgeCount + 1
               }
-            : null,
+            : null
         }))
       }
       return newEdge
@@ -286,17 +297,19 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedEdge = await window.electron.relationship.updateEdge(currentGraph.id, edgeId, updates)
+      const updatedEdge = await window.electron.relationship.updateEdge(
+        currentGraph.id,
+        edgeId,
+        updates
+      )
       if (updatedEdge) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                edges: state.currentGraph.edges.map((e) =>
-                  e.id === edgeId ? updatedEdge : e
-                ),
+                edges: state.currentGraph.edges.map(e => (e.id === edgeId ? updatedEdge : e))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -313,14 +326,14 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const success = await window.electron.relationship.deleteEdge(currentGraph.id, edgeId)
       if (success) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                edges: state.currentGraph.edges.filter((e) => e.id !== edgeId),
-                edgeCount: state.currentGraph.edgeCount - 1,
+                edges: state.currentGraph.edges.filter(e => e.id !== edgeId),
+                edgeCount: state.currentGraph.edgeCount - 1
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -336,7 +349,9 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return BUILTIN_RELATION_TYPES
 
     // 合并内置类型和自定义类型
-    return [...BUILTIN_RELATION_TYPES, ...currentGraph.customRelationTypes].sort((a, b) => a.order - b.order)
+    return [...BUILTIN_RELATION_TYPES, ...currentGraph.customRelationTypes].sort(
+      (a, b) => a.order - b.order
+    )
   },
 
   addRelationType: async (type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>) => {
@@ -346,13 +361,13 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const newType = await window.electron.relationship.addRelationType(currentGraph.id, type)
       if (newType) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                customRelationTypes: [...state.currentGraph.customRelationTypes, newType],
+                customRelationTypes: [...state.currentGraph.customRelationTypes, newType]
               }
-            : null,
+            : null
         }))
       }
       return newType
@@ -369,17 +384,21 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedType = await window.electron.relationship.updateRelationType(currentGraph.id, typeId, updates)
+      const updatedType = await window.electron.relationship.updateRelationType(
+        currentGraph.id,
+        typeId,
+        updates
+      )
       if (updatedType) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                customRelationTypes: state.currentGraph.customRelationTypes.map((t) =>
+                customRelationTypes: state.currentGraph.customRelationTypes.map(t =>
                   t.id === typeId ? updatedType : t
-                ),
+                )
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -396,15 +415,15 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const success = await window.electron.relationship.deleteRelationType(currentGraph.id, typeId)
       if (success) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
                 customRelationTypes: state.currentGraph.customRelationTypes.filter(
-                  (t) => t.id !== typeId
-                ),
+                  t => t.id !== typeId
+                )
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -420,15 +439,18 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const thumbnailPath = await window.electron.relationship.saveThumbnail(currentGraph.id, dataUrl)
+      const thumbnailPath = await window.electron.relationship.saveThumbnail(
+        currentGraph.id,
+        dataUrl
+      )
       if (thumbnailPath) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? { ...state.currentGraph, thumbnail: thumbnailPath }
             : null,
-          graphs: state.graphs.map((g) =>
+          graphs: state.graphs.map(g =>
             g.id === currentGraph.id ? { ...g, thumbnail: thumbnailPath } : g
-          ),
+          )
         }))
       }
     } catch (error) {
@@ -452,7 +474,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     try {
       const graph = await window.electron.relationship.import(jsonContent)
       if (graph) {
-        set((state) => ({
+        set(state => ({
           graphs: [
             ...state.graphs,
             {
@@ -466,9 +488,9 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
               nodeCount: graph.nodeCount,
               edgeCount: graph.edgeCount,
               createdAt: graph.createdAt,
-              updatedAt: graph.updatedAt,
-            },
-          ],
+              updatedAt: graph.updatedAt
+            }
+          ]
         }))
       }
       return graph
@@ -483,17 +505,17 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.nodes.find((n) => n.id === nodeId)
+    return currentGraph?.nodes.find(n => n.id === nodeId)
   },
 
   getEdgeById: (edgeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.edges.find((e) => e.id === edgeId)
+    return currentGraph?.edges.find(e => e.id === edgeId)
   },
 
   getRelationTypeById: (typeId: string) => {
     const types = get().getRelationTypes()
-    return types.find((t) => t.id === typeId)
+    return types.find(t => t.id === typeId)
   },
 
   clearData: () => {
@@ -501,7 +523,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
       graphs: [],
       currentGraph: null,
       isLoading: false,
-      error: null,
+      error: null
     })
   },
 
@@ -516,10 +538,10 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
       const success = await window.electron.relationship.reorderGraphs(graphIds)
       if (success) {
         // 按新顺序更新本地状态
-        set((state) => {
-          const graphMap = new Map(state.graphs.map((g) => [g.id, g]))
+        set(state => {
+          const graphMap = new Map(state.graphs.map(g => [g.id, g]))
           const reorderedGraphs = graphIds
-            .map((id) => graphMap.get(id))
+            .map(id => graphMap.get(id))
             .filter((g): g is RelationshipGraphMeta => g !== undefined)
           return { graphs: reorderedGraphs }
         })
@@ -530,5 +552,5 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
       set({ error: errorMessage })
       return false
     }
-  },
+  }
 }))

@@ -56,7 +56,8 @@ class ProjectSettingsService {
       this.settings = {
         editor: { ...DEFAULT_PROJECT_SETTINGS.editor, ...saved.editor },
         highlight: { ...DEFAULT_PROJECT_SETTINGS.highlight, ...saved.highlight },
-        autoCreateVocabularyFile: saved.autoCreateVocabularyFile ?? DEFAULT_PROJECT_SETTINGS.autoCreateVocabularyFile,
+        autoCreateVocabularyFile:
+          saved.autoCreateVocabularyFile ?? DEFAULT_PROJECT_SETTINGS.autoCreateVocabularyFile,
         backup: { ...DEFAULT_PROJECT_SETTINGS.backup, ...saved.backup },
         expandedFolders: saved.expandedFolders ?? DEFAULT_PROJECT_SETTINGS.expandedFolders,
         hiddenItems: saved.hiddenItems ?? DEFAULT_PROJECT_SETTINGS.hiddenItems
@@ -98,16 +99,20 @@ class ProjectSettingsService {
   }
 
   /** 深度合并：只更新传入字段，保留其他属性 */
-  private mergeSettings(target: ProjectSettings, source: Partial<ProjectSettings>): ProjectSettings {
+  private mergeSettings(
+    target: ProjectSettings,
+    source: Partial<ProjectSettings>
+  ): ProjectSettings {
     const result = { ...target }
-    
+
     if (source.editor) result.editor = { ...target.editor, ...source.editor }
     if (source.highlight) result.highlight = { ...target.highlight, ...source.highlight }
     if (source.backup) result.backup = { ...target.backup, ...source.backup }
-    if (source.autoCreateVocabularyFile !== undefined) result.autoCreateVocabularyFile = source.autoCreateVocabularyFile
+    if (source.autoCreateVocabularyFile !== undefined)
+      result.autoCreateVocabularyFile = source.autoCreateVocabularyFile
     if (source.expandedFolders !== undefined) result.expandedFolders = source.expandedFolders
     if (source.hiddenItems !== undefined) result.hiddenItems = source.hiddenItems
-    
+
     return result
   }
 

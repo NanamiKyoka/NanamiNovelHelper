@@ -9,7 +9,7 @@ import type {
   DynamicSkill,
   DynamicSkillExecutionRequest,
   DynamicSkillExecutionResult,
-  SkillWhitelistEntry,
+  SkillWhitelistEntry
 } from '@shared/ai-assistant'
 import type { CreateSkillOptions, UpdateSkillOptions } from '@main/services/dynamicSkill'
 
@@ -27,10 +27,13 @@ export function registerDynamicSkillHandlers(): void {
   /**
    * 获取单个 SKILL
    */
-  ipcMain.handle('dynamicSkill:get', async (_event, skillId: string): Promise<DynamicSkill | undefined> => {
-    validateParams('dynamicSkill:get').nonEmptyString(skillId, 'skillId').validate()
-    return dynamicSkillService.getSkill(skillId)
-  })
+  ipcMain.handle(
+    'dynamicSkill:get',
+    async (_event, skillId: string): Promise<DynamicSkill | undefined> => {
+      validateParams('dynamicSkill:get').nonEmptyString(skillId, 'skillId').validate()
+      return dynamicSkillService.getSkill(skillId)
+    }
+  )
 
   /**
    * 重新加载 SKILL（使用当前项目路径）
@@ -62,7 +65,11 @@ export function registerDynamicSkillHandlers(): void {
       skillId: string,
       toolId: string,
       parameters: Record<string, unknown>,
-      context: { projectPath: string; currentChapter?: { path: string; content: string }; selectedText?: string },
+      context: {
+        projectPath: string
+        currentChapter?: { path: string; content: string }
+        selectedText?: string
+      }
     ): Promise<DynamicSkillExecutionResult> => {
       validateParams('dynamicSkill:execute')
         .nonEmptyString(skillId, 'skillId')
@@ -73,19 +80,19 @@ export function registerDynamicSkillHandlers(): void {
         skillId,
         toolId,
         parameters,
-        context,
+        context
       }
 
       const win = BrowserWindow.fromWebContents(event.sender)
 
-      return dynamicSkillService.executeTool(request, (line) => {
+      return dynamicSkillService.executeTool(request, line => {
         // 流式输出到渲染进程（使用正确的事件名）
         win?.webContents.send('dynamicSkill:execution-output', {
           executionId: `${skillId}-${toolId}`,
-          line,
+          line
         })
       })
-    },
+    }
   )
 
   /**
@@ -115,16 +122,21 @@ export function registerDynamicSkillHandlers(): void {
         .nonEmptyString(skillPath, 'skillPath')
         .validate()
       return dynamicSkillService.trustSkill(skillId, skillName, skillPath)
-    },
+    }
   )
 
   /**
    * 从白名单移除（取消信任）
    */
-  ipcMain.handle('dynamicSkill:removeFromWhitelist', async (_event, skillId: string): Promise<void> => {
-    validateParams('dynamicSkill:removeFromWhitelist').nonEmptyString(skillId, 'skillId').validate()
-    return dynamicSkillService.untrustSkill(skillId)
-  })
+  ipcMain.handle(
+    'dynamicSkill:removeFromWhitelist',
+    async (_event, skillId: string): Promise<void> => {
+      validateParams('dynamicSkill:removeFromWhitelist')
+        .nonEmptyString(skillId, 'skillId')
+        .validate()
+      return dynamicSkillService.untrustSkill(skillId)
+    }
+  )
 
   /**
    * 检查 SKILL 是否被信任
@@ -132,9 +144,12 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:isTrusted',
     async (_event, skillId: string, skillPath: string): Promise<boolean> => {
-      validateParams('dynamicSkill:isTrusted').nonEmptyString(skillId, 'skillId').nonEmptyString(skillPath, 'skillPath').validate()
+      validateParams('dynamicSkill:isTrusted')
+        .nonEmptyString(skillId, 'skillId')
+        .nonEmptyString(skillPath, 'skillPath')
+        .validate()
       return dynamicSkillService.isSkillTrusted(skillId, skillPath)
-    },
+    }
   )
 
   /**
@@ -145,7 +160,7 @@ export function registerDynamicSkillHandlers(): void {
     async (_event, options: CreateSkillOptions): Promise<DynamicSkill> => {
       validateParams('dynamicSkill:create').object(options, 'options').validate()
       return dynamicSkillService.createSkill(options)
-    },
+    }
   )
 
   /**
@@ -154,19 +169,19 @@ export function registerDynamicSkillHandlers(): void {
   ipcMain.handle(
     'dynamicSkill:update',
     async (_event, skillId: string, options: UpdateSkillOptions): Promise<DynamicSkill> => {
-      validateParams('dynamicSkill:update').nonEmptyString(skillId, 'skillId').object(options, 'options').validate()
+      validateParams('dynamicSkill:update')
+        .nonEmptyString(skillId, 'skillId')
+        .object(options, 'options')
+        .validate()
       return dynamicSkillService.updateSkill(skillId, options)
-    },
+    }
   )
 
   /**
    * 删除 SKILL（移动到回收站）
    */
-  ipcMain.handle(
-    'dynamicSkill:delete',
-    async (_event, skillId: string): Promise<void> => {
-      validateParams('dynamicSkill:delete').nonEmptyString(skillId, 'skillId').validate()
-      return dynamicSkillService.deleteSkill(skillId)
-    },
-  )
+  ipcMain.handle('dynamicSkill:delete', async (_event, skillId: string): Promise<void> => {
+    validateParams('dynamicSkill:delete').nonEmptyString(skillId, 'skillId').validate()
+    return dynamicSkillService.deleteSkill(skillId)
+  })
 }

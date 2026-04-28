@@ -104,7 +104,7 @@ const DEFAULT_EXCLUDES = [
   '**/dist/**',
   '**/out/**',
   '**/.DS_Store',
-  '**/Thumbs.db',
+  '**/Thumbs.db'
 ]
 
 /**
@@ -122,7 +122,7 @@ const DEFAULT_INCLUDES = [
   '**/*.jsx',
   '**/*.tsx',
   '**/*.css',
-  '**/*.html',
+  '**/*.html'
 ]
 
 /**
@@ -155,7 +155,7 @@ class SearchService {
         results: [],
         totalMatches: 0,
         filesSearched: 0,
-        error: Errors.projectNotOpen('SearchService').message,
+        error: Errors.projectNotOpen('SearchService').message
       }
     }
 
@@ -164,7 +164,7 @@ class SearchService {
         success: true,
         results: [],
         totalMatches: 0,
-        filesSearched: 0,
+        filesSearched: 0
       }
     }
 
@@ -176,7 +176,7 @@ class SearchService {
       filesToInclude = '',
       filesToExclude = '',
       maxFileSize = 1024 * 1024,
-      maxResults = 1000,
+      maxResults = 1000
     } = options
 
     try {
@@ -195,7 +195,12 @@ class SearchService {
       for (const filePath of filesToSearch) {
         if (totalMatches >= maxResults) break
 
-        const result = await this.searchFile(filePath, regex, maxFileSize, maxResults - totalMatches)
+        const result = await this.searchFile(
+          filePath,
+          regex,
+          maxFileSize,
+          maxResults - totalMatches
+        )
         filesSearched++
 
         if (result && result.matches.length > 0) {
@@ -208,7 +213,7 @@ class SearchService {
         success: true,
         results,
         totalMatches,
-        filesSearched,
+        filesSearched
       }
     } catch (error) {
       return {
@@ -216,7 +221,7 @@ class SearchService {
         results: [],
         totalMatches: 0,
         filesSearched: 0,
-        error: error instanceof Error ? error.message : '搜索失败',
+        error: error instanceof Error ? error.message : '搜索失败'
       }
     }
   }
@@ -258,14 +263,17 @@ class SearchService {
 
     return patternsStr
       .split(',')
-      .map((p) => p.trim())
+      .map(p => p.trim())
       .filter(Boolean)
   }
 
   /**
    * 收集要搜索的文件
    */
-  private async collectFiles(includePatterns: string[], excludePatterns: string[]): Promise<string[]> {
+  private async collectFiles(
+    includePatterns: string[],
+    excludePatterns: string[]
+  ): Promise<string[]> {
     if (!this.currentProjectPath) return []
 
     const files: string[] = []
@@ -374,11 +382,14 @@ class SearchService {
             column,
             matchText,
             lineText: lineText.trim(),
-            contextBefore: lineText.substring(Math.max(0, match.index - contextLength), match.index),
+            contextBefore: lineText.substring(
+              Math.max(0, match.index - contextLength),
+              match.index
+            ),
             contextAfter: lineText.substring(
               match.index + matchText.length,
               Math.min(lineText.length, match.index + matchText.length + contextLength)
-            ),
+            )
           })
 
           if (!regex.global) break
@@ -392,7 +403,7 @@ class SearchService {
       return {
         filePath: relativePath,
         fileName: path.basename(relativePath),
-        matches,
+        matches
       }
     } catch (error) {
       // 文件读取失败，忽略
@@ -424,7 +435,14 @@ class SearchService {
 
     try {
       let content = fs.readFileSync(fullPath, 'utf-8')
-      const { caseSensitive = false, wholeWord = false, useRegex = false, replaceAll = true, line, column } = options
+      const {
+        caseSensitive = false,
+        wholeWord = false,
+        useRegex = false,
+        replaceAll = true,
+        line,
+        column
+      } = options
 
       const regex = this.buildSearchRegex(searchQuery, { caseSensitive, wholeWord, useRegex })
 
@@ -433,15 +451,18 @@ class SearchService {
       if (replaceAll) {
         if (isHtmlFile(filePath)) {
           let count = 0
-          const newContent = content.replace(/(<[^>]*>)|([^<]+)/g, (fullMatch, tagMatch, textMatch) => {
-            if (tagMatch) return tagMatch
-            regex.lastIndex = 0
-            const replaced = textMatch.replace(regex, () => {
-              count++
-              return replaceText
-            })
-            return replaced
-          })
+          const newContent = content.replace(
+            /(<[^>]*>)|([^<]+)/g,
+            (fullMatch, tagMatch, textMatch) => {
+              if (tagMatch) return tagMatch
+              regex.lastIndex = 0
+              const replaced = textMatch.replace(regex, () => {
+                count++
+                return replaceText
+              })
+              return replaced
+            }
+          )
           replacements = count
           content = newContent
         } else {
@@ -474,7 +495,7 @@ class SearchService {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : '替换失败',
+        error: error instanceof Error ? error.message : '替换失败'
       }
     }
   }

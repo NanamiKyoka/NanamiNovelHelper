@@ -17,7 +17,7 @@ import {
   DatePicker,
   Dropdown,
   Drawer,
-  theme,
+  theme
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -34,7 +34,7 @@ import {
   CheckOutlined,
   MenuOutlined,
   ClockCircleOutlined,
-  EditOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -44,14 +44,14 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  DragOverlay,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
@@ -100,21 +100,17 @@ function SortableTimelineNode({
   onContextMenu,
   onEdit,
   formatTimeInfo,
-  getTimeIcon,
+  getTimeIcon
 }: SortableTimelineNodeProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: node.id, disabled: isBatchMode })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: node.id,
+    disabled: isBatchMode
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   }
 
   return (
@@ -126,16 +122,15 @@ function SortableTimelineNode({
       onContextMenu={onContextMenu}
     >
       <div className={styles.timelineLine}>
-        <div
-          className={styles.timelineDot}
-          style={{ backgroundColor: node.color || '#1890ff' }}
-        />
+        <div className={styles.timelineDot} style={{ backgroundColor: node.color || '#1890ff' }} />
         {index < totalCount - 1 && <div className={styles.timelineConnector} />}
       </div>
       <div className={styles.timelineContent}>
         <div className={styles.nodeHeader}>
           <div className={styles.nodeTitleRow}>
-            <Text strong className={styles.nodeTitle}>{node.title}</Text>
+            <Text strong className={styles.nodeTitle}>
+              {node.title}
+            </Text>
             {node.isBranchPoint && <Tag color="blue">分支点</Tag>}
           </div>
           <div className={styles.nodeActions}>
@@ -161,16 +156,20 @@ function SortableTimelineNode({
           <div className={styles.nodeCharacters}>
             <UserOutlined />
             <div className={styles.characterList}>
-              {node.characters.map((char) => (
-                <Tag key={char.id} color={char.color || 'default'}>{char.name}</Tag>
+              {node.characters.map(char => (
+                <Tag key={char.id} color={char.color || 'default'}>
+                  {char.name}
+                </Tag>
               ))}
             </div>
           </div>
         )}
         {node.tags && node.tags.length > 0 && (
           <div className={styles.nodeTags}>
-            {node.tags.map((tag) => (
-              <Tag key={tag} color="blue" style={{ fontSize: 11 }}>{tag}</Tag>
+            {node.tags.map(tag => (
+              <Tag key={tag} color="blue" style={{ fontSize: 11 }}>
+                {tag}
+              </Tag>
             ))}
           </div>
         )}
@@ -188,9 +187,10 @@ function SortableTimelineNode({
 function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JSX.Element {
   const { token } = theme.useToken()
   const { modal, message } = App.useApp()
-  const isDarkMode = token.colorBgContainer === '#141414' ||
-                     token.colorBgContainer === '#1f1f1f' ||
-                     token.colorTextBase === '#fff'
+  const isDarkMode =
+    token.colorBgContainer === '#141414' ||
+    token.colorBgContainer === '#1f1f1f' ||
+    token.colorTextBase === '#fff'
 
   const {
     currentTimeline,
@@ -205,13 +205,13 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     redo,
     canUndo,
     canRedo,
-    saveThumbnail,
+    saveThumbnail
   } = useTimelineStore()
 
   const { types: vocabularyTypes, loadTypes, entries, loadEntries } = useVocabularyStore()
-  
-  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
-  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
+
+  const setFullscreenMode = useUIStore(state => state.setFullscreenMode)
+  const exitFullscreen = useUIStore(state => state.exitFullscreen)
 
   // 设置全屏模式，卸载时退出
   useEffect(() => {
@@ -232,7 +232,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
         const delta = e.deltaY > 0 ? -0.05 : 0.05
-        setZoom((prev) => Math.min(Math.max(prev + delta, 0.3), 3))
+        setZoom(prev => Math.min(Math.max(prev + delta, 0.3), 3))
       }
     }
 
@@ -244,7 +244,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   const [nodeEdit, setNodeEdit] = useState<NodeEditState>({
     visible: false,
     node: null,
-    isNew: false,
+    isNew: false
   })
 
   // 批量选择状态
@@ -265,7 +265,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     visible: false,
     x: 0,
     y: 0,
-    nodeId: null,
+    nodeId: null
   })
 
   // 初始化
@@ -277,7 +277,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   // 加载词汇条目 - 只加载一次
   useEffect(() => {
     if (vocabularyTypes.length > 0) {
-      vocabularyTypes.forEach((type) => {
+      vocabularyTypes.forEach(type => {
         loadEntries(type.id)
       })
     }
@@ -338,67 +338,76 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   // 打开新增节点弹窗
   const handleAddNode = useCallback(() => {
     const nodes = currentTimeline?.nodes || []
-    const maxOrder = nodes.length > 0 ? Math.max(...nodes.map((n) => n.order)) : -1
+    const maxOrder = nodes.length > 0 ? Math.max(...nodes.map(n => n.order)) : -1
     setNodeEdit({
       visible: true,
       node: {
         title: '',
         description: '',
         timeInfo: {
-          format: 'custom',
+          format: 'custom'
         },
         characters: [],
         order: maxOrder + 1,
-        color: '#1890ff',
+        color: '#1890ff'
       },
-      isNew: true,
+      isNew: true
     })
   }, [currentTimeline?.nodes])
 
   // 快速添加模板
-  const handleQuickAdd = useCallback(async (template: { title: string; description: string; color: string }) => {
-    const nodes = currentTimeline?.nodes || []
-    const maxOrder = nodes.length > 0 ? Math.max(...nodes.map((n) => n.order)) : -1
-    await addNode({
-      title: template.title,
-      description: template.description,
-      timeInfo: { format: 'custom' },
-      characters: [],
-      order: maxOrder + 1,
-      color: template.color,
-    })
-    message.success(`已添加: ${template.title}`)
-  }, [currentTimeline?.nodes, addNode, message])
+  const handleQuickAdd = useCallback(
+    async (template: { title: string; description: string; color: string }) => {
+      const nodes = currentTimeline?.nodes || []
+      const maxOrder = nodes.length > 0 ? Math.max(...nodes.map(n => n.order)) : -1
+      await addNode({
+        title: template.title,
+        description: template.description,
+        timeInfo: { format: 'custom' },
+        characters: [],
+        order: maxOrder + 1,
+        color: template.color
+      })
+      message.success(`已添加: ${template.title}`)
+    },
+    [currentTimeline?.nodes, addNode, message]
+  )
 
-  const quickAddMenu: MenuProps['items'] = useMemo(() => [
-    { key: 'event', label: '事件节点', icon: <ClockCircleOutlined /> },
-    { key: 'turning', label: '转折点', icon: <EditOutlined /> },
-    { key: 'climax', label: '高潮', icon: <TagOutlined /> },
-    { key: 'ending', label: '结局', icon: <CheckOutlined /> },
-    { type: 'divider' },
-    { key: 'custom', label: '自定义...', icon: <PlusOutlined /> },
-  ], [])
+  const quickAddMenu: MenuProps['items'] = useMemo(
+    () => [
+      { key: 'event', label: '事件节点', icon: <ClockCircleOutlined /> },
+      { key: 'turning', label: '转折点', icon: <EditOutlined /> },
+      { key: 'climax', label: '高潮', icon: <TagOutlined /> },
+      { key: 'ending', label: '结局', icon: <CheckOutlined /> },
+      { type: 'divider' },
+      { key: 'custom', label: '自定义...', icon: <PlusOutlined /> }
+    ],
+    []
+  )
 
-  const handleQuickAddClick: MenuProps['onClick'] = useCallback((info) => {
-    const templates: Record<string, { title: string; description: string; color: string }> = {
-      event: { title: '新事件', description: '', color: '#1890ff' },
-      turning: { title: '转折点', description: '故事方向发生重大变化', color: '#fa8c16' },
-      climax: { title: '高潮', description: '故事的紧张巅峰', color: '#f5222d' },
-      ending: { title: '结局', description: '', color: '#52c41a' },
-    }
-    if (info.key === 'custom') {
-      handleAddNode()
-    } else if (templates[info.key]) {
-      handleQuickAdd(templates[info.key])
-    }
-  }, [handleAddNode, handleQuickAdd])
+  const handleQuickAddClick: MenuProps['onClick'] = useCallback(
+    info => {
+      const templates: Record<string, { title: string; description: string; color: string }> = {
+        event: { title: '新事件', description: '', color: '#1890ff' },
+        turning: { title: '转折点', description: '故事方向发生重大变化', color: '#fa8c16' },
+        climax: { title: '高潮', description: '故事的紧张巅峰', color: '#f5222d' },
+        ending: { title: '结局', description: '', color: '#52c41a' }
+      }
+      if (info.key === 'custom') {
+        handleAddNode()
+      } else if (templates[info.key]) {
+        handleQuickAdd(templates[info.key])
+      }
+    },
+    [handleAddNode, handleQuickAdd]
+  )
 
   // 打开编辑节点弹窗
   const handleEditNode = useCallback((node: TimelineNode) => {
     setNodeEdit({
       visible: true,
       node: { ...node },
-      isNew: false,
+      isNew: false
     })
   }, [])
 
@@ -420,7 +429,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         order: nodeEdit.node.order || 0,
         isBranchPoint: nodeEdit.node.isBranchPoint,
         tags: nodeEdit.node.tags,
-        causalLinks: nodeEdit.node.causalLinks,
+        causalLinks: nodeEdit.node.causalLinks
       })
     } else if (nodeEdit.node.id) {
       await updateNode(nodeEdit.node.id, nodeEdit.node as Partial<TimelineNode>)
@@ -432,7 +441,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   // 删除节点
   const handleDeleteNode = async (nodeId: string) => {
     await deleteNode(nodeId)
-    setSelectedNodes((prev) => prev.filter((id) => id !== nodeId))
+    setSelectedNodes(prev => prev.filter(id => id !== nodeId))
   }
 
   // 批量删除
@@ -448,7 +457,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         await batchDeleteNodes(selectedNodes)
         setSelectedNodes([])
         setIsBatchMode(false)
-      },
+      }
     })
   }
 
@@ -457,21 +466,24 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-      },
+        distance: 5
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
   // DnD 拖拽结束
-  const handleDndDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveDragId(null)
-    if (!over || active.id === over.id) return
-    await moveNode(active.id as string, over.id as string)
-  }, [moveNode])
+  const handleDndDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event
+      setActiveDragId(null)
+      if (!over || active.id === over.id) return
+      await moveNode(active.id as string, over.id as string)
+    },
+    [moveNode]
+  )
 
   const handleDndDragStart = useCallback((event: DragEndEvent) => {
     setActiveDragId(event.active.id as string)
@@ -501,19 +513,19 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       }
     }
 
-    setSelectedNodes((prev) =>
-      prev.includes(nodeId) ? prev.filter((id) => id !== nodeId) : [...prev, nodeId]
+    setSelectedNodes(prev =>
+      prev.includes(nodeId) ? prev.filter(id => id !== nodeId) : [...prev, nodeId]
     )
     lastSelectedNodeId.current = nodeId
   }
 
   // 缩放控制
   const handleZoomIn = () => {
-    setZoom((prev) => Math.min(prev + 0.1, 2))
+    setZoom(prev => Math.min(prev + 0.1, 2))
   }
 
   const handleZoomOut = () => {
-    setZoom((prev) => Math.max(prev - 0.1, 0.5))
+    setZoom(prev => Math.max(prev - 0.1, 0.5))
   }
 
   const handleZoomReset = () => {
@@ -556,7 +568,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       onClick: () => {
         handleEditNode(node)
         setContextMenu(prev => ({ ...prev, visible: false }))
-      },
+      }
     },
     { type: 'divider' },
     {
@@ -571,9 +583,9 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           okText: '删除',
           okButtonProps: { danger: true },
           cancelText: '取消',
-          onOk: () => handleDeleteNode(node.id),
-        }),
-    },
+          onOk: () => handleDeleteNode(node.id)
+        })
+    }
   ]
 
   // 处理右键菜单
@@ -584,7 +596,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      nodeId: node.id,
+      nodeId: node.id
     })
   }
 
@@ -592,7 +604,8 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
-      const isInputFocused = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      const isInputFocused =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
       if (isInputFocused) return
 
       if (e.ctrlKey || e.metaKey) {
@@ -664,7 +677,20 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [undo, redo, isBatchMode, sortedNodes, selectedNodes, nodeEdit.visible, contextMenu.visible, handleBatchDelete, handleZoomIn, handleZoomOut, handleZoomReset, message])
+  }, [
+    undo,
+    redo,
+    isBatchMode,
+    sortedNodes,
+    selectedNodes,
+    nodeEdit.visible,
+    contextMenu.visible,
+    handleBatchDelete,
+    handleZoomIn,
+    handleZoomOut,
+    handleZoomReset,
+    message
+  ])
 
   if (isLoading) {
     return (
@@ -682,7 +708,9 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       <div className={styles.container}>
         <div className={styles.loading}>
           <Text type="secondary">时间线不存在</Text>
-          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+            返回
+          </Button>
         </div>
       </div>
     )
@@ -737,10 +765,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               <Button icon={<MenuOutlined />} onClick={toggleBatchMode}>
                 批量操作
               </Button>
-              <Dropdown menu={{ items: quickAddMenu, onClick: handleQuickAddClick }} trigger={['click']}>
-                <Button icon={<PlusOutlined />}>
-                  快速添加
-                </Button>
+              <Dropdown
+                menu={{ items: quickAddMenu, onClick: handleQuickAddClick }}
+                trigger={['click']}
+              >
+                <Button icon={<PlusOutlined />}>快速添加</Button>
               </Dropdown>
               <Button type="primary" onClick={handleAddNode}>
                 自定义节点
@@ -751,7 +780,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       </div>
 
       {/* 时间线主体 */}
-      <div className={styles.content} ref={contentRef} style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
+      <div
+        className={styles.content}
+        ref={contentRef}
+        style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+      >
         {sortedNodes.length === 0 ? (
           <div className={styles.emptyNodes}>
             <ClockCircleOutlined className={styles.emptyIcon} />
@@ -768,7 +801,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             onDragEnd={handleDndDragEnd}
           >
             <SortableContext
-              items={sortedNodes.map((n) => n.id)}
+              items={sortedNodes.map(n => n.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className={styles.timeline}>
@@ -780,8 +813,8 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                     totalCount={sortedNodes.length}
                     isBatchMode={isBatchMode}
                     isSelected={selectedNodes.includes(node.id)}
-                    onToggleSelect={(shiftKey) => toggleNodeSelection(node.id, shiftKey)}
-                    onContextMenu={(e) => handleContextMenu(e, node)}
+                    onToggleSelect={shiftKey => toggleNodeSelection(node.id, shiftKey)}
+                    onContextMenu={e => handleContextMenu(e, node)}
                     onEdit={() => handleEditNode(node)}
                     formatTimeInfo={formatTimeInfo}
                     getTimeIcon={getTimeIcon}
@@ -799,7 +832,14 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             </SortableContext>
             <DragOverlay>
               {activeDragId ? (
-                <div style={{ opacity: 0.5, padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8 }}>
+                <div
+                  style={{
+                    opacity: 0.5,
+                    padding: '8px 12px',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: 8
+                  }}
+                >
                   <Text strong>{sortedNodes.find(n => n.id === activeDragId)?.title}</Text>
                 </div>
               ) : null}
@@ -826,10 +866,10 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             <Input
               placeholder="输入节点标题"
               value={nodeEdit.node?.title || ''}
-              onChange={(e) =>
-                setNodeEdit((prev) => ({
+              onChange={e =>
+                setNodeEdit(prev => ({
                   ...prev,
-                  node: { ...prev.node, title: e.target.value },
+                  node: { ...prev.node, title: e.target.value }
                 }))
               }
               maxLength={100}
@@ -841,10 +881,10 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             <TextArea
               placeholder="输入节点描述"
               value={nodeEdit.node?.description || ''}
-              onChange={(e) =>
-                setNodeEdit((prev) => ({
+              onChange={e =>
+                setNodeEdit(prev => ({
                   ...prev,
-                  node: { ...prev.node, description: e.target.value },
+                  node: { ...prev.node, description: e.target.value }
                 }))
               }
               rows={3}
@@ -856,19 +896,19 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             <label className={styles.formLabel}>时间信息</label>
             <Select
               value={nodeEdit.node?.timeInfo?.format || 'custom'}
-              onChange={(value) =>
-                setNodeEdit((prev) => ({
+              onChange={value =>
+                setNodeEdit(prev => ({
                   ...prev,
                   node: {
                     ...prev.node,
-                    timeInfo: { ...prev.node?.timeInfo, format: value },
-                  },
+                    timeInfo: { ...prev.node?.timeInfo, format: value }
+                  }
                 }))
               }
               options={[
                 { label: '自定义标签', value: 'custom' },
                 { label: '日期时间', value: 'datetime' },
-                { label: '章节引用', value: 'chapter' },
+                { label: '章节引用', value: 'chapter' }
               ]}
               style={{ width: '100%', marginBottom: 8 }}
             />
@@ -876,16 +916,16 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               <DatePicker
                 showTime
                 value={nodeEdit.node?.timeInfo?.datetime}
-                onChange={(date) =>
-                  setNodeEdit((prev) => ({
+                onChange={date =>
+                  setNodeEdit(prev => ({
                     ...prev,
                     node: {
                       ...prev.node,
                       timeInfo: {
                         ...prev.node?.timeInfo,
-                        datetime: date?.toISOString(),
-                      },
-                    },
+                        datetime: date?.toISOString()
+                      }
+                    }
                   }))
                 }
                 style={{ width: '100%' }}
@@ -895,16 +935,16 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               <Input
                 placeholder="输入自定义时间标签，如：第一纪元、三年前"
                 value={nodeEdit.node?.timeInfo?.customLabel || ''}
-                onChange={(e) =>
-                  setNodeEdit((prev) => ({
+                onChange={e =>
+                  setNodeEdit(prev => ({
                     ...prev,
                     node: {
                       ...prev.node,
                       timeInfo: {
                         ...prev.node?.timeInfo,
-                        customLabel: e.target.value,
-                      },
-                    },
+                        customLabel: e.target.value
+                      }
+                    }
                   }))
                 }
               />
@@ -916,24 +956,26 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             <Select
               mode="multiple"
               placeholder="选择关联的角色"
-              value={nodeEdit.node?.characters?.map((c) => c.id) || []}
-              onChange={(ids) => {
-                const selectedChars = ids.map((id) => {
-                  const entry = Object.values(entries).flat().find((e) => e.id === id)
+              value={nodeEdit.node?.characters?.map(c => c.id) || []}
+              onChange={ids => {
+                const selectedChars = ids.map(id => {
+                  const entry = Object.values(entries)
+                    .flat()
+                    .find(e => e.id === id)
                   return {
                     id,
                     name: entry?.name || '',
-                    color: entry?.color,
+                    color: entry?.color
                   } as CharacterRef
                 })
-                setNodeEdit((prev) => ({
+                setNodeEdit(prev => ({
                   ...prev,
-                  node: { ...prev.node, characters: selectedChars },
+                  node: { ...prev.node, characters: selectedChars }
                 }))
               }}
               options={Object.values(entries)
                 .flat()
-                .map((e) => ({ label: e.name, value: e.id }))}
+                .map(e => ({ label: e.name, value: e.id }))}
               style={{ width: '100%' }}
             />
           </div>
@@ -944,10 +986,10 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               mode="tags"
               placeholder="输入标签后按回车添加"
               value={nodeEdit.node?.tags || []}
-              onChange={(tags) =>
-                setNodeEdit((prev) => ({
+              onChange={tags =>
+                setNodeEdit(prev => ({
                   ...prev,
-                  node: { ...prev.node, tags },
+                  node: { ...prev.node, tags }
                 }))
               }
               style={{ width: '100%' }}
@@ -959,7 +1001,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
             <label className={styles.formLabel}>节点颜色</label>
             <div className={styles.colorPicker}>
               {['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2'].map(
-                (color) => (
+                color => (
                   <div
                     key={color}
                     className={`${styles.colorOption} ${
@@ -967,9 +1009,9 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() =>
-                      setNodeEdit((prev) => ({
+                      setNodeEdit(prev => ({
                         ...prev,
-                        node: { ...prev.node, color },
+                        node: { ...prev.node, color }
                       }))
                     }
                   />
@@ -984,10 +1026,10 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               <input
                 type="checkbox"
                 checked={nodeEdit.node?.isBranchPoint || false}
-                onChange={(e) =>
-                  setNodeEdit((prev) => ({
+                onChange={e =>
+                  setNodeEdit(prev => ({
                     ...prev,
-                    node: { ...prev.node, isBranchPoint: e.target.checked },
+                    node: { ...prev.node, isBranchPoint: e.target.checked }
                   }))
                 }
               />
@@ -1001,11 +1043,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
               mode="multiple"
               placeholder="选择此节点导致的结果节点"
               value={nodeEdit.node?.causalLinks?.map(l => l.targetId) || []}
-              onChange={(targetIds) => {
+              onChange={targetIds => {
                 const links = targetIds.map(id => ({ targetId: id }))
-                setNodeEdit((prev) => ({
+                setNodeEdit(prev => ({
                   ...prev,
-                  node: { ...prev.node, causalLinks: links },
+                  node: { ...prev.node, causalLinks: links }
                 }))
               }}
               options={sortedNodes
@@ -1022,10 +1064,10 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         menu={{
           items: contextMenu.nodeId
             ? getNodeContextMenu(sortedNodes.find(n => n.id === contextMenu.nodeId)!)
-            : [],
+            : []
         }}
         open={contextMenu.visible}
-        onOpenChange={(open) => {
+        onOpenChange={open => {
           if (!open) {
             setContextMenu(prev => ({ ...prev, visible: false }))
           }
@@ -1034,7 +1076,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           position: 'fixed',
           left: contextMenu.x,
           top: contextMenu.y,
-          zIndex: 10001,
+          zIndex: 10001
         }}
       >
         <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />

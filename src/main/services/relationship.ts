@@ -70,9 +70,7 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
 
   protected sortItems(items: RelationshipGraphMeta[]): RelationshipGraphMeta[] {
     // 按更新时间排序
-    return items.sort((a, b) => 
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
+    return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }
 
   // ============================================
@@ -88,9 +86,8 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
 
     // 获取当前最大 order
     const existingGraphs = this.getList()
-    const maxOrder = existingGraphs.length > 0
-      ? Math.max(...existingGraphs.map(g => g.order ?? 0))
-      : -1
+    const maxOrder =
+      existingGraphs.length > 0 ? Math.max(...existingGraphs.map(g => g.order ?? 0)) : -1
 
     const graph: RelationshipGraph = {
       id: graphId,
@@ -121,7 +118,7 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
     if (!graph) return null
 
     const now = this.getTimestamp()
-    
+
     const updatedGraph: RelationshipGraph = {
       ...graph,
       ...updates,
@@ -149,7 +146,10 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 添加节点
    */
-  addNode(graphId: string, node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>): RelationshipNode | null {
+  addNode(
+    graphId: string,
+    node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>
+  ): RelationshipNode | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -172,7 +172,11 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 更新节点
    */
-  updateNode(graphId: string, nodeId: string, updates: Partial<RelationshipNode>): RelationshipNode | null {
+  updateNode(
+    graphId: string,
+    nodeId: string,
+    updates: Partial<RelationshipNode>
+  ): RelationshipNode | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -225,7 +229,10 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 添加边
    */
-  addEdge(graphId: string, edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>): RelationshipEdge | null {
+  addEdge(
+    graphId: string,
+    edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>
+  ): RelationshipEdge | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -253,7 +260,11 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 更新边
    */
-  updateEdge(graphId: string, edgeId: string, updates: Partial<RelationshipEdge>): RelationshipEdge | null {
+  updateEdge(
+    graphId: string,
+    edgeId: string,
+    updates: Partial<RelationshipEdge>
+  ): RelationshipEdge | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -310,7 +321,10 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 添加自定义关系类型
    */
-  addCustomRelationType(graphId: string, type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>): RelationType | null {
+  addCustomRelationType(
+    graphId: string,
+    type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>
+  ): RelationType | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -336,7 +350,11 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   /**
    * 更新自定义关系类型
    */
-  updateCustomRelationType(graphId: string, typeId: string, updates: Partial<RelationType>): RelationType | null {
+  updateCustomRelationType(
+    graphId: string,
+    typeId: string,
+    updates: Partial<RelationType>
+  ): RelationType | null {
     const graph = this.get(graphId)
     if (!graph || !graph.customRelationTypes) return null
 
@@ -402,16 +420,15 @@ class RelationshipService extends BaseService<RelationshipGraph, RelationshipGra
   override importItem(jsonContent: string): RelationshipGraph | null {
     try {
       const graph = JSON5.parse(jsonContent) as RelationshipGraph
-      
+
       const newId = this.generateId()
       const now = this.getTimestamp()
 
       // 获取当前最大 order
       const existingGraphs = this.getList()
-      const maxOrder = existingGraphs.length > 0
-        ? Math.max(...existingGraphs.map(g => g.order ?? 0))
-        : -1
-      
+      const maxOrder =
+        existingGraphs.length > 0 ? Math.max(...existingGraphs.map(g => g.order ?? 0)) : -1
+
       const importedGraph: RelationshipGraph = {
         ...graph,
         id: newId,

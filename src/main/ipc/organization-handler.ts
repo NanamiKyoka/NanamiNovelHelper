@@ -34,18 +34,27 @@ export function registerOrganizationHandlers(): void {
     return organizationService.get(graphId)
   })
 
-  ipcMain.handle('organization:create', (_, options: CreateOrganizationGraphOptions): OrganizationGraph => {
-    validateParams('organization:create')
-      .object(options, 'options')
-      .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
-      .validate()
-    return organizationService.createGraph(options)
-  })
+  ipcMain.handle(
+    'organization:create',
+    (_, options: CreateOrganizationGraphOptions): OrganizationGraph => {
+      validateParams('organization:create')
+        .object(options, 'options')
+        .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
+        .validate()
+      return organizationService.createGraph(options)
+    }
+  )
 
-  ipcMain.handle('organization:update', (_, graphId: string, updates: UpdateOrganizationGraphOptions): OrganizationGraph | null => {
-    validateParams('organization:update').nonEmptyString(graphId, 'graphId').object(updates, 'updates').validate()
-    return organizationService.updateGraph(graphId, updates)
-  })
+  ipcMain.handle(
+    'organization:update',
+    (_, graphId: string, updates: UpdateOrganizationGraphOptions): OrganizationGraph | null => {
+      validateParams('organization:update')
+        .nonEmptyString(graphId, 'graphId')
+        .object(updates, 'updates')
+        .validate()
+      return organizationService.updateGraph(graphId, updates)
+    }
+  )
 
   ipcMain.handle('organization:delete', (_, graphId: string): boolean => {
     validateParams('organization:delete').nonEmptyString(graphId, 'graphId').validate()
@@ -57,50 +66,103 @@ export function registerOrganizationHandlers(): void {
   // ============================================
 
   // 添加节点
-  ipcMain.handle('organization:addNode', (_, graphId: string, options: CreateOrganizationNodeOptions): OrganizationNode | null => {
-    validateParams('organization:addNode').nonEmptyString(graphId, 'graphId').object(options, 'options').validate()
-    return organizationService.addNode(graphId, options)
-  })
+  ipcMain.handle(
+    'organization:addNode',
+    (_, graphId: string, options: CreateOrganizationNodeOptions): OrganizationNode | null => {
+      validateParams('organization:addNode')
+        .nonEmptyString(graphId, 'graphId')
+        .object(options, 'options')
+        .validate()
+      return organizationService.addNode(graphId, options)
+    }
+  )
 
-  ipcMain.handle('organization:updateNode', (_, graphId: string, nodeId: string, updates: UpdateOrganizationNodeOptions): OrganizationNode | null => {
-    validateParams('organization:updateNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').object(updates, 'updates').validate()
-    return organizationService.updateNode(graphId, nodeId, updates)
-  })
+  ipcMain.handle(
+    'organization:updateNode',
+    (
+      _,
+      graphId: string,
+      nodeId: string,
+      updates: UpdateOrganizationNodeOptions
+    ): OrganizationNode | null => {
+      validateParams('organization:updateNode')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .object(updates, 'updates')
+        .validate()
+      return organizationService.updateNode(graphId, nodeId, updates)
+    }
+  )
 
   ipcMain.handle('organization:deleteNode', (_, graphId: string, nodeId: string): boolean => {
-    validateParams('organization:deleteNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
+    validateParams('organization:deleteNode')
+      .nonEmptyString(graphId, 'graphId')
+      .nonEmptyString(nodeId, 'nodeId')
+      .validate()
     return organizationService.deleteNode(graphId, nodeId)
   })
 
-  ipcMain.handle('organization:moveNode', (_, graphId: string, nodeId: string, newParentId: string | undefined): OrganizationNode | null => {
-    validateParams('organization:moveNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
-    return organizationService.moveNode(graphId, nodeId, newParentId)
-  })
+  ipcMain.handle(
+    'organization:moveNode',
+    (
+      _,
+      graphId: string,
+      nodeId: string,
+      newParentId: string | undefined
+    ): OrganizationNode | null => {
+      validateParams('organization:moveNode')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .validate()
+      return organizationService.moveNode(graphId, nodeId, newParentId)
+    }
+  )
 
-  ipcMain.handle('organization:getChildren', (_, graphId: string, parentId: string | undefined): OrganizationNode[] => {
-    validateParams('organization:getChildren').nonEmptyString(graphId, 'graphId').validate()
-    return organizationService.getChildren(graphId, parentId)
-  })
+  ipcMain.handle(
+    'organization:getChildren',
+    (_, graphId: string, parentId: string | undefined): OrganizationNode[] => {
+      validateParams('organization:getChildren').nonEmptyString(graphId, 'graphId').validate()
+      return organizationService.getChildren(graphId, parentId)
+    }
+  )
 
-  ipcMain.handle('organization:getDescendants', (_, graphId: string, nodeId: string): OrganizationNode[] => {
-    validateParams('organization:getDescendants').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
-    return organizationService.getDescendants(graphId, nodeId)
-  })
+  ipcMain.handle(
+    'organization:getDescendants',
+    (_, graphId: string, nodeId: string): OrganizationNode[] => {
+      validateParams('organization:getDescendants')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .validate()
+      return organizationService.getDescendants(graphId, nodeId)
+    }
+  )
 
-  ipcMain.handle('organization:getAncestors', (_, graphId: string, nodeId: string): OrganizationNode[] => {
-    validateParams('organization:getAncestors').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
-    return organizationService.getAncestors(graphId, nodeId)
-  })
+  ipcMain.handle(
+    'organization:getAncestors',
+    (_, graphId: string, nodeId: string): OrganizationNode[] => {
+      validateParams('organization:getAncestors')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .validate()
+      return organizationService.getAncestors(graphId, nodeId)
+    }
+  )
 
   // ============================================
   // 缩略图
   // ============================================
 
   // 保存缩略图
-  ipcMain.handle('organization:saveThumbnail', (_, graphId: string, dataUrl: string): string | null => {
-    validateParams('organization:saveThumbnail').nonEmptyString(graphId, 'graphId').nonEmptyString(dataUrl, 'dataUrl').validate()
-    return organizationService.saveThumbnail(graphId, dataUrl)
-  })
+  ipcMain.handle(
+    'organization:saveThumbnail',
+    (_, graphId: string, dataUrl: string): string | null => {
+      validateParams('organization:saveThumbnail')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(dataUrl, 'dataUrl')
+        .validate()
+      return organizationService.saveThumbnail(graphId, dataUrl)
+    }
+  )
 
   ipcMain.handle('organization:getThumbnailPath', (_, graphId: string): string | null => {
     validateParams('organization:getThumbnailPath').nonEmptyString(graphId, 'graphId').validate()
@@ -123,18 +185,21 @@ export function registerOrganizationHandlers(): void {
   })
 
   // 显示导出对话框
-  ipcMain.handle('organization:showExportDialog', async (_, graphName: string): Promise<string | null> => {
-    const result = await dialog.showSaveDialog({
-      title: '导出组织架构图',
-      defaultPath: `${graphName}.json5`,
-      filters: [
-        { name: 'JSON5 文件', extensions: ['json5'] },
-        { name: 'JSON 文件', extensions: ['json'] },
-        { name: '所有文件', extensions: ['*'] }
-      ]
-    })
-    return result.canceled ? null : result.filePath
-  })
+  ipcMain.handle(
+    'organization:showExportDialog',
+    async (_, graphName: string): Promise<string | null> => {
+      const result = await dialog.showSaveDialog({
+        title: '导出组织架构图',
+        defaultPath: `${graphName}.json5`,
+        filters: [
+          { name: 'JSON5 文件', extensions: ['json5'] },
+          { name: 'JSON 文件', extensions: ['json'] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      })
+      return result.canceled ? null : result.filePath
+    }
+  )
 
   // 显示导入对话框
   ipcMain.handle('organization:showImportDialog', async (): Promise<string | null> => {

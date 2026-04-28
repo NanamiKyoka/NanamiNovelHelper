@@ -1,9 +1,5 @@
 import { create } from 'zustand'
-import type { 
-  VocabularyType, 
-  VocabularyEntry, 
-  VocabularySettings 
-} from '@shared/vocabulary'
+import type { VocabularyType, VocabularyEntry, VocabularySettings } from '@shared/vocabulary'
 
 interface VocabularyState {
   // 状态
@@ -11,10 +7,10 @@ interface VocabularyState {
   entries: VocabularyEntry[]
   settings: VocabularySettings
   isLoading: boolean
-  isLoaded: boolean  // types 已加载
-  entriesLoaded: boolean  // entries 已加载
-  error: string | null  // 错误信息
-  
+  isLoaded: boolean // types 已加载
+  entriesLoaded: boolean // entries 已加载
+  error: string | null // 错误信息
+
   // 类型操作
   loadTypes: () => Promise<void>
   saveTypes: (types: VocabularyType[]) => Promise<void>
@@ -22,24 +18,26 @@ interface VocabularyState {
   updateType: (id: string, updates: Partial<VocabularyType>) => Promise<void>
   deleteType: (id: string) => Promise<void>
   reorderTypes: (typeIds: string[]) => Promise<void>
-  
+
   // 条目操作
   loadEntries: (typeId?: string) => Promise<void>
   saveEntries: (typeId: string, entries: VocabularyEntry[]) => Promise<void>
-  addEntry: (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<VocabularyEntry>
+  addEntry: (
+    entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+  ) => Promise<VocabularyEntry>
   updateEntry: (id: string, updates: Partial<VocabularyEntry>) => Promise<void>
   deleteEntry: (id: string) => Promise<void>
   reorderEntries: (typeId: string, entryIds: string[]) => Promise<void>
-  
+
   // 关联文件操作
   createLinkedFile: (entry: VocabularyEntry) => Promise<string | null>
   linkFile: (entryId: string, filePath: string) => Promise<void>
   unlinkFile: (entryId: string) => Promise<void>
-  
+
   // 设置操作
   loadSettings: () => Promise<void>
   updateSettings: (settings: Partial<VocabularySettings>) => Promise<void>
-  
+
   // 辅助方法
   getEntryById: (id: string) => VocabularyEntry | undefined
   getEntriesByType: (typeId: string) => VocabularyEntry[]
@@ -64,7 +62,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
   isLoaded: false,
   entriesLoaded: false,
   error: null,
-  
+
   // 类型操作
   loadTypes: async () => {
     set({ isLoading: true, error: null })
@@ -77,7 +75,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       set({ isLoading: false, isLoaded: false, error: errorMessage })
     }
   },
-  
+
   saveTypes: async (types: VocabularyType[]) => {
     try {
       await window.electron.vocabulary.saveTypes(types)
@@ -87,8 +85,8 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
-  addType: async (type) => {
+
+  addType: async type => {
     try {
       const newType = await window.electron.vocabulary.addType(type)
       set(state => ({ types: [...state.types, newType] }))
@@ -98,13 +96,13 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   updateType: async (id, updates) => {
     try {
       const updated = await window.electron.vocabulary.updateType(id, updates)
       if (updated) {
         set(state => ({
-          types: state.types.map(t => t.id === id ? updated : t)
+          types: state.types.map(t => (t.id === id ? updated : t))
         }))
       }
     } catch (error) {
@@ -112,8 +110,8 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
-  deleteType: async (id) => {
+
+  deleteType: async id => {
     try {
       const success = await window.electron.vocabulary.deleteType(id)
       if (success) {
@@ -129,22 +127,22 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   reorderTypes: async (typeIds: string[]) => {
     const { types } = get()
     // 保存原始数据以便回滚
     const originalTypes = [...types]
-    
+
     // 根据 typeIds 顺序重新排列并更新 order 字段
     const reorderedTypes = typeIds.map((id, index) => {
       const type = types.find(t => t.id === id)
       if (!type) throw new Error(`类型 ${id} 不存在`)
       return { ...type, order: index, updatedAt: new Date().toISOString() }
     })
-    
+
     // 乐观更新：先更新本地状态
     set({ types: reorderedTypes })
-    
+
     try {
       await window.electron.vocabulary.saveTypes(reorderedTypes)
     } catch (error) {
@@ -154,7 +152,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   // 条目操作
   loadEntries: async (typeId?: string) => {
     set({ isLoading: true, error: null })
@@ -163,10 +161,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       if (typeId) {
         // 只更新指定类型的条目
         set(state => ({
-          entries: [
-            ...state.entries.filter(e => e.typeId !== typeId),
-            ...entries
-          ],
+          entries: [...state.entries.filter(e => e.typeId !== typeId), ...entries],
           isLoading: false,
           entriesLoaded: true,
           error: null
@@ -180,23 +175,20 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       set({ isLoading: false, entriesLoaded: false, error: errorMessage })
     }
   },
-  
+
   saveEntries: async (typeId, entries) => {
     try {
       await window.electron.vocabulary.saveEntries(typeId, entries)
       set(state => ({
-        entries: [
-          ...state.entries.filter(e => e.typeId !== typeId),
-          ...entries
-        ]
+        entries: [...state.entries.filter(e => e.typeId !== typeId), ...entries]
       }))
     } catch (error) {
       console.error('Failed to save vocabulary entries:', error)
       throw error
     }
   },
-  
-  addEntry: async (entry) => {
+
+  addEntry: async entry => {
     try {
       const newEntry = await window.electron.vocabulary.addEntry(entry)
       set(state => ({ entries: [...state.entries, newEntry] }))
@@ -206,13 +198,13 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   updateEntry: async (id, updates) => {
     try {
       const updated = await window.electron.vocabulary.updateEntry(id, updates)
       if (updated) {
         set(state => ({
-          entries: state.entries.map(e => e.id === id ? updated : e)
+          entries: state.entries.map(e => (e.id === id ? updated : e))
         }))
       }
     } catch (error) {
@@ -220,8 +212,8 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
-  deleteEntry: async (id) => {
+
+  deleteEntry: async id => {
     try {
       const success = await window.electron.vocabulary.deleteEntry(id)
       if (success) {
@@ -234,12 +226,12 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   reorderEntries: async (typeId: string, entryIds: string[]) => {
     const { entries } = get()
     // 保存原始数据以便回滚
     const originalEntries = entries.filter(e => e.typeId === typeId)
-    
+
     // 获取当前类型的所有条目
     const typeEntries = entries.filter(e => e.typeId === typeId)
     // 根据 entryIds 顺序重新排列并更新 order 字段
@@ -248,37 +240,31 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       if (!entry) throw new Error(`条目 ${id} 不存在`)
       return { ...entry, order: index, updatedAt: new Date().toISOString() }
     })
-    
+
     // 乐观更新：先更新本地状态
     set(state => ({
-      entries: [
-        ...state.entries.filter(e => e.typeId !== typeId),
-        ...reorderedEntries
-      ]
+      entries: [...state.entries.filter(e => e.typeId !== typeId), ...reorderedEntries]
     }))
-    
+
     try {
       await window.electron.vocabulary.saveEntries(typeId, reorderedEntries)
     } catch (error) {
       console.error('Failed to reorder vocabulary entries:', error)
       // 回滚到原始状态
       set(state => ({
-        entries: [
-          ...state.entries.filter(e => e.typeId !== typeId),
-          ...originalEntries
-        ]
+        entries: [...state.entries.filter(e => e.typeId !== typeId), ...originalEntries]
       }))
       throw error
     }
   },
-  
+
   // 关联文件操作
-  createLinkedFile: async (entry) => {
+  createLinkedFile: async entry => {
     try {
       const filePath = await window.electron.vocabulary.createLinkedFile(entry)
       if (filePath) {
         set(state => ({
-          entries: state.entries.map(e => 
+          entries: state.entries.map(e =>
             e.id === entry.id ? { ...e, linkedFilePath: filePath } : e
           )
         }))
@@ -289,13 +275,13 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   linkFile: async (entryId, filePath) => {
     try {
       const success = await window.electron.vocabulary.linkFile(entryId, filePath)
       if (success) {
         set(state => ({
-          entries: state.entries.map(e => 
+          entries: state.entries.map(e =>
             e.id === entryId ? { ...e, linkedFilePath: filePath } : e
           )
         }))
@@ -305,13 +291,13 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
-  unlinkFile: async (entryId) => {
+
+  unlinkFile: async entryId => {
     try {
       const success = await window.electron.vocabulary.unlinkFile(entryId)
       if (success) {
         set(state => ({
-          entries: state.entries.map(e => 
+          entries: state.entries.map(e =>
             e.id === entryId ? { ...e, linkedFilePath: undefined } : e
           )
         }))
@@ -321,7 +307,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   // 设置操作
   loadSettings: async () => {
     try {
@@ -331,8 +317,8 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       console.error('Failed to load vocabulary settings:', error)
     }
   },
-  
-  updateSettings: async (settings) => {
+
+  updateSettings: async settings => {
     try {
       await window.electron.vocabulary.updateSettings(settings)
       set(state => ({ settings: { ...state.settings, ...settings } }))
@@ -341,28 +327,28 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
       throw error
     }
   },
-  
+
   // 辅助方法
   getEntryById: (id: string) => {
     return get().entries.find(e => e.id === id)
   },
-  
+
   getEntriesByType: (typeId: string) => {
     return get().entries.filter(e => e.typeId === typeId)
   },
-  
+
   getTypeById: (id: string) => {
     return get().types.find(t => t.id === id)
   },
-  
+
   findEntry: (id: string) => {
     return get().entries.find(e => e.id === id) || null
   },
-  
+
   findType: (id: string) => {
     return get().types.find(t => t.id === id) || null
   },
-  
+
   clearData: () => {
     set({
       types: [],

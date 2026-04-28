@@ -11,7 +11,7 @@ import type {
   WorkflowListItem,
   VariableValue,
   AiApiCallOptions,
-  AiApiCallResult,
+  AiApiCallResult
 } from '@shared/ai-assistant'
 
 interface AiAssistantState {
@@ -40,7 +40,9 @@ interface AiAssistantState {
   // 模板操作
   loadTemplates: () => Promise<void>
   loadTemplate: (id: string) => Promise<void>
-  saveTemplate: (template: Omit<PromptTemplate, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<PromptTemplate>
+  saveTemplate: (
+    template: Omit<PromptTemplate, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ) => Promise<PromptTemplate>
   deleteTemplate: (id: string) => Promise<void>
   copyTemplateToProject: (id: string) => Promise<void>
   exportTemplate: (id: string) => Promise<string | null>
@@ -49,7 +51,9 @@ interface AiAssistantState {
   // 工作流操作
   loadWorkflows: () => Promise<void>
   loadWorkflow: (id: string) => Promise<void>
-  saveWorkflow: (workflow: Omit<PromptWorkflow, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) => Promise<PromptWorkflow>
+  saveWorkflow: (
+    workflow: Omit<PromptWorkflow, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ) => Promise<PromptWorkflow>
   deleteWorkflow: (id: string) => Promise<void>
   exportWorkflow: (id: string) => Promise<string | null>
   importWorkflow: (json5Content: string) => Promise<PromptWorkflow | null>
@@ -65,7 +69,9 @@ interface AiAssistantState {
 
   // API 调用
   callApi: (prompt: string, options?: AiApiCallOptions) => Promise<AiApiCallResult>
-  testApiConnection: (provider: 'openai' | 'anthropic' | 'custom') => Promise<{ success: boolean; error?: string }>
+  testApiConnection: (
+    provider: 'openai' | 'anthropic' | 'custom'
+  ) => Promise<{ success: boolean; error?: string }>
   getAvailableModels: (provider: 'openai' | 'anthropic' | 'custom') => Promise<string[]>
 
   // 变量解析
@@ -105,14 +111,14 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const [templateList, templates] = await Promise.all([
         window.electron.aiAssistant.getTemplateList(),
-        window.electron.aiAssistant.getTemplates(),
+        window.electron.aiAssistant.getTemplates()
       ])
       set({
         templateList,
         templates,
         templatesLoaded: true,
         isLoading: false,
-        error: null,
+        error: null
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载模板失败'
@@ -131,18 +137,18 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
   },
 
-  saveTemplate: async (template) => {
+  saveTemplate: async template => {
     try {
       const saved = await window.electron.aiAssistant.saveTemplate(template)
-      set((state) => {
-        const existingIndex = state.templates.findIndex((t) => t.id === saved.id)
+      set(state => {
+        const existingIndex = state.templates.findIndex(t => t.id === saved.id)
         const newTemplates =
           existingIndex >= 0
-            ? state.templates.map((t) => (t.id === saved.id ? saved : t))
+            ? state.templates.map(t => (t.id === saved.id ? saved : t))
             : [...state.templates, saved]
         return {
           templates: newTemplates,
-          currentTemplate: saved,
+          currentTemplate: saved
         }
       })
       // 重新加载列表
@@ -159,10 +165,10 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const success = await window.electron.aiAssistant.deleteTemplate(id)
       if (success) {
-        set((state) => ({
-          templates: state.templates.filter((t) => t.id !== id),
-          templateList: state.templateList.filter((t) => t.id !== id),
-          currentTemplate: state.currentTemplate?.id === id ? null : state.currentTemplate,
+        set(state => ({
+          templates: state.templates.filter(t => t.id !== id),
+          templateList: state.templateList.filter(t => t.id !== id),
+          currentTemplate: state.currentTemplate?.id === id ? null : state.currentTemplate
         }))
       }
     } catch (error) {
@@ -175,11 +181,11 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const template = await window.electron.aiAssistant.copyTemplateToProject(id)
       if (template) {
-        set((state) => {
-          const existingIndex = state.templates.findIndex((t) => t.id === id)
+        set(state => {
+          const existingIndex = state.templates.findIndex(t => t.id === id)
           const newTemplates =
             existingIndex >= 0
-              ? state.templates.map((t) => (t.id === id ? template : t))
+              ? state.templates.map(t => (t.id === id ? template : t))
               : [...state.templates, template]
           return { templates: newTemplates, currentTemplate: template }
         })
@@ -203,8 +209,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const template = await window.electron.aiAssistant.importTemplate(json5Content)
       if (template) {
-        set((state) => ({
-          templates: [...state.templates, template],
+        set(state => ({
+          templates: [...state.templates, template]
         }))
         // 重新加载列表
         const templateList = await window.electron.aiAssistant.getTemplateList()
@@ -223,14 +229,14 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const [workflowList, workflows] = await Promise.all([
         window.electron.aiAssistant.getWorkflowList(),
-        window.electron.aiAssistant.getWorkflows(),
+        window.electron.aiAssistant.getWorkflows()
       ])
       set({
         workflowList,
         workflows,
         workflowsLoaded: true,
         isLoading: false,
-        error: null,
+        error: null
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载工作流失败'
@@ -249,18 +255,18 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
   },
 
-  saveWorkflow: async (workflow) => {
+  saveWorkflow: async workflow => {
     try {
       const saved = await window.electron.aiAssistant.saveWorkflow(workflow)
-      set((state) => {
-        const existingIndex = state.workflows.findIndex((w) => w.id === saved.id)
+      set(state => {
+        const existingIndex = state.workflows.findIndex(w => w.id === saved.id)
         const newWorkflows =
           existingIndex >= 0
-            ? state.workflows.map((w) => (w.id === saved.id ? saved : w))
+            ? state.workflows.map(w => (w.id === saved.id ? saved : w))
             : [...state.workflows, saved]
         return {
           workflows: newWorkflows,
-          currentWorkflow: saved,
+          currentWorkflow: saved
         }
       })
       // 重新加载列表
@@ -277,10 +283,10 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const success = await window.electron.aiAssistant.deleteWorkflow(id)
       if (success) {
-        set((state) => ({
-          workflows: state.workflows.filter((w) => w.id !== id),
-          workflowList: state.workflowList.filter((w) => w.id !== id),
-          currentWorkflow: state.currentWorkflow?.id === id ? null : state.currentWorkflow,
+        set(state => ({
+          workflows: state.workflows.filter(w => w.id !== id),
+          workflowList: state.workflowList.filter(w => w.id !== id),
+          currentWorkflow: state.currentWorkflow?.id === id ? null : state.currentWorkflow
         }))
       }
     } catch (error) {
@@ -302,8 +308,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const workflow = await window.electron.aiAssistant.importWorkflow(json5Content)
       if (workflow) {
-        set((state) => ({
-          workflows: [...state.workflows, workflow],
+        set(state => ({
+          workflows: [...state.workflows, workflow]
         }))
         // 重新加载列表
         const workflowList = await window.electron.aiAssistant.getWorkflowList()
@@ -318,17 +324,14 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   // 执行操作
   startWorkflow: async (workflowId: string) => {
-    const workflow = get().workflows.find((w) => w.id === workflowId)
+    const workflow = get().workflows.find(w => w.id === workflowId)
     if (!workflow) {
       throw new Error('工作流不存在')
     }
 
     set({ isExecuting: true, error: null })
     try {
-      const execution = await window.electron.aiAssistant.createExecution(
-        workflowId,
-        workflow.name
-      )
+      const execution = await window.electron.aiAssistant.createExecution(workflowId, workflow.name)
       set({ currentExecution: execution })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '启动工作流失败'
@@ -367,7 +370,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const stepOutputs = { ...execution.stepOutputs, [stepId]: output }
       const updated = await window.electron.aiAssistant.updateExecution(execution.id, {
-        stepOutputs,
+        stepOutputs
       })
       if (updated) {
         set({ currentExecution: updated })
@@ -385,7 +388,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const updated = await window.electron.aiAssistant.updateExecution(execution.id, {
         status: 'cancelled',
-        completedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString()
       })
       if (updated) {
         set({ currentExecution: null, isExecuting: false })
@@ -409,9 +412,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     try {
       const success = await window.electron.aiAssistant.deleteExecution(id)
       if (success) {
-        set((state) => ({
-          executionHistory: state.executionHistory.filter((e) => e.id !== id),
-          currentExecution: state.currentExecution?.id === id ? null : state.currentExecution,
+        set(state => ({
+          executionHistory: state.executionHistory.filter(e => e.id !== id),
+          currentExecution: state.currentExecution?.id === id ? null : state.currentExecution
         }))
       }
     } catch (error) {
@@ -429,7 +432,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       return {
         success: false,
         error: error instanceof Error ? error.message : 'API 调用失败',
-        duration: 0,
+        duration: 0
       }
     }
   },
@@ -440,7 +443,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : '连接测试失败',
+        error: error instanceof Error ? error.message : '连接测试失败'
       }
     }
   },
@@ -494,9 +497,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   },
 
   // UI 操作
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  setCurrentTemplate: (template) => set({ currentTemplate: template }),
-  setCurrentWorkflow: (workflow) => set({ currentWorkflow: workflow }),
+  setActiveTab: tab => set({ activeTab: tab }),
+  setCurrentTemplate: template => set({ currentTemplate: template }),
+  setCurrentWorkflow: workflow => set({ currentWorkflow: workflow }),
   clearError: () => set({ error: null }),
 
   clearData: () => {
@@ -514,7 +517,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       isLoading: false,
       isExecuting: false,
       error: null,
-      activeTab: 'templates',
+      activeTab: 'templates'
     })
-  },
+  }
 }))

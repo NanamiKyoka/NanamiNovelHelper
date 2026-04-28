@@ -10,13 +10,18 @@ export { useHoverCard } from './useHoverCard'
 
 // 错误处理
 export { useErrorHandling, useModuleErrorHandler } from './useErrorHandling'
-export type { ErrorHandlerOptions, ErrorDetail, ErrorCategory, ErrorSeverity } from './useErrorHandling'
+export type {
+  ErrorHandlerOptions,
+  ErrorDetail,
+  ErrorCategory,
+  ErrorSeverity
+} from './useErrorHandling'
 
 // 快捷键
-export { 
-  useShortcuts, 
-  useShortcut, 
-  registerShortcut, 
+export {
+  useShortcuts,
+  useShortcut,
+  registerShortcut,
   registerShortcuts,
   checkShortcutConflict,
   getRegisteredShortcuts,

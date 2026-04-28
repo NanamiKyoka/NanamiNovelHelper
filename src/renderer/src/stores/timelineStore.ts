@@ -9,7 +9,7 @@ import type {
   TimelineNode,
   CreateTimelineOptions,
   UpdateTimelineOptions,
-  TimelineHistoryAction,
+  TimelineHistoryAction
 } from '../types/timeline'
 
 interface TimelineState {
@@ -36,7 +36,9 @@ interface TimelineState {
   clearCurrentTimeline: () => void
 
   // 节点管理
-  addNode: (node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<TimelineNode | null>
+  addNode: (
+    node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+  ) => Promise<TimelineNode | null>
   updateNode: (nodeId: string, updates: Partial<TimelineNode>) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
   batchDeleteNodes: (nodeIds: string[]) => Promise<number>
@@ -45,8 +47,16 @@ interface TimelineState {
   updateNodesOrder: (nodes: TimelineNode[]) => Promise<void>
 
   // 分支管理
-  createBranch: (parentTimelineId: string, branchFromNodeId: string, name?: string) => Promise<Timeline | null>
-  mergeBranch: (branchTimelineId: string, targetTimelineId: string, targetNodeId?: string) => Promise<boolean>
+  createBranch: (
+    parentTimelineId: string,
+    branchFromNodeId: string,
+    name?: string
+  ) => Promise<Timeline | null>
+  mergeBranch: (
+    branchTimelineId: string,
+    targetTimelineId: string,
+    targetNodeId?: string
+  ) => Promise<boolean>
   getBranches: (parentTimelineId: string) => Promise<TimelineMeta[]>
 
   // 撤销重做
@@ -125,7 +135,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const timeline = await window.electron.timeline.create(options)
-      set((state) => ({
+      set(state => ({
         timelines: [
           {
             id: timeline.id,
@@ -136,12 +146,12 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             nodeCount: timeline.nodeCount,
             tags: timeline.tags,
             createdAt: timeline.createdAt,
-            updatedAt: timeline.updatedAt,
+            updatedAt: timeline.updatedAt
           },
-          ...state.timelines,
+          ...state.timelines
         ],
         currentTimeline: timeline,
-        isLoading: false,
+        isLoading: false
       }))
       return timeline
     } catch (error) {
@@ -156,8 +166,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     try {
       const updatedTimeline = await window.electron.timeline.update(timelineId, updates)
       if (updatedTimeline) {
-        set((state) => ({
-          timelines: state.timelines.map((t) =>
+        set(state => ({
+          timelines: state.timelines.map(t =>
             t.id === timelineId
               ? {
                   ...t,
@@ -167,12 +177,12 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
                   branchInfo: updatedTimeline.branchInfo,
                   nodeCount: updatedTimeline.nodeCount,
                   tags: updatedTimeline.tags,
-                  updatedAt: updatedTimeline.updatedAt,
+                  updatedAt: updatedTimeline.updatedAt
                 }
               : t
           ),
           currentTimeline:
-            state.currentTimeline?.id === timelineId ? updatedTimeline : state.currentTimeline,
+            state.currentTimeline?.id === timelineId ? updatedTimeline : state.currentTimeline
         }))
       }
     } catch (error) {
@@ -186,10 +196,9 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     try {
       const success = await window.electron.timeline.delete(timelineId)
       if (success) {
-        set((state) => ({
-          timelines: state.timelines.filter((t) => t.id !== timelineId),
-          currentTimeline:
-            state.currentTimeline?.id === timelineId ? null : state.currentTimeline,
+        set(state => ({
+          timelines: state.timelines.filter(t => t.id !== timelineId),
+          currentTimeline: state.currentTimeline?.id === timelineId ? null : state.currentTimeline
         }))
       }
     } catch (error) {
@@ -217,17 +226,17 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           timelineId: currentTimeline.id,
           afterData: newNode,
           timestamp: Date.now(),
-          description: `创建节点: ${newNode.title}`,
+          description: `创建节点: ${newNode.title}`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
                 nodes: [...state.currentTimeline.nodes, newNode],
-                nodeCount: state.currentTimeline.nodeCount + 1,
+                nodeCount: state.currentTimeline.nodeCount + 1
               }
-            : null,
+            : null
         }))
       }
       return newNode
@@ -243,7 +252,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find((n) => n.id === nodeId)
+    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
 
     try {
       const updatedNode = await window.electron.timeline.updateNode(
@@ -259,18 +268,16 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           beforeData: oldNode,
           afterData: updatedNode,
           timestamp: Date.now(),
-          description: `更新节点: ${updatedNode.title}`,
+          description: `更新节点: ${updatedNode.title}`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.map((n) =>
-                  n.id === nodeId ? updatedNode : n
-                ),
+                nodes: state.currentTimeline.nodes.map(n => (n.id === nodeId ? updatedNode : n))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -284,7 +291,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find((n) => n.id === nodeId)
+    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
 
     try {
       const success = await window.electron.timeline.deleteNode(currentTimeline.id, nodeId)
@@ -295,18 +302,18 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           timelineId: currentTimeline.id,
           beforeData: oldNode,
           timestamp: Date.now(),
-          description: `删除节点: ${oldNode?.title}`,
+          description: `删除节点: ${oldNode?.title}`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.filter((n) => n.id !== nodeId),
-                nodeCount: state.currentTimeline.nodeCount - 1,
+                nodes: state.currentTimeline.nodes.filter(n => n.id !== nodeId),
+                nodeCount: state.currentTimeline.nodeCount - 1
               }
             : null,
-          selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
+          selectedNodeIds: state.selectedNodeIds.filter(id => id !== nodeId)
         }))
       }
     } catch (error) {
@@ -320,7 +327,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return 0
 
-    const oldNodes = currentTimeline.nodes.filter((n) => nodeIds.includes(n.id))
+    const oldNodes = currentTimeline.nodes.filter(n => nodeIds.includes(n.id))
 
     try {
       const deletedCount = await window.electron.timeline.batchDeleteNodes(
@@ -334,18 +341,18 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           timelineId: currentTimeline.id,
           beforeData: oldNodes,
           timestamp: Date.now(),
-          description: `批量删除 ${deletedCount} 个节点`,
+          description: `批量删除 ${deletedCount} 个节点`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.filter((n) => !nodeIds.includes(n.id)),
-                nodeCount: state.currentTimeline.nodeCount - deletedCount,
+                nodes: state.currentTimeline.nodes.filter(n => !nodeIds.includes(n.id)),
+                nodeCount: state.currentTimeline.nodeCount - deletedCount
               }
             : null,
-          selectedNodeIds: [],
+          selectedNodeIds: []
         }))
       }
       return deletedCount
@@ -361,7 +368,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find((n) => n.id === nodeId)
+    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
     const oldOrder = oldNode?.order ?? 0
 
     try {
@@ -378,16 +385,16 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           beforeData: { nodeId, oldOrder },
           afterData: { nodeId, newOrder },
           timestamp: Date.now(),
-          description: `移动节点: ${oldNode?.title}`,
+          description: `移动节点: ${oldNode?.title}`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: updatedNodes,
+                nodes: updatedNodes
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -401,7 +408,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNodes = currentTimeline.nodes.filter((n) => nodeIds.includes(n.id))
+    const oldNodes = currentTimeline.nodes.filter(n => nodeIds.includes(n.id))
 
     try {
       const updatedNodes = await window.electron.timeline.batchMoveNodes(
@@ -414,19 +421,19 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         get().pushHistory({
           type: 'batch_move_nodes',
           timelineId: currentTimeline.id,
-          beforeData: oldNodes.map((n) => ({ id: n.id, order: n.order })),
+          beforeData: oldNodes.map(n => ({ id: n.id, order: n.order })),
           afterData: { nodeIds, targetOrder },
           timestamp: Date.now(),
-          description: `批量移动 ${nodeIds.length} 个节点`,
+          description: `批量移动 ${nodeIds.length} 个节点`
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: updatedNodes,
+                nodes: updatedNodes
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -443,10 +450,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNodes = [...currentTimeline.nodes]
 
     try {
-      const updatedTimeline = await window.electron.timeline.updateNodes(
-        currentTimeline.id,
-        nodes
-      )
+      const updatedTimeline = await window.electron.timeline.updateNodes(currentTimeline.id, nodes)
       if (updatedTimeline) {
         // 记录历史
         get().pushHistory({
@@ -455,16 +459,16 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           beforeData: oldNodes,
           afterData: nodes,
           timestamp: Date.now(),
-          description: '重新排序节点',
+          description: '重新排序节点'
         })
 
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: nodes,
+                nodes: nodes
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -483,7 +487,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         name
       )
       if (branchTimeline) {
-        set((state) => ({
+        set(state => ({
           timelines: [
             {
               id: branchTimeline.id,
@@ -494,33 +498,30 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
               nodeCount: branchTimeline.nodeCount,
               tags: branchTimeline.tags,
               createdAt: branchTimeline.createdAt,
-              updatedAt: branchTimeline.updatedAt,
+              updatedAt: branchTimeline.updatedAt
             },
-            ...state.timelines,
-          ],
+            ...state.timelines
+          ]
         }))
 
         // 更新父时间线中的分支点信息
         const { currentTimeline } = get()
         if (currentTimeline && currentTimeline.id === parentTimelineId) {
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map((n) =>
+                  nodes: state.currentTimeline.nodes.map(n =>
                     n.id === branchFromNodeId
                       ? {
                           ...n,
                           isBranchPoint: true,
-                          branchedTimelineIds: [
-                            ...(n.branchedTimelineIds || []),
-                            branchTimeline.id,
-                          ],
+                          branchedTimelineIds: [...(n.branchedTimelineIds || []), branchTimeline.id]
                         }
                       : n
-                  ),
+                  )
                 }
-              : null,
+              : null
           }))
         }
       }
@@ -546,19 +547,19 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       )
       if (success) {
         // 更新分支时间线的状态
-        set((state) => ({
-          timelines: state.timelines.map((t) =>
+        set(state => ({
+          timelines: state.timelines.map(t =>
             t.id === branchTimelineId
               ? {
                   ...t,
                   branchInfo: {
                     ...t.branchInfo,
                     mergeToTimelineId: targetTimelineId,
-                    mergeToNodeId: targetNodeId,
-                  },
+                    mergeToNodeId: targetNodeId
+                  }
                 }
               : t
-          ),
+          )
         }))
       }
       return success
@@ -582,7 +583,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 撤销重做
   pushHistory: (action: TimelineHistoryAction) => {
     const { history, historyIndex, maxHistorySize } = get()
-    
+
     // 如果在历史中间进行了新操作，删除后面的历史
     const newHistory = history.slice(0, historyIndex + 1)
     newHistory.push(action)
@@ -594,7 +595,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
     set({
       history: newHistory,
-      historyIndex: newHistory.length - 1,
+      historyIndex: newHistory.length - 1
     })
   },
 
@@ -612,14 +613,14 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.afterData) {
           const node = action.afterData as TimelineNode
           window.electron.timeline.deleteNode(currentTimeline.id, node.id)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.filter((n) => n.id !== node.id),
-                  nodeCount: state.currentTimeline.nodeCount - 1,
+                  nodes: state.currentTimeline.nodes.filter(n => n.id !== node.id),
+                  nodeCount: state.currentTimeline.nodeCount - 1
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -634,16 +635,16 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             timeInfo: node.timeInfo,
             characters: node.characters,
             chapter: node.chapter,
-            color: node.color,
+            color: node.color
           })
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
                   nodes: [...state.currentTimeline.nodes, node],
-                  nodeCount: state.currentTimeline.nodeCount + 1,
+                  nodeCount: state.currentTimeline.nodeCount + 1
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -653,15 +654,13 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.beforeData) {
           const node = action.beforeData as TimelineNode
           window.electron.timeline.updateNode(currentTimeline.id, node.id, node)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map((n) =>
-                    n.id === node.id ? node : n
-                  ),
+                  nodes: state.currentTimeline.nodes.map(n => (n.id === node.id ? node : n))
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -671,13 +670,13 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.beforeData && 'nodes' in action.beforeData) {
           const nodes = action.beforeData as TimelineNode[]
           window.electron.timeline.updateNodes(currentTimeline.id, nodes)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: nodes,
+                  nodes: nodes
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -686,7 +685,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 撤销批量删除
         if (action.beforeData) {
           const nodes = action.beforeData as TimelineNode[]
-          nodes.forEach((node) => {
+          nodes.forEach(node => {
             window.electron.timeline.addNode(currentTimeline.id, {
               title: node.title,
               description: node.description,
@@ -694,7 +693,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
               characters: node.characters,
               chapter: node.chapter,
               color: node.color,
-              order: node.order,
+              order: node.order
             })
           })
           get().loadTimeline(currentTimeline.id)
@@ -724,7 +723,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             timeInfo: node.timeInfo,
             characters: node.characters,
             chapter: node.chapter,
-            color: node.color,
+            color: node.color
           })
           get().loadTimeline(currentTimeline.id)
         }
@@ -735,14 +734,14 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.beforeData) {
           const node = action.beforeData as TimelineNode
           window.electron.timeline.deleteNode(currentTimeline.id, node.id)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.filter((n) => n.id !== node.id),
-                  nodeCount: state.currentTimeline.nodeCount - 1,
+                  nodes: state.currentTimeline.nodes.filter(n => n.id !== node.id),
+                  nodeCount: state.currentTimeline.nodeCount - 1
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -752,15 +751,13 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.afterData) {
           const node = action.afterData as TimelineNode
           window.electron.timeline.updateNode(currentTimeline.id, node.id, node)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map((n) =>
-                    n.id === node.id ? node : n
-                  ),
+                  nodes: state.currentTimeline.nodes.map(n => (n.id === node.id ? node : n))
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -770,13 +767,13 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.afterData && 'nodes' in action.afterData) {
           const nodes = action.afterData as TimelineNode[]
           window.electron.timeline.updateNodes(currentTimeline.id, nodes)
-          set((state) => ({
+          set(state => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: nodes,
+                  nodes: nodes
                 }
-              : null,
+              : null
           }))
         }
         break
@@ -802,10 +799,10 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 选择管理
   selectNode: (nodeId: string, multi = false) => {
     if (multi) {
-      set((state) => ({
+      set(state => ({
         selectedNodeIds: state.selectedNodeIds.includes(nodeId)
-          ? state.selectedNodeIds.filter((id) => id !== nodeId)
-          : [...state.selectedNodeIds, nodeId],
+          ? state.selectedNodeIds.filter(id => id !== nodeId)
+          : [...state.selectedNodeIds, nodeId]
       }))
     } else {
       set({ selectedNodeIds: [nodeId] })
@@ -813,15 +810,15 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   },
 
   deselectNode: (nodeId: string) => {
-    set((state) => ({
-      selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
+    set(state => ({
+      selectedNodeIds: state.selectedNodeIds.filter(id => id !== nodeId)
     }))
   },
 
   selectAllNodes: () => {
     const { currentTimeline } = get()
     if (!currentTimeline) return
-    set({ selectedNodeIds: currentTimeline.nodes.map((n) => n.id) })
+    set({ selectedNodeIds: currentTimeline.nodes.map(n => n.id) })
   },
 
   clearSelection: () => {
@@ -839,13 +836,13 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         dataUrl
       )
       if (thumbnailPath) {
-        set((state) => ({
+        set(state => ({
           currentTimeline: state.currentTimeline
             ? { ...state.currentTimeline, thumbnail: thumbnailPath }
             : null,
-          timelines: state.timelines.map((t) =>
+          timelines: state.timelines.map(t =>
             t.id === currentTimeline.id ? { ...t, thumbnail: thumbnailPath } : t
-          ),
+          )
         }))
       }
     } catch (error) {
@@ -880,7 +877,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     try {
       const timeline = await window.electron.timeline.import(jsonContent)
       if (timeline) {
-        set((state) => ({
+        set(state => ({
           timelines: [
             {
               id: timeline.id,
@@ -891,10 +888,10 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
               nodeCount: timeline.nodeCount,
               tags: timeline.tags,
               createdAt: timeline.createdAt,
-              updatedAt: timeline.updatedAt,
+              updatedAt: timeline.updatedAt
             },
-            ...state.timelines,
-          ],
+            ...state.timelines
+          ]
         }))
       }
       return timeline
@@ -909,14 +906,14 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentTimeline } = get()
-    return currentTimeline?.nodes.find((n) => n.id === nodeId)
+    return currentTimeline?.nodes.find(n => n.id === nodeId)
   },
 
   getNodesByTimeRange: (startTime: string, endTime: string) => {
     const { currentTimeline } = get()
     if (!currentTimeline) return []
 
-    return currentTimeline.nodes.filter((node) => {
+    return currentTimeline.nodes.filter(node => {
       if (node.timeInfo.format === 'datetime' && node.timeInfo.datetime) {
         const nodeTime = new Date(node.timeInfo.datetime).getTime()
         const start = new Date(startTime).getTime()
@@ -935,7 +932,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       error: null,
       history: [],
       historyIndex: -1,
-      selectedNodeIds: [],
+      selectedNodeIds: []
     })
   },
 
@@ -950,14 +947,16 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       const success = await window.electron.timeline.reorder(timelineIds)
       if (success) {
         // 更新本地状态顺序
-        set((state) => ({
-          timelines: timelineIds.map((id, index) => {
-            const timeline = state.timelines.find(t => t.id === id)
-            if (timeline) {
-              return { ...timeline, order: index }
-            }
-            return null
-          }).filter((t): t is TimelineMeta => t !== null)
+        set(state => ({
+          timelines: timelineIds
+            .map((id, index) => {
+              const timeline = state.timelines.find(t => t.id === id)
+              if (timeline) {
+                return { ...timeline, order: index }
+              }
+              return null
+            })
+            .filter((t): t is TimelineMeta => t !== null)
         }))
       }
       return success
@@ -967,5 +966,5 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
       set({ error: errorMessage })
       return false
     }
-  },
+  }
 }))

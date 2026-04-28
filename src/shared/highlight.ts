@@ -302,7 +302,7 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
         { fieldId: 'type', visible: true, order: 0 },
         { fieldId: 'gender', visible: true, order: 1 },
         { fieldId: 'age', visible: true, order: 2 },
-        { fieldId: 'affiliation', visible: true, order: 3 },
+        { fieldId: 'affiliation', visible: true, order: 3 }
       ]
     },
     {
@@ -310,7 +310,7 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
       typeName: '地点',
       fields: [
         { fieldId: 'type', visible: true, order: 0 },
-        { fieldId: 'location', visible: true, order: 1 },
+        { fieldId: 'location', visible: true, order: 1 }
       ]
     },
     {
@@ -318,7 +318,7 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
       typeName: '组织',
       fields: [
         { fieldId: 'type', visible: true, order: 0 },
-        { fieldId: 'leader', visible: true, order: 1 },
+        { fieldId: 'leader', visible: true, order: 1 }
       ]
     },
     {
@@ -327,7 +327,7 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
       fields: [
         { fieldId: 'type', visible: true, order: 0 },
         { fieldId: 'rarity', visible: true, order: 1 },
-        { fieldId: 'owner', visible: true, order: 2 },
+        { fieldId: 'owner', visible: true, order: 2 }
       ]
     },
     {
@@ -335,7 +335,7 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
       typeName: '魔法/技能',
       fields: [
         { fieldId: 'type', visible: true, order: 0 },
-        { fieldId: 'element', visible: true, order: 1 },
+        { fieldId: 'element', visible: true, order: 1 }
       ]
     },
     {
@@ -344,9 +344,9 @@ export const DEFAULT_HOVER_CARD_CONFIG: HoverCardConfig = {
       fields: [
         { fieldId: 'type', visible: true, order: 0 },
         { fieldId: 'date', visible: true, order: 1 },
-        { fieldId: 'location', visible: true, order: 2 },
+        { fieldId: 'location', visible: true, order: 2 }
       ]
-    },
+    }
   ]
 }
 

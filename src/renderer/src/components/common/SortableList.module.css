@@ -48,13 +48,13 @@
 }
 
 /* 水平排列模式 */
-.sortableList[data-strategy="horizontal"] {
+.sortableList[data-strategy='horizontal'] {
   flex-direction: row;
   flex-wrap: wrap;
 }
 
 /* 矩形排列模式 */
-.sortableList[data-strategy="rect"] {
+.sortableList[data-strategy='rect'] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;

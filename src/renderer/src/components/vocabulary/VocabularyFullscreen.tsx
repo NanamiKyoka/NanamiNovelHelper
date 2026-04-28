@@ -85,22 +85,22 @@ const { Text, Title } = Typography
 
 // 类型图标映射
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  'character': <TeamOutlined />,
-  'location': <EnvironmentOutlined />,
-  'organization': <TeamOutlined />,
-  'item': <GiftOutlined />,
-  'magic': <ThunderboltOutlined />,
-  'event': <CalendarOutlined />
+  character: <TeamOutlined />,
+  location: <EnvironmentOutlined />,
+  organization: <TeamOutlined />,
+  item: <GiftOutlined />,
+  magic: <ThunderboltOutlined />,
+  event: <CalendarOutlined />
 }
 
 // 内置类型对应的字段模板
 const BUILTIN_FIELDS_MAP: Record<string, FieldDefinition[]> = {
-  'character': [],
-  'location': [],
-  'organization': [],
-  'item': [],
-  'magic': [],
-  'event': []
+  character: [],
+  location: [],
+  organization: [],
+  item: [],
+  magic: [],
+  event: []
 }
 
 // 可排序的类型项组件
@@ -125,14 +125,9 @@ function SortableTypeItem({
   onDelete,
   getTypeIcon
 }: SortableTypeItemProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: type.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: type.id
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -152,7 +147,7 @@ function SortableTypeItem({
           className={styles.dragHandle}
           {...attributes}
           {...listeners}
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <HolderOutlined />
         </div>
@@ -161,9 +156,7 @@ function SortableTypeItem({
         </div>
         <div className={styles.typeInfo}>
           <div className={styles.typeName}>{type.name}</div>
-          <div className={styles.typeMeta}>
-            {entryCount} 条
-          </div>
+          <div className={styles.typeMeta}>{entryCount} 条</div>
         </div>
       </div>
       <div className={styles.typeItemActions}>
@@ -172,7 +165,10 @@ function SortableTypeItem({
             type="text"
             size="small"
             icon={<CopyOutlined />}
-            onClick={(e) => { e.stopPropagation(); onDuplicate() }}
+            onClick={e => {
+              e.stopPropagation()
+              onDuplicate()
+            }}
           />
         </Tooltip>
         <Tooltip title="编辑">
@@ -180,13 +176,19 @@ function SortableTypeItem({
             type="text"
             size="small"
             icon={<EditOutlined />}
-            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            onClick={e => {
+              e.stopPropagation()
+              onEdit()
+            }}
           />
         </Tooltip>
         <Popconfirm
           title="确定删除此类型？"
-          onConfirm={(e) => { e?.stopPropagation(); onDelete() }}
-          onCancel={(e) => e?.stopPropagation()}
+          onConfirm={e => {
+            e?.stopPropagation()
+            onDelete()
+          }}
+          onCancel={e => e?.stopPropagation()}
           okText="删除"
           cancelText="取消"
         >
@@ -195,7 +197,7 @@ function SortableTypeItem({
             size="small"
             icon={<DeleteOutlined />}
             danger
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           />
         </Popconfirm>
       </div>
@@ -222,12 +224,14 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     reorderTypes,
     isLoaded
   } = useVocabularyStore()
-  
-  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
-  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
-  
+
+  const setFullscreenMode = useUIStore(state => state.setFullscreenMode)
+  const exitFullscreen = useUIStore(state => state.exitFullscreen)
+
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'entries' | 'typeSettings' | 'highlight' | 'statistics'>('entries')
+  const [activeTab, setActiveTab] = useState<
+    'entries' | 'typeSettings' | 'highlight' | 'statistics'
+  >('entries')
   const [searchText, setSearchText] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -236,7 +240,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
 
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
-  
+
   // DnD 传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -254,7 +258,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     setFullscreenMode('vocabulary')
     return () => exitFullscreen()
   }, [setFullscreenMode, exitFullscreen])
-  
+
   // 类型编辑状态
   const [editingType, setEditingType] = useState<VocabularyType | null>(null)
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false)
@@ -315,37 +319,37 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   // 过滤类型列表
   const filteredTypes = useMemo(() => {
     if (!searchText.trim()) return types.sort((a, b) => a.order - b.order)
-    return types.filter(t => 
-      t.name.toLowerCase().includes(searchText.toLowerCase())
-    ).sort((a, b) => a.order - b.order)
+    return types
+      .filter(t => t.name.toLowerCase().includes(searchText.toLowerCase()))
+      .sort((a, b) => a.order - b.order)
   }, [types, searchText])
-  
+
   // 拖拽开始
   const handleDragStart = (event: DragStartEvent): void => {
     setActiveId(event.active.id as string)
   }
-  
+
   // 拖拽结束
   const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
       const oldIndex = filteredTypes.findIndex(t => t.id === active.id)
       const newIndex = filteredTypes.findIndex(t => t.id === over.id)
-      
+
       const newTypes = arrayMove(filteredTypes, oldIndex, newIndex)
       const newTypeIds = newTypes.map(t => t.id)
-      
+
       // 调用 reorderTypes 更新顺序
-      reorderTypes(newTypeIds).catch((error) => {
+      reorderTypes(newTypeIds).catch(error => {
         console.error('Failed to reorder types:', error)
         message.error('排序失败')
       })
     }
-    
+
     setActiveId(null)
   }
-  
+
   // 当前拖拽的类型
   const activeType = activeId ? types.find(t => t.id === activeId) : null
 
@@ -356,7 +360,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     setSelectedTemplate(template || null)
     form.resetFields()
     setSelectedIcon(undefined)
-    
+
     if (mode === 'template' && template) {
       form.setFieldsValue({
         name: template.name,
@@ -364,15 +368,16 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         color: template.color
       })
       if (template.icon) {
-        setSelectedIcon({ 
-          type: /[\p{Emoji}]/u.test(template.icon) ? 'emoji' : 'ant', 
-          value: template.icon 
+        setSelectedIcon({
+          type: /[\p{Emoji}]/u.test(template.icon) ? 'emoji' : 'ant',
+          value: template.icon
         })
       }
     } else {
       form.setFieldsValue({
         name: '',
-        color: VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
+        color:
+          VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
       })
     }
     setIsTypeModalOpen(true)
@@ -389,9 +394,9 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       color: type.color
     })
     if (type.icon) {
-      setSelectedIcon({ 
-        type: /[\p{Emoji}]/u.test(type.icon) ? 'emoji' : 'ant', 
-        value: type.icon 
+      setSelectedIcon({
+        type: /[\p{Emoji}]/u.test(type.icon) ? 'emoji' : 'ant',
+        value: type.icon
       })
     } else {
       setSelectedIcon(undefined)
@@ -404,10 +409,9 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
     try {
       const values = await form.validateFields()
       setLoading(true)
-      
-      const colorValue = typeof values.color === 'string' 
-        ? values.color 
-        : values.color?.toHexString?.() || '#1890ff'
+
+      const colorValue =
+        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || '#1890ff'
 
       if (editingType) {
         await updateType(editingType.id, {
@@ -418,12 +422,12 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         message.success('更新成功')
       } else {
         let fields: FieldDefinition[] = []
-        
+
         if (createMode === 'template' && selectedTemplate) {
           const templateFields = BUILTIN_FIELDS_MAP[selectedTemplate.id] || []
           fields = templateFields.map(f => ({ ...f, id: uuidv4() }))
         }
-        
+
         await addType({
           name: values.name,
           icon: values.icon,
@@ -435,7 +439,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         })
         message.success('创建成功')
       }
-      
+
       setIsTypeModalOpen(false)
       setCreateMode(null)
       setSelectedTemplate(null)
@@ -477,7 +481,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   const parseImportFile = (file: File): Promise<Record<string, unknown>[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = (e) => {
+      reader.onload = e => {
         try {
           const content = e.target?.result as string
           if (file.name.endsWith('.json')) {
@@ -519,21 +523,21 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         message.error('文件中没有数据')
         return false
       }
-      
+
       setImportData(data)
       setImportFields(Object.keys(data[0]))
-      
+
       // 自动映射字段
       const currentTypeDef = types.find(t => t.id === selectedTypeId)
       const autoMapping: Record<string, string> = {}
       const fieldKeywords: Record<string, string[]> = {
-        'name': ['名称', '名字', 'name', 'title'],
-        'aliases': ['别名', 'aliases', 'alias', 'aka'],
-        'description': ['描述', '备注', '说明', 'description', 'desc', 'note'],
-        'tags': ['标签', 'tags', 'tag'],
-        'color': ['颜色', 'color']
+        name: ['名称', '名字', 'name', 'title'],
+        aliases: ['别名', 'aliases', 'alias', 'aka'],
+        description: ['描述', '备注', '说明', 'description', 'desc', 'note'],
+        tags: ['标签', 'tags', 'tag'],
+        color: ['颜色', 'color']
       }
-      
+
       Object.keys(data[0]).forEach(importField => {
         const lowerField = importField.toLowerCase()
         for (const [targetField, keywords] of Object.entries(fieldKeywords)) {
@@ -544,16 +548,15 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         }
         // 检查是否匹配自定义字段
         if (!autoMapping[importField] && currentTypeDef) {
-          const matchedField = currentTypeDef.fields.find(f => 
-            f.name.toLowerCase() === lowerField || 
-            f.id.toLowerCase() === lowerField
+          const matchedField = currentTypeDef.fields.find(
+            f => f.name.toLowerCase() === lowerField || f.id.toLowerCase() === lowerField
           )
           if (matchedField) {
             autoMapping[importField] = `field_${matchedField.id}`
           }
         }
       })
-      
+
       setFieldMapping(autoMapping)
       setImportResult(null)
       setImportModalOpen(true)
@@ -567,16 +570,16 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
   // 执行导入
   const executeImport = async (): Promise<void> => {
     if (!selectedTypeId || importData.length === 0) return
-    
+
     setImporting(true)
     setImportProgress(0)
     setImportResult(null)
-    
+
     const currentTypeDef = types.find(t => t.id === selectedTypeId)
     const typeName = currentTypeDef?.name || '未知'
     let successCount = 0
     let failedCount = 0
-    
+
     for (let i = 0; i < importData.length; i++) {
       const item = importData[i]
       try {
@@ -592,27 +595,35 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         } = {
           name: '',
           aliases: [],
-          color: currentTypeDef?.color || VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)],
+          color:
+            currentTypeDef?.color ||
+            VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)],
           typeId: selectedTypeId,
           typeName,
           fields: {},
           tags: [],
           description: ''
         }
-        
+
         // 应用字段映射
         Object.entries(fieldMapping).forEach(([importField, targetField]) => {
           const value = item[importField]
           if (value === undefined || value === '') return
-          
+
           if (targetField === 'name') {
             entry.name = String(value)
           } else if (targetField === 'aliases') {
-            entry.aliases = String(value).split(/[,、，]/).map(s => s.trim()).filter(Boolean)
+            entry.aliases = String(value)
+              .split(/[,、，]/)
+              .map(s => s.trim())
+              .filter(Boolean)
           } else if (targetField === 'description') {
             entry.description = String(value)
           } else if (targetField === 'tags') {
-            entry.tags = String(value).split(/[,、，]/).map(s => s.trim()).filter(Boolean)
+            entry.tags = String(value)
+              .split(/[,、，]/)
+              .map(s => s.trim())
+              .filter(Boolean)
           } else if (targetField === 'color') {
             entry.color = String(value)
           } else if (targetField.startsWith('field_')) {
@@ -620,24 +631,24 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             entry.fields[fieldId] = value
           }
         })
-        
+
         if (!entry.name) {
           failedCount++
           continue
         }
-        
+
         await addEntry(entry)
         successCount++
       } catch {
         failedCount++
       }
-      
+
       setImportProgress(Math.round(((i + 1) / importData.length) * 100))
     }
-    
+
     setImporting(false)
     setImportResult({ success: successCount, failed: failedCount })
-    
+
     if (successCount > 0) {
       loadEntries()
     }
@@ -683,9 +694,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         <span>
           <TagOutlined />
           条目管理
-          {entries.length > 0 && (
-            <Tag style={{ marginLeft: 8 }}>{entries.length}</Tag>
-          )}
+          {entries.length > 0 && <Tag style={{ marginLeft: 8 }}>{entries.length}</Tag>}
         </span>
       )
     },
@@ -726,7 +735,9 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
             返回
           </Button>
-          <Title level={5} className={styles.title}>词汇管理</Title>
+          <Title level={5} className={styles.title}>
+            词汇管理
+          </Title>
         </div>
         <div className={styles.toolbarRight}>
           <span className={styles.stats}>
@@ -735,12 +746,12 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           <Upload
             accept=".json,.csv"
             showUploadList={false}
-            beforeUpload={(file) => handleImportUpload(file)}
+            beforeUpload={file => handleImportUpload(file)}
             disabled={!selectedTypeId}
           >
             <Tooltip title={!selectedTypeId ? '请先选择类型' : '导入 JSON/CSV 文件'}>
-              <Button 
-                icon={<ImportOutlined />} 
+              <Button
+                icon={<ImportOutlined />}
                 style={{ marginLeft: 8 }}
                 disabled={!selectedTypeId}
               >
@@ -759,7 +770,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               ref={typeSearchInputRef}
               placeholder="搜索类型..."
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={e => setSearchText(e.target.value)}
               allowClear
               size="small"
             />
@@ -769,7 +780,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               </Button>
             </Dropdown>
           </div>
-          
+
           <div className={styles.siderBody}>
             {filteredTypes.length === 0 ? (
               <Empty description="暂无类型" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -785,7 +796,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                   strategy={verticalListSortingStrategy}
                 >
                   <div className={styles.typeList}>
-                    {filteredTypes.map((type) => (
+                    {filteredTypes.map(type => (
                       <SortableTypeItem
                         key={type.id}
                         type={type}
@@ -800,12 +811,15 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     ))}
                   </div>
                 </SortableContext>
-                
+
                 <DragOverlay>
                   {activeType ? (
                     <div className={styles.overlayItem}>
                       <div className={styles.typeItemContent}>
-                        <div className={styles.typeIcon} style={{ backgroundColor: activeType.color }}>
+                        <div
+                          className={styles.typeIcon}
+                          style={{ backgroundColor: activeType.color }}
+                        >
                           {getTypeIcon(activeType)}
                         </div>
                         <div className={styles.typeInfo}>
@@ -833,18 +847,20 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             <div className={styles.contentBody}>
               <Tabs
                 activeKey={activeTab}
-                onChange={(key) => setActiveTab(key as 'entries' | 'typeSettings' | 'highlight' | 'statistics')}
+                onChange={key =>
+                  setActiveTab(key as 'entries' | 'typeSettings' | 'highlight' | 'statistics')
+                }
                 items={tabItems}
                 className={styles.tabs}
               />
-              
+
               <div className={styles.tabContent}>
                 {activeTab === 'entries' && (
-                  <VocabularyPanel 
+                  <VocabularyPanel
                     ref={panelRef}
-                    readOnly={false} 
-                    embedded 
-                    currentTypeId={selectedTypeId || ''} 
+                    readOnly={false}
+                    embedded
+                    currentTypeId={selectedTypeId || ''}
                     onTypeChange={setSelectedTypeId}
                   />
                 )}
@@ -853,42 +869,42 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                     <Row gutter={[16, 16]}>
                       <Col span={6}>
                         <Card>
-                          <Statistic 
-                            title="词汇类型数" 
-                            value={types.length} 
+                          <Statistic
+                            title="词汇类型数"
+                            value={types.length}
                             prefix={<TagOutlined />}
                           />
                         </Card>
                       </Col>
                       <Col span={6}>
                         <Card>
-                          <Statistic 
-                            title="词汇总数" 
-                            value={entries.length} 
+                          <Statistic
+                            title="词汇总数"
+                            value={entries.length}
                             prefix={<TagOutlined />}
                           />
                         </Card>
                       </Col>
                       <Col span={6}>
                         <Card>
-                          <Statistic 
-                            title="已收藏" 
-                            value={entries.filter(e => e.starred).length} 
+                          <Statistic
+                            title="已收藏"
+                            value={entries.filter(e => e.starred).length}
                             prefix={<TagOutlined style={{ color: '#faad14' }} />}
                           />
                         </Card>
                       </Col>
                       <Col span={6}>
                         <Card>
-                          <Statistic 
-                            title="关联文件" 
-                            value={entries.filter(e => e.linkedFilePath).length} 
+                          <Statistic
+                            title="关联文件"
+                            value={entries.filter(e => e.linkedFilePath).length}
                             prefix={<FileTextOutlined />}
                           />
                         </Card>
                       </Col>
                     </Row>
-                    
+
                     <Card title="各类型词汇数量" style={{ marginTop: 16 }}>
                       <Table
                         dataSource={types.map(t => ({
@@ -896,7 +912,8 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                           name: t.name,
                           count: entries.filter(e => e.typeId === t.id).length,
                           starred: entries.filter(e => e.typeId === t.id && e.starred).length,
-                          withFile: entries.filter(e => e.typeId === t.id && e.linkedFilePath).length
+                          withFile: entries.filter(e => e.typeId === t.id && e.linkedFilePath)
+                            .length
                         }))}
                         columns={[
                           { title: '类型名称', dataIndex: 'name', key: 'name' },
@@ -920,16 +937,22 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                         const sortedTags = Object.entries(tagCounts)
                           .sort((a, b) => b[1] - a[1])
                           .slice(0, 20)
-                        
+
                         if (sortedTags.length === 0) {
-                          return <Empty description="暂无标签数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                          return (
+                            <Empty
+                              description="暂无标签数据"
+                              image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            />
+                          )
                         }
-                        
+
                         return (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                             {sortedTags.map(([tag, count]) => (
                               <Tag key={tag} style={{ margin: 0 }}>
-                                {tag} <span style={{ color: 'var(--text-secondary)' }}>({count})</span>
+                                {tag}{' '}
+                                <span style={{ color: 'var(--text-secondary)' }}>({count})</span>
                               </Tag>
                             ))}
                           </div>
@@ -939,15 +962,13 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                   </div>
                 )}
                 {activeTab === 'typeSettings' && (
-                  <VocabularyTypeSettings 
+                  <VocabularyTypeSettings
                     hideTypeList
                     selectedTypeId={selectedTypeId}
                     onSelectedTypeIdChange={setSelectedTypeId}
                   />
                 )}
-                {activeTab === 'highlight' && (
-                  <HighlightSettings />
-                )}
+                {activeTab === 'highlight' && <HighlightSettings />}
               </div>
             </div>
           )}
@@ -956,9 +977,11 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
 
       {/* 类型编辑弹窗 */}
       <Modal
-        title={editingType ? '编辑类型' : (createMode === 'template' ? '从模板创建' : '新建自定义类型')}
+        title={
+          editingType ? '编辑类型' : createMode === 'template' ? '从模板创建' : '新建自定义类型'
+        }
         open={isTypeModalOpen}
-        onCancel={() => { 
+        onCancel={() => {
           setIsTypeModalOpen(false)
           setCreateMode(null)
           setSelectedTemplate(null)
@@ -976,14 +999,11 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           >
             <Input placeholder="如：角色、地点、组织" />
           </Form.Item>
-          
+
           <Form.Item label="图标">
-            <div 
-              className={styles.iconPreviewBox}
-              onClick={() => setIsIconPickerOpen(true)}
-            >
-              <div 
-                className={styles.iconPreview} 
+            <div className={styles.iconPreviewBox} onClick={() => setIsIconPickerOpen(true)}>
+              <div
+                className={styles.iconPreview}
                 style={{ backgroundColor: form.getFieldValue('color') || '#1890ff' }}
               >
                 {getIconPreview(selectedIcon?.value, <TagOutlined />)}
@@ -991,11 +1011,11 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               <span className={styles.iconHint}>点击选择图标</span>
             </div>
           </Form.Item>
-          
+
           <Form.Item name="icon" hidden>
             <Input />
           </Form.Item>
-          
+
           <Form.Item name="color" label="默认颜色">
             <ColorPicker format="hex" />
           </Form.Item>
@@ -1006,7 +1026,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       <IconPicker
         open={isIconPickerOpen}
         value={selectedIcon}
-        onChange={(iconValue) => {
+        onChange={iconValue => {
           setSelectedIcon(iconValue)
           form.setFieldValue('icon', iconValue.value)
           setIsIconPickerOpen(false)
@@ -1028,7 +1048,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           showIcon
           style={{ marginBottom: 16 }}
         />
-        
+
         {importing ? (
           <div style={{ padding: '24px 0', textAlign: 'center' }}>
             <Progress percent={importProgress} status="active" />
@@ -1054,7 +1074,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                 将导入文件的字段映射到词汇字段
               </Text>
             </div>
-            
+
             <Table
               dataSource={importFields.map(field => ({ key: field, field }))}
               columns={[
@@ -1081,11 +1101,11 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                         label: `字段: ${f.name}`
                       })) || [])
                     ]
-                    
+
                     return (
                       <Select
                         value={fieldMapping[record.field] || ''}
-                        onChange={(value) => {
+                        onChange={value => {
                           setFieldMapping(prev => ({
                             ...prev,
                             [record.field]: value
@@ -1114,12 +1134,12 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
               pagination={false}
               size="small"
             />
-            
+
             <div style={{ marginTop: 24, textAlign: 'right' }}>
               <Space>
                 <Button onClick={closeImportModal}>取消</Button>
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   onClick={executeImport}
                   disabled={!Object.values(fieldMapping).includes('name')}
                 >

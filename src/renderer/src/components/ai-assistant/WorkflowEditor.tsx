@@ -19,7 +19,7 @@ import {
   Switch,
   Empty,
   Popconfirm,
-  Badge,
+  Badge
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -30,7 +30,7 @@ import {
   PlayCircleOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
-  BranchesOutlined,
+  BranchesOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import type {
@@ -38,7 +38,7 @@ import type {
   WorkflowStep,
   WorkflowBranch,
   VariableDefinition,
-  TemplateCategory,
+  TemplateCategory
 } from '@shared/ai-assistant'
 import styles from './WorkflowEditor.module.css'
 
@@ -50,7 +50,7 @@ const CATEGORY_OPTIONS: { value: TemplateCategory; label: string }[] = [
   { value: 'character', label: '人物塑造' },
   { value: 'plot', label: '情节设计' },
   { value: 'worldbuilding', label: '世界观构建' },
-  { value: 'polishing', label: '润色修改' },
+  { value: 'polishing', label: '润色修改' }
 ]
 
 // 分支条件类型
@@ -60,7 +60,7 @@ const CONDITION_TYPE_OPTIONS = [
   { value: 'equals', label: '等于' },
   { value: 'not_equals', label: '不等于' },
   { value: 'regex', label: '正则匹配' },
-  { value: 'exists', label: '存在值' },
+  { value: 'exists', label: '存在值' }
 ]
 
 interface WorkflowEditorProps {
@@ -77,7 +77,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
     saveWorkflow,
     setCurrentWorkflow,
     loadTemplates,
-    templatesLoaded,
+    templatesLoaded
   } = useAiAssistantStore()
 
   const [form] = Form.useForm()
@@ -96,14 +96,14 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
   // 加载工作流数据
   useEffect(() => {
     if (workflowId) {
-      const workflow = workflows.find((w) => w.id === workflowId)
+      const workflow = workflows.find(w => w.id === workflowId)
       if (workflow) {
         setCurrentWorkflow(workflow)
         form.setFieldsValue({
           name: workflow.name,
           description: workflow.description,
           category: workflow.category,
-          tags: workflow.tags,
+          tags: workflow.tags
         })
         setSteps(workflow.steps)
         setGlobalVariables(workflow.globalVariables)
@@ -128,7 +128,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
         name: currentWorkflow.name,
         description: currentWorkflow.description,
         category: currentWorkflow.category,
-        tags: currentWorkflow.tags,
+        tags: currentWorkflow.tags
       })
       setSteps(currentWorkflow.steps)
       setGlobalVariables(currentWorkflow.globalVariables)
@@ -145,7 +145,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
       autoExecute: false,
       saveOutput: true,
       outputVariableName: `输出${steps.length + 1}`,
-      order: steps.length,
+      order: steps.length
     }
     setSteps([...steps, newStep])
     // 如果是第一个步骤，设为起始步骤
@@ -156,14 +156,12 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
 
   // 更新步骤
   const handleUpdateStep = (id: string, updates: Partial<WorkflowStep>) => {
-    setSteps(
-      steps.map((s) => (s.id === id ? { ...s, ...updates } : s))
-    )
+    setSteps(steps.map(s => (s.id === id ? { ...s, ...updates } : s)))
   }
 
   // 删除步骤
   const handleDeleteStep = (id: string) => {
-    const newSteps = steps.filter((s) => s.id !== id)
+    const newSteps = steps.filter(s => s.id !== id)
     setSteps(newSteps)
     // 如果删除的是起始步骤，重新设置
     if (startStepId === id && newSteps.length > 0) {
@@ -173,14 +171,14 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
 
   // 移动步骤
   const handleMoveStep = (id: string, direction: 'up' | 'down') => {
-    const index = steps.findIndex((s) => s.id === id)
+    const index = steps.findIndex(s => s.id === id)
     if (index === -1) return
 
     const newSteps = [...steps]
     if (direction === 'up' && index > 0) {
-      [newSteps[index - 1], newSteps[index]] = [newSteps[index], newSteps[index - 1]]
+      ;[newSteps[index - 1], newSteps[index]] = [newSteps[index], newSteps[index - 1]]
     } else if (direction === 'down' && index < steps.length - 1) {
-      [newSteps[index], newSteps[index + 1]] = [newSteps[index + 1], newSteps[index]]
+      ;[newSteps[index], newSteps[index + 1]] = [newSteps[index + 1], newSteps[index]]
     }
     setSteps(newSteps.map((s, i) => ({ ...s, order: i })))
   }
@@ -198,36 +196,38 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
       name: '新分支',
       condition: {
         type: 'contains',
-        value: '',
+        value: ''
       },
-      nextStepId: '',
+      nextStepId: ''
     }
-    const step = steps.find((s) => s.id === stepId)
+    const step = steps.find(s => s.id === stepId)
     if (step) {
       handleUpdateStep(stepId, {
-        branches: [...(step.branches || []), newBranch],
+        branches: [...(step.branches || []), newBranch]
       })
     }
   }
 
   // 更新分支
-  const handleUpdateBranch = (stepId: string, branchId: string, updates: Partial<WorkflowBranch>) => {
-    const step = steps.find((s) => s.id === stepId)
+  const handleUpdateBranch = (
+    stepId: string,
+    branchId: string,
+    updates: Partial<WorkflowBranch>
+  ) => {
+    const step = steps.find(s => s.id === stepId)
     if (step && step.branches) {
       handleUpdateStep(stepId, {
-        branches: step.branches.map((b) =>
-          b.id === branchId ? { ...b, ...updates } : b
-        ),
+        branches: step.branches.map(b => (b.id === branchId ? { ...b, ...updates } : b))
       })
     }
   }
 
   // 删除分支
   const handleDeleteBranch = (stepId: string, branchId: string) => {
-    const step = steps.find((s) => s.id === stepId)
+    const step = steps.find(s => s.id === stepId)
     if (step && step.branches) {
       handleUpdateStep(stepId, {
-        branches: step.branches.filter((b) => b.id !== branchId),
+        branches: step.branches.filter(b => b.id !== branchId)
       })
     }
   }
@@ -240,21 +240,19 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
       key: `全局变量${globalVariables.length + 1}`,
       type: 'text',
       required: false,
-      order: globalVariables.length,
+      order: globalVariables.length
     }
     setGlobalVariables([...globalVariables, newVariable])
   }
 
   // 更新全局变量
   const handleUpdateGlobalVariable = (id: string, updates: Partial<VariableDefinition>) => {
-    setGlobalVariables(
-      globalVariables.map((v) => (v.id === id ? { ...v, ...updates } : v))
-    )
+    setGlobalVariables(globalVariables.map(v => (v.id === id ? { ...v, ...updates } : v)))
   }
 
   // 删除全局变量
   const handleDeleteGlobalVariable = (id: string) => {
-    setGlobalVariables(globalVariables.filter((v) => v.id !== id))
+    setGlobalVariables(globalVariables.filter(v => v.id !== id))
   }
 
   // 保存工作流
@@ -286,7 +284,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
         globalVariables: globalVariables.map((v, index) => ({ ...v, order: index })),
         isBuiltIn: false,
         source: 'project',
-        order: currentWorkflow?.order || 0,
+        order: currentWorkflow?.order || 0
       }
 
       await saveWorkflow(workflow)
@@ -302,23 +300,23 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
 
   // 可选择的步骤选项（用于分支目标）
   const stepOptions = useMemo(() => {
-    return steps.map((s) => ({
+    return steps.map(s => ({
       value: s.id,
-      label: s.name,
+      label: s.name
     }))
   }, [steps])
 
   // 可选择的模板选项
   const templateOptions = useMemo(() => {
-    return templates.map((t) => ({
+    return templates.map(t => ({
       value: t.id,
-      label: t.name,
+      label: t.name
     }))
   }, [templates])
 
   // 渲染步骤卡片
   const renderStepCard = (step: WorkflowStep, index: number) => {
-    const template = templates.find((t) => t.id === step.templateId)
+    const template = templates.find(t => t.id === step.templateId)
     const isStartStep = step.id === startStepId
 
     return (
@@ -363,10 +361,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
                 />
               </Tooltip>
             )}
-            <Popconfirm
-              title="确定删除此步骤？"
-              onConfirm={() => handleDeleteStep(step.id)}
-            >
+            <Popconfirm title="确定删除此步骤？" onConfirm={() => handleDeleteStep(step.id)}>
               <Button type="text" size="small" icon={<DeleteOutlined />} danger />
             </Popconfirm>
           </Space>
@@ -377,7 +372,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>步骤名称：</label>
             <Input
               value={step.name}
-              onChange={(e) => handleUpdateStep(step.id, { name: e.target.value })}
+              onChange={e => handleUpdateStep(step.id, { name: e.target.value })}
               placeholder="步骤名称"
               style={{ flex: 1 }}
             />
@@ -387,7 +382,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>关联模板：</label>
             <Select
               value={step.templateId}
-              onChange={(templateId) => handleUpdateStep(step.id, { templateId })}
+              onChange={templateId => handleUpdateStep(step.id, { templateId })}
               options={templateOptions}
               placeholder="选择提示词模板"
               style={{ flex: 1 }}
@@ -409,7 +404,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>自动执行：</label>
             <Switch
               checked={step.autoExecute}
-              onChange={(checked) => handleUpdateStep(step.id, { autoExecute: checked })}
+              onChange={checked => handleUpdateStep(step.id, { autoExecute: checked })}
             />
             <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
               无需用户确认自动执行
@@ -420,12 +415,12 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>保存输出：</label>
             <Switch
               checked={step.saveOutput}
-              onChange={(checked) => handleUpdateStep(step.id, { saveOutput: checked })}
+              onChange={checked => handleUpdateStep(step.id, { saveOutput: checked })}
             />
             {step.saveOutput && (
               <Input
                 value={step.outputVariableName}
-                onChange={(e) => handleUpdateStep(step.id, { outputVariableName: e.target.value })}
+                onChange={e => handleUpdateStep(step.id, { outputVariableName: e.target.value })}
                 placeholder="变量名"
                 style={{ width: 150, marginLeft: 8 }}
                 addonBefore="{{"
@@ -439,8 +434,11 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>默认下一步：</label>
             <Select
               value={step.nextStepId}
-              onChange={(nextStepId) => handleUpdateStep(step.id, { nextStepId })}
-              options={[{ value: '', label: '无（结束）' }, ...stepOptions.filter(o => o.value !== step.id)]}
+              onChange={nextStepId => handleUpdateStep(step.id, { nextStepId })}
+              options={[
+                { value: '', label: '无（结束）' },
+                ...stepOptions.filter(o => o.value !== step.id)
+              ]}
               placeholder="选择下一步"
               style={{ flex: 1 }}
               allowClear
@@ -456,7 +454,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
           </Divider>
 
           {step.branches && step.branches.length > 0 ? (
-            step.branches.map((branch) => (
+            step.branches.map(branch => (
               <Card
                 key={branch.id}
                 size="small"
@@ -464,7 +462,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
                 title={
                   <Input
                     value={branch.name}
-                    onChange={(e) => handleUpdateBranch(step.id, branch.id, { name: e.target.value })}
+                    onChange={e => handleUpdateBranch(step.id, branch.id, { name: e.target.value })}
                     placeholder="分支名称"
                     style={{ width: 150 }}
                     bordered={false}
@@ -485,9 +483,9 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
                     <label>条件类型：</label>
                     <Select
                       value={branch.condition.type}
-                      onChange={(type) =>
+                      onChange={type =>
                         handleUpdateBranch(step.id, branch.id, {
-                          condition: { ...branch.condition, type },
+                          condition: { ...branch.condition, type }
                         })
                       }
                       options={CONDITION_TYPE_OPTIONS}
@@ -498,9 +496,9 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
                     <label>匹配值：</label>
                     <Input
                       value={branch.condition.value}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleUpdateBranch(step.id, branch.id, {
-                          condition: { ...branch.condition, value: e.target.value },
+                          condition: { ...branch.condition, value: e.target.value }
                         })
                       }
                       placeholder="匹配的值或正则表达式"
@@ -511,7 +509,9 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
                     <label>跳转步骤：</label>
                     <Select
                       value={branch.nextStepId}
-                      onChange={(nextStepId) => handleUpdateBranch(step.id, branch.id, { nextStepId })}
+                      onChange={nextStepId =>
+                        handleUpdateBranch(step.id, branch.id, { nextStepId })
+                      }
                       options={stepOptions.filter(o => o.value !== step.id)}
                       placeholder="选择目标步骤"
                       style={{ flex: 1 }}
@@ -568,7 +568,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>变量名：</label>
             <Input
               value={variable.name}
-              onChange={(e) => handleUpdateGlobalVariable(variable.id, { name: e.target.value })}
+              onChange={e => handleUpdateGlobalVariable(variable.id, { name: e.target.value })}
               placeholder="显示名称"
               style={{ width: 120 }}
             />
@@ -577,7 +577,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>引用键：</label>
             <Input
               value={variable.key}
-              onChange={(e) => handleUpdateGlobalVariable(variable.id, { key: e.target.value })}
+              onChange={e => handleUpdateGlobalVariable(variable.id, { key: e.target.value })}
               placeholder="用于 {{key}} 引用"
               style={{ width: 120 }}
               addonBefore="{{"
@@ -588,14 +588,14 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>类型：</label>
             <Select
               value={variable.type}
-              onChange={(type) => handleUpdateGlobalVariable(variable.id, { type })}
+              onChange={type => handleUpdateGlobalVariable(variable.id, { type })}
               options={[
                 { value: 'text', label: '文本' },
                 { value: 'textarea', label: '多行文本' },
                 { value: 'vocabulary', label: '词汇条目' },
                 { value: 'select', label: '单选' },
                 { value: 'multiselect', label: '多选' },
-                { value: 'number', label: '数字' },
+                { value: 'number', label: '数字' }
               ]}
               style={{ width: 150 }}
             />
@@ -604,7 +604,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             <label>必填：</label>
             <Switch
               checked={variable.required}
-              onChange={(checked) => handleUpdateGlobalVariable(variable.id, { required: checked })}
+              onChange={checked => handleUpdateGlobalVariable(variable.id, { required: checked })}
             />
           </div>
         </div>
@@ -625,12 +625,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
           </Title>
         </Space>
         <Space>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={handleSave}
-          >
+          <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
             保存
           </Button>
         </Space>
@@ -673,10 +668,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
 
           <div className={styles.stepsSection}>
             {steps.length === 0 ? (
-              <Empty
-                description="暂无步骤"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
+              <Empty description="暂无步骤" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
               steps.map((step, index) => renderStepCard(step, index))
             )}
@@ -709,10 +701,7 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
 
           <div className={styles.siderContent}>
             {globalVariables.length === 0 ? (
-              <Empty
-                description="暂无全局变量"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
+              <Empty description="暂无全局变量" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
               globalVariables.map(renderGlobalVariableCard)
             )}

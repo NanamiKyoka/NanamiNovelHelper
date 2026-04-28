@@ -63,36 +63,36 @@ export function HighlightHoverCard({
 }: HighlightHoverCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
   const [adjustedPosition, setAdjustedPosition] = useState(position)
-  
+
   // 获取词汇数据
   const { findEntry, findType } = useVocabularyStore()
   const { findWord } = useSensitiveStore()
   const { hoverCardConfig } = useHighlightService()
-  
+
   // 使用传入的配置或 store 中的配置
   const activeConfig = config || hoverCardConfig || { enabled: true, delay: 300, typeConfigs: [] }
-  
+
   // 查找词汇条目或敏感词
   const entry = useMemo(() => {
     if (isSensitive) return null
     return findEntry(entryId)
   }, [entryId, isSensitive, findEntry])
-  
+
   const sensitiveWord = useMemo(() => {
     if (!isSensitive) return null
     return findWord(entryId)
   }, [entryId, isSensitive, findWord])
-  
+
   // 获取词汇类型
   const vocabularyType = useMemo(() => {
     if (!entry) return null
     return findType(entry.typeId)
   }, [entry, findType])
-  
+
   // 获取该类型的字段显示配置
   const fieldConfig = useMemo((): string[] => {
     if (!vocabularyType) return []
-    
+
     // 如果有配置，使用配置的字段列表
     if (activeConfig.typeConfigs) {
       const typeConfig = activeConfig.typeConfigs.find(tc => tc.typeId === vocabularyType.id)
@@ -100,47 +100,45 @@ export function HighlightHoverCard({
         return typeConfig.fields
       }
     }
-    
+
     // 默认显示该类型的所有自定义字段（排除内置的 name 和 type）
-    return vocabularyType.fields
-      .filter(f => !['name', 'type'].includes(f.id))
-      .map(f => f.id)
+    return vocabularyType.fields.filter(f => !['name', 'type'].includes(f.id)).map(f => f.id)
   }, [vocabularyType, activeConfig.typeConfigs])
-  
+
   // 调整位置，确保不超出视口
   useEffect(() => {
     if (!visible || !cardRef.current) {
       setAdjustedPosition(position)
       return
     }
-    
+
     const rect = cardRef.current.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    
+
     let x = position.x + 10
     let y = position.y + 10
-    
+
     // 右侧超出
     if (x + rect.width > viewportWidth - 20) {
       x = position.x - rect.width - 10
     }
-    
+
     // 底部超出
     if (y + rect.height > viewportHeight - 20) {
       y = position.y - rect.height - 10
     }
-    
+
     // 确保不超出左侧和顶部
     x = Math.max(10, x)
     y = Math.max(10, y)
-    
+
     setAdjustedPosition({ x, y })
   }, [visible, position])
-  
+
   if (!visible) return null
   if (!activeConfig.enabled) return null
-  
+
   // 渲染敏感词卡片
   if (isSensitive && sensitiveWord) {
     return (
@@ -152,35 +150,39 @@ export function HighlightHoverCard({
           top: adjustedPosition.y
         }}
       >
-        <Card
-          size="small"
-          className={styles.card}
-          styles={{ body: { padding: '8px 12px' } }}
-        >
+        <Card size="small" className={styles.card} styles={{ body: { padding: '8px 12px' } }}>
           <div className={styles.header}>
-            <Text strong className={styles.name}>{sensitiveWord.name}</Text>
+            <Text strong className={styles.name}>
+              {sensitiveWord.name}
+            </Text>
             <Tag color={getSeverityColor(sensitiveWord.severity)}>
               {getSeverityText(sensitiveWord.severity)}
             </Tag>
           </div>
-          
+
           {sensitiveWord.category && (
             <div className={styles.fieldRow}>
-              <Text type="secondary" className={styles.label}>类别:</Text>
+              <Text type="secondary" className={styles.label}>
+                类别:
+              </Text>
               <Text>{sensitiveWord.category}</Text>
             </div>
           )}
-          
+
           {sensitiveWord.suggestion && (
             <div className={styles.fieldRow}>
-              <Text type="secondary" className={styles.label}>建议:</Text>
+              <Text type="secondary" className={styles.label}>
+                建议:
+              </Text>
               <Text className={styles.suggestion}>{sensitiveWord.suggestion}</Text>
             </div>
           )}
-          
+
           {sensitiveWord.description && (
             <div className={styles.fieldRow}>
-              <Text type="secondary" className={styles.label}>说明:</Text>
+              <Text type="secondary" className={styles.label}>
+                说明:
+              </Text>
               <Text className={styles.description}>{sensitiveWord.description}</Text>
             </div>
           )}
@@ -188,10 +190,10 @@ export function HighlightHoverCard({
       </div>
     )
   }
-  
+
   // 渲染词汇卡片
   if (!entry) return null
-  
+
   return (
     <div
       ref={cardRef}
@@ -201,38 +203,39 @@ export function HighlightHoverCard({
         top: adjustedPosition.y
       }}
     >
-      <Card
-        size="small"
-        className={styles.card}
-        styles={{ body: { padding: '8px 12px' } }}
-      >
+      <Card size="small" className={styles.card} styles={{ body: { padding: '8px 12px' } }}>
         {/* 标题行 */}
         <div className={styles.header}>
-          <Text strong className={styles.name}>{entry.name}</Text>
-          <div 
+          <Text strong className={styles.name}>
+            {entry.name}
+          </Text>
+          <div
             className={styles.colorIndicator}
             style={{ backgroundColor: entry.color || vocabularyType?.color || '#1890ff' }}
           />
-          {vocabularyType && (
-            <Tag color={vocabularyType.color}>{vocabularyType.name}</Tag>
-          )}
+          {vocabularyType && <Tag color={vocabularyType.color}>{vocabularyType.name}</Tag>}
         </div>
-        
+
         {/* 别名 - 根据配置显示 */}
         {fieldConfig.includes('aliases') && entry.aliases && entry.aliases.length > 0 && (
           <div className={styles.fieldRow}>
-            <Text type="secondary" className={styles.label}>别名:</Text>
+            <Text type="secondary" className={styles.label}>
+              别名:
+            </Text>
             <Text>{entry.aliases.join(', ')}</Text>
           </div>
         )}
-        
+
         {/* 配置的字段（排除内置字段，它们单独处理） */}
         {fieldConfig
-          .filter(fieldId => !['name', 'type', 'description', 'aliases', 'tags', 'color'].includes(fieldId))
+          .filter(
+            fieldId =>
+              !['name', 'type', 'description', 'aliases', 'tags', 'color'].includes(fieldId)
+          )
           .map(fieldId => {
             const value = entry.fields[fieldId]
             if (!value || (Array.isArray(value) && value.length === 0)) return null
-            
+
             return (
               <div key={fieldId} className={styles.fieldRow}>
                 <Text type="secondary" className={styles.label}>
@@ -242,16 +245,18 @@ export function HighlightHoverCard({
               </div>
             )
           })}
-        
+
         {/* 标签 - 根据配置显示 */}
         {fieldConfig.includes('tags') && entry.tags && entry.tags.length > 0 && (
           <div className={styles.tagsRow}>
             {entry.tags.map((tag, index) => (
-              <Tag key={index} className={styles.tag}>{tag}</Tag>
+              <Tag key={index} className={styles.tag}>
+                {tag}
+              </Tag>
             ))}
           </div>
         )}
-        
+
         {/* 描述 - 根据配置显示 */}
         {fieldConfig.includes('description') && entry.description && (
           <>

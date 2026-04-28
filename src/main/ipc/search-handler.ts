@@ -11,10 +11,13 @@ import { validateParams } from '../utils/validation'
  */
 export function registerSearchHandlers(): void {
   // 执行搜索
-  ipcMain.handle('search:content', async (_event, options: SearchOptions): Promise<SearchResult> => {
-    validateParams('search:content').object(options, 'options').validate()
-    return await searchService.search(options)
-  })
+  ipcMain.handle(
+    'search:content',
+    async (_event, options: SearchOptions): Promise<SearchResult> => {
+      validateParams('search:content').object(options, 'options').validate()
+      return await searchService.search(options)
+    }
+  )
 
   ipcMain.handle(
     'search:replace',

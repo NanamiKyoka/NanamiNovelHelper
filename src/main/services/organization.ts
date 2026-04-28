@@ -68,9 +68,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
 
   protected sortItems(items: OrganizationGraphMeta[]): OrganizationGraphMeta[] {
     // 按更新时间排序
-    return items.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
+    return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }
 
   // ============================================
@@ -86,9 +84,8 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
 
     // 获取当前最大 order
     const existingGraphs = this.getList()
-    const maxOrder = existingGraphs.length > 0
-      ? Math.max(...existingGraphs.map(g => g.order ?? 0))
-      : -1
+    const maxOrder =
+      existingGraphs.length > 0 ? Math.max(...existingGraphs.map(g => g.order ?? 0)) : -1
 
     const graph: OrganizationGraph = {
       id: graphId,
@@ -163,9 +160,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
 
     // 获取同级节点的最大排序值
     const siblings = graph.nodes.filter(n => n.parentId === options.parentId)
-    const maxOrder = siblings.length > 0
-      ? Math.max(...siblings.map(n => n.order))
-      : -1
+    const maxOrder = siblings.length > 0 ? Math.max(...siblings.map(n => n.order)) : -1
 
     const newNode: OrganizationNode = {
       id: this.generateId(),
@@ -192,7 +187,11 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
   /**
    * 更新节点
    */
-  updateNode(graphId: string, nodeId: string, updates: UpdateOrganizationNodeOptions): OrganizationNode | null {
+  updateNode(
+    graphId: string,
+    nodeId: string,
+    updates: UpdateOrganizationNodeOptions
+  ): OrganizationNode | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -250,7 +249,11 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
   /**
    * 移动节点（更改父节点）
    */
-  moveNode(graphId: string, nodeId: string, newParentId: string | undefined): OrganizationNode | null {
+  moveNode(
+    graphId: string,
+    nodeId: string,
+    newParentId: string | undefined
+  ): OrganizationNode | null {
     const graph = this.get(graphId)
     if (!graph) return null
 
@@ -278,9 +281,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
 
     // 获取新父节点下的最大排序值
     const siblings = graph.nodes.filter(n => n.parentId === newParentId && n.id !== nodeId)
-    const maxOrder = siblings.length > 0
-      ? Math.max(...siblings.map(n => n.order))
-      : -1
+    const maxOrder = siblings.length > 0 ? Math.max(...siblings.map(n => n.order)) : -1
 
     graph.nodes[nodeIndex] = {
       ...graph.nodes[nodeIndex],
@@ -301,9 +302,7 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
     const graph = this.get(graphId)
     if (!graph) return []
 
-    return graph.nodes
-      .filter(n => n.parentId === parentId)
-      .sort((a, b) => a.order - b.order)
+    return graph.nodes.filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
   }
 
   /**
@@ -383,9 +382,8 @@ class OrganizationService extends BaseService<OrganizationGraph, OrganizationGra
 
       // 获取当前最大 order
       const existingGraphs = this.getList()
-      const maxOrder = existingGraphs.length > 0
-        ? Math.max(...existingGraphs.map(g => g.order ?? 0))
-        : -1
+      const maxOrder =
+        existingGraphs.length > 0 ? Math.max(...existingGraphs.map(g => g.order ?? 0)) : -1
 
       const importedGraph: OrganizationGraph = {
         ...graph,

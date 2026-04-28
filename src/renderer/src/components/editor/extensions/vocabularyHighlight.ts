@@ -68,7 +68,12 @@ function getSegmenter(): Intl.Segmenter {
  * 检查匹配是否为完整词（分词过滤）
  * 用于避免单字误匹配，如"小"匹配到"小红"
  */
-function isCompleteWord(text: string, start: number, end: number, pattern: HighlightPattern): boolean {
+function isCompleteWord(
+  text: string,
+  start: number,
+  end: number,
+  pattern: HighlightPattern
+): boolean {
   // 如果模式配置为部分匹配，直接返回 true
   if (pattern.matchMode === 'partial') {
     return true
@@ -77,11 +82,11 @@ function isCompleteWord(text: string, start: number, end: number, pattern: Highl
   // 检查边界字符
   const beforeChar = start > 0 ? text[start - 1] : ' '
   const afterChar = end < text.length ? text[end] : ' '
-  
+
   // 使用正则检查是否为词边界
-  const isWordBoundary = !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(beforeChar) && 
-                         !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(afterChar)
-  
+  const isWordBoundary =
+    !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(beforeChar) && !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(afterChar)
+
   if (!isWordBoundary) {
     return false
   }
@@ -93,7 +98,7 @@ function isCompleteWord(text: string, start: number, end: number, pattern: Highl
     try {
       const seg = getSegmenter()
       const segments = Array.from(seg.segment(text))
-      
+
       // 查找是否有完整词匹配
       let currentIndex = 0
       for (const segment of segments) {
@@ -120,7 +125,7 @@ function isCompleteWord(text: string, start: number, end: number, pattern: Highl
  * 注意：实际的 patterns 和 automaton 存储在 highlightService store 中
  */
 export function updateHighlightPatterns(_patterns: HighlightPattern[]): void {
-  globalVersion++  // 增加版本号，强制刷新
+  globalVersion++ // 增加版本号，强制刷新
 }
 
 /**
@@ -128,7 +133,7 @@ export function updateHighlightPatterns(_patterns: HighlightPattern[]): void {
  */
 export function updateHighlightStyleConfig(config: HighlightStyleConfig): void {
   globalStyleConfig = config
-  globalVersion++  // 增加版本号，强制刷新
+  globalVersion++ // 增加版本号，强制刷新
 }
 
 /**
@@ -136,7 +141,7 @@ export function updateHighlightStyleConfig(config: HighlightStyleConfig): void {
  */
 export function updateHighlightEnabled(enabled: boolean): void {
   globalEnabled = enabled
-  globalVersion++  // 增加版本号，强制刷新
+  globalVersion++ // 增加版本号，强制刷新
 }
 
 /**
@@ -242,7 +247,13 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
   addCommands() {
     return {
       setVocabularyHighlight:
-        (attributes: { entryId: string; color: string; typeId?: string; isSensitive?: boolean; severity?: string }) =>
+        (attributes: {
+          entryId: string
+          color: string
+          typeId?: string
+          isSensitive?: boolean
+          severity?: string
+        }) =>
         ({ chain }) => {
           return chain().setMark(this.name, attributes).run()
         },
@@ -274,15 +285,15 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             const patterns = storeState.patterns
             const automaton = storeState.automaton
             const enabled = storeState.config?.scope.enabled ?? true
-            
+
             if (!enabled || !globalEnabled || patterns.length === 0) {
               return DecorationSet.empty
             }
 
             const doc = newState.doc
             const cached = decorationCache.get(doc)
-            
-            const needsRecompute = 
+
+            const needsRecompute =
               tr.docChanged ||
               !cached ||
               cached.version !== globalVersion ||
@@ -293,18 +304,18 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             }
 
             const newDecorations = createHighlightDecorations(
-              doc, 
+              doc,
               automaton,
               patterns,
               globalStyleConfig
             )
-            
+
             decorationCache.set(doc, {
               version: globalVersion,
               decorations: newDecorations,
               docSize: doc.content.size
             })
-            
+
             return newDecorations
           }
         },
@@ -383,7 +394,7 @@ function createHighlightDecorations(
 
       // 创建装饰
       const style = getHighlightStyle(pattern.color, styleConfig, pattern.isSensitive)
-      
+
       decorations.push(
         Decoration.inline(from, to, {
           class: 'vocabulary-highlight',

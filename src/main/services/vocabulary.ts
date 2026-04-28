@@ -1,17 +1,13 @@
 /**
  * 词汇服务
- * 
+ *
  * 管理词汇类型、词汇条目和敏感词的 CRUD 操作
  * 继承 ServiceCore 获得路径管理、ID 生成、JSON5 读写等基础能力
  */
 
 import * as fs from 'fs'
 import * as path from 'path'
-import {
-  VocabularyType,
-  VocabularyEntry,
-  SensitiveWord
-} from '../types'
+import { VocabularyType, VocabularyEntry, SensitiveWord } from '../types'
 import {
   PROJECT_META_DIR,
   VOCABULARY_DIR,
@@ -197,7 +193,9 @@ class VocabularyService extends ServiceCore {
     this.writeJson5File(entriesPath, entries)
   }
 
-  addVocabularyEntry(entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>): VocabularyEntry {
+  addVocabularyEntry(
+    entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+  ): VocabularyEntry {
     const entries = this.loadVocabularyEntries(entry.typeId)
     const now = this.getTimestamp()
 
@@ -329,7 +327,9 @@ ${entry.description || '详细描述...'}
     this.writeJson5File(this.sensitiveWordsPath, words)
   }
 
-  addSensitiveWord(word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>): SensitiveWord {
+  addSensitiveWord(
+    word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+  ): SensitiveWord {
     const words = this.loadSensitiveWords()
     const now = this.getTimestamp()
 
@@ -375,7 +375,9 @@ ${entry.description || '详细描述...'}
     return true
   }
 
-  importSensitiveWords(words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>>): number {
+  importSensitiveWords(
+    words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt' | 'order'>>
+  ): number {
     const existingWords = this.loadSensitiveWords()
     const now = this.getTimestamp()
 

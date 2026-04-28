@@ -41,7 +41,7 @@ function OrganizationPanel(): JSX.Element {
   return (
     <div className={styles.container}>
       {viewMode === 'list' && (
-        <OrganizationGraphList 
+        <OrganizationGraphList
           onSelectGraph={handleSelectGraph}
           onCreateAndEdit={handleCreateAndEdit}
         />
@@ -54,10 +54,7 @@ function OrganizationPanel(): JSX.Element {
         />
       )}
       {viewMode === 'editor' && currentGraphId && (
-        <OrganizationGraphFullscreen
-          graphId={currentGraphId}
-          onBack={handleBackToList}
-        />
+        <OrganizationGraphFullscreen graphId={currentGraphId} onBack={handleBackToList} />
       )}
     </div>
   )

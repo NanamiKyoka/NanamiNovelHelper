@@ -21,10 +21,20 @@ interface ApiConfig {
 
 const PRESET_APIS: { id: string; name: string; description: string; hasBaseUrl: boolean }[] = [
   { id: 'openai', name: 'OpenAI API Key', description: '用于 GPT 系列模型调用', hasBaseUrl: true },
-  { id: 'anthropic', name: 'Anthropic API Key', description: '用于 Claude 系列模型调用', hasBaseUrl: true },
-  { id: 'deepseek', name: 'DeepSeek API Key', description: '用于 DeepSeek 模型调用', hasBaseUrl: true },
+  {
+    id: 'anthropic',
+    name: 'Anthropic API Key',
+    description: '用于 Claude 系列模型调用',
+    hasBaseUrl: true
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek API Key',
+    description: '用于 DeepSeek 模型调用',
+    hasBaseUrl: true
+  },
   { id: 'moonshot', name: 'Moonshot API Key', description: '用于 Kimi 模型调用', hasBaseUrl: true },
-  { id: 'zhipu', name: '智谱 API Key', description: '用于 GLM 系列模型调用', hasBaseUrl: true },
+  { id: 'zhipu', name: '智谱 API Key', description: '用于 GLM 系列模型调用', hasBaseUrl: true }
 ]
 
 export function ApiSettings(): JSX.Element {
@@ -37,7 +47,7 @@ export function ApiSettings(): JSX.Element {
   useEffect(() => {
     const loadConfigs = async () => {
       const loadedConfigs: ApiConfig[] = []
-      
+
       for (const preset of PRESET_APIS) {
         const key = await getApiKey(preset.id)
         if (key) {
@@ -49,10 +59,10 @@ export function ApiSettings(): JSX.Element {
           })
         }
       }
-      
+
       setConfigs(loadedConfigs)
     }
-    
+
     loadConfigs()
   }, [getApiKey])
 
@@ -63,22 +73,27 @@ export function ApiSettings(): JSX.Element {
       if (values.baseUrl) {
         await setApiKey(`${id}_baseUrl`, values.baseUrl)
       }
-      
+
       setConfigs(prev => {
         const exists = prev.find(c => c.id === id)
         if (exists) {
-          return prev.map(c => c.id === id ? { ...c, key: values.key, baseUrl: values.baseUrl } : c)
+          return prev.map(c =>
+            c.id === id ? { ...c, key: values.key, baseUrl: values.baseUrl } : c
+          )
         }
         const preset = PRESET_APIS.find(p => p.id === id)
-        return [...prev, {
-          id,
-          name: preset?.name || id,
-          key: values.key,
-          baseUrl: values.baseUrl,
-          enabled: true
-        }]
+        return [
+          ...prev,
+          {
+            id,
+            name: preset?.name || id,
+            key: values.key,
+            baseUrl: values.baseUrl,
+            enabled: true
+          }
+        ]
       })
-      
+
       message.success('保存成功')
     } catch (error) {
       message.error('保存失败')
@@ -118,9 +133,7 @@ export function ApiSettings(): JSX.Element {
       />
 
       <Card title="API 密钥管理" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          配置 AI 服务的 API 密钥，密钥将被安全存储在本地配置中。
-        </p>
+        <p className={baseStyles.hint}>配置 AI 服务的 API 密钥，密钥将被安全存储在本地配置中。</p>
 
         {configs.length === 0 ? (
           <Text type="secondary">暂无已配置的 API 密钥</Text>
@@ -161,14 +174,12 @@ export function ApiSettings(): JSX.Element {
       </Card>
 
       <Card title="添加 API 密钥" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          选择要添加的 API 服务并输入密钥。
-        </p>
+        <p className={baseStyles.hint}>选择要添加的 API 服务并输入密钥。</p>
 
         <Form
           form={form}
           layout="vertical"
-          onFinish={(values) => {
+          onFinish={values => {
             for (const preset of PRESET_APIS) {
               const keyField = `${preset.id}_key`
               const baseUrlField = `${preset.id}_baseUrl`
@@ -190,22 +201,16 @@ export function ApiSettings(): JSX.Element {
                 label={preset.name}
                 rules={[{ required: false }]}
               >
-                <Input.Password
-                  placeholder={`输入 ${preset.name}`}
-                  visibilityToggle
-                />
+                <Input.Password placeholder={`输入 ${preset.name}`} visibilityToggle />
               </Form.Item>
               {preset.hasBaseUrl && (
-                <Form.Item
-                  name={`${preset.id}_baseUrl`}
-                  label="自定义 Base URL（可选）"
-                >
+                <Form.Item name={`${preset.id}_baseUrl`} label="自定义 Base URL（可选）">
                   <Input placeholder="https://api.openai.com/v1" />
                 </Form.Item>
               )}
             </div>
           ))}
-          
+
           <Form.Item>
             <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
               保存

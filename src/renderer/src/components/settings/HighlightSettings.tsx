@@ -24,10 +24,7 @@ import {
   Modal
 } from 'antd'
 import type { TreeDataNode, TreeProps } from 'antd'
-import {
-  PlusOutlined,
-  FolderOutlined
-} from '@ant-design/icons'
+import { PlusOutlined, FolderOutlined } from '@ant-design/icons'
 import type { HighlightConfig, HoverCardTypeConfig } from '@shared/highlight'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
@@ -39,7 +36,7 @@ const { Option } = Select
 export function HighlightSettings(): JSX.Element {
   const { config, saveConfig, loading, updateHoverCardConfig } = useHighlightService()
   const { types: vocabTypes } = useVocabularyStore()
-  const currentProject = useProjectStore((state) => state.currentProject)
+  const currentProject = useProjectStore(state => state.currentProject)
   const [form] = Form.useForm()
   const [newExcludeExt, setNewExcludeExt] = useState('')
   const [newExcludeDir, setNewExcludeDir] = useState('')
@@ -75,43 +72,46 @@ export function HighlightSettings(): JSX.Element {
   }, [config, form])
 
   // 自动保存表单值变化
-  const handleValuesChange = useCallback((_changedValues: any, allValues: any) => {
-    if (!config) return
+  const handleValuesChange = useCallback(
+    (_changedValues: any, allValues: any) => {
+      if (!config) return
 
-    const newConfig: Partial<HighlightConfig> = {
-      scope: {
-        ...config.scope,
-        enabled: allValues.enabled
-      },
-      match: {
-        ...config.match,
-        matchMode: allValues.matchMode,
-        caseSensitive: allValues.caseSensitive,
-        matchAliases: allValues.matchAliases,
-        sensitiveWordHighlight: allValues.sensitiveWordHighlight
-      },
-      style: {
-        ...config.style,
-        showTextColor: allValues.showTextColor,
-        showBold: allValues.showBold,
-        showItalic: allValues.showItalic,
-        showUnderline: allValues.showUnderline,
-        underlineWidth: allValues.underlineWidth,
-        underlineStyle: allValues.underlineStyle,
-        showHoverTooltip: allValues.showHoverTooltip,
-        hoverDelay: allValues.hoverDelay
-      },
-      performance: {
-        ...config.performance,
-        largeFileThreshold: allValues.largeFileThreshold,
-        disableOnLargeFile: allValues.disableOnLargeFile,
-        updateDebounce: allValues.updateDebounce,
-        maxHighlights: allValues.maxHighlights
+      const newConfig: Partial<HighlightConfig> = {
+        scope: {
+          ...config.scope,
+          enabled: allValues.enabled
+        },
+        match: {
+          ...config.match,
+          matchMode: allValues.matchMode,
+          caseSensitive: allValues.caseSensitive,
+          matchAliases: allValues.matchAliases,
+          sensitiveWordHighlight: allValues.sensitiveWordHighlight
+        },
+        style: {
+          ...config.style,
+          showTextColor: allValues.showTextColor,
+          showBold: allValues.showBold,
+          showItalic: allValues.showItalic,
+          showUnderline: allValues.showUnderline,
+          underlineWidth: allValues.underlineWidth,
+          underlineStyle: allValues.underlineStyle,
+          showHoverTooltip: allValues.showHoverTooltip,
+          hoverDelay: allValues.hoverDelay
+        },
+        performance: {
+          ...config.performance,
+          largeFileThreshold: allValues.largeFileThreshold,
+          disableOnLargeFile: allValues.disableOnLargeFile,
+          updateDebounce: allValues.updateDebounce,
+          maxHighlights: allValues.maxHighlights
+        }
       }
-    }
 
-    saveConfig(newConfig)
-  }, [config, saveConfig])
+      saveConfig(newConfig)
+    },
+    [config, saveConfig]
+  )
 
   // 加载项目目录结构
   const loadProjectDirs = async () => {
@@ -148,7 +148,7 @@ export function HighlightSettings(): JSX.Element {
   }
 
   // 选择目录
-  const handleDirSelect: TreeProps['onSelect'] = (selectedKeys) => {
+  const handleDirSelect: TreeProps['onSelect'] = selectedKeys => {
     if (selectedKeys.length === 0) return
     const selectedDir = selectedKeys[0] as string
 
@@ -188,7 +188,7 @@ export function HighlightSettings(): JSX.Element {
       message.warning('该扩展名已存在')
       return
     }
-    
+
     saveConfig({
       scope: {
         ...config!.scope,
@@ -217,7 +217,7 @@ export function HighlightSettings(): JSX.Element {
       message.warning('该目录已存在')
       return
     }
-    
+
     saveConfig({
       scope: {
         ...config!.scope,
@@ -246,7 +246,7 @@ export function HighlightSettings(): JSX.Element {
       message.warning('该目录已存在')
       return
     }
-    
+
     saveConfig({
       scope: {
         ...config!.scope,
@@ -311,7 +311,9 @@ export function HighlightSettings(): JSX.Element {
         <Card title="高亮范围" className={styles.card}>
           <div className={styles.section}>
             <h4>包含目录</h4>
-            <p className={styles.hint}>留空表示全部文件，添加后将只对这些目录下的文件进行高亮。 使用相对于项目根目录的路径。</p>
+            <p className={styles.hint}>
+              留空表示全部文件，添加后将只对这些目录下的文件进行高亮。 使用相对于项目根目录的路径。
+            </p>
             <div className={styles.tagList}>
               {config.scope.includeDirectories.map(dir => (
                 <Tag
@@ -332,8 +334,8 @@ export function HighlightSettings(): JSX.Element {
                 onPressEnter={addIncludeDir}
                 style={{ flex: 1 }}
               />
-              <Button 
-                icon={<FolderOutlined />} 
+              <Button
+                icon={<FolderOutlined />}
                 onClick={() => openDirPicker('include')}
                 disabled={!currentProject}
                 title={currentProject ? '从项目中选择目录' : '请先打开项目'}
@@ -350,7 +352,9 @@ export function HighlightSettings(): JSX.Element {
 
           <div className={styles.section}>
             <h4>排除目录</h4>
-            <p className={styles.hint}>这些目录下的文件不会进行高亮。使用相对于项目根目录的路径。</p>
+            <p className={styles.hint}>
+              这些目录下的文件不会进行高亮。使用相对于项目根目录的路径。
+            </p>
             <div className={styles.tagList}>
               {config.scope.excludeDirectories.map(dir => (
                 <Tag
@@ -371,8 +375,8 @@ export function HighlightSettings(): JSX.Element {
                 onPressEnter={addExcludeDir}
                 style={{ flex: 1 }}
               />
-              <Button 
-                icon={<FolderOutlined />} 
+              <Button
+                icon={<FolderOutlined />}
                 onClick={() => openDirPicker('exclude')}
                 disabled={!currentProject}
                 title={currentProject ? '从项目中选择目录' : '请先打开项目'}
@@ -392,11 +396,7 @@ export function HighlightSettings(): JSX.Element {
             <p className={styles.hint}>这些扩展名的文件不会进行高亮</p>
             <div className={styles.tagList}>
               {config.scope.excludeExtensions.map(ext => (
-                <Tag
-                  key={ext}
-                  closable
-                  onClose={() => removeExcludeExt(ext)}
-                >
+                <Tag key={ext} closable onClose={() => removeExcludeExt(ext)}>
                   .{ext}
                 </Tag>
               ))}
@@ -456,7 +456,7 @@ export function HighlightSettings(): JSX.Element {
               <Checkbox>下划线</Checkbox>
             </Form.Item>
           </div>
-          
+
           <Form.Item noStyle shouldUpdate>
             {({ getFieldValue }) => {
               const showUnderline = getFieldValue('showUnderline')
@@ -504,7 +504,12 @@ export function HighlightSettings(): JSX.Element {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="largeFileThreshold" label="大文件阈值 (字节)">
-                <InputNumber min={100 * 1024} max={10 * 1024 * 1024} step={100 * 1024} style={{ width: '100%' }} />
+                <InputNumber
+                  min={100 * 1024}
+                  max={10 * 1024 * 1024}
+                  step={100 * 1024}
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -542,7 +547,7 @@ export function HighlightSettings(): JSX.Element {
                   </span>
                   <ColorPicker
                     value={color}
-                    onChange={(value) => {
+                    onChange={value => {
                       const newColors = {
                         ...config.match.sensitiveWordColors,
                         [severity]: typeof value === 'string' ? value : value.toHexString()
@@ -567,13 +572,13 @@ export function HighlightSettings(): JSX.Element {
           <p className={styles.hint}>
             配置悬浮时显示的词汇详细信息。可以为每种词汇类型单独设置显示的字段。
           </p>
-          
+
           <Collapse
             items={vocabTypes.map(vocabType => {
               const typeConfig = config.hoverCard?.typeConfigs?.find(
                 (c: HoverCardTypeConfig) => c.typeId === vocabType.id
               ) || { typeId: vocabType.id, fields: ['name', 'type'] }
-              
+
               return {
                 key: vocabType.id,
                 label: (
@@ -587,7 +592,7 @@ export function HighlightSettings(): JSX.Element {
                     <p className={styles.hint}>选择悬浮卡片中显示的字段：</p>
                     <Checkbox.Group
                       value={typeConfig.fields}
-                      onChange={(checkedValues) => {
+                      onChange={checkedValues => {
                         const newTypeConfigs = [
                           ...(config.hoverCard?.typeConfigs?.filter(
                             (c: HoverCardTypeConfig) => c.typeId !== vocabType.id
@@ -624,8 +629,13 @@ export function HighlightSettings(): JSX.Element {
                           <Checkbox value="color">颜色</Checkbox>
                         </Col>
                         {vocabType.fields
-                          .filter((field) => !['name', 'type', 'description', 'aliases', 'tags', 'color'].includes(field.id))
-                          .map((field) => (
+                          .filter(
+                            field =>
+                              !['name', 'type', 'description', 'aliases', 'tags', 'color'].includes(
+                                field.id
+                              )
+                          )
+                          .map(field => (
                             <Col span={8} key={field.id}>
                               <Checkbox value={field.id}>{field.name}</Checkbox>
                             </Col>
@@ -658,12 +668,7 @@ export function HighlightSettings(): JSX.Element {
             {currentProject ? '项目中没有目录' : '请先打开项目'}
           </div>
         ) : (
-          <Tree
-            showIcon
-            treeData={projectDirs}
-            onSelect={handleDirSelect}
-            defaultExpandAll
-          />
+          <Tree showIcon treeData={projectDirs} onSelect={handleDirSelect} defaultExpandAll />
         )}
       </Modal>
     </div>

@@ -1,6 +1,6 @@
 /**
  * 全局加载状态管理
- * 
+ *
  * 统一管理应用中各模块的加载状态，支持：
  * - 多模块并行加载
  * - 加载进度追踪
@@ -11,21 +11,21 @@ import { create } from 'zustand'
 
 /** 加载模块标识 */
 export type LoadingModule =
-  | 'project'      // 项目
-  | 'vocabulary'   // 词汇
-  | 'sensitive'    // 敏感词
+  | 'project' // 项目
+  | 'vocabulary' // 词汇
+  | 'sensitive' // 敏感词
   | 'relationship' // 关系图
-  | 'timeline'     // 时间线
+  | 'timeline' // 时间线
   | 'sequenceChart' // 事序图
   | 'organization' // 组织架构
-  | 'map'          // 地图
-  | 'fileTree'     // 文件树
-  | 'highlight'    // 高亮配置
-  | 'settings'     // 设置
-  | 'git'          // Git
-  | 'ai'           // AI 助手
-  | 'terminal'     // 终端
-  | string         // 支持自定义模块
+  | 'map' // 地图
+  | 'fileTree' // 文件树
+  | 'highlight' // 高亮配置
+  | 'settings' // 设置
+  | 'git' // Git
+  | 'ai' // AI 助手
+  | 'terminal' // 终端
+  | string // 支持自定义模块
 
 /** 加载任务 */
 export interface LoadingTask {
@@ -69,7 +69,7 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
   showGlobalOverlay: false,
 
   startLoading: (id, module, message) => {
-    set((state) => {
+    set(state => {
       const newTasks = new Map(state.tasks)
       newTasks.set(id, {
         id,
@@ -81,19 +81,19 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
     })
   },
 
-  endLoading: (id) => {
-    set((state) => {
+  endLoading: id => {
+    set(state => {
       const newTasks = new Map(state.tasks)
       newTasks.delete(id)
       return { tasks: newTasks }
     })
   },
 
-  setGlobalMessage: (message) => {
+  setGlobalMessage: message => {
     set({ globalMessage: message })
   },
 
-  setShowGlobalOverlay: (show) => {
+  setShowGlobalOverlay: show => {
     set({ showGlobalOverlay: show })
   },
 
@@ -101,7 +101,7 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
     set({ tasks: new Map(), globalMessage: null })
   },
 
-  isModuleLoading: (module) => {
+  isModuleLoading: module => {
     const { tasks } = get()
     for (const task of tasks.values()) {
       if (task.module === module) return true
@@ -113,13 +113,13 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
     return get().tasks.size > 0
   },
 
-  getProgress: (modules) => {
+  getProgress: modules => {
     const { tasks } = get()
     const loadingModules = new Set<LoadingModule>()
     for (const task of tasks.values()) {
       loadingModules.add(task.module)
     }
-    
+
     const completed = modules.filter(m => !loadingModules.has(m)).length
     return { completed, total: modules.length }
   }
@@ -130,12 +130,12 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
  * 简化组件中的使用
  */
 export function useLoading() {
-  const startLoading = useLoadingStore((s) => s.startLoading)
-  const endLoading = useLoadingStore((s) => s.endLoading)
-  const setGlobalMessage = useLoadingStore((s) => s.setGlobalMessage)
-  const setShowGlobalOverlay = useLoadingStore((s) => s.setShowGlobalOverlay)
-  const isModuleLoading = useLoadingStore((s) => s.isModuleLoading)
-  const isLoading = useLoadingStore((s) => s.isLoading)
+  const startLoading = useLoadingStore(s => s.startLoading)
+  const endLoading = useLoadingStore(s => s.endLoading)
+  const setGlobalMessage = useLoadingStore(s => s.setGlobalMessage)
+  const setShowGlobalOverlay = useLoadingStore(s => s.setShowGlobalOverlay)
+  const isModuleLoading = useLoadingStore(s => s.isModuleLoading)
+  const isLoading = useLoadingStore(s => s.isLoading)
 
   return {
     startLoading,
@@ -150,7 +150,7 @@ export function useLoading() {
 /**
  * 加载任务包装器
  * 自动管理加载状态
- * 
+ *
  * @example
  * const withLoading = useLoadingTask()
  * await withLoading('project-init', 'project', async () => {
@@ -158,8 +158,8 @@ export function useLoading() {
  * }, '加载项目中...')
  */
 export function useLoadingTask() {
-  const startLoading = useLoadingStore((s) => s.startLoading)
-  const endLoading = useLoadingStore((s) => s.endLoading)
+  const startLoading = useLoadingStore(s => s.startLoading)
+  const endLoading = useLoadingStore(s => s.endLoading)
 
   return async <T>(
     id: string,
@@ -181,7 +181,7 @@ export function useLoadingTask() {
  * 选择器：获取所有加载中的模块
  */
 export function useLoadingModules(): LoadingModule[] {
-  const tasks = useLoadingStore((s) => s.tasks)
+  const tasks = useLoadingStore(s => s.tasks)
   const modules = new Set<LoadingModule>()
   for (const task of tasks.values()) {
     modules.add(task.module)
@@ -193,19 +193,20 @@ export function useLoadingModules(): LoadingModule[] {
  * 选择器：获取加载状态摘要
  */
 export function useLoadingSummary() {
-  const tasks = useLoadingStore((s) => s.tasks)
-  const globalMessage = useLoadingStore((s) => s.globalMessage)
-  const showGlobalOverlay = useLoadingStore((s) => s.showGlobalOverlay)
-  
+  const tasks = useLoadingStore(s => s.tasks)
+  const globalMessage = useLoadingStore(s => s.globalMessage)
+  const showGlobalOverlay = useLoadingStore(s => s.showGlobalOverlay)
+
   const taskList = Array.from(tasks.values())
   const hasLoading = taskList.length > 0
-  
+
   // 获取最新的加载消息
-  const latestTask = taskList.length > 0 
-    ? taskList.reduce((latest, current) => 
-        current.startTime > latest.startTime ? current : latest
-      )
-    : null
+  const latestTask =
+    taskList.length > 0
+      ? taskList.reduce((latest, current) =>
+          current.startTime > latest.startTime ? current : latest
+        )
+      : null
 
   return {
     isLoading: hasLoading,

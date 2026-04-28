@@ -305,26 +305,26 @@ export const TEMPLATE_CATEGORIES: CategoryInfo[] = [
     id: 'character',
     name: '人物塑造',
     icon: 'UserOutlined',
-    description: '人物档案、性格分析、关系梳理等',
+    description: '人物档案、性格分析、关系梳理等'
   },
   {
     id: 'plot',
     name: '情节设计',
     icon: 'BranchesOutlined',
-    description: '情节冲突、高潮设计、伏笔设置等',
+    description: '情节冲突、高潮设计、伏笔设置等'
   },
   {
     id: 'worldbuilding',
     name: '世界观构建',
     icon: 'GlobalOutlined',
-    description: '世界观设计、势力架构、魔法系统等',
+    description: '世界观设计、势力架构、魔法系统等'
   },
   {
     id: 'polishing',
     name: '润色修改',
     icon: 'EditOutlined',
-    description: '文本润色、风格调整、敏感词检查等',
-  },
+    description: '文本润色、风格调整、敏感词检查等'
+  }
 ]
 
 /**
@@ -334,7 +334,7 @@ export const DEFAULT_API_CONFIG: TemplateApiConfig = {
   provider: 'openai',
   model: 'gpt-4',
   temperature: 0.7,
-  maxTokens: 2000,
+  maxTokens: 2000
 }
 
 /**
@@ -343,7 +343,7 @@ export const DEFAULT_API_CONFIG: TemplateApiConfig = {
 export const DEFAULT_OUTPUT_CONFIG: TemplateOutputConfig = {
   outputTarget: 'both',
   previewBeforeOutput: true,
-  formatOutput: true,
+  formatOutput: true
 }
 
 // ============================================
@@ -372,7 +372,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'vocabulary',
           vocabularyTypeId: 'character',
           required: true,
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -381,8 +381,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '简述故事的世界观和背景',
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请为以下角色生成详细的人物档案：
 
@@ -404,7 +404,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 0,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -421,8 +421,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'vocabulary',
           vocabularyTypeId: 'character',
           required: true,
-          order: 0,
-        },
+          order: 0
+        }
       ],
       content: `请分析以下角色的对话风格：
 
@@ -439,7 +439,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 1,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     // ========== 情节设计 ==========
@@ -457,7 +457,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '描述当前情节的基本情况',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -466,7 +466,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'multiselect',
           options: [],
           required: false,
-          order: 1,
+          order: 1
         },
         {
           id: 'v3',
@@ -475,8 +475,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'select',
           options: ['人物内心', '人物之间', '人物与环境', '人物与社会', '理念冲突'],
           required: true,
-          order: 2,
-        },
+          order: 2
+        }
       ],
       content: `请为以下情节设计冲突：
 
@@ -495,7 +495,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 0,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -512,7 +512,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '描述后续将要发生的重要事件',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -520,8 +520,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           key: '当前章节',
           type: 'chapter',
           required: false,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请为以下后续事件设计伏笔：
 
@@ -540,7 +540,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 1,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     // ========== 世界观构建 ==========
@@ -558,7 +558,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '描述世界的基本设定',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -567,8 +567,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'select',
           options: ['魔法', '武功', '超能力', '科技', '其他'],
           required: true,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请设计一套完整的{{力量类型}}系统：
 
@@ -585,7 +585,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 0,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -602,7 +602,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '描述世界的基本情况',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -611,8 +611,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'select',
           options: ['国家', '门派', '商业联盟', '秘密组织', '其他'],
           required: true,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请设计一套{{势力类型}}架构：
 
@@ -628,7 +628,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 1,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     // ========== 润色修改 ==========
@@ -646,7 +646,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中文本或粘贴需要润色的内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -655,8 +655,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'select',
           options: ['更生动', '更简洁', '更正式', '更轻松', '更文学化'],
           required: true,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请对以下文本进行润色，使其{{润色方向}}：
 
@@ -672,7 +672,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 0,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -689,7 +689,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中前文内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -699,8 +699,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           options: ['短（100-200字）', '中（300-500字）', '长（500-800字）'],
           required: false,
           defaultValue: '中（300-500字）',
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请根据以下前文内容续写后续内容：
 
@@ -719,7 +719,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 1,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -736,7 +736,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中文本或粘贴需要改写的内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -745,8 +745,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'select',
           options: ['更口语化', '更书面化', '更戏剧化', '更平实', '第一人称', '第三人称'],
           required: true,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请将以下文本改写为{{改写风格}}的风格：
 
@@ -761,7 +761,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 2,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -778,7 +778,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中文本或粘贴需要扩充的内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -787,8 +787,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'multiselect',
           options: ['环境描写', '心理描写', '动作描写', '对话细节', '感官描写'],
           required: false,
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请为以下文本扩充细节：
 
@@ -807,7 +807,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 3,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -824,7 +824,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中文本或粘贴需要总结的内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -834,8 +834,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           options: ['段落', '要点列表', '表格'],
           required: false,
           defaultValue: '要点列表',
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请总结以下文本的要点：
 
@@ -853,7 +853,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 4,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -870,8 +870,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: true,
           placeholder: '粘贴需要检查的文本',
-          order: 0,
-        },
+          order: 0
+        }
       ],
       content: `请检查以下文本的敏感内容：
 
@@ -889,7 +889,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 5,
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     },
 
     {
@@ -906,7 +906,7 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'selection',
           required: true,
           placeholder: '选中对话内容',
-          order: 0,
+          order: 0
         },
         {
           id: 'v2',
@@ -915,8 +915,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
           type: 'textarea',
           required: false,
           placeholder: '可选：描述说话角色的性格、身份等信息',
-          order: 1,
-        },
+          order: 1
+        }
       ],
       content: `请优化以下对话：
 
@@ -935,8 +935,8 @@ export function getBuiltInTemplates(): PromptTemplate[] {
       source: 'global',
       order: 6,
       createdAt: now,
-      updatedAt: now,
-    },
+      updatedAt: now
+    }
   ]
 }
 
@@ -961,7 +961,7 @@ export function getBuiltInWorkflows(): PromptWorkflow[] {
           autoExecute: false,
           saveOutput: true,
           outputVariableName: '档案',
-          order: 0,
+          order: 0
         },
         {
           id: 'step2',
@@ -971,7 +971,7 @@ export function getBuiltInWorkflows(): PromptWorkflow[] {
           saveOutput: true,
           outputVariableName: '对话风格',
           nextStepId: 'step3',
-          order: 1,
+          order: 1
         },
         {
           id: 'step3',
@@ -979,8 +979,8 @@ export function getBuiltInWorkflows(): PromptWorkflow[] {
           templateId: '',
           autoExecute: true,
           saveOutput: false,
-          order: 2,
-        },
+          order: 2
+        }
       ],
       startStepId: 'step1',
       globalVariables: [
@@ -991,15 +991,15 @@ export function getBuiltInWorkflows(): PromptWorkflow[] {
           type: 'vocabulary',
           vocabularyTypeId: 'character',
           required: true,
-          order: 0,
-        },
+          order: 0
+        }
       ],
       isBuiltIn: true,
       source: 'global',
       order: 0,
       createdAt: now,
-      updatedAt: now,
-    },
+      updatedAt: now
+    }
   ]
 }
 

@@ -1,6 +1,6 @@
 /**
  * 错误边界组件
- * 
+ *
  * 捕获子组件的 JavaScript 错误，防止整个应用崩溃
  */
 
@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </Button>,
               <Button key="reload" onClick={this.handleReload}>
                 刷新页面
-              </Button>,
+              </Button>
             ]}
           />
         </div>
@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  */
 export function ModuleErrorBoundary({
   children,
-  moduleName,
+  moduleName
 }: {
   children: ReactNode
   moduleName: string

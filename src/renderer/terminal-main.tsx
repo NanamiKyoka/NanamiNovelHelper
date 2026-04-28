@@ -14,8 +14,8 @@ import '@renderer/styles/global.css'
 
 // 主题提供者组件
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const config = useThemeStore((state) => state.config)
-  const resolvedMode = useThemeStore((state) => state.resolvedMode)
+  const config = useThemeStore(state => state.config)
+  const resolvedMode = useThemeStore(state => state.resolvedMode)
 
   // 更新 CSS 变量和 body 类
   useEffect(() => {
@@ -23,11 +23,11 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
     root.style.setProperty('--font-size', `${config.fontSize}px`)
     root.style.setProperty('--font-family', config.fontFamily)
     root.style.setProperty('--primary-color', config.primaryColor)
-    
+
     // 更新 body 类
     document.body.classList.remove('light', 'dark')
     document.body.classList.add(resolvedMode)
-    
+
     // 更新 data 属性（用于 CSS 选择器）
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, config.primaryColor, resolvedMode])
@@ -45,9 +45,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
 
   return (
     <ConfigProvider locale={zhCN} theme={antdTheme}>
-      <AntApp>
-        {children}
-      </AntApp>
+      <AntApp>{children}</AntApp>
     </ConfigProvider>
   )
 }
@@ -68,12 +66,12 @@ const initProject = async () => {
 const initTerminals = async () => {
   try {
     const terminals = await window.electron.terminal.list()
-    useTerminalStore.setState({ 
+    useTerminalStore.setState({
       terminals,
       activeTerminalId: terminals.length > 0 ? terminals[0].id : null,
       isPanelVisible: true
     })
-    
+
     // 如果没有终端，创建一个
     if (terminals.length === 0) {
       const cwd = useProjectStore.getState().currentProject?.path
@@ -82,7 +80,7 @@ const initTerminals = async () => {
   } catch (error) {
     console.error('Failed to load terminals:', error)
   }
-  
+
   // 加载可用 Shell
   useTerminalStore.getState().loadAvailableShells()
 }

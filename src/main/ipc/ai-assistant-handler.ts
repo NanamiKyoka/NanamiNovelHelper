@@ -14,7 +14,7 @@ import type {
   WorkflowListItem,
   AiApiCallOptions,
   AiApiCallResult,
-  AIProvider,
+  AIProvider
 } from '@shared/ai-assistant'
 
 let registered = false
@@ -59,20 +59,28 @@ export function registerAiAssistantHandlers(): void {
     return aiAssistantService.deleteTemplate(id)
   })
 
-  ipcMain.handle('aiAssistant:copyTemplateToProject', (_event, id: string): PromptTemplate | null => {
-    validateParams('aiAssistant:copyTemplateToProject').nonEmptyString(id, 'id').validate()
-    return aiAssistantService.copyTemplateToProject(id)
-  })
+  ipcMain.handle(
+    'aiAssistant:copyTemplateToProject',
+    (_event, id: string): PromptTemplate | null => {
+      validateParams('aiAssistant:copyTemplateToProject').nonEmptyString(id, 'id').validate()
+      return aiAssistantService.copyTemplateToProject(id)
+    }
+  )
 
   ipcMain.handle('aiAssistant:exportTemplate', (_event, id: string): string | null => {
     validateParams('aiAssistant:exportTemplate').nonEmptyString(id, 'id').validate()
     return aiAssistantService.exportTemplate(id)
   })
 
-  ipcMain.handle('aiAssistant:importTemplate', (_event, json5Content: string): PromptTemplate | null => {
-    validateParams('aiAssistant:importTemplate').nonEmptyString(json5Content, 'json5Content').validate()
-    return aiAssistantService.importTemplate(json5Content)
-  })
+  ipcMain.handle(
+    'aiAssistant:importTemplate',
+    (_event, json5Content: string): PromptTemplate | null => {
+      validateParams('aiAssistant:importTemplate')
+        .nonEmptyString(json5Content, 'json5Content')
+        .validate()
+      return aiAssistantService.importTemplate(json5Content)
+    }
+  )
 
   // ============================================
   // 工作流 IPC 处理器
@@ -112,10 +120,15 @@ export function registerAiAssistantHandlers(): void {
     return aiAssistantService.exportWorkflow(id)
   })
 
-  ipcMain.handle('aiAssistant:importWorkflow', (_event, json5Content: string): PromptWorkflow | null => {
-    validateParams('aiAssistant:importWorkflow').nonEmptyString(json5Content, 'json5Content').validate()
-    return aiAssistantService.importWorkflow(json5Content)
-  })
+  ipcMain.handle(
+    'aiAssistant:importWorkflow',
+    (_event, json5Content: string): PromptWorkflow | null => {
+      validateParams('aiAssistant:importWorkflow')
+        .nonEmptyString(json5Content, 'json5Content')
+        .validate()
+      return aiAssistantService.importWorkflow(json5Content)
+    }
+  )
 
   // ============================================
   // 执行状态 IPC 处理器
@@ -124,7 +137,10 @@ export function registerAiAssistantHandlers(): void {
   ipcMain.handle(
     'aiAssistant:createExecution',
     (_event, workflowId: string, workflowName: string): WorkflowExecution => {
-      validateParams('aiAssistant:createExecution').nonEmptyString(workflowId, 'workflowId').nonEmptyString(workflowName, 'workflowName').validate()
+      validateParams('aiAssistant:createExecution')
+        .nonEmptyString(workflowId, 'workflowId')
+        .nonEmptyString(workflowName, 'workflowName')
+        .validate()
       return aiAssistantService.createExecution(workflowId, workflowName)
     }
   )
@@ -137,7 +153,10 @@ export function registerAiAssistantHandlers(): void {
   ipcMain.handle(
     'aiAssistant:updateExecution',
     (_event, id: string, updates: Partial<WorkflowExecution>): WorkflowExecution | null => {
-      validateParams('aiAssistant:updateExecution').nonEmptyString(id, 'id').object(updates, 'updates').validate()
+      validateParams('aiAssistant:updateExecution')
+        .nonEmptyString(id, 'id')
+        .object(updates, 'updates')
+        .validate()
       return aiAssistantService.updateExecution(id, updates)
     }
   )

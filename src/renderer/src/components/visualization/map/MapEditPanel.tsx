@@ -1,6 +1,6 @@
 /**
  * 地图编辑面板
- * 
+ *
  * 用于编辑选中元素的属性
  */
 
@@ -8,8 +8,8 @@ import { useState, useEffect } from 'react'
 import { Input, Select, InputNumber, ColorPicker, Button, Divider, Empty } from 'antd'
 import { DeleteOutlined, LinkOutlined } from '@ant-design/icons'
 import { useMapStore } from '@renderer/stores/mapStore'
-import type { 
-  UpdateRegionOptions, 
+import type {
+  UpdateRegionOptions,
   UpdateConnectionOptions,
   ConnectionType,
   LineStyle
@@ -35,17 +35,17 @@ export function MapEditPanel() {
   const currentMap = useMapStore(state => state.currentMap)
   const selectedRegionId = useMapStore(state => state.selectedRegionId)
   const selectedConnectionId = useMapStore(state => state.selectedConnectionId)
-  
+
   const updateRegion = useMapStore(state => state.updateRegion)
   const updateConnection = useMapStore(state => state.updateConnection)
   const deleteRegion = useMapStore(state => state.deleteRegion)
   const deleteConnection = useMapStore(state => state.deleteConnection)
   const selectRegion = useMapStore(state => state.selectRegion)
-  
+
   // 获取选中的元素
   const selectedRegion = currentMap?.data?.regions?.find(r => r.id === selectedRegionId)
   const selectedConnection = currentMap?.data?.connections?.find(c => c.id === selectedConnectionId)
-  
+
   // 板块编辑状态
   const [regionForm, setRegionForm] = useState<{
     name: string
@@ -62,7 +62,7 @@ export function MapEditPanel() {
     borderWidth: 2,
     opacity: 0.7
   })
-  
+
   // 连接编辑状态
   const [connectionForm, setConnectionForm] = useState<{
     name: string
@@ -81,7 +81,7 @@ export function MapEditPanel() {
     lineWidth: 2,
     lineStyle: 'solid'
   })
-  
+
   // 同步板块表单
   useEffect(() => {
     if (selectedRegion) {
@@ -95,7 +95,7 @@ export function MapEditPanel() {
       })
     }
   }, [selectedRegion])
-  
+
   // 同步连接表单
   useEffect(() => {
     if (selectedConnection) {
@@ -110,52 +110,52 @@ export function MapEditPanel() {
       })
     }
   }, [selectedConnection])
-  
+
   // 更新板块属性
   const handleRegionChange = (key: string, value: string | number) => {
     setRegionForm(prev => ({ ...prev, [key]: value }))
-    
+
     if (selectedRegionId) {
       updateRegion(selectedRegionId, { [key]: value } as UpdateRegionOptions)
     }
   }
-  
+
   // 更新连接属性
   const handleConnectionChange = (key: string, value: string | number) => {
     setConnectionForm(prev => ({ ...prev, [key]: value }))
-    
+
     if (selectedConnectionId) {
       updateConnection(selectedConnectionId, { [key]: value } as UpdateConnectionOptions)
     }
   }
-  
+
   // 获取连接的板块名称
   const getConnectionRegionNames = () => {
     if (!selectedConnection || !currentMap?.data) return { source: '', target: '' }
-    
+
     const sourceRegion = currentMap.data.regions?.find(r => r.id === selectedConnection.sourceId)
     const targetRegion = currentMap.data.regions?.find(r => r.id === selectedConnection.targetId)
-    
+
     return {
       source: sourceRegion?.name || '未知',
       target: targetRegion?.name || '未知'
     }
   }
-  
+
   // 渲染板块编辑面板
   if (selectedRegion) {
     return (
       <div className={styles.panel}>
         <div className={styles.header}>
           <h3>板块属性</h3>
-          <Button 
-            danger 
-            type="text" 
+          <Button
+            danger
+            type="text"
             icon={<DeleteOutlined />}
             onClick={() => deleteRegion(selectedRegionId!)}
           />
         </div>
-        
+
         <div className={styles.content}>
           <div className={styles.field}>
             <label>名称</label>
@@ -165,7 +165,7 @@ export function MapEditPanel() {
               placeholder="输入板块名称"
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>描述</label>
             <TextArea
@@ -175,9 +175,9 @@ export function MapEditPanel() {
               rows={3}
             />
           </div>
-          
+
           <Divider>样式</Divider>
-          
+
           <div className={styles.field}>
             <label>填充颜色</label>
             <ColorPicker
@@ -186,7 +186,7 @@ export function MapEditPanel() {
               showText
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>边框颜色</label>
             <ColorPicker
@@ -195,7 +195,7 @@ export function MapEditPanel() {
               showText
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>边框宽度</label>
             <InputNumber
@@ -206,7 +206,7 @@ export function MapEditPanel() {
               style={{ width: '100%' }}
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>透明度</label>
             <InputNumber
@@ -218,21 +218,22 @@ export function MapEditPanel() {
               style={{ width: '100%' }}
             />
           </div>
-          
+
           <Divider>连接</Divider>
-          
+
           <div className={styles.connectionsList}>
             {currentMap?.data?.connections
               ?.filter(c => c.sourceId === selectedRegionId || c.targetId === selectedRegionId)
               .map(connection => {
-                const otherRegionId = connection.sourceId === selectedRegionId 
-                  ? connection.targetId 
-                  : connection.sourceId
+                const otherRegionId =
+                  connection.sourceId === selectedRegionId
+                    ? connection.targetId
+                    : connection.sourceId
                 const otherRegion = currentMap?.data?.regions?.find(r => r.id === otherRegionId)
-                
+
                 return (
-                  <div 
-                    key={connection.id} 
+                  <div
+                    key={connection.id}
                     className={styles.connectionItem}
                     onClick={() => {
                       selectRegion(null)
@@ -242,43 +243,45 @@ export function MapEditPanel() {
                     <LinkOutlined />
                     <span>{otherRegion?.name || '未知'}</span>
                     <span className={styles.connectionType}>
-                      {connection.connectionType === 'land' ? '陆路' :
-                       connection.connectionType === 'water' ? '水路' :
-                       connection.connectionType === 'portal' ? '传送' : connection.customTypeName || '自定义'}
+                      {connection.connectionType === 'land'
+                        ? '陆路'
+                        : connection.connectionType === 'water'
+                          ? '水路'
+                          : connection.connectionType === 'portal'
+                            ? '传送'
+                            : connection.customTypeName || '自定义'}
                     </span>
                   </div>
                 )
               })}
             {currentMap?.data?.connections?.filter(
               c => c.sourceId === selectedRegionId || c.targetId === selectedRegionId
-            ).length === 0 && (
-              <div className={styles.emptyConnections}>暂无连接</div>
-            )}
+            ).length === 0 && <div className={styles.emptyConnections}>暂无连接</div>}
           </div>
         </div>
       </div>
     )
   }
-  
+
   // 渲染连接编辑面板
   if (selectedConnection) {
     const { source, target } = getConnectionRegionNames()
-    
+
     return (
       <div className={styles.panel}>
         <div className={styles.header}>
           <h3>连接属性</h3>
-          <Button 
-            danger 
-            type="text" 
+          <Button
+            danger
+            type="text"
             icon={<DeleteOutlined />}
             onClick={() => deleteConnection(selectedConnectionId!)}
           />
         </div>
-        
+
         <div className={styles.content}>
           <div className={styles.connectedRegions}>
-            <span 
+            <span
               className={styles.regionLink}
               onClick={() => {
                 if (selectedConnection) {
@@ -290,7 +293,7 @@ export function MapEditPanel() {
               {source}
             </span>
             <span className={styles.arrow}>→</span>
-            <span 
+            <span
               className={styles.regionLink}
               onClick={() => {
                 if (selectedConnection) {
@@ -302,7 +305,7 @@ export function MapEditPanel() {
               {target}
             </span>
           </div>
-          
+
           <div className={styles.field}>
             <label>名称</label>
             <Input
@@ -311,7 +314,7 @@ export function MapEditPanel() {
               placeholder="连接名称（可选）"
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>描述</label>
             <TextArea
@@ -321,9 +324,9 @@ export function MapEditPanel() {
               rows={2}
             />
           </div>
-          
+
           <Divider>类型</Divider>
-          
+
           <div className={styles.field}>
             <label>连接类型</label>
             <Select
@@ -333,7 +336,7 @@ export function MapEditPanel() {
               style={{ width: '100%' }}
             />
           </div>
-          
+
           {connectionForm.connectionType === 'custom' && (
             <div className={styles.field}>
               <label>自定义类型名</label>
@@ -344,9 +347,9 @@ export function MapEditPanel() {
               />
             </div>
           )}
-          
+
           <Divider>样式</Divider>
-          
+
           <div className={styles.field}>
             <label>颜色</label>
             <ColorPicker
@@ -355,7 +358,7 @@ export function MapEditPanel() {
               showText
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>线宽</label>
             <InputNumber
@@ -366,7 +369,7 @@ export function MapEditPanel() {
               style={{ width: '100%' }}
             />
           </div>
-          
+
           <div className={styles.field}>
             <label>线条样式</label>
             <Select
@@ -380,15 +383,12 @@ export function MapEditPanel() {
       </div>
     )
   }
-  
+
   // 无选中元素
   return (
     <div className={styles.panel}>
       <div className={styles.empty}>
-        <Empty
-          description="选择一个板块或连接进行编辑"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="选择一个板块或连接进行编辑" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     </div>
   )

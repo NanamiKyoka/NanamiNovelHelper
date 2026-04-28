@@ -50,7 +50,10 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
               const ext = file.type.split('/')[1]?.toLowerCase() || ''
               const fileName = file.name || `image.${ext}`
               const fileExt = fileName.split('.').pop()?.toLowerCase() || ext
-              if (!options.allowedFormats.includes(fileExt) && !options.allowedFormats.includes(ext)) {
+              if (
+                !options.allowedFormats.includes(fileExt) &&
+                !options.allowedFormats.includes(ext)
+              ) {
                 console.warn(`Image format ${fileExt} not allowed`)
                 continue
               }
@@ -60,7 +63,7 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
                 continue
               }
 
-              options.onUpload(file).then((result) => {
+              options.onUpload(file).then(result => {
                 if (result) {
                   view.dispatch(
                     view.state.tr.replaceSelectionWith(
@@ -105,7 +108,7 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
                 continue
               }
 
-              options.onUpload(file).then((result) => {
+              options.onUpload(file).then(result => {
                 if (result) {
                   view.dispatch(
                     view.state.tr.replaceSelectionWith(
@@ -126,12 +129,10 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
   }
 })
 
-export async function uploadImageOriginal(
-  file: File
-): Promise<string | null> {
-  return new Promise((resolve) => {
+export async function uploadImageOriginal(file: File): Promise<string | null> {
+  return new Promise(resolve => {
     const reader = new FileReader()
-    reader.onload = async (e) => {
+    reader.onload = async e => {
       const base64 = e.target?.result as string
       if (!base64) {
         resolve(null)

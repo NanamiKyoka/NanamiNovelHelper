@@ -16,7 +16,7 @@ import {
   TagOutlined,
   HolderOutlined,
   CheckOutlined,
-  CameraOutlined,
+  CameraOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -27,14 +27,14 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverlay,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
@@ -73,27 +73,23 @@ function SortableTimelineItem({
   editValue,
   onChapterClick,
   formatTimeInfo,
-  getTimeIcon,
+  getTimeIcon
 }: SortableTimelineItemProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: node.id, disabled: !isEditMode })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: node.id,
+    disabled: !isEditMode
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   }
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
+    <div
+      ref={setNodeRef}
+      style={style}
       className={`${styles.timelineItemWrapper}${isEditMode ? ` ${styles.editing}` : ''}`}
       data-node-id={node.id}
     >
@@ -117,7 +113,7 @@ function SortableTimelineItem({
               <Input
                 size="small"
                 value={editValue}
-                onChange={(e) => onEditChange(e.target.value)}
+                onChange={e => onEditChange(e.target.value)}
                 onBlur={() => onFinishEdit(node.id, 'title', editValue)}
                 onPressEnter={() => onFinishEdit(node.id, 'title', editValue)}
                 autoFocus
@@ -145,7 +141,7 @@ function SortableTimelineItem({
             <Input.TextArea
               size="small"
               value={editValue}
-              onChange={(e) => onEditChange(e.target.value)}
+              onChange={e => onEditChange(e.target.value)}
               onBlur={() => onFinishEdit(node.id, 'description', editValue)}
               onPressEnter={() => onFinishEdit(node.id, 'description', editValue)}
               autoFocus
@@ -169,7 +165,7 @@ function SortableTimelineItem({
             <div className={styles.nodeCharacters}>
               <UserOutlined />
               <div className={styles.characterList}>
-                {node.characters.map((char) => (
+                {node.characters.map(char => (
                   <Tag key={char.id} color={char.color || 'default'}>
                     {char.name}
                   </Tag>
@@ -187,24 +183,26 @@ function SortableTimelineItem({
               title="点击跳转到章节"
             >
               <FileTextOutlined />
-              <Text type="secondary" style={{ textDecoration: 'underline' }}>{node.chapter.title}</Text>
+              <Text type="secondary" style={{ textDecoration: 'underline' }}>
+                {node.chapter.title}
+              </Text>
             </div>
           )}
 
           {/* 分支标记 */}
-          {node.isBranchPoint && node.branchedTimelineIds && node.branchedTimelineIds.length > 0 && (
-            <div className={styles.branchMark}>
-              <BranchesOutlined style={{ color: '#722ed1' }} />
-              <Text style={{ color: '#722ed1' }}>
-                {node.branchedTimelineIds.length} 个分支
-              </Text>
-              {node.branchedTimelineIds.map((id, idx) => (
-                <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
-                  分支 {idx + 1}
-                </Tag>
-              ))}
-            </div>
-          )}
+          {node.isBranchPoint &&
+            node.branchedTimelineIds &&
+            node.branchedTimelineIds.length > 0 && (
+              <div className={styles.branchMark}>
+                <BranchesOutlined style={{ color: '#722ed1' }} />
+                <Text style={{ color: '#722ed1' }}>{node.branchedTimelineIds.length} 个分支</Text>
+                {node.branchedTimelineIds.map((id, idx) => (
+                  <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
+                    分支 {idx + 1}
+                  </Tag>
+                ))}
+              </div>
+            )}
         </div>
       </div>
     </div>
@@ -220,29 +218,36 @@ interface TimelinePreviewProps {
 function TimelinePreview({
   timelineId,
   onClose,
-  onEnterEditMode,
+  onEnterEditMode
 }: TimelinePreviewProps): JSX.Element {
   const { message } = App.useApp()
 
-  const { currentTimeline, isLoading, loadTimeline, updateNodesOrder, updateNode } = useTimelineStore()
+  const { currentTimeline, isLoading, loadTimeline, updateNodesOrder, updateNode } =
+    useTimelineStore()
   const { openFile } = useEditorStore()
   const { exitFullscreen } = useUIStore()
 
   // 章节跳转处理
-  const handleChapterClick = useCallback(async (path: string, title: string) => {
-    try {
-      await openFile(path, title)
-      exitFullscreen()
-    } catch (error) {
-      message.error('无法打开章节文件')
-    }
-  }, [openFile, exitFullscreen, message])
+  const handleChapterClick = useCallback(
+    async (path: string, title: string) => {
+      try {
+        await openFile(path, title)
+        exitFullscreen()
+      } catch (error) {
+        message.error('无法打开章节文件')
+      }
+    },
+    [openFile, exitFullscreen, message]
+  )
 
   // 编辑模式状态
   const [isEditMode, setIsEditMode] = useState(false)
 
   // 行内快速编辑状态
-  const [editingField, setEditingField] = useState<{ nodeId: string; field: 'title' | 'description' } | null>(null)
+  const [editingField, setEditingField] = useState<{
+    nodeId: string
+    field: 'title' | 'description'
+  } | null>(null)
   const [editValue, setEditValue] = useState('')
 
   // 导出用ref
@@ -261,7 +266,9 @@ function TimelinePreview({
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.scale(scale, scale)
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() || '#ffffff'
+      ctx.fillStyle =
+        getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() ||
+        '#ffffff'
       ctx.fillRect(0, 0, rect.width, rect.height)
 
       const svgData = new XMLSerializer().serializeToString(
@@ -303,11 +310,11 @@ function TimelinePreview({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-      },
+        distance: 5
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -373,46 +380,55 @@ function TimelinePreview({
       const el = contentRef.current.querySelector(`[data-node-id="${node.id}"]`)
       if (el) {
         const rect = el.getBoundingClientRect()
-        positions.set(node.id, new DOMRect(
-          rect.left - containerRect.left,
-          rect.top - containerRect.top,
-          rect.width,
-          rect.height
-        ))
+        positions.set(
+          node.id,
+          new DOMRect(
+            rect.left - containerRect.left,
+            rect.top - containerRect.top,
+            rect.width,
+            rect.height
+          )
+        )
       }
     }
     setNodePositions(positions)
   }, [sortedNodes, isEditMode])
 
   // 行内快速编辑处理
-  const handleStartEdit = useCallback((nodeId: string, field: 'title' | 'description') => {
-    const node = sortedNodes.find(n => n.id === nodeId)
-    if (node) {
-      setEditingField({ nodeId, field })
-      setEditValue(field === 'title' ? node.title : (node.description || ''))
-    }
-  }, [sortedNodes])
-
-  const handleFinishEdit = useCallback(async (nodeId: string, field: 'title' | 'description', value: string) => {
-    if (editingField?.nodeId === nodeId && editingField.field === field) {
-      const trimmedValue = value.trim()
-      if (field === 'title' && !trimmedValue) {
-        message.warning('标题不能为空')
-        setEditingField(null)
-        return
-      }
+  const handleStartEdit = useCallback(
+    (nodeId: string, field: 'title' | 'description') => {
       const node = sortedNodes.find(n => n.id === nodeId)
       if (node) {
-        const originalValue = field === 'title' ? node.title : (node.description || '')
-        if (trimmedValue !== originalValue) {
-          await updateNode(nodeId, { [field]: trimmedValue })
-          message.success('已更新')
+        setEditingField({ nodeId, field })
+        setEditValue(field === 'title' ? node.title : node.description || '')
+      }
+    },
+    [sortedNodes]
+  )
+
+  const handleFinishEdit = useCallback(
+    async (nodeId: string, field: 'title' | 'description', value: string) => {
+      if (editingField?.nodeId === nodeId && editingField.field === field) {
+        const trimmedValue = value.trim()
+        if (field === 'title' && !trimmedValue) {
+          message.warning('标题不能为空')
+          setEditingField(null)
+          return
+        }
+        const node = sortedNodes.find(n => n.id === nodeId)
+        if (node) {
+          const originalValue = field === 'title' ? node.title : node.description || ''
+          if (trimmedValue !== originalValue) {
+            await updateNode(nodeId, { [field]: trimmedValue })
+            message.success('已更新')
+          }
         }
       }
-    }
-    setEditingField(null)
-    setEditValue('')
-  }, [editingField, sortedNodes, updateNode, message])
+      setEditingField(null)
+      setEditValue('')
+    },
+    [editingField, sortedNodes, updateNode, message]
+  )
 
   // 拖拽开始
   const handleDragStart = useCallback((event: DragStartEvent): void => {
@@ -425,14 +441,14 @@ function TimelinePreview({
       const { active, over } = event
 
       if (over && active.id !== over.id) {
-        const oldIndex = sortedNodes.findIndex((n) => n.id === active.id)
-        const newIndex = sortedNodes.findIndex((n) => n.id === over.id)
+        const oldIndex = sortedNodes.findIndex(n => n.id === active.id)
+        const newIndex = sortedNodes.findIndex(n => n.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
           // 创建新排序的节点数组
           const newNodes = arrayMove(sortedNodes, oldIndex, newIndex).map((node, index) => ({
             ...node,
-            order: index,
+            order: index
           }))
 
           // 调用 updateNodesOrder 更新顺序
@@ -451,11 +467,11 @@ function TimelinePreview({
   )
 
   // 当前拖拽的节点
-  const activeNode = activeId ? sortedNodes.find((n) => n.id === activeId) : null
+  const activeNode = activeId ? sortedNodes.find(n => n.id === activeId) : null
 
   // 切换编辑模式
   const toggleEditMode = useCallback((): void => {
-    setIsEditMode((prev) => !prev)
+    setIsEditMode(prev => !prev)
   }, [])
 
   if (isLoading) {
@@ -534,9 +550,27 @@ function TimelinePreview({
       {/* 时间线主体 */}
       <div className={styles.content} ref={contentRef} style={{ position: 'relative' }}>
         {causalLines.length > 0 && (
-          <svg className={styles.causalSvg} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
+          <svg
+            className={styles.causalSvg}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 1
+            }}
+          >
             <defs>
-              <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrowhead"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <polygon points="0 0, 8 3, 0 6" fill="#722ed1" />
               </marker>
             </defs>
@@ -587,7 +621,7 @@ function TimelinePreview({
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={sortedNodes.map((n) => n.id)}
+              items={sortedNodes.map(n => n.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className={styles.timeline}>

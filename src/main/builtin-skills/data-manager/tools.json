@@ -343,7 +343,14 @@
         "required": false,
         "default": "list_graphs",
         "description": "操作类型",
-        "enum": ["list_graphs", "get_graph", "get_node", "get_edge", "search_nodes", "get_relations"]
+        "enum": [
+          "list_graphs",
+          "get_graph",
+          "get_node",
+          "get_edge",
+          "search_nodes",
+          "get_relations"
+        ]
       },
       {
         "name": "graphId",
@@ -546,7 +553,15 @@
         "required": false,
         "default": "list_graphs",
         "description": "操作类型",
-        "enum": ["list_graphs", "get_graph", "get_node", "get_children", "get_descendants", "get_ancestors", "search_nodes"]
+        "enum": [
+          "list_graphs",
+          "get_graph",
+          "get_node",
+          "get_children",
+          "get_descendants",
+          "get_ancestors",
+          "search_nodes"
+        ]
       },
       {
         "name": "graphId",
@@ -720,7 +735,14 @@
         "required": false,
         "default": "list_timelines",
         "description": "操作类型",
-        "enum": ["list_timelines", "get_timeline", "get_node", "get_branches", "search_nodes", "get_character_events"]
+        "enum": [
+          "list_timelines",
+          "get_timeline",
+          "get_node",
+          "get_branches",
+          "search_nodes",
+          "get_character_events"
+        ]
       },
       {
         "name": "timelineId",
@@ -767,7 +789,15 @@
         "required": false,
         "default": "list_charts",
         "description": "操作类型",
-        "enum": ["list_charts", "get_chart", "get_event", "search_events", "get_character_events", "get_location_events", "get_event_types"]
+        "enum": [
+          "list_charts",
+          "get_chart",
+          "get_event",
+          "search_events",
+          "get_character_events",
+          "get_location_events",
+          "get_event_types"
+        ]
       },
       {
         "name": "chartId",

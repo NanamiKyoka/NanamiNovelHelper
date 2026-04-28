@@ -1,6 +1,6 @@
 /**
  * 骨架屏组件
- * 
+ *
  * 提供优雅的加载占位效果，改善用户等待体验
  */
 
@@ -26,11 +26,7 @@ export function SkeletonLoader({
   className,
   ...restProps
 }: SkeletonLoaderProps) {
-  const containerClass = [
-    styles.container,
-    animate && styles.animate,
-    className,
-  ]
+  const containerClass = [styles.container, animate && styles.animate, className]
     .filter(Boolean)
     .join(' ')
 
@@ -66,7 +62,12 @@ export function SkeletonLoader({
           {[...Array(rows)].map((_, i) => (
             <div key={i} className={styles.tableRow}>
               {[...Array(4)].map((_, j) => (
-                <Skeleton.Input key={j} active={animate} size="small" className={styles.tableCell} />
+                <Skeleton.Input
+                  key={j}
+                  active={animate}
+                  size="small"
+                  className={styles.tableCell}
+                />
               ))}
             </div>
           ))}

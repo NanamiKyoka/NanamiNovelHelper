@@ -88,9 +88,8 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
 
     // 获取当前最大 order
     const existingTimelines = this.getList()
-    const maxOrder = existingTimelines.length > 0
-      ? Math.max(...existingTimelines.map(t => t.order ?? 0))
-      : -1
+    const maxOrder =
+      existingTimelines.length > 0 ? Math.max(...existingTimelines.map(t => t.order ?? 0)) : -1
 
     const timeline: Timeline = {
       id: timelineId,
@@ -249,11 +248,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
   /**
    * 移动节点（改变顺序）
    */
-  moveNode(
-    timelineId: string,
-    nodeId: string,
-    newOrder: number
-  ): TimelineNode[] | null {
+  moveNode(timelineId: string, nodeId: string, newOrder: number): TimelineNode[] | null {
     const timeline = this.get(timelineId)
     if (!timeline) return null
 
@@ -292,7 +287,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
     if (!timeline) return null
 
     const now = this.getTimestamp()
-    
+
     // 获取要移动的节点
     const nodesToMove = timeline.nodes.filter(n => nodeIds.includes(n.id))
     if (nodesToMove.length === 0) return null
@@ -401,9 +396,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
    */
   getBranchTimelines(parentTimelineId: string): TimelineMeta[] {
     const allTimelines = this.getList()
-    return allTimelines.filter(
-      t => t.branchInfo.parentTimelineId === parentTimelineId
-    )
+    return allTimelines.filter(t => t.branchInfo.parentTimelineId === parentTimelineId)
   }
 
   /**
@@ -550,7 +543,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
   reorderTimelines(timelineIds: string[]): boolean {
     try {
       const now = this.getTimestamp()
-      
+
       for (let i = 0; i < timelineIds.length; i++) {
         const timeline = this.get(timelineIds[i])
         if (timeline) {
@@ -559,7 +552,7 @@ class TimelineService extends BaseService<Timeline, TimelineMeta> {
           this.save(timeline)
         }
       }
-      
+
       return true
     } catch (error) {
       this.logger.error('重排时间线顺序失败', error)

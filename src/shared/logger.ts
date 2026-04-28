@@ -1,6 +1,6 @@
 /**
  * 统一日志工具
- * 
+ *
  * 提供结构化的日志输出，支持模块标识和日志级别控制
  * 可在主进程和渲染进程中使用
  */
@@ -101,7 +101,7 @@ export class Logger {
     return new Logger({
       module: `${this.module}:${subModule}`,
       enableDebug: this.enableDebug,
-      isDev: this.isDev,
+      isDev: this.isDev
     })
   }
 }
@@ -110,34 +110,40 @@ export class Logger {
  * 创建日志器
  */
 export function createLogger(
-  module: string, 
+  module: string,
   options?: Partial<LoggerOptions> & { isDev?: EnvironmentDetector }
 ): Logger {
   return new Logger({
     module,
     enableDebug: options?.enableDebug,
-    isDev: options?.isDev,
+    isDev: options?.isDev
   })
 }
 
 /**
  * 创建主进程日志器
  */
-export function createMainLogger(module: string, options?: Partial<Omit<LoggerOptions, 'isDev'>>): Logger {
+export function createMainLogger(
+  module: string,
+  options?: Partial<Omit<LoggerOptions, 'isDev'>>
+): Logger {
   return createLogger(module, {
     ...options,
-    isDev: () => process.env.NODE_ENV === 'development',
+    isDev: () => process.env.NODE_ENV === 'development'
   })
 }
 
 /**
  * 创建渲染进程日志器
  */
-export function createRendererLogger(module: string, options?: Partial<Omit<LoggerOptions, 'isDev'>>): Logger {
+export function createRendererLogger(
+  module: string,
+  options?: Partial<Omit<LoggerOptions, 'isDev'>>
+): Logger {
   return createLogger(module, {
     ...options,
     // @ts-ignore - import.meta 在编译时会被处理
-    isDev: () => import.meta.env?.DEV ?? process.env.NODE_ENV === 'development',
+    isDev: () => import.meta.env?.DEV ?? process.env.NODE_ENV === 'development'
   })
 }
 
@@ -146,7 +152,7 @@ export function createRendererLogger(module: string, options?: Partial<Omit<Logg
  */
 export const logger = {
   _isDev: defaultIsDev,
-  
+
   debug: (module: string, message: string, ...args: unknown[]) => {
     if (defaultIsDev()) {
       console.log(`[${module}] ${message}`, ...args)
@@ -166,7 +172,7 @@ export const logger = {
     } else {
       console.error(`[${module}] ${message}`)
     }
-  },
+  }
 }
 
 export default Logger

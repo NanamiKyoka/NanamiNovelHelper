@@ -25,14 +25,14 @@ import {
 
 // 生成选项
 export interface GenerateOptions {
-  type: string          // 类型：cn, jp, en, force, place, book, item, elixir, 或自定义类型ID
-  count?: number        // 生成数量，默认 24
-  surname?: string      // 指定姓氏
-  gender?: 'male' | 'female'  // 性别
-  charCount?: 2 | 3     // 名字字数（仅人名）
-  middleChar?: string   // 中间字（仅中国三字名）
-  suffix?: string       // 指定后缀（势力/地名/物品等）
-  customType?: CustomNameType  // 自定义类型配置
+  type: string // 类型：cn, jp, en, force, place, book, item, elixir, 或自定义类型ID
+  count?: number // 生成数量，默认 24
+  surname?: string // 指定姓氏
+  gender?: 'male' | 'female' // 性别
+  charCount?: 2 | 3 // 名字字数（仅人名）
+  middleChar?: string // 中间字（仅中国三字名）
+  suffix?: string // 指定后缀（势力/地名/物品等）
+  customType?: CustomNameType // 自定义类型配置
 }
 
 // 随机选择数组中的一个元素
@@ -56,11 +56,11 @@ function randomInt(min: number, max: number): number {
 function generateChineseNames(options: GenerateOptions): string[] {
   const { count = 24, surname, gender, charCount, middleChar } = options
   const result: string[] = []
-  
+
   // 名字用字
   const maleChars = CHINESE_MALE_CHARS
   const femaleChars = CHINESE_FEMALE_CHARS
-  
+
   for (let i = 0; i < count; i++) {
     // 选择姓氏
     let selectedSurname: string
@@ -68,18 +68,24 @@ function generateChineseNames(options: GenerateOptions): string[] {
       selectedSurname = surname
     } else {
       // 80% 单姓，20% 复姓
-      selectedSurname = Math.random() < 0.8
-        ? randomPick(CHINESE_SURNAMES)
-        : randomPick(CHINESE_COMPOUND_SURNAMES)
+      selectedSurname =
+        Math.random() < 0.8 ? randomPick(CHINESE_SURNAMES) : randomPick(CHINESE_COMPOUND_SURNAMES)
     }
-    
+
     // 选择名字用字
-    const nameChars = gender === 'female' ? femaleChars : (gender === 'male' ? maleChars : (Math.random() < 0.5 ? maleChars : femaleChars))
-    
+    const nameChars =
+      gender === 'female'
+        ? femaleChars
+        : gender === 'male'
+          ? maleChars
+          : Math.random() < 0.5
+            ? maleChars
+            : femaleChars
+
     // 生成名字
     let name: string
     const nameLength = charCount || (Math.random() < 0.6 ? 2 : 3)
-    
+
     if (nameLength === 2) {
       // 二字名：姓 + 1字
       name = randomChar(nameChars)
@@ -91,10 +97,10 @@ function generateChineseNames(options: GenerateOptions): string[] {
         name = randomChar(nameChars) + randomChar(nameChars)
       }
     }
-    
+
     result.push(selectedSurname + name)
   }
-  
+
   return result
 }
 
@@ -104,21 +110,28 @@ function generateChineseNames(options: GenerateOptions): string[] {
 function generateJapaneseNames(options: GenerateOptions): string[] {
   const { count = 24, surname, gender } = options
   const result: string[] = []
-  
+
   const maleChars = JAPANESE_MALE_CHARS
   const femaleChars = JAPANESE_FEMALE_CHARS
-  
+
   for (let i = 0; i < count; i++) {
     // 选择姓氏
     const selectedSurname = surname || randomPick(JAPANESE_SURNAMES)
-    
+
     // 选择名字
-    const nameChars = gender === 'female' ? femaleChars : (gender === 'male' ? maleChars : (Math.random() < 0.5 ? maleChars : femaleChars))
+    const nameChars =
+      gender === 'female'
+        ? femaleChars
+        : gender === 'male'
+          ? maleChars
+          : Math.random() < 0.5
+            ? maleChars
+            : femaleChars
     const name = randomPick(nameChars)
-    
+
     result.push(selectedSurname + name)
   }
-  
+
   return result
 }
 
@@ -128,21 +141,26 @@ function generateJapaneseNames(options: GenerateOptions): string[] {
 function generateWesternNames(options: GenerateOptions): string[] {
   const { count = 24, surname, gender } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 选择姓氏
     const selectedSurname = surname || randomPick(WESTERN_SURNAMES)
-    
+
     // 选择名字
-    const names = gender === 'female' 
-      ? WESTERN_FEMALE_NAMES 
-      : (gender === 'male' ? WESTERN_MALE_NAMES : (Math.random() < 0.5 ? WESTERN_MALE_NAMES : WESTERN_FEMALE_NAMES))
+    const names =
+      gender === 'female'
+        ? WESTERN_FEMALE_NAMES
+        : gender === 'male'
+          ? WESTERN_MALE_NAMES
+          : Math.random() < 0.5
+            ? WESTERN_MALE_NAMES
+            : WESTERN_FEMALE_NAMES
     const firstName = randomPick(names)
-    
+
     // 格式：名·姓
     result.push(`${firstName}·${selectedSurname}`)
   }
-  
+
   return result
 }
 
@@ -152,7 +170,7 @@ function generateWesternNames(options: GenerateOptions): string[] {
 function generateForceNames(options: GenerateOptions): string[] {
   const { count = 24, suffix } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀：1-3 个核心字
     const prefixLength = randomInt(1, 3)
@@ -160,13 +178,13 @@ function generateForceNames(options: GenerateOptions): string[] {
     for (let j = 0; j < prefixLength; j++) {
       prefix += randomPick(CORE_WORDS)
     }
-    
+
     // 后缀
     const selectedSuffix = suffix || randomPick(FORCE_SUFFIXES)
-    
+
     result.push(prefix + selectedSuffix)
   }
-  
+
   return result
 }
 
@@ -176,7 +194,7 @@ function generateForceNames(options: GenerateOptions): string[] {
 function generatePlaceNames(options: GenerateOptions): string[] {
   const { count = 24, suffix } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀：1-4 个核心字
     const prefixLength = randomInt(1, 4)
@@ -184,13 +202,13 @@ function generatePlaceNames(options: GenerateOptions): string[] {
     for (let j = 0; j < prefixLength; j++) {
       prefix += randomPick(CORE_WORDS)
     }
-    
+
     // 后缀
     const selectedSuffix = suffix || randomPick(PLACE_SUFFIXES)
-    
+
     result.push(prefix + selectedSuffix)
   }
-  
+
   return result
 }
 
@@ -200,7 +218,7 @@ function generatePlaceNames(options: GenerateOptions): string[] {
 function generateBookNames(options: GenerateOptions): string[] {
   const { count = 24, suffix } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀：1-4 个核心字
     const prefixLength = randomInt(1, 4)
@@ -208,13 +226,13 @@ function generateBookNames(options: GenerateOptions): string[] {
     for (let j = 0; j < prefixLength; j++) {
       prefix += randomPick(CORE_WORDS)
     }
-    
+
     // 后缀
     const selectedSuffix = suffix || randomPick(BOOK_SUFFIXES)
-    
+
     result.push(prefix + selectedSuffix)
   }
-  
+
   return result
 }
 
@@ -224,7 +242,7 @@ function generateBookNames(options: GenerateOptions): string[] {
 function generateItemNames(options: GenerateOptions): string[] {
   const { count = 24, suffix } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀：1-3 个核心字
     const prefixLength = randomInt(1, 3)
@@ -232,13 +250,13 @@ function generateItemNames(options: GenerateOptions): string[] {
     for (let j = 0; j < prefixLength; j++) {
       prefix += randomPick(CORE_WORDS)
     }
-    
+
     // 后缀
     const selectedSuffix = suffix || randomPick(ITEM_SUFFIXES)
-    
+
     result.push(prefix + selectedSuffix)
   }
-  
+
   return result
 }
 
@@ -248,7 +266,7 @@ function generateItemNames(options: GenerateOptions): string[] {
 function generateElixirNames(options: GenerateOptions): string[] {
   const { count = 24, suffix } = options
   const result: string[] = []
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀：1-3 个核心字
     const prefixLength = randomInt(1, 3)
@@ -256,13 +274,13 @@ function generateElixirNames(options: GenerateOptions): string[] {
     for (let j = 0; j < prefixLength; j++) {
       prefix += randomPick(CORE_WORDS)
     }
-    
+
     // 后缀
     const selectedSuffix = suffix || randomPick(ELIXIR_SUFFIXES)
-    
+
     result.push(prefix + selectedSuffix)
   }
-  
+
   return result
 }
 
@@ -274,10 +292,10 @@ function generateCustomNames(options: GenerateOptions): string[] {
   if (!customType) {
     return []
   }
-  
+
   const result: string[] = []
   const { prefixes, suffixes, prefixCount, usePrefixOnly } = customType
-  
+
   for (let i = 0; i < count; i++) {
     // 前缀
     const [min, max] = prefixCount
@@ -286,7 +304,7 @@ function generateCustomNames(options: GenerateOptions): string[] {
     for (let j = 0; j < length; j++) {
       prefix += randomPick(prefixes)
     }
-    
+
     if (usePrefixOnly) {
       result.push(prefix)
     } else {
@@ -295,7 +313,7 @@ function generateCustomNames(options: GenerateOptions): string[] {
       result.push(prefix + selectedSuffix)
     }
   }
-  
+
   return result
 }
 
@@ -304,7 +322,7 @@ function generateCustomNames(options: GenerateOptions): string[] {
  */
 export function generateNames(options: GenerateOptions): string[] {
   const { type } = options
-  
+
   switch (type) {
     case 'cn':
       return generateChineseNames(options)
@@ -331,7 +349,10 @@ export function generateNames(options: GenerateOptions): string[] {
 /**
  * 获取随机姓氏
  */
-export function getRandomSurname(type: 'cn' | 'jp' | 'en' = 'cn', compound: boolean = false): string {
+export function getRandomSurname(
+  type: 'cn' | 'jp' | 'en' = 'cn',
+  compound: boolean = false
+): string {
   switch (type) {
     case 'cn':
       if (compound) {

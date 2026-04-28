@@ -18,5 +18,5 @@ export const GENDER_CONFIG: Record<Gender, { label: string; color: string }> = {
   male: { label: '男', color: '#1890ff' },
   female: { label: '女', color: '#eb2f96' },
   other: { label: '其他', color: '#722ed1' },
-  unknown: { label: '未知', color: '#8c8c8c' },
+  unknown: { label: '未知', color: '#8c8c8c' }
 }

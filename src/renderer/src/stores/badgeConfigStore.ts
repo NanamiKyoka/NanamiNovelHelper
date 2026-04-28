@@ -27,7 +27,7 @@ export const useBadgeConfigStore = create<BadgeConfigState>((set, get) => ({
 
     try {
       const badgeOrder = await window.electron.settings.global.getBadgeOrder()
-      
+
       if (badgeOrder && Array.isArray(badgeOrder) && badgeOrder.length > 0) {
         const validOrder = badgeOrder.filter(b => DEFAULT_BADGE_ORDER.includes(b))
         const missingBadges = DEFAULT_BADGE_ORDER.filter(b => !validOrder.includes(b))

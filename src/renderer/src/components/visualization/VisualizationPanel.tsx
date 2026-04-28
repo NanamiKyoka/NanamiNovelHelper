@@ -90,21 +90,18 @@ function VisualizationPanel(): JSX.Element {
   }
 
   // 如果选中了某个工具，显示对应的工具面板
-  if (activeTool && ['relationship', 'timeline', 'sequenceChart', 'organization', 'map'].includes(activeTool)) {
+  if (
+    activeTool &&
+    ['relationship', 'timeline', 'sequenceChart', 'organization', 'map'].includes(activeTool)
+  ) {
     return (
       <div className={styles.toolContainer}>
         <div className={styles.toolHeader}>
-          <Button 
-            type="text" 
-            icon={<ArrowLeftOutlined />} 
-            onClick={() => setActiveTool(null)}
-          >
+          <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => setActiveTool(null)}>
             返回
           </Button>
         </div>
-        <div className={styles.toolContent}>
-          {renderActiveTool()}
-        </div>
+        <div className={styles.toolContent}>{renderActiveTool()}</div>
       </div>
     )
   }
@@ -121,9 +118,9 @@ function VisualizationPanel(): JSX.Element {
         <Title level={5}>可视化工具</Title>
         <Text type="secondary">通过可视化方式管理和展示创作内容</Text>
       </div>
-      
+
       <Row gutter={[16, 16]} className={styles.content}>
-        {tools.map((tool) => (
+        {tools.map(tool => (
           <Col span={12} key={tool.key}>
             <Card
               hoverable={tool.status === 'available'}
@@ -138,9 +135,7 @@ function VisualizationPanel(): JSX.Element {
                     {tool.description}
                   </Text>
                 </div>
-                {tool.status === 'coming' && (
-                  <span className={styles.badge}>即将推出</span>
-                )}
+                {tool.status === 'coming' && <span className={styles.badge}>即将推出</span>}
                 {tool.status === 'development' && (
                   <span className={`${styles.badge} ${styles.badgeDevelopment}`}>开发中</span>
                 )}

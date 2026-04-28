@@ -30,7 +30,11 @@ interface TerminalState {
   error: string | null
 
   // Actions
-  createTerminal: (options?: { cwd?: string; name?: string; shellPath?: string }) => Promise<TerminalInstance | null>
+  createTerminal: (options?: {
+    cwd?: string
+    name?: string
+    shellPath?: string
+  }) => Promise<TerminalInstance | null>
   destroyTerminal: (id: string) => Promise<void>
   setActiveTerminal: (id: string | null) => void
   togglePanel: () => void
@@ -61,20 +65,20 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     try {
       // 如果没有指定 cwd，使用当前项目路径
       const cwd = options?.cwd ?? getCurrentProjectPath()
-      
+
       const terminal = await window.electron.terminal.create({
         cwd,
         name: options?.name,
         shellPath: options?.shellPath
       })
-      
-      set((state) => ({
+
+      set(state => ({
         terminals: [...state.terminals, terminal],
         activeTerminalId: terminal.id,
         isPanelVisible: true,
         isLoading: false
       }))
-      
+
       return terminal
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '创建终端失败'
@@ -87,12 +91,15 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   destroyTerminal: async (id: string) => {
     try {
       await window.electron.terminal.destroy(id)
-      set((state) => {
-        const newTerminals = state.terminals.filter((t) => t.id !== id)
-        const newActiveId = state.activeTerminalId === id
-          ? newTerminals.length > 0 ? newTerminals[0].id : null
-          : state.activeTerminalId
-        
+      set(state => {
+        const newTerminals = state.terminals.filter(t => t.id !== id)
+        const newActiveId =
+          state.activeTerminalId === id
+            ? newTerminals.length > 0
+              ? newTerminals[0].id
+              : null
+            : state.activeTerminalId
+
         return {
           terminals: newTerminals,
           activeTerminalId: newActiveId,
@@ -154,12 +161,12 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
 
   // 清空终端（退出码）
   clearTerminal: () => {
-    set((state) => {
-      const activeTerminal = state.terminals.find((t) => t.id === state.activeTerminalId)
+    set(state => {
+      const activeTerminal = state.terminals.find(t => t.id === state.activeTerminalId)
       if (activeTerminal) {
         // 标记为已退出
         return {
-          terminals: state.terminals.map((t) =>
+          terminals: state.terminals.map(t =>
             t.id === state.activeTerminalId ? { ...t, exited: true } : t
           )
         }

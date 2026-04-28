@@ -4,12 +4,7 @@
 
 import { Radio, InputNumber, Button, Space, Typography, ColorPicker, Card } from 'antd'
 import type { Color } from 'antd/es/color-picker'
-import {
-  SunOutlined,
-  MoonOutlined,
-  DesktopOutlined,
-  ReloadOutlined
-} from '@ant-design/icons'
+import { SunOutlined, MoonOutlined, DesktopOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useThemeStore } from '@stores/themeStore'
 import { PRESET_COLORS, DEFAULT_THEME } from '@types/theme'
 import baseStyles from './SettingsBase.module.css'
@@ -18,7 +13,8 @@ import styles from './AppearanceSettings.module.css'
 const { Text } = Typography
 
 function AppearanceSettings(): JSX.Element {
-  const { config, resolvedMode, setMode, setPrimaryColor, setFontSize, resetTheme } = useThemeStore()
+  const { config, resolvedMode, setMode, setPrimaryColor, setFontSize, resetTheme } =
+    useThemeStore()
 
   return (
     <div className={baseStyles.container}>
@@ -26,7 +22,7 @@ function AppearanceSettings(): JSX.Element {
         <div className={styles.modeOptions}>
           <Radio.Group
             value={config.mode}
-            onChange={(e) => setMode(e.target.value)}
+            onChange={e => setMode(e.target.value)}
             optionType="button"
             buttonStyle="solid"
           >
@@ -50,7 +46,7 @@ function AppearanceSettings(): JSX.Element {
 
       <Card title="主题色" className={baseStyles.card}>
         <div className={styles.colorOptions}>
-          {PRESET_COLORS.map((color) => (
+          {PRESET_COLORS.map(color => (
             <div
               key={color.value}
               className={`${styles.colorItem} ${config.primaryColor === color.value ? styles.active : ''}`}
@@ -58,9 +54,7 @@ function AppearanceSettings(): JSX.Element {
               onClick={() => setPrimaryColor(color.value)}
               title={color.name}
             >
-              {config.primaryColor === color.value && (
-                <span className={styles.checkMark}>✓</span>
-              )}
+              {config.primaryColor === color.value && <span className={styles.checkMark}>✓</span>}
             </div>
           ))}
         </div>
@@ -82,7 +76,7 @@ function AppearanceSettings(): JSX.Element {
               min={12}
               max={24}
               value={config.fontSize}
-              onChange={(value) => setFontSize(value || DEFAULT_THEME.fontSize)}
+              onChange={value => setFontSize(value || DEFAULT_THEME.fontSize)}
               style={{ width: 80 }}
             />
             <span className={styles.inputSuffix}>px</span>
@@ -91,10 +85,7 @@ function AppearanceSettings(): JSX.Element {
       </Card>
 
       <Card title="重置" className={baseStyles.card}>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={resetTheme}
-        >
+        <Button icon={<ReloadOutlined />} onClick={resetTheme}>
           恢复默认设置
         </Button>
       </Card>

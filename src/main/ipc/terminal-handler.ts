@@ -24,10 +24,7 @@ export function registerTerminalHandlers(): void {
   // 写入数据
   ipcMain.handle(TerminalChannels.WRITE, (_, id: string, data: string) => {
     // 参数验证
-    validateParams('terminal:write ')
-      .nonEmptyString(id, 'id')
-      .string(data, 'data')
-      .validate()
+    validateParams('terminal:write ').nonEmptyString(id, 'id').string(data, 'data').validate()
     return terminalService.write(id, data)
   })
 

@@ -41,13 +41,16 @@ export function registerTimelineHandlers(): void {
     return timelineService.createTimeline(options)
   })
 
-  ipcMain.handle('timeline:update', (_, timelineId: string, updates: UpdateTimelineOptions): Timeline | null => {
-    validateParams('timeline:update')
-      .nonEmptyString(timelineId, 'timelineId')
-      .object(updates, 'updates')
-      .validate()
-    return timelineService.updateTimeline(timelineId, updates)
-  })
+  ipcMain.handle(
+    'timeline:update',
+    (_, timelineId: string, updates: UpdateTimelineOptions): Timeline | null => {
+      validateParams('timeline:update')
+        .nonEmptyString(timelineId, 'timelineId')
+        .object(updates, 'updates')
+        .validate()
+      return timelineService.updateTimeline(timelineId, updates)
+    }
+  )
 
   ipcMain.handle('timeline:delete', (_, timelineId: string): boolean => {
     validateParams('timeline:delete').nonEmptyString(timelineId, 'timelineId').validate()
@@ -59,63 +62,130 @@ export function registerTimelineHandlers(): void {
   // ============================================
 
   // 添加节点
-  ipcMain.handle('timeline:addNode', (_, timelineId: string, node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>): TimelineNode | null => {
-    validateParams('timeline:addNode').nonEmptyString(timelineId, 'timelineId').object(node, 'node').validate()
-    return timelineService.addNode(timelineId, node)
-  })
+  ipcMain.handle(
+    'timeline:addNode',
+    (
+      _,
+      timelineId: string,
+      node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+    ): TimelineNode | null => {
+      validateParams('timeline:addNode')
+        .nonEmptyString(timelineId, 'timelineId')
+        .object(node, 'node')
+        .validate()
+      return timelineService.addNode(timelineId, node)
+    }
+  )
 
-  ipcMain.handle('timeline:updateNode', (_, timelineId: string, nodeId: string, updates: Partial<TimelineNode>): TimelineNode | null => {
-    validateParams('timeline:updateNode').nonEmptyString(timelineId, 'timelineId').nonEmptyString(nodeId, 'nodeId').object(updates, 'updates').validate()
-    return timelineService.updateNode(timelineId, nodeId, updates)
-  })
+  ipcMain.handle(
+    'timeline:updateNode',
+    (
+      _,
+      timelineId: string,
+      nodeId: string,
+      updates: Partial<TimelineNode>
+    ): TimelineNode | null => {
+      validateParams('timeline:updateNode')
+        .nonEmptyString(timelineId, 'timelineId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .object(updates, 'updates')
+        .validate()
+      return timelineService.updateNode(timelineId, nodeId, updates)
+    }
+  )
 
   ipcMain.handle('timeline:deleteNode', (_, timelineId: string, nodeId: string): boolean => {
-    validateParams('timeline:deleteNode').nonEmptyString(timelineId, 'timelineId').nonEmptyString(nodeId, 'nodeId').validate()
+    validateParams('timeline:deleteNode')
+      .nonEmptyString(timelineId, 'timelineId')
+      .nonEmptyString(nodeId, 'nodeId')
+      .validate()
     return timelineService.deleteNode(timelineId, nodeId)
   })
 
-  ipcMain.handle('timeline:batchDeleteNodes', (_, timelineId: string, nodeIds: string[]): number => {
-    validateParams('timeline:batchDeleteNodes').nonEmptyString(timelineId, 'timelineId').stringArray(nodeIds, 'nodeIds').validate()
-    return timelineService.batchDeleteNodes(timelineId, nodeIds)
-  })
+  ipcMain.handle(
+    'timeline:batchDeleteNodes',
+    (_, timelineId: string, nodeIds: string[]): number => {
+      validateParams('timeline:batchDeleteNodes')
+        .nonEmptyString(timelineId, 'timelineId')
+        .stringArray(nodeIds, 'nodeIds')
+        .validate()
+      return timelineService.batchDeleteNodes(timelineId, nodeIds)
+    }
+  )
 
-  ipcMain.handle('timeline:moveNode', (_, timelineId: string, nodeId: string, newOrder: number): TimelineNode[] | null => {
-    validateParams('timeline:moveNode').nonEmptyString(timelineId, 'timelineId').nonEmptyString(nodeId, 'nodeId').number(newOrder, 'newOrder').validate()
-    return timelineService.moveNode(timelineId, nodeId, newOrder)
-  })
+  ipcMain.handle(
+    'timeline:moveNode',
+    (_, timelineId: string, nodeId: string, newOrder: number): TimelineNode[] | null => {
+      validateParams('timeline:moveNode')
+        .nonEmptyString(timelineId, 'timelineId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .number(newOrder, 'newOrder')
+        .validate()
+      return timelineService.moveNode(timelineId, nodeId, newOrder)
+    }
+  )
 
-  ipcMain.handle('timeline:batchMoveNodes', (_, timelineId: string, nodeIds: string[], targetOrder: number): TimelineNode[] | null => {
-    validateParams('timeline:batchMoveNodes').nonEmptyString(timelineId, 'timelineId').stringArray(nodeIds, 'nodeIds').number(targetOrder, 'targetOrder').validate()
-    return timelineService.batchMoveNodes(timelineId, nodeIds, targetOrder)
-  })
+  ipcMain.handle(
+    'timeline:batchMoveNodes',
+    (_, timelineId: string, nodeIds: string[], targetOrder: number): TimelineNode[] | null => {
+      validateParams('timeline:batchMoveNodes')
+        .nonEmptyString(timelineId, 'timelineId')
+        .stringArray(nodeIds, 'nodeIds')
+        .number(targetOrder, 'targetOrder')
+        .validate()
+      return timelineService.batchMoveNodes(timelineId, nodeIds, targetOrder)
+    }
+  )
 
-  ipcMain.handle('timeline:updateNodes', (_, timelineId: string, nodes: TimelineNode[]): Timeline | null => {
-    validateParams('timeline:updateNodes').nonEmptyString(timelineId, 'timelineId').array(nodes, 'nodes').validate()
-    return timelineService.updateTimeline(timelineId, { nodes })
-  })
+  ipcMain.handle(
+    'timeline:updateNodes',
+    (_, timelineId: string, nodes: TimelineNode[]): Timeline | null => {
+      validateParams('timeline:updateNodes')
+        .nonEmptyString(timelineId, 'timelineId')
+        .array(nodes, 'nodes')
+        .validate()
+      return timelineService.updateTimeline(timelineId, { nodes })
+    }
+  )
 
   // ============================================
   // 分支管理
   // ============================================
 
   // 创建分支时间线
-  ipcMain.handle('timeline:createBranch', (_, parentTimelineId: string, branchFromNodeId: string, name?: string): Timeline | null => {
-    validateParams('timeline:createBranch').nonEmptyString(parentTimelineId, 'parentTimelineId').nonEmptyString(branchFromNodeId, 'branchFromNodeId').validate()
-    return timelineService.createBranchTimeline(parentTimelineId, branchFromNodeId, name)
-  })
+  ipcMain.handle(
+    'timeline:createBranch',
+    (_, parentTimelineId: string, branchFromNodeId: string, name?: string): Timeline | null => {
+      validateParams('timeline:createBranch')
+        .nonEmptyString(parentTimelineId, 'parentTimelineId')
+        .nonEmptyString(branchFromNodeId, 'branchFromNodeId')
+        .validate()
+      return timelineService.createBranchTimeline(parentTimelineId, branchFromNodeId, name)
+    }
+  )
 
-  ipcMain.handle('timeline:mergeBranch', (_, branchTimelineId: string, targetTimelineId: string, targetNodeId?: string): boolean => {
-    validateParams('timeline:mergeBranch').nonEmptyString(branchTimelineId, 'branchTimelineId').nonEmptyString(targetTimelineId, 'targetTimelineId').validate()
-    return timelineService.mergeBranchTimeline(branchTimelineId, targetTimelineId, targetNodeId)
-  })
+  ipcMain.handle(
+    'timeline:mergeBranch',
+    (_, branchTimelineId: string, targetTimelineId: string, targetNodeId?: string): boolean => {
+      validateParams('timeline:mergeBranch')
+        .nonEmptyString(branchTimelineId, 'branchTimelineId')
+        .nonEmptyString(targetTimelineId, 'targetTimelineId')
+        .validate()
+      return timelineService.mergeBranchTimeline(branchTimelineId, targetTimelineId, targetNodeId)
+    }
+  )
 
   ipcMain.handle('timeline:getBranches', (_, parentTimelineId: string): TimelineMeta[] => {
-    validateParams('timeline:getBranches').nonEmptyString(parentTimelineId, 'parentTimelineId').validate()
+    validateParams('timeline:getBranches')
+      .nonEmptyString(parentTimelineId, 'parentTimelineId')
+      .validate()
     return timelineService.getBranchTimelines(parentTimelineId)
   })
 
   ipcMain.handle('timeline:getBranchSourceNode', (_, timelineId: string): TimelineNode | null => {
-    validateParams('timeline:getBranchSourceNode').nonEmptyString(timelineId, 'timelineId').validate()
+    validateParams('timeline:getBranchSourceNode')
+      .nonEmptyString(timelineId, 'timelineId')
+      .validate()
     return timelineService.getBranchSourceNode(timelineId)
   })
 
@@ -124,10 +194,16 @@ export function registerTimelineHandlers(): void {
   // ============================================
 
   // 保存缩略图
-  ipcMain.handle('timeline:saveThumbnail', (_, timelineId: string, dataUrl: string): string | null => {
-    validateParams('timeline:saveThumbnail').nonEmptyString(timelineId, 'timelineId').nonEmptyString(dataUrl, 'dataUrl').validate()
-    return timelineService.saveThumbnail(timelineId, dataUrl)
-  })
+  ipcMain.handle(
+    'timeline:saveThumbnail',
+    (_, timelineId: string, dataUrl: string): string | null => {
+      validateParams('timeline:saveThumbnail')
+        .nonEmptyString(timelineId, 'timelineId')
+        .nonEmptyString(dataUrl, 'dataUrl')
+        .validate()
+      return timelineService.saveThumbnail(timelineId, dataUrl)
+    }
+  )
 
   ipcMain.handle('timeline:getThumbnailPath', (_, timelineId: string): string | null => {
     validateParams('timeline:getThumbnailPath').nonEmptyString(timelineId, 'timelineId').validate()
@@ -155,20 +231,27 @@ export function registerTimelineHandlers(): void {
   })
 
   // 显示导出对话框
-  ipcMain.handle('timeline:showExportDialog', async (_, timelineName: string, format: 'json' | 'markdown' = 'json'): Promise<string | null> => {
-    const extension = format === 'markdown' ? 'md' : 'json5'
-    const filterName = format === 'markdown' ? 'Markdown 文件' : 'JSON5 文件'
-    
-    const result = await dialog.showSaveDialog({
-      title: '导出时间线',
-      defaultPath: `${timelineName}.${extension}`,
-      filters: [
-        { name: filterName, extensions: [extension] },
-        { name: '所有文件', extensions: ['*'] }
-      ]
-    })
-    return result.canceled ? null : result.filePath
-  })
+  ipcMain.handle(
+    'timeline:showExportDialog',
+    async (
+      _,
+      timelineName: string,
+      format: 'json' | 'markdown' = 'json'
+    ): Promise<string | null> => {
+      const extension = format === 'markdown' ? 'md' : 'json5'
+      const filterName = format === 'markdown' ? 'Markdown 文件' : 'JSON5 文件'
+
+      const result = await dialog.showSaveDialog({
+        title: '导出时间线',
+        defaultPath: `${timelineName}.${extension}`,
+        filters: [
+          { name: filterName, extensions: [extension] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      })
+      return result.canceled ? null : result.filePath
+    }
+  )
 
   // 显示导入对话框
   ipcMain.handle('timeline:showImportDialog', async (): Promise<string | null> => {
@@ -185,16 +268,22 @@ export function registerTimelineHandlers(): void {
   })
 
   // 保存导出文件
-  ipcMain.handle('timeline:saveExportFile', async (_, filePath: string, content: string): Promise<boolean> => {
-    validateParams('timeline:saveExportFile').nonEmptyString(filePath, 'filePath').string(content, 'content').validate()
-    try {
-      fs.writeFileSync(filePath, content, 'utf-8')
-      return true
-    } catch (error) {
-      console.error('Failed to save export file:', error)
-      return false
+  ipcMain.handle(
+    'timeline:saveExportFile',
+    async (_, filePath: string, content: string): Promise<boolean> => {
+      validateParams('timeline:saveExportFile')
+        .nonEmptyString(filePath, 'filePath')
+        .string(content, 'content')
+        .validate()
+      try {
+        fs.writeFileSync(filePath, content, 'utf-8')
+        return true
+      } catch (error) {
+        console.error('Failed to save export file:', error)
+        return false
+      }
     }
-  })
+  )
 
   ipcMain.handle('timeline:readImportFile', async (_, filePath: string): Promise<string | null> => {
     validateParams('timeline:readImportFile').nonEmptyString(filePath, 'filePath').validate()

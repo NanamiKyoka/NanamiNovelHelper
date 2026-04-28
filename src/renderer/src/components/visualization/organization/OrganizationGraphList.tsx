@@ -4,16 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  Typography,
-  Button,
-  Card,
-  Modal,
-  App,
-  Input,
-  Select,
-  Spin,
-} from 'antd'
+import { Typography, Button, Card, Modal, App, Input, Select, Spin } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -22,7 +13,7 @@ import {
   EditOutlined,
   TeamOutlined,
   ApartmentOutlined,
-  HolderOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -31,14 +22,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  DragEndEvent
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  rectSortingStrategy,
+  rectSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
@@ -74,33 +65,24 @@ function SortableCard({
   graph,
   getLocalUrl,
   onContextMenu,
-  onDoubleClick,
+  onDoubleClick
 }: SortableCardProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: graph.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: graph.id
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : 0,
+    zIndex: isDragging ? 1 : 0
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={styles.sortableCardWrapper}
-    >
+    <div ref={setNodeRef} style={style} className={styles.sortableCardWrapper}>
       <Card
         className={styles.graphCard}
-        onContextMenu={(e) => onContextMenu(e, graph)}
+        onContextMenu={e => onContextMenu(e, graph)}
         onDoubleClick={() => onDoubleClick(graph.id)}
         styles={{ body: { padding: 0 } }}
       >
@@ -115,19 +97,13 @@ function SortableCard({
             <ApartmentOutlined className={styles.thumbnailPlaceholder} />
           )}
           {/* 拖拽手柄 */}
-          <div
-            className={styles.dragHandle}
-            {...attributes}
-            {...listeners}
-          >
+          <div className={styles.dragHandle} {...attributes} {...listeners}>
             <HolderOutlined />
           </div>
         </div>
         <div className={styles.cardBody}>
           <div className={styles.graphName}>{graph.name}</div>
-          {graph.description && (
-            <div className={styles.graphDescription}>{graph.description}</div>
-          )}
+          {graph.description && <div className={styles.graphDescription}>{graph.description}</div>}
           <div className={styles.graphStats}>
             <span className={styles.stat}>
               <TeamOutlined />
@@ -140,7 +116,10 @@ function SortableCard({
   )
 }
 
-function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationGraphListProps): JSX.Element {
+function OrganizationGraphList({
+  onSelectGraph,
+  onCreateAndEdit
+}: OrganizationGraphListProps): JSX.Element {
   const { modal, message } = App.useApp()
 
   const {
@@ -151,7 +130,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
     deleteGraph,
     exportGraph,
     importGraph,
-    reorderGraphs,
+    reorderGraphs
   } = useOrganizationStore()
 
   const { types: vocabularyTypes, loadTypes } = useVocabularyStore()
@@ -167,11 +146,11 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 需要移动 5px 才开始拖拽，避免误触
-      },
+        distance: 5 // 需要移动 5px 才开始拖拽，避免误触
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -180,7 +159,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
     visible: false,
     x: 0,
     y: 0,
-    graph: null,
+    graph: null
   })
 
   const contextMenuRef = useRef<HTMLDivElement>(null)
@@ -202,7 +181,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu((prev) => ({ ...prev, visible: false }))
+        setContextMenu(prev => ({ ...prev, visible: false }))
       }
     }
 
@@ -219,7 +198,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      graph,
+      graph
     })
   }, [])
 
@@ -235,7 +214,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
       const graph = await createGraph({
         name: newGraphName.trim(),
         description: newGraphDescription.trim() || undefined,
-        linkedVocabularyTypes: newGraphVocabularyTypes,
+        linkedVocabularyTypes: newGraphVocabularyTypes
       })
       if (graph) {
         message.success('创建成功')
@@ -252,7 +231,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
 
   // 删除组织架构图
   const handleDelete = (graph: OrganizationGraphMeta) => {
-    setContextMenu((prev) => ({ ...prev, visible: false }))
+    setContextMenu(prev => ({ ...prev, visible: false }))
     modal.confirm({
       title: '确定要删除这个组织架构图吗？',
       content: `将删除「${graph.name}」，删除后无法恢复。`,
@@ -266,7 +245,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
         } catch {
           message.error('删除失败')
         }
-      },
+      }
     })
   }
 
@@ -284,7 +263,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
     } catch {
       message.error('导出失败')
     }
-    setContextMenu((prev) => ({ ...prev, visible: false }))
+    setContextMenu(prev => ({ ...prev, visible: false }))
   }
 
   // 导入组织架构图
@@ -314,13 +293,13 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
       const { active, over } = event
 
       if (over && active.id !== over.id) {
-        const oldIndex = graphs.findIndex((g) => g.id === active.id)
-        const newIndex = graphs.findIndex((g) => g.id === over.id)
+        const oldIndex = graphs.findIndex(g => g.id === active.id)
+        const newIndex = graphs.findIndex(g => g.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
           // 乐观更新：先本地排序
           const newGraphs = arrayMove(graphs, oldIndex, newIndex)
-          const graphIds = newGraphs.map((g) => g.id)
+          const graphIds = newGraphs.map(g => g.id)
 
           // 保存到后端
           const success = await reorderGraphs(graphIds)
@@ -347,7 +326,11 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
           <Button icon={<ImportOutlined />} onClick={handleImport}>
             导入
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalVisible(true)}
+          >
             新建
           </Button>
         </div>
@@ -370,12 +353,9 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={graphs.map((g) => g.id)}
-              strategy={rectSortingStrategy}
-            >
+            <SortableContext items={graphs.map(g => g.id)} strategy={rectSortingStrategy}>
               <div className={styles.grid}>
-                {graphs.map((graph) => (
+                {graphs.map(graph => (
                   <SortableCard
                     key={graph.id}
                     graph={graph}
@@ -401,16 +381,13 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
             className={styles.contextMenuItem}
             onClick={() => {
               onSelectGraph(contextMenu.graph!.id)
-              setContextMenu((prev) => ({ ...prev, visible: false }))
+              setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >
             <EditOutlined />
             <span>打开</span>
           </div>
-          <div
-            className={styles.contextMenuItem}
-            onClick={() => handleExport(contextMenu.graph!)}
-          >
+          <div className={styles.contextMenuItem} onClick={() => handleExport(contextMenu.graph!)}>
             <ExportOutlined />
             <span>导出</span>
           </div>
@@ -441,7 +418,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
             <Input
               placeholder="输入组织架构图名称"
               value={newGraphName}
-              onChange={(e) => setNewGraphName(e.target.value)}
+              onChange={e => setNewGraphName(e.target.value)}
               maxLength={50}
             />
           </div>
@@ -451,7 +428,7 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
             <TextArea
               placeholder="输入组织架构图描述（可选）"
               value={newGraphDescription}
-              onChange={(e) => setNewGraphDescription(e.target.value)}
+              onChange={e => setNewGraphDescription(e.target.value)}
               rows={3}
               maxLength={200}
             />
@@ -459,18 +436,16 @@ function OrganizationGraphList({ onSelectGraph, onCreateAndEdit }: OrganizationG
 
           <div className={styles.formItem}>
             <label className={styles.formLabel}>关联词汇类型</label>
-            <span className={styles.formHint}>
-              关联后可从词汇库快速添加节点
-            </span>
+            <span className={styles.formHint}>关联后可从词汇库快速添加节点</span>
             <Select
               mode="multiple"
               placeholder="选择要关联的词汇类型"
               value={newGraphVocabularyTypes}
               onChange={setNewGraphVocabularyTypes}
               className={styles.vocabularyTypeSelect}
-              options={vocabularyTypes.map((t) => ({
+              options={vocabularyTypes.map(t => ({
                 label: t.name,
-                value: t.id,
+                value: t.id
               }))}
             />
           </div>

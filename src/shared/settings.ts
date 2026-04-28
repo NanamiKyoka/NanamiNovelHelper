@@ -1,6 +1,6 @@
 /**
  * 设置类型定义（共享）
- * 
+ *
  * 全局设置（跨项目共享，存 electron-store）和项目设置（跟随项目，存 .novelhelper/settings.json5）
  * 所有设置项都有默认值，避免 undefined 导致运行时错误
  */
@@ -22,7 +22,8 @@ export const DEFAULT_GLOBAL_THEME: GlobalThemeConfig = {
   mode: 'light',
   primaryColor: DEFAULT_COLORS.primary,
   fontSize: 14,
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 }
 
 // ============ 窗口状态 ============
@@ -59,7 +60,16 @@ export interface BadgeVisibility {
   terminal: boolean
 }
 
-export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
+export type BadgeType =
+  | 'vocabulary'
+  | 'sensitive'
+  | 'randomName'
+  | 'relationship'
+  | 'timeline'
+  | 'sequenceChart'
+  | 'organization'
+  | 'map'
+  | 'terminal'
 
 export const DEFAULT_BADGE_ORDER: BadgeType[] = [
   'vocabulary',
@@ -110,7 +120,16 @@ export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
   aiAssistant: true
 }
 
-export const DEFAULT_SIDEBAR_BADGE_ORDER = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'map', 'aiAssistant']
+export const DEFAULT_SIDEBAR_BADGE_ORDER = [
+  'vocabulary',
+  'sensitive',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'map',
+  'aiAssistant'
+]
 
 // ============ 全局布局设置 ============
 

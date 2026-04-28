@@ -67,14 +67,9 @@ interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 }
 
 function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id
+  })
 
   const style: React.CSSProperties = {
     ...props.style,
@@ -84,20 +79,17 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
   }
 
   return (
-    <tr
-      {...props}
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-    >
-      {React.Children.map(props.children, (child) => {
-        if (React.isValidElement(child) && (child as React.ReactElement<{ className?: string }>).props?.className?.includes('drag-handle-cell')) {
+    <tr {...props} ref={setNodeRef} style={style} {...attributes}>
+      {React.Children.map(props.children, child => {
+        if (
+          React.isValidElement(child) &&
+          (child as React.ReactElement<{ className?: string }>).props?.className?.includes(
+            'drag-handle-cell'
+          )
+        ) {
           return React.cloneElement(child as React.ReactElement<object>, {
             children: (
-              <div
-                className={styles.dragHandle}
-                {...listeners}
-              >
+              <div className={styles.dragHandle} {...listeners}>
                 <HolderOutlined />
               </div>
             )
@@ -110,23 +102,16 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
 }
 
 function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.Element {
-  const {
-    words,
-    loadWords,
-    addWord,
-    updateWord,
-    deleteWord,
-    reorderWords,
-    isLoaded
-  } = useSensitiveStore()
-  
-  const setFullscreenMode = useUIStore((state) => state.setFullscreenMode)
-  const exitFullscreen = useUIStore((state) => state.exitFullscreen)
-  
+  const { words, loadWords, addWord, updateWord, deleteWord, reorderWords, isLoaded } =
+    useSensitiveStore()
+
+  const setFullscreenMode = useUIStore(state => state.setFullscreenMode)
+  const exitFullscreen = useUIStore(state => state.exitFullscreen)
+
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [activeTab, setActiveTab] = useState<'words' | 'settings'>('words')
   const [searchText, setSearchText] = useState('')
-  
+
   // 编辑抽屉状态
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingWord, setEditingWord] = useState<SensitiveWord | null>(null)
@@ -174,19 +159,20 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
   // 过滤敏感词
   const filteredWords = useMemo(() => {
     let result = words
-    
+
     if (selectedCategory !== 'all') {
       result = result.filter(w => w.category === selectedCategory)
     }
-    
+
     if (searchText.trim()) {
       const lower = searchText.toLowerCase()
-      result = result.filter(w => 
-        w.name.toLowerCase().includes(lower) ||
-        w.aliases.some(a => a.toLowerCase().includes(lower))
+      result = result.filter(
+        w =>
+          w.name.toLowerCase().includes(lower) ||
+          w.aliases.some(a => a.toLowerCase().includes(lower))
       )
     }
-    
+
     // 按 order 字段排序
     return result.sort((a, b) => a.order - b.order)
   }, [words, selectedCategory, searchText])
@@ -226,7 +212,7 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
         await addWord(values)
         message.success('创建成功')
       }
-      
+
       setDrawerOpen(false)
     } catch (error) {
       message.error('保存失败')
@@ -244,16 +230,16 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
   // 拖拽结束
   const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
       const oldIndex = filteredWords.findIndex(w => w.id === active.id)
       const newIndex = filteredWords.findIndex(w => w.id === over.id)
-      
+
       const newWords = arrayMove(filteredWords, oldIndex, newIndex)
       const newWordIds = newWords.map(w => w.id)
-      
+
       // 调用 reorderWords 更新顺序
-      reorderWords(newWordIds).catch((error) => {
+      reorderWords(newWordIds).catch(error => {
         console.error('Failed to reorder words:', error)
         message.error('排序失败')
       })
@@ -263,11 +249,7 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
   // 获取严重程度标签
   const getSeverityTag = (severity: string): JSX.Element => {
     const level = SEVERITY_LEVELS.find(l => l.value === severity)
-    return (
-      <Tag color={level?.color || '#999'}>
-        {level?.label || severity}
-      </Tag>
-    )
+    return <Tag color={level?.color || '#999'}>{level?.label || severity}</Tag>
   }
 
   // 表格列定义
@@ -331,12 +313,7 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
             okText="删除"
             cancelText="取消"
           >
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-            />
+            <Button type="text" size="small" icon={<DeleteOutlined />} danger />
           </Popconfirm>
         </Space>
       )
@@ -352,7 +329,9 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
           <WarningOutlined />
           敏感词管理
           {words.length > 0 && (
-            <Tag style={{ marginLeft: 8 }} color="red">{words.length}</Tag>
+            <Tag style={{ marginLeft: 8 }} color="red">
+              {words.length}
+            </Tag>
           )}
         </span>
       )
@@ -373,13 +352,15 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>返回</Button>
-          <Title level={5} className={styles.title}>敏感词管理</Title>
+          <Button icon={<ArrowLeftOutlined />} onClick={onBack}>
+            返回
+          </Button>
+          <Title level={5} className={styles.title}>
+            敏感词管理
+          </Title>
         </div>
         <div className={styles.toolbarRight}>
-          <span className={styles.stats}>
-            {words.length} 个敏感词
-          </span>
+          <span className={styles.stats}>{words.length} 个敏感词</span>
         </div>
       </div>
 
@@ -390,16 +371,16 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
             <Input.Search
               placeholder="搜索敏感词..."
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={e => setSearchText(e.target.value)}
               allowClear
               size="small"
             />
           </div>
-          
+
           <div className={styles.siderBody}>
             <List
               dataSource={categories}
-              renderItem={(cat) => (
+              renderItem={cat => (
                 <List.Item
                   className={`${styles.categoryItem} ${selectedCategory === cat.key ? styles.active : ''}`}
                   onClick={() => setSelectedCategory(cat.key)}
@@ -412,14 +393,9 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
               )}
             />
           </div>
-          
+
           <div className={styles.siderFooter}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              block
-              onClick={handleCreate}
-            >
+            <Button type="primary" icon={<PlusOutlined />} block onClick={handleCreate}>
               添加敏感词
             </Button>
           </div>
@@ -430,11 +406,11 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
           <div className={styles.contentBody}>
             <Tabs
               activeKey={activeTab}
-              onChange={(key) => setActiveTab(key as 'words' | 'settings')}
+              onChange={key => setActiveTab(key as 'words' | 'settings')}
               items={tabItems}
               className={styles.tabs}
             />
-            
+
             <div className={styles.tabContent}>
               {activeTab === 'words' && (
                 <DndContext
@@ -452,7 +428,11 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
                       rowKey="id"
                       size="small"
                       pagination={{ pageSize: 20 }}
-                      locale={{ emptyText: <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                      locale={{
+                        emptyText: (
+                          <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        )
+                      }}
                       components={{
                         body: {
                           row: SortableRow
@@ -462,14 +442,12 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
                   </SortableContext>
                 </DndContext>
               )}
-              
+
               {activeTab === 'settings' && (
                 <div className={styles.settingsPanel}>
                   <h3 className={styles.settingsTitle}>敏感词高亮颜色</h3>
-                  <p className={styles.settingsDesc}>
-                    按严重程度设置敏感词在编辑器中的高亮颜色
-                  </p>
-                  
+                  <p className={styles.settingsDesc}>按严重程度设置敏感词在编辑器中的高亮颜色</p>
+
                   <div className={styles.colorSettings}>
                     {SEVERITY_LEVELS.map(level => (
                       <div key={level.value} className={styles.colorRow}>
@@ -482,14 +460,14 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
                             {level.value === 'critical' && '严重问题'}
                           </span>
                         </div>
-                        <div 
+                        <div
                           className={styles.colorPreview}
                           style={{ backgroundColor: level.color }}
                         />
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className={styles.settingsNote}>
                     <Text type="secondary">
                       注意：颜色设置可在「设置 → 词汇高亮 → 敏感词颜色」中修改

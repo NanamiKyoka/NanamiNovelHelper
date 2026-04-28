@@ -3,21 +3,8 @@
  */
 
 import { useState } from 'react'
-import {
-  Button,
-  Modal,
-  message,
-  Typography,
-  Alert,
-  Popconfirm,
-  Card
-} from 'antd'
-import {
-  DownloadOutlined,
-  UploadOutlined,
-  ReloadOutlined,
-  DeleteOutlined
-} from '@ant-design/icons'
+import { Button, Modal, message, Typography, Alert, Popconfirm, Card } from 'antd'
+import { DownloadOutlined, UploadOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons'
 import JSON5 from 'json5'
 import { useSettingsStore } from '@stores/settingsStore'
 import baseStyles from './SettingsBase.module.css'
@@ -38,7 +25,7 @@ export function DataManagementSettings(): JSX.Element {
         exportedAt: new Date().toISOString(),
         settings: globalSettings
       }
-      
+
       const blob = new Blob([JSON5.stringify(exportData, null, 2)], { type: 'application/json5' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -48,7 +35,7 @@ export function DataManagementSettings(): JSX.Element {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      
+
       message.success('设置已导出')
     } catch (error) {
       message.error('导出失败')
@@ -61,27 +48,29 @@ export function DataManagementSettings(): JSX.Element {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json5,.json'
-    
-    input.onchange = async (e) => {
+
+    input.onchange = async e => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
-      
+
       setImporting(true)
       try {
         const text = await file.text()
         const data = JSON5.parse(text)
-        
+
         if (!data.settings) {
           throw new Error('Invalid settings file')
         }
-        
+
         Modal.confirm({
           title: '确认导入设置',
           content: (
             <div>
               <p>即将导入以下设置：</p>
               <ul>
-                <li>导出时间: {data.exportedAt ? new Date(data.exportedAt).toLocaleString() : '未知'}</li>
+                <li>
+                  导出时间: {data.exportedAt ? new Date(data.exportedAt).toLocaleString() : '未知'}
+                </li>
                 <li>版本: {data.version || '未知'}</li>
               </ul>
               <p style={{ color: 'var(--ant-color-error)' }}>注意：当前设置将被覆盖！</p>
@@ -102,7 +91,7 @@ export function DataManagementSettings(): JSX.Element {
         setImporting(false)
       }
     }
-    
+
     input.click()
   }
 
@@ -150,11 +139,7 @@ export function DataManagementSettings(): JSX.Element {
             <br />
             <Text type="secondary">将当前应用设置导出为 JSON5 文件</Text>
           </div>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExport}
-            loading={exporting}
-          >
+          <Button icon={<DownloadOutlined />} onClick={handleExport} loading={exporting}>
             导出
           </Button>
         </div>
@@ -165,11 +150,7 @@ export function DataManagementSettings(): JSX.Element {
             <br />
             <Text type="secondary">从 JSON5 文件导入设置（将覆盖当前设置）</Text>
           </div>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={handleImport}
-            loading={importing}
-          >
+          <Button icon={<UploadOutlined />} onClick={handleImport} loading={importing}>
             导入
           </Button>
         </div>
@@ -190,9 +171,7 @@ export function DataManagementSettings(): JSX.Element {
             cancelText="取消"
             okButtonProps={{ danger: true }}
           >
-            <Button icon={<ReloadOutlined />}>
-              重置
-            </Button>
+            <Button icon={<ReloadOutlined />}>重置</Button>
           </Popconfirm>
         </div>
 
@@ -202,10 +181,7 @@ export function DataManagementSettings(): JSX.Element {
             <br />
             <Text type="secondary">清除应用缓存数据，不影响项目和设置</Text>
           </div>
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={handleClearCache}
-          >
+          <Button icon={<DeleteOutlined />} onClick={handleClearCache}>
             清除
           </Button>
         </div>

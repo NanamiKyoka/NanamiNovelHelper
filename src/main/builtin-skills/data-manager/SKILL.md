@@ -24,12 +24,14 @@ timeout: 30000
 管理小说设定中的词汇条目，如角色、地点、道具等。
 
 **特点**：
+
 - 支持动态类型发现（运行时读取 types.json5）
 - 支持内置类型和自定义类型
 - 支持按类型、关键词、标签查询
 - 支持字段动态更新
 
 **工具**：
+
 - `vocabulary_query` - 查询词汇类型和条目
 - `vocabulary_add` - 添加词汇类型或条目
 - `vocabulary_update` - 更新词汇类型或条目
@@ -40,6 +42,7 @@ timeout: 30000
 管理内容审核相关的敏感词。
 
 **工具**：
+
 - `sensitive_query` - 查询敏感词
 - `sensitive_add` - 添加敏感词
 - `sensitive_update` - 更新敏感词
@@ -50,11 +53,13 @@ timeout: 30000
 管理角色之间的关系图。
 
 **特点**：
+
 - 支持图、节点、边三种实体
 - 内置多种关系类型
 - 支持自定义关系类型
 
 **工具**：
+
 - `relationship_query` - 查询关系图
 - `relationship_add` - 创建图/添加节点/添加边
 - `relationship_update` - 更新图/节点/边
@@ -65,11 +70,13 @@ timeout: 30000
 管理层级结构，如组织、家族、势力等。
 
 **特点**：
+
 - 树形结构，支持父子关系
 - 支持获取祖先、子孙节点
 - 支持节点移动和折叠
 
 **工具**：
+
 - `organization_query` - 查询组织架构图
 - `organization_add` - 创建图/添加节点
 - `organization_update` - 更新图/节点/移动节点
@@ -80,6 +87,7 @@ timeout: 30000
 查询故事时间线（只读）。
 
 **工具**：
+
 - `timeline_query` - 查询时间线列表、详情、节点、分支
 
 ### 6. 事序图查询 (Sequence Chart)
@@ -87,6 +95,7 @@ timeout: 30000
 查询事件序列图（只读）。
 
 **工具**：
+
 - `sequence_chart_query` - 查询事序图列表、详情、事件
 
 ## 使用场景

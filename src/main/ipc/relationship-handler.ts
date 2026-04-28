@@ -34,18 +34,27 @@ export function registerRelationshipHandlers(): void {
     return relationshipService.get(graphId)
   })
 
-  ipcMain.handle('relationship:create', (_, options: CreateRelationshipGraphOptions): RelationshipGraph => {
-    validateParams('relationship:create')
-      .object(options, 'options')
-      .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
-      .validate()
-    return relationshipService.createGraph(options)
-  })
+  ipcMain.handle(
+    'relationship:create',
+    (_, options: CreateRelationshipGraphOptions): RelationshipGraph => {
+      validateParams('relationship:create')
+        .object(options, 'options')
+        .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
+        .validate()
+      return relationshipService.createGraph(options)
+    }
+  )
 
-  ipcMain.handle('relationship:update', (_, graphId: string, updates: UpdateRelationshipGraphOptions): RelationshipGraph | null => {
-    validateParams('relationship:update').nonEmptyString(graphId, 'graphId').object(updates, 'updates').validate()
-    return relationshipService.updateGraph(graphId, updates)
-  })
+  ipcMain.handle(
+    'relationship:update',
+    (_, graphId: string, updates: UpdateRelationshipGraphOptions): RelationshipGraph | null => {
+      validateParams('relationship:update')
+        .nonEmptyString(graphId, 'graphId')
+        .object(updates, 'updates')
+        .validate()
+      return relationshipService.updateGraph(graphId, updates)
+    }
+  )
 
   ipcMain.handle('relationship:delete', (_, graphId: string): boolean => {
     validateParams('relationship:delete').nonEmptyString(graphId, 'graphId').validate()
@@ -57,18 +66,43 @@ export function registerRelationshipHandlers(): void {
   // ============================================
 
   // 添加节点
-  ipcMain.handle('relationship:addNode', (_, graphId: string, node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>): RelationshipNode | null => {
-    validateParams('relationship:addNode').nonEmptyString(graphId, 'graphId').object(node, 'node').validate()
-    return relationshipService.addNode(graphId, node)
-  })
+  ipcMain.handle(
+    'relationship:addNode',
+    (
+      _,
+      graphId: string,
+      node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>
+    ): RelationshipNode | null => {
+      validateParams('relationship:addNode')
+        .nonEmptyString(graphId, 'graphId')
+        .object(node, 'node')
+        .validate()
+      return relationshipService.addNode(graphId, node)
+    }
+  )
 
-  ipcMain.handle('relationship:updateNode', (_, graphId: string, nodeId: string, updates: Partial<RelationshipNode>): RelationshipNode | null => {
-    validateParams('relationship:updateNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').object(updates, 'updates').validate()
-    return relationshipService.updateNode(graphId, nodeId, updates)
-  })
+  ipcMain.handle(
+    'relationship:updateNode',
+    (
+      _,
+      graphId: string,
+      nodeId: string,
+      updates: Partial<RelationshipNode>
+    ): RelationshipNode | null => {
+      validateParams('relationship:updateNode')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(nodeId, 'nodeId')
+        .object(updates, 'updates')
+        .validate()
+      return relationshipService.updateNode(graphId, nodeId, updates)
+    }
+  )
 
   ipcMain.handle('relationship:deleteNode', (_, graphId: string, nodeId: string): boolean => {
-    validateParams('relationship:deleteNode').nonEmptyString(graphId, 'graphId').nonEmptyString(nodeId, 'nodeId').validate()
+    validateParams('relationship:deleteNode')
+      .nonEmptyString(graphId, 'graphId')
+      .nonEmptyString(nodeId, 'nodeId')
+      .validate()
     return relationshipService.deleteNode(graphId, nodeId)
   })
 
@@ -77,18 +111,43 @@ export function registerRelationshipHandlers(): void {
   // ============================================
 
   // 添加边
-  ipcMain.handle('relationship:addEdge', (_, graphId: string, edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>): RelationshipEdge | null => {
-    validateParams('relationship:addEdge').nonEmptyString(graphId, 'graphId').object(edge, 'edge').validate()
-    return relationshipService.addEdge(graphId, edge)
-  })
+  ipcMain.handle(
+    'relationship:addEdge',
+    (
+      _,
+      graphId: string,
+      edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>
+    ): RelationshipEdge | null => {
+      validateParams('relationship:addEdge')
+        .nonEmptyString(graphId, 'graphId')
+        .object(edge, 'edge')
+        .validate()
+      return relationshipService.addEdge(graphId, edge)
+    }
+  )
 
-  ipcMain.handle('relationship:updateEdge', (_, graphId: string, edgeId: string, updates: Partial<RelationshipEdge>): RelationshipEdge | null => {
-    validateParams('relationship:updateEdge').nonEmptyString(graphId, 'graphId').nonEmptyString(edgeId, 'edgeId').object(updates, 'updates').validate()
-    return relationshipService.updateEdge(graphId, edgeId, updates)
-  })
+  ipcMain.handle(
+    'relationship:updateEdge',
+    (
+      _,
+      graphId: string,
+      edgeId: string,
+      updates: Partial<RelationshipEdge>
+    ): RelationshipEdge | null => {
+      validateParams('relationship:updateEdge')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(edgeId, 'edgeId')
+        .object(updates, 'updates')
+        .validate()
+      return relationshipService.updateEdge(graphId, edgeId, updates)
+    }
+  )
 
   ipcMain.handle('relationship:deleteEdge', (_, graphId: string, edgeId: string): boolean => {
-    validateParams('relationship:deleteEdge').nonEmptyString(graphId, 'graphId').nonEmptyString(edgeId, 'edgeId').validate()
+    validateParams('relationship:deleteEdge')
+      .nonEmptyString(graphId, 'graphId')
+      .nonEmptyString(edgeId, 'edgeId')
+      .validate()
     return relationshipService.deleteEdge(graphId, edgeId)
   })
 
@@ -102,30 +161,59 @@ export function registerRelationshipHandlers(): void {
     return relationshipService.getRelationTypes(graphId)
   })
 
-  ipcMain.handle('relationship:addRelationType', (_, graphId: string, type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>): RelationType | null => {
-    validateParams('relationship:addRelationType').nonEmptyString(graphId, 'graphId').object(type, 'type').validate()
-    return relationshipService.addCustomRelationType(graphId, type)
-  })
+  ipcMain.handle(
+    'relationship:addRelationType',
+    (
+      _,
+      graphId: string,
+      type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>
+    ): RelationType | null => {
+      validateParams('relationship:addRelationType')
+        .nonEmptyString(graphId, 'graphId')
+        .object(type, 'type')
+        .validate()
+      return relationshipService.addCustomRelationType(graphId, type)
+    }
+  )
 
-  ipcMain.handle('relationship:updateRelationType', (_, graphId: string, typeId: string, updates: Partial<RelationType>): RelationType | null => {
-    validateParams('relationship:updateRelationType').nonEmptyString(graphId, 'graphId').nonEmptyString(typeId, 'typeId').object(updates, 'updates').validate()
-    return relationshipService.updateCustomRelationType(graphId, typeId, updates)
-  })
+  ipcMain.handle(
+    'relationship:updateRelationType',
+    (_, graphId: string, typeId: string, updates: Partial<RelationType>): RelationType | null => {
+      validateParams('relationship:updateRelationType')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(typeId, 'typeId')
+        .object(updates, 'updates')
+        .validate()
+      return relationshipService.updateCustomRelationType(graphId, typeId, updates)
+    }
+  )
 
-  ipcMain.handle('relationship:deleteRelationType', (_, graphId: string, typeId: string): boolean => {
-    validateParams('relationship:deleteRelationType').nonEmptyString(graphId, 'graphId').nonEmptyString(typeId, 'typeId').validate()
-    return relationshipService.deleteCustomRelationType(graphId, typeId)
-  })
+  ipcMain.handle(
+    'relationship:deleteRelationType',
+    (_, graphId: string, typeId: string): boolean => {
+      validateParams('relationship:deleteRelationType')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(typeId, 'typeId')
+        .validate()
+      return relationshipService.deleteCustomRelationType(graphId, typeId)
+    }
+  )
 
   // ============================================
   // 缩略图
   // ============================================
 
   // 保存缩略图
-  ipcMain.handle('relationship:saveThumbnail', (_, graphId: string, dataUrl: string): string | null => {
-    validateParams('relationship:saveThumbnail').nonEmptyString(graphId, 'graphId').nonEmptyString(dataUrl, 'dataUrl').validate()
-    return relationshipService.saveThumbnail(graphId, dataUrl)
-  })
+  ipcMain.handle(
+    'relationship:saveThumbnail',
+    (_, graphId: string, dataUrl: string): string | null => {
+      validateParams('relationship:saveThumbnail')
+        .nonEmptyString(graphId, 'graphId')
+        .nonEmptyString(dataUrl, 'dataUrl')
+        .validate()
+      return relationshipService.saveThumbnail(graphId, dataUrl)
+    }
+  )
 
   ipcMain.handle('relationship:getThumbnailPath', (_, graphId: string): string | null => {
     validateParams('relationship:getThumbnailPath').nonEmptyString(graphId, 'graphId').validate()
@@ -148,18 +236,21 @@ export function registerRelationshipHandlers(): void {
   })
 
   // 显示导出对话框
-  ipcMain.handle('relationship:showExportDialog', async (_, graphName: string): Promise<string | null> => {
-    const result = await dialog.showSaveDialog({
-      title: '导出关系图',
-      defaultPath: `${graphName}.json5`,
-      filters: [
-        { name: 'JSON5 文件', extensions: ['json5'] },
-        { name: 'JSON 文件', extensions: ['json'] },
-        { name: '所有文件', extensions: ['*'] }
-      ]
-    })
-    return result.canceled ? null : result.filePath
-  })
+  ipcMain.handle(
+    'relationship:showExportDialog',
+    async (_, graphName: string): Promise<string | null> => {
+      const result = await dialog.showSaveDialog({
+        title: '导出关系图',
+        defaultPath: `${graphName}.json5`,
+        filters: [
+          { name: 'JSON5 文件', extensions: ['json5'] },
+          { name: 'JSON 文件', extensions: ['json'] },
+          { name: '所有文件', extensions: ['*'] }
+        ]
+      })
+      return result.canceled ? null : result.filePath
+    }
+  )
 
   // 显示导入对话框
   ipcMain.handle('relationship:showImportDialog', async (): Promise<string | null> => {

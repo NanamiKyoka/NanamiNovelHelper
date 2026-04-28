@@ -13,54 +13,63 @@ import { ImageFieldConfig } from '../types/vocabulary'
  */
 export function registerImageHandlers(): void {
   // 从 Base64 上传图片
-  ipcMain.handle('image:uploadFromBase64', async (_event, base64Data: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
-    validateParams('image:uploadFromBase64').nonEmptyString(base64Data, 'base64Data').validate()
-    try {
-      const project = projectService.getCurrentProject()
-      if (!project) {
-        throw new Error('没有打开的项目')
+  ipcMain.handle(
+    'image:uploadFromBase64',
+    async (_event, base64Data: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
+      validateParams('image:uploadFromBase64').nonEmptyString(base64Data, 'base64Data').validate()
+      try {
+        const project = projectService.getCurrentProject()
+        if (!project) {
+          throw new Error('没有打开的项目')
+        }
+        return await imageService.uploadFromBase64(project.path, base64Data, config)
+      } catch (error) {
+        console.error('Failed to upload image from base64:', error)
+        throw error
       }
-      return await imageService.uploadFromBase64(project.path, base64Data, config)
-    } catch (error) {
-      console.error('Failed to upload image from base64:', error)
-      throw error
     }
-  })
+  )
 
   // 从文件路径上传图片
-  ipcMain.handle('image:uploadFromFile', async (_event, filePath: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
-    validateParams('image:uploadFromFile').nonEmptyString(filePath, 'filePath').validate()
-    try {
-      const project = projectService.getCurrentProject()
-      if (!project) {
-        throw new Error('没有打开的项目')
+  ipcMain.handle(
+    'image:uploadFromFile',
+    async (_event, filePath: string, config?: ImageFieldConfig): Promise<ImageUploadResult> => {
+      validateParams('image:uploadFromFile').nonEmptyString(filePath, 'filePath').validate()
+      try {
+        const project = projectService.getCurrentProject()
+        if (!project) {
+          throw new Error('没有打开的项目')
+        }
+        return await imageService.uploadFromFile(project.path, filePath, config)
+      } catch (error) {
+        console.error('Failed to upload image from file:', error)
+        throw error
       }
-      return await imageService.uploadFromFile(project.path, filePath, config)
-    } catch (error) {
-      console.error('Failed to upload image from file:', error)
-      throw error
     }
-  })
+  )
 
   // 显示选择图片对话框并上传
-  ipcMain.handle('image:selectAndUpload', async (_event, config?: ImageFieldConfig): Promise<ImageUploadResult | null> => {
-    try {
-      const project = projectService.getCurrentProject()
-      if (!project) {
-        throw new Error('没有打开的项目')
-      }
+  ipcMain.handle(
+    'image:selectAndUpload',
+    async (_event, config?: ImageFieldConfig): Promise<ImageUploadResult | null> => {
+      try {
+        const project = projectService.getCurrentProject()
+        if (!project) {
+          throw new Error('没有打开的项目')
+        }
 
-      const filePath = await imageService.showOpenDialog()
-      if (!filePath) {
-        return null
-      }
+        const filePath = await imageService.showOpenDialog()
+        if (!filePath) {
+          return null
+        }
 
-      return await imageService.uploadFromFile(project.path, filePath, config)
-    } catch (error) {
-      console.error('Failed to select and upload image:', error)
-      throw error
+        return await imageService.uploadFromFile(project.path, filePath, config)
+      } catch (error) {
+        console.error('Failed to select and upload image:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 删除图片
   ipcMain.handle('image:delete', async (_event, imagePath: string): Promise<void> => {

@@ -18,10 +18,7 @@ import type {
   SidebarBadgeVisibility,
   GlobalLayoutSettings
 } from '@shared/settings'
-import {
-  DEFAULT_GLOBAL_SETTINGS,
-  DEFAULT_PROJECT_SETTINGS
-} from '@shared/settings'
+import { DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROJECT_SETTINGS } from '@shared/settings'
 
 interface SettingsState {
   isLoading: boolean
@@ -29,7 +26,7 @@ interface SettingsState {
   globalSettings: GlobalSettings
   projectSettings: ProjectSettings | null
   hasProject: boolean
-  
+
   initGlobalSettings: () => Promise<void>
   updateGlobalSettings: (settings: Partial<GlobalSettings>) => Promise<void>
   resetGlobalSettings: () => Promise<void>
@@ -96,8 +93,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({ globalSettings: DEFAULT_GLOBAL_SETTINGS, isInitialized: true, isLoading: false })
     }
   },
-  
-  updateGlobalSettings: async (updates) => {
+
+  updateGlobalSettings: async updates => {
     try {
       const settings = await window.electron.settings.global.update(updates)
       set({ globalSettings: settings })
@@ -106,7 +103,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       throw error
     }
   },
-  
+
   resetGlobalSettings: async () => {
     try {
       const settings = await window.electron.settings.global.reset()
@@ -117,54 +114,54 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  setThemeMode: async (mode) => {
+  setThemeMode: async mode => {
     const { globalSettings } = get()
     const newTheme = { ...globalSettings.theme, mode }
     await get().updateGlobalSettings({ theme: newTheme })
   },
-  
-  setPrimaryColor: async (primaryColor) => {
+
+  setPrimaryColor: async primaryColor => {
     const { globalSettings } = get()
     const newTheme = { ...globalSettings.theme, primaryColor }
     await get().updateGlobalSettings({ theme: newTheme })
   },
-  
-  setFontSize: async (fontSize) => {
+
+  setFontSize: async fontSize => {
     const { globalSettings } = get()
     const newTheme = { ...globalSettings.theme, fontSize }
     await get().updateGlobalSettings({ theme: newTheme })
   },
-  
-  setFontFamily: async (fontFamily) => {
+
+  setFontFamily: async fontFamily => {
     const { globalSettings } = get()
     const newTheme = { ...globalSettings.theme, fontFamily }
     await get().updateGlobalSettings({ theme: newTheme })
   },
 
-  setWindowState: async (state) => {
+  setWindowState: async state => {
     const { globalSettings } = get()
     const newWindow = { ...globalSettings.window, ...state }
     await get().updateGlobalSettings({ window: newWindow })
   },
 
-  setLanguage: async (language) => {
+  setLanguage: async language => {
     await window.electron.settings.global.setLanguage(language)
     const { globalSettings } = get()
     set({ globalSettings: { ...globalSettings, language } })
   },
 
-  setSidebarWidth: async (sidebarWidth) => {
+  setSidebarWidth: async sidebarWidth => {
     await window.electron.settings.global.setSidebarWidth(sidebarWidth)
     const { globalSettings } = get()
     set({ globalSettings: { ...globalSettings, sidebarWidth } })
   },
 
-  setShowWelcome: async (showWelcome) => {
+  setShowWelcome: async showWelcome => {
     await get().updateGlobalSettings({ showWelcome })
   },
 
   // 全局布局设置
-  updateLayoutSettings: async (layout) => {
+  updateLayoutSettings: async layout => {
     try {
       const newLayout = await window.electron.settings.global.updateLayout(layout)
       const { globalSettings } = get()
@@ -175,44 +172,66 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  updateBadgeVisibility: async (updates) => {
+  updateBadgeVisibility: async updates => {
     try {
-      const newBadgeVisibility = await window.electron.settings.global.updateBadgeVisibility(updates)
+      const newBadgeVisibility =
+        await window.electron.settings.global.updateBadgeVisibility(updates)
       const { globalSettings } = get()
-      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, badgeVisibility: newBadgeVisibility } } })
+      set({
+        globalSettings: {
+          ...globalSettings,
+          layout: { ...globalSettings.layout, badgeVisibility: newBadgeVisibility }
+        }
+      })
     } catch (error) {
       console.error('Failed to update badge visibility:', error)
       throw error
     }
   },
 
-  updateSidebarBadgeVisibility: async (updates) => {
+  updateSidebarBadgeVisibility: async updates => {
     try {
-      const newSidebarBadgeVisibility = await window.electron.settings.global.updateSidebarBadgeVisibility(updates)
+      const newSidebarBadgeVisibility =
+        await window.electron.settings.global.updateSidebarBadgeVisibility(updates)
       const { globalSettings } = get()
-      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, sidebarBadgeVisibility: newSidebarBadgeVisibility } } })
+      set({
+        globalSettings: {
+          ...globalSettings,
+          layout: { ...globalSettings.layout, sidebarBadgeVisibility: newSidebarBadgeVisibility }
+        }
+      })
     } catch (error) {
       console.error('Failed to update sidebar badge visibility:', error)
       throw error
     }
   },
 
-  updateSidebarBadgeOrder: async (order) => {
+  updateSidebarBadgeOrder: async order => {
     try {
       const newOrder = await window.electron.settings.global.updateSidebarBadgeOrder(order)
       const { globalSettings } = get()
-      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, sidebarBadgeOrder: newOrder } } })
+      set({
+        globalSettings: {
+          ...globalSettings,
+          layout: { ...globalSettings.layout, sidebarBadgeOrder: newOrder }
+        }
+      })
     } catch (error) {
       console.error('Failed to update sidebar badge order:', error)
       throw error
     }
   },
 
-  setShowHiddenFiles: async (show) => {
+  setShowHiddenFiles: async show => {
     try {
       await window.electron.settings.global.setShowHiddenFiles(show)
       const { globalSettings } = get()
-      set({ globalSettings: { ...globalSettings, layout: { ...globalSettings.layout, showHiddenFiles: show } } })
+      set({
+        globalSettings: {
+          ...globalSettings,
+          layout: { ...globalSettings.layout, showHiddenFiles: show }
+        }
+      })
     } catch (error) {
       console.error('Failed to set show hidden files:', error)
       throw error
@@ -229,7 +248,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({ projectSettings: DEFAULT_PROJECT_SETTINGS, hasProject: true, isLoading: false })
     }
   },
-  
+
   clearProjectSettings: () => {
     set({ projectSettings: null, hasProject: false })
   },
@@ -238,8 +257,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setProjectSettings: (settings: ProjectSettings) => {
     set({ projectSettings: settings, hasProject: true })
   },
-  
-  updateProjectSettings: async (updates) => {
+
+  updateProjectSettings: async updates => {
     try {
       const settings = await window.electron.settings.project.update(updates)
       set({ projectSettings: settings })
@@ -248,7 +267,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       throw error
     }
   },
-  
+
   resetProjectSettings: async () => {
     try {
       const settings = await window.electron.settings.project.reset()
@@ -259,59 +278,59 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  updateEditorSettings: async (updates) => {
+  updateEditorSettings: async updates => {
     const { projectSettings } = get()
     if (!projectSettings) return
     const newEditor = { ...projectSettings.editor, ...updates }
     await get().updateProjectSettings({ editor: newEditor })
   },
 
-  updateHighlightSettings: async (updates) => {
+  updateHighlightSettings: async updates => {
     const { projectSettings } = get()
     if (!projectSettings) return
     const newHighlight = { ...projectSettings.highlight, ...updates }
     await get().updateProjectSettings({ highlight: newHighlight })
   },
 
-  updateBackupSettings: async (updates) => {
+  updateBackupSettings: async updates => {
     const { projectSettings } = get()
     if (!projectSettings) return
     const newBackup = { ...projectSettings.backup, ...updates }
     await get().updateProjectSettings({ backup: newBackup })
   },
 
-  getApiKey: async (keyName) => {
+  getApiKey: async keyName => {
     return await window.electron.settings.global.getApiKey(keyName)
   },
-  
+
   setApiKey: async (keyName, value) => {
     await window.electron.settings.global.setApiKey(keyName, value)
   },
-  
-  deleteApiKey: async (keyName) => {
+
+  deleteApiKey: async keyName => {
     await window.electron.settings.global.deleteApiKey(keyName)
   },
 
   createBackup: async () => {
     return await window.electron.backup.create()
   },
-  
+
   listBackups: async () => {
     return await window.electron.backup.list()
   },
-  
-  restoreBackup: async (filename) => {
+
+  restoreBackup: async filename => {
     return await window.electron.backup.restore(filename)
   },
-  
-  deleteBackup: async (filename) => {
+
+  deleteBackup: async filename => {
     return await window.electron.backup.delete(filename)
   },
-  
-  exportBackup: async (filename) => {
+
+  exportBackup: async filename => {
     return await window.electron.backup.export(filename)
   },
-  
+
   importBackup: async () => {
     return await window.electron.backup.import()
   },
@@ -328,7 +347,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 // 监听系统主题变化，自动更新
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  mediaQuery.addEventListener('change', (_e) => {
+  mediaQuery.addEventListener('change', _e => {
     const state = useSettingsStore.getState()
     if (state.globalSettings.theme.mode === 'system') {
       useSettingsStore.setState({ globalSettings: { ...state.globalSettings } })

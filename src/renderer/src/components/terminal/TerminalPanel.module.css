@@ -61,7 +61,9 @@
   height: 28px;
   color: var(--text-secondary);
   border-radius: var(--radius-base);
-  transition: background var(--transition-base), color var(--transition-base);
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
 }
 
 .headerBtn:hover {

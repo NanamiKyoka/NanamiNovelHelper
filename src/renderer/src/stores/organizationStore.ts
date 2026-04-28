@@ -10,7 +10,7 @@ import type {
   CreateOrganizationGraphOptions,
   UpdateOrganizationGraphOptions,
   CreateOrganizationNodeOptions,
-  UpdateOrganizationNodeOptions,
+  UpdateOrganizationNodeOptions
 } from '@shared/organization'
 
 interface OrganizationState {
@@ -90,20 +90,23 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const graph = await window.electron.organization.create(options)
-      set((state) => ({
-        graphs: [...state.graphs, {
-          id: graph.id,
-          name: graph.name,
-          description: graph.description,
-          thumbnail: graph.thumbnail,
-          linkedVocabularyTypes: graph.linkedVocabularyTypes,
-          nodeStyle: graph.nodeStyle,
-          nodeCount: graph.nodeCount,
-          createdAt: graph.createdAt,
-          updatedAt: graph.updatedAt,
-        }],
+      set(state => ({
+        graphs: [
+          ...state.graphs,
+          {
+            id: graph.id,
+            name: graph.name,
+            description: graph.description,
+            thumbnail: graph.thumbnail,
+            linkedVocabularyTypes: graph.linkedVocabularyTypes,
+            nodeStyle: graph.nodeStyle,
+            nodeCount: graph.nodeCount,
+            createdAt: graph.createdAt,
+            updatedAt: graph.updatedAt
+          }
+        ],
         currentGraph: graph,
-        isLoading: false,
+        isLoading: false
       }))
       return graph
     } catch (error) {
@@ -118,8 +121,8 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       const updatedGraph = await window.electron.organization.update(graphId, updates)
       if (updatedGraph) {
-        set((state) => ({
-          graphs: state.graphs.map((g) =>
+        set(state => ({
+          graphs: state.graphs.map(g =>
             g.id === graphId
               ? {
                   ...g,
@@ -129,11 +132,11 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
                   linkedVocabularyTypes: updatedGraph.linkedVocabularyTypes,
                   nodeStyle: updatedGraph.nodeStyle,
                   nodeCount: updatedGraph.nodeCount,
-                  updatedAt: updatedGraph.updatedAt,
+                  updatedAt: updatedGraph.updatedAt
                 }
               : g
           ),
-          currentGraph: state.currentGraph?.id === graphId ? updatedGraph : state.currentGraph,
+          currentGraph: state.currentGraph?.id === graphId ? updatedGraph : state.currentGraph
         }))
       }
     } catch (error) {
@@ -147,9 +150,9 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       const success = await window.electron.organization.delete(graphId)
       if (success) {
-        set((state) => ({
-          graphs: state.graphs.filter((g) => g.id !== graphId),
-          currentGraph: state.currentGraph?.id === graphId ? null : state.currentGraph,
+        set(state => ({
+          graphs: state.graphs.filter(g => g.id !== graphId),
+          currentGraph: state.currentGraph?.id === graphId ? null : state.currentGraph
         }))
       }
     } catch (error) {
@@ -171,14 +174,14 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       const newNode = await window.electron.organization.addNode(currentGraph.id, options)
       if (newNode) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
                 nodes: [...state.currentGraph.nodes, newNode],
-                nodeCount: state.currentGraph.nodeCount + 1,
+                nodeCount: state.currentGraph.nodeCount + 1
               }
-            : null,
+            : null
         }))
       }
       return newNode
@@ -195,17 +198,19 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.organization.updateNode(currentGraph.id, nodeId, updates)
+      const updatedNode = await window.electron.organization.updateNode(
+        currentGraph.id,
+        nodeId,
+        updates
+      )
       if (updatedNode) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map((n) =>
-                  n.id === nodeId ? updatedNode : n
-                ),
+                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -225,15 +230,15 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
         // 获取要删除的节点及其所有后代节点
         const descendants = get().getDescendants(nodeId)
         const idsToDelete = new Set([nodeId, ...descendants.map(n => n.id)])
-        
-        set((state) => ({
+
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.filter((n) => !idsToDelete.has(n.id)),
-                nodeCount: state.currentGraph.nodeCount - idsToDelete.size,
+                nodes: state.currentGraph.nodes.filter(n => !idsToDelete.has(n.id)),
+                nodeCount: state.currentGraph.nodeCount - idsToDelete.size
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -248,17 +253,19 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.organization.moveNode(currentGraph.id, nodeId, newParentId)
+      const updatedNode = await window.electron.organization.moveNode(
+        currentGraph.id,
+        nodeId,
+        newParentId
+      )
       if (updatedNode) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map((n) =>
-                  n.id === nodeId ? updatedNode : n
-                ),
+                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -274,15 +281,18 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const thumbnailPath = await window.electron.organization.saveThumbnail(currentGraph.id, dataUrl)
+      const thumbnailPath = await window.electron.organization.saveThumbnail(
+        currentGraph.id,
+        dataUrl
+      )
       if (thumbnailPath) {
-        set((state) => ({
+        set(state => ({
           currentGraph: state.currentGraph
             ? { ...state.currentGraph, thumbnail: thumbnailPath }
             : null,
-          graphs: state.graphs.map((g) =>
+          graphs: state.graphs.map(g =>
             g.id === currentGraph.id ? { ...g, thumbnail: thumbnailPath } : g
-          ),
+          )
         }))
       }
     } catch (error) {
@@ -306,7 +316,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     try {
       const graph = await window.electron.organization.import(jsonContent)
       if (graph) {
-        set((state) => ({
+        set(state => ({
           graphs: [
             ...state.graphs,
             {
@@ -318,9 +328,9 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
               nodeStyle: graph.nodeStyle,
               nodeCount: graph.nodeCount,
               createdAt: graph.createdAt,
-              updatedAt: graph.updatedAt,
-            },
-          ],
+              updatedAt: graph.updatedAt
+            }
+          ]
         }))
       }
       return graph
@@ -335,32 +345,28 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.nodes.find((n) => n.id === nodeId)
+    return currentGraph?.nodes.find(n => n.id === nodeId)
   },
 
   getRootNodes: () => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    return currentGraph.nodes
-      .filter((n) => !n.parentId)
-      .sort((a, b) => a.order - b.order)
+    return currentGraph.nodes.filter(n => !n.parentId).sort((a, b) => a.order - b.order)
   },
 
   getChildren: (parentId: string) => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    return currentGraph.nodes
-      .filter((n) => n.parentId === parentId)
-      .sort((a, b) => a.order - b.order)
+    return currentGraph.nodes.filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
   },
 
   getDescendants: (nodeId: string) => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    
+
     const descendants: OrganizationNode[] = []
     const collectDescendants = (id: string) => {
-      const children = currentGraph.nodes.filter((n) => n.parentId === id)
+      const children = currentGraph.nodes.filter(n => n.parentId === id)
       for (const child of children) {
         descendants.push(child)
         collectDescendants(child.id)
@@ -373,11 +379,11 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   getAncestors: (nodeId: string) => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    
+
     const ancestors: OrganizationNode[] = []
-    let current = currentGraph.nodes.find((n) => n.id === nodeId)
+    let current = currentGraph.nodes.find(n => n.id === nodeId)
     while (current?.parentId) {
-      const parent = currentGraph.nodes.find((n) => n.id === current!.parentId)
+      const parent = currentGraph.nodes.find(n => n.id === current!.parentId)
       if (parent) {
         ancestors.push(parent)
         current = parent
@@ -393,7 +399,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       graphs: [],
       currentGraph: null,
       isLoading: false,
-      error: null,
+      error: null
     })
   },
 
@@ -408,10 +414,10 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       const success = await window.electron.organization.reorderGraphs(graphIds)
       if (success) {
         // 更新本地状态中的排序
-        set((state) => ({
+        set(state => ({
           graphs: graphIds
-            .map((id) => state.graphs.find((g) => g.id === id))
-            .filter((g): g is OrganizationGraphMeta => g !== undefined),
+            .map(id => state.graphs.find(g => g.id === id))
+            .filter((g): g is OrganizationGraphMeta => g !== undefined)
         }))
       }
       return success
@@ -421,5 +427,5 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
       set({ error: errorMessage })
       return false
     }
-  },
+  }
 }))

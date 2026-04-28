@@ -44,16 +44,19 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
   }, [editor])
 
   // 处理右键菜单
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    
-    if (!editor) return
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
 
-    const text = getSelectedText()
-    setSelectedText(text)
-    
-    setPosition({ x: e.clientX, y: e.clientY })
-  }, [editor, getSelectedText])
+      if (!editor) return
+
+      const text = getSelectedText()
+      setSelectedText(text)
+
+      setPosition({ x: e.clientX, y: e.clientY })
+    },
+    [editor, getSelectedText]
+  )
 
   // 关闭菜单
   const closeMenu = useCallback(() => {
@@ -78,82 +81,85 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
   }, [position, closeMenu])
 
   // 执行格式化命令
-  const execCommand = useCallback((command: string, ..._args: unknown[]) => {
-    if (!editor) return
+  const execCommand = useCallback(
+    (command: string, ..._args: unknown[]) => {
+      if (!editor) return
 
-    closeMenu()
+      closeMenu()
 
-    const chain = editor.chain().focus()
+      const chain = editor.chain().focus()
 
-    switch (command) {
-      case 'copy':
-        navigator.clipboard.writeText(getSelectedText()).then(() => {
-          message.success('已复制')
-        })
-        break
-      case 'cut':
-        navigator.clipboard.writeText(getSelectedText()).then(() => {
-          chain.deleteSelection().run()
-          message.success('已剪切')
-        })
-        break
-      case 'paste':
-        navigator.clipboard.readText().then((text) => {
-          chain.insertContent(text).run()
-        })
-        break
-      case 'bold':
-        chain.toggleBold().run()
-        break
-      case 'italic':
-        chain.toggleItalic().run()
-        break
-      case 'strike':
-        chain.toggleStrike().run()
-        break
-      case 'code':
-        chain.toggleCode().run()
-        break
-      case 'codeBlock':
-        chain.toggleCodeBlock().run()
-        break
-      case 'link':
-        const url = window.prompt('输入链接地址:')
-        if (url) {
-          chain.setLink({ href: url }).run()
-        }
-        break
-      case 'removeLink':
-        chain.unsetLink().run()
-        break
-      case 'bulletList':
-        chain.toggleBulletList().run()
-        break
-      case 'orderedList':
-        chain.toggleOrderedList().run()
-        break
-      case 'clearFormat':
-        chain.clearNodes().unsetAllMarks().run()
-        break
-      case 'heading1':
-        chain.toggleHeading({ level: 1 }).run()
-        break
-      case 'heading2':
-        chain.toggleHeading({ level: 2 }).run()
-        break
-      case 'heading3':
-        chain.toggleHeading({ level: 3 }).run()
-        break
-      case 'paragraph':
-        chain.setParagraph().run()
-        break
-      case 'highlight':
-        chain.toggleHighlight({ color: '#fef3cd' }).run()
-        break
-      default:
-        break
-    }
-  }, [editor, closeMenu, getSelectedText])
+      switch (command) {
+        case 'copy':
+          navigator.clipboard.writeText(getSelectedText()).then(() => {
+            message.success('已复制')
+          })
+          break
+        case 'cut':
+          navigator.clipboard.writeText(getSelectedText()).then(() => {
+            chain.deleteSelection().run()
+            message.success('已剪切')
+          })
+          break
+        case 'paste':
+          navigator.clipboard.readText().then(text => {
+            chain.insertContent(text).run()
+          })
+          break
+        case 'bold':
+          chain.toggleBold().run()
+          break
+        case 'italic':
+          chain.toggleItalic().run()
+          break
+        case 'strike':
+          chain.toggleStrike().run()
+          break
+        case 'code':
+          chain.toggleCode().run()
+          break
+        case 'codeBlock':
+          chain.toggleCodeBlock().run()
+          break
+        case 'link':
+          const url = window.prompt('输入链接地址:')
+          if (url) {
+            chain.setLink({ href: url }).run()
+          }
+          break
+        case 'removeLink':
+          chain.unsetLink().run()
+          break
+        case 'bulletList':
+          chain.toggleBulletList().run()
+          break
+        case 'orderedList':
+          chain.toggleOrderedList().run()
+          break
+        case 'clearFormat':
+          chain.clearNodes().unsetAllMarks().run()
+          break
+        case 'heading1':
+          chain.toggleHeading({ level: 1 }).run()
+          break
+        case 'heading2':
+          chain.toggleHeading({ level: 2 }).run()
+          break
+        case 'heading3':
+          chain.toggleHeading({ level: 3 }).run()
+          break
+        case 'paragraph':
+          chain.setParagraph().run()
+          break
+        case 'highlight':
+          chain.toggleHighlight({ color: '#fef3cd' }).run()
+          break
+        default:
+          break
+      }
+    },
+    [editor, closeMenu, getSelectedText]
+  )
 
   // 构建菜单项
   const getMenuItems = useCallback((): MenuProps['items'] => {
@@ -337,11 +343,7 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.container}
-      onContextMenu={handleContextMenu}
-    >
+    <div ref={containerRef} className={styles.container} onContextMenu={handleContextMenu}>
       {children}
       {position && (
         <div
@@ -356,7 +358,7 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
           <Dropdown
             menu={{ items: getMenuItems() }}
             open={!!position}
-            onOpenChange={(open) => {
+            onOpenChange={open => {
               if (!open) closeMenu()
             }}
             trigger={['contextMenu']}

@@ -1,6 +1,6 @@
 /**
  * 编辑器扩展配置 Hook
- * 
+ *
  * 封装 TipTap 编辑器的扩展配置逻辑
  */
 
@@ -16,7 +16,13 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
-import { TabInsert, CustomKeymap, LineNumbers, ImagePaste, uploadImageOriginal } from '@components/editor/extensions'
+import {
+  TabInsert,
+  CustomKeymap,
+  LineNumbers,
+  ImagePaste,
+  uploadImageOriginal
+} from '@components/editor/extensions'
 import { VocabularyHighlight } from '@components/editor/extensions/vocabularyHighlight'
 import type { HighlightStyleConfig, HoverCardConfig } from '@shared/highlight'
 
@@ -67,7 +73,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
         heading: {
           levels: [1, 2, 3, 4, 5, 6]
         },
-        codeBlock: false, // 禁用默认的 codeBlock，使用 CodeBlockLowlight 替代
+        codeBlock: false // 禁用默认的 codeBlock，使用 CodeBlockLowlight 替代
       }),
       // 代码块扩展（带语法高亮）
       CodeBlockLowlight.configure({
@@ -101,7 +107,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
       ImagePaste.configure({
         maxSize: 10 * 1024 * 1024,
         allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-        onUpload: async (file) => {
+        onUpload: async file => {
           return uploadImageOriginal(file)
         }
       }),

@@ -5,15 +5,7 @@
 
 import { useCallback, useEffect, useRef, useMemo, memo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import {
-  Button,
-  Empty,
-  Input,
-  Tooltip,
-  App,
-  Spin,
-  Dropdown
-} from 'antd'
+import { Button, Empty, Input, Tooltip, App, Spin, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   FolderOpenOutlined,
@@ -63,7 +55,7 @@ function stripHtmlTags(html: string): string {
     .replace(/&nbsp;/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/^\s+|\s+$/g, '')
-  
+
   return text
 }
 
@@ -72,7 +64,7 @@ const getFileIcon = (name: string, isDirectory: boolean, isExpanded?: boolean): 
   if (isDirectory) {
     return isExpanded ? <FolderOpenOutlined /> : <FolderOutlined />
   }
-  
+
   const ext = name.split('.').pop()?.toLowerCase()
   switch (ext) {
     case 'novel':
@@ -130,7 +122,7 @@ const TreeNode = memo(function TreeNode({
 }: TreeNodeProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isCanceling = useRef(false)
-  
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
@@ -139,12 +131,9 @@ const TreeNode = memo(function TreeNode({
       isCanceling.current = false
     }
   }, [isEditing])
-  
+
   return (
-    <Dropdown
-      menu={{ items: getContextMenu() }}
-      trigger={['contextMenu']}
-    >
+    <Dropdown menu={{ items: getContextMenu() }} trigger={['contextMenu']}>
       <div
         className={`${styles.treeNode} ${isSelected ? styles.selected : ''}`}
         style={{ paddingLeft: depth * 16 + 8 }}
@@ -153,9 +142,9 @@ const TreeNode = memo(function TreeNode({
         onContextMenu={onContextMenu}
       >
         {/* 展开/折叠箭头 */}
-        <span 
+        <span
           className={`${styles.arrow} ${isExpanded ? styles.expanded : ''} ${!node.isDirectory ? styles.hidden : ''}`}
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation()
             if (node.isDirectory) {
               onToggleExpand()
@@ -164,12 +153,10 @@ const TreeNode = memo(function TreeNode({
         >
           <RightOutlined />
         </span>
-        
+
         {/* 图标 */}
-        <span className={styles.icon}>
-          {getFileIcon(node.name, node.isDirectory, isExpanded)}
-        </span>
-        
+        <span className={styles.icon}>{getFileIcon(node.name, node.isDirectory, isExpanded)}</span>
+
         {/* 名称 */}
         {isEditing ? (
           <input
@@ -177,7 +164,7 @@ const TreeNode = memo(function TreeNode({
             type="text"
             className={styles.editInput}
             value={editingName}
-            onChange={(e) => onRenameChange(e.target.value)}
+            onChange={e => onRenameChange(e.target.value)}
             onBlur={() => {
               // 如果是 Escape 取消触发的 blur，不执行 finish
               if (isCanceling.current) {
@@ -185,12 +172,12 @@ const TreeNode = memo(function TreeNode({
               }
               onRenameFinish()
             }}
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               // Ctrl+Space 用于切换输入法，不阻止事件传播
               if (e.key === ' ' && (e.ctrlKey || e.metaKey)) {
                 return // 让事件正常冒泡，输入法可以捕获
               }
-              
+
               // 只对需要处理的按键阻止冒泡
               if (e.key === 'Enter') {
                 e.stopPropagation()
@@ -220,31 +207,42 @@ interface NewItemProps {
   onCancel: () => void
 }
 
-const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, onCancel }: NewItemProps) {
+const NewItem = memo(function NewItem({
+  type,
+  depth,
+  name,
+  onChange,
+  onFinish,
+  onCancel
+}: NewItemProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isCanceling = useRef(false)
-  
+
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
       inputRef.current.select()
     }
   }, [])
-  
+
   return (
     <div className={styles.treeNode} style={{ paddingLeft: depth * 16 + 8 }}>
       <span className={`${styles.arrow} ${styles.hidden}`}>
         <RightOutlined />
       </span>
       <span className={styles.icon}>
-        {type === 'folder' ? <FolderOutlined /> : <FileTextOutlined style={{ color: 'var(--color-primary)' }} />}
+        {type === 'folder' ? (
+          <FolderOutlined />
+        ) : (
+          <FileTextOutlined style={{ color: 'var(--color-primary)' }} />
+        )}
       </span>
       <input
         ref={inputRef}
         type="text"
         className={styles.editInput}
         value={name}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         onBlur={() => {
           // 如果是 Escape 取消触发的 blur，不执行 finish
           if (isCanceling.current) {
@@ -252,12 +250,12 @@ const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, o
           }
           onFinish(true)
         }}
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           // Ctrl+Space 用于切换输入法，不阻止事件传播
           if (e.key === ' ' && (e.ctrlKey || e.metaKey)) {
             return // 让事件正常冒泡，输入法可以捕获
           }
-          
+
           // 只对需要处理的按键阻止冒泡
           if (e.key === 'Enter') {
             e.stopPropagation()
@@ -275,11 +273,11 @@ const NewItem = memo(function NewItem({ type, depth, name, onChange, onFinish, o
 
 function FileTree(): JSX.Element {
   const { message, modal } = App.useApp()
-  const currentProject = useProjectStore((state) => state.currentProject)
-  const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
-  const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
-  const openFile = useEditorStore((state) => state.openFile)
-  
+  const currentProject = useProjectStore(state => state.currentProject)
+  const openCreateProjectModal = useUIStore(state => state.openCreateProjectModal)
+  const openOpenProjectModal = useUIStore(state => state.openOpenProjectModal)
+  const openFile = useEditorStore(state => state.openFile)
+
   // 文件树 Store
   const {
     roots,
@@ -318,45 +316,51 @@ function FileTree(): JSX.Element {
     findNode,
     getFlattenedNodes
   } = useFileTreeStore()
-  
+
   const treeRef = useRef<HTMLDivElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   // 防抖搜索
-  const debouncedSearch = useCallback((value: string) => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      search(value)
-    }, SEARCH_DEBOUNCE_MS)
-  }, [search])
-  
+  const debouncedSearch = useCallback(
+    (value: string) => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+      searchTimeoutRef.current = setTimeout(() => {
+        search(value)
+      }, SEARCH_DEBOUNCE_MS)
+    },
+    [search]
+  )
+
   // 扁平化的节点列表（用于虚拟滚动）
-  const flattenedNodes = useMemo(() => getFlattenedNodes(), [roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName])
-  
+  const flattenedNodes = useMemo(
+    () => getFlattenedNodes(),
+    [roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName]
+  )
+
   // 虚拟滚动
   const virtualizer = useVirtualizer({
     count: flattenedNodes.length,
     getScrollElement: () => treeRef.current,
     estimateSize: () => 22, // 行高
-    overscan: 10,
+    overscan: 10
   })
-  
+
   // 项目变化时加载文件树
   useEffect(() => {
     if (currentProject) {
       loadTree()
     }
   }, [currentProject, loadTree])
-  
+
   // 排序变化时重新加载文件树
   useEffect(() => {
     if (currentProject) {
       refreshTree()
     }
   }, [sortMode])
-  
+
   // 清理搜索定时器
   useEffect(() => {
     return () => {
@@ -365,30 +369,30 @@ function FileTree(): JSX.Element {
       }
     }
   }, [])
-  
+
   // 键盘导航
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // 如果正在编辑，不处理快捷键
       if (editingKey || newItemParent !== null) return
-      
+
       // 检查当前焦点是否在输入元素或编辑器中
       const activeElement = document.activeElement
-      const isInputFocused = activeElement instanceof HTMLElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.isContentEditable ||
-        activeElement.closest('.ProseMirror') ||
-        activeElement.closest('[contenteditable="true"]')
-      )
-      
+      const isInputFocused =
+        activeElement instanceof HTMLElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable ||
+          activeElement.closest('.ProseMirror') ||
+          activeElement.closest('[contenteditable="true"]'))
+
       // 如果焦点在输入元素或编辑器中，不处理任何快捷键（让编辑器/浏览器原生处理）
       if (isInputFocused) {
         return
       }
-      
+
       const selectedArray = Array.from(selectedKeys)
-      
+
       // 方向键导航
       if (e.key === 'ArrowUp') {
         e.preventDefault()
@@ -398,7 +402,7 @@ function FileTree(): JSX.Element {
           select(prevNode.id)
         }
       }
-      
+
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
@@ -407,7 +411,7 @@ function FileTree(): JSX.Element {
           select(nextNode.id)
         }
       }
-      
+
       // ArrowLeft: 折叠或跳转到父节点
       if (e.key === 'ArrowLeft' && focusedKey) {
         e.preventDefault()
@@ -420,7 +424,7 @@ function FileTree(): JSX.Element {
           }
         }
       }
-      
+
       // ArrowRight: 展开或跳转到第一个子节点
       if (e.key === 'ArrowRight' && focusedKey) {
         e.preventDefault()
@@ -433,269 +437,312 @@ function FileTree(): JSX.Element {
           }
         }
       }
-      
+
       // Home/End
       if (e.key === 'Home' && flattenedNodes.length > 0) {
         e.preventDefault()
         select(flattenedNodes[0].id)
       }
-      
+
       if (e.key === 'End' && flattenedNodes.length > 0) {
         e.preventDefault()
         select(flattenedNodes[flattenedNodes.length - 1].id)
       }
-      
+
       // F2 - 重命名
       if (e.key === 'F2' && selectedArray.length === 1) {
         e.preventDefault()
         startRename(selectedArray[0])
       }
-      
+
       // Delete - 删除
       if (e.key === 'Delete' && selectedArray.length > 0) {
         e.preventDefault()
         confirmDelete(selectedArray, !e.shiftKey)
       }
-      
+
       // Ctrl+C - 复制
       if (e.key === 'c' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
         e.preventDefault()
         copyItems(selectedArray)
         message.success(`已复制 ${selectedArray.length} 个项目`)
       }
-      
+
       // Ctrl+X - 剪切
       if (e.key === 'x' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
         e.preventDefault()
         cutItems(selectedArray)
         message.success(`已剪切 ${selectedArray.length} 个项目`)
       }
-      
+
       // Ctrl+V - 粘贴
       if (e.key === 'v' && (e.ctrlKey || e.metaKey) && clipboard) {
         e.preventDefault()
         handlePaste(selectedArray[0])
       }
-      
+
       // Ctrl+N - 新建文件
       if (e.key === 'n' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
         e.preventDefault()
         const targetKey = selectedArray[0]
         const targetNode = targetKey ? findNode(targetKey) : null
-        startNewItem(targetNode?.isDirectory ? targetKey : (targetNode ? useFileTreeStore.getState().getParentNode(targetKey)?.key ?? null : null), 'file')
+        startNewItem(
+          targetNode?.isDirectory
+            ? targetKey
+            : targetNode
+              ? (useFileTreeStore.getState().getParentNode(targetKey)?.key ?? null)
+              : null,
+          'file'
+        )
       }
-      
+
       // Ctrl+Shift+N - 新建文件夹
       if (e.key === 'N' && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault()
         const targetKey = selectedArray[0]
         const targetNode = targetKey ? findNode(targetKey) : null
-        startNewItem(targetNode?.isDirectory ? targetKey : (targetNode ? useFileTreeStore.getState().getParentNode(targetKey)?.key ?? null : null), 'folder')
+        startNewItem(
+          targetNode?.isDirectory
+            ? targetKey
+            : targetNode
+              ? (useFileTreeStore.getState().getParentNode(targetKey)?.key ?? null)
+              : null,
+          'folder'
+        )
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedKeys, focusedKey, editingKey, newItemParent, clipboard, flattenedNodes, expandedKeys])
-  
+
   // 确认删除
-  const confirmDelete = useCallback((keys: string[], useTrash: boolean) => {
-    modal.confirm({
-      title: useTrash ? '删除确认' : '永久删除',
-      content: useTrash
-        ? `确定要将 ${keys.length} 个项目移至回收站吗？`
-        : `确定要永久删除 ${keys.length} 个项目吗？此操作不可撤销。`,
-      okText: useTrash ? '删除' : '永久删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await deleteItems(keys, !useTrash)
-          message.success(useTrash ? '已移至回收站' : '已永久删除')
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : '删除失败'
-          message.error(errorMessage)
+  const confirmDelete = useCallback(
+    (keys: string[], useTrash: boolean) => {
+      modal.confirm({
+        title: useTrash ? '删除确认' : '永久删除',
+        content: useTrash
+          ? `确定要将 ${keys.length} 个项目移至回收站吗？`
+          : `确定要永久删除 ${keys.length} 个项目吗？此操作不可撤销。`,
+        okText: useTrash ? '删除' : '永久删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteItems(keys, !useTrash)
+            message.success(useTrash ? '已移至回收站' : '已永久删除')
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : '删除失败'
+            message.error(errorMessage)
+          }
         }
-      }
-    })
-  }, [modal, message, deleteItems])
-  
-  // 粘贴处理
-  const handlePaste = useCallback(async (targetKey: string | null) => {
-    try {
-      await paste(targetKey)
-      message.success(`已粘贴 ${clipboard?.nodes.length || 0} 个项目`)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '粘贴失败'
-      message.error(errorMessage)
-    }
-  }, [paste, clipboard, message])
-  
-  // 导出 .novel 文件为 TXT
-  const handleExportNovel = useCallback(async (node: typeof flattenedNodes[0]['node']) => {
-    try {
-      const content = await window.electron.file.read(node.path)
-      if (!content) {
-        message.warning('文件内容为空')
-        return
-      }
-
-      const baseName = node.name.replace(/\.[^.]+$/, '')
-      const filePath = await window.electron.file.showSaveDialog({
-        title: '导出为纯文本',
-        defaultPath: `${baseName}.txt`,
-        filters: [
-          { name: '文本文件', extensions: ['txt'] },
-          { name: '所有文件', extensions: ['*'] }
-        ]
       })
+    },
+    [modal, message, deleteItems]
+  )
 
-      if (!filePath) return
+  // 粘贴处理
+  const handlePaste = useCallback(
+    async (targetKey: string | null) => {
+      try {
+        await paste(targetKey)
+        message.success(`已粘贴 ${clipboard?.nodes.length || 0} 个项目`)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '粘贴失败'
+        message.error(errorMessage)
+      }
+    },
+    [paste, clipboard, message]
+  )
 
-      const plainText = stripHtmlTags(content)
-      const success = await window.electron.file.exportTxt(filePath, plainText)
-      
-      if (success) {
-        message.success('导出成功')
-      } else {
+  // 导出 .novel 文件为 TXT
+  const handleExportNovel = useCallback(
+    async (node: (typeof flattenedNodes)[0]['node']) => {
+      try {
+        const content = await window.electron.file.read(node.path)
+        if (!content) {
+          message.warning('文件内容为空')
+          return
+        }
+
+        const baseName = node.name.replace(/\.[^.]+$/, '')
+        const filePath = await window.electron.file.showSaveDialog({
+          title: '导出为纯文本',
+          defaultPath: `${baseName}.txt`,
+          filters: [
+            { name: '文本文件', extensions: ['txt'] },
+            { name: '所有文件', extensions: ['*'] }
+          ]
+        })
+
+        if (!filePath) return
+
+        const plainText = stripHtmlTags(content)
+        const success = await window.electron.file.exportTxt(filePath, plainText)
+
+        if (success) {
+          message.success('导出成功')
+        } else {
+          message.error('导出失败')
+        }
+      } catch (error) {
+        console.error('Export failed:', error)
         message.error('导出失败')
       }
-    } catch (error) {
-      console.error('Export failed:', error)
-      message.error('导出失败')
-    }
-  }, [message])
-  
+    },
+    [message]
+  )
+
   // 获取节点上下文菜单
-  const getNodeContextMenu = useCallback((node: typeof flattenedNodes[0]['node']): MenuProps['items'] => {
-    const items: MenuProps['items'] = []
-    
-    if (node.isDirectory) {
-      items.push(
-        {
-          key: 'newFile',
-          icon: <FileAddOutlined />,
-          label: '新建文件',
-          onClick: () => startNewItem(node.key, 'file')
-        },
-        {
-          key: 'newFolder',
-          icon: <FolderAddOutlined />,
-          label: '新建文件夹',
-          onClick: () => startNewItem(node.key, 'folder')
-        },
-        { type: 'divider' }
-      )
-    }
-    
-    items.push(
-      {
-        key: 'rename',
-        icon: <span>✏️</span>,
-        label: '重命名',
-        onClick: () => startRename(node.key)
-      },
-      {
-        key: 'copy',
-        icon: <span>📋</span>,
-        label: '复制',
-        onClick: () => {
-          copyItems([node.key])
-          message.success('已复制')
-        }
-      },
-      {
-        key: 'cut',
-        icon: <span>✂️</span>,
-        label: '剪切',
-        onClick: () => {
-          cutItems([node.key])
-          message.success('已剪切')
-        }
+  const getNodeContextMenu = useCallback(
+    (node: (typeof flattenedNodes)[0]['node']): MenuProps['items'] => {
+      const items: MenuProps['items'] = []
+
+      if (node.isDirectory) {
+        items.push(
+          {
+            key: 'newFile',
+            icon: <FileAddOutlined />,
+            label: '新建文件',
+            onClick: () => startNewItem(node.key, 'file')
+          },
+          {
+            key: 'newFolder',
+            icon: <FolderAddOutlined />,
+            label: '新建文件夹',
+            onClick: () => startNewItem(node.key, 'folder')
+          },
+          { type: 'divider' }
+        )
       }
-    )
-    
-    if (clipboard && clipboard.nodes.length > 0) {
+
       items.push(
         {
+          key: 'rename',
+          icon: <span>✏️</span>,
+          label: '重命名',
+          onClick: () => startRename(node.key)
+        },
+        {
+          key: 'copy',
+          icon: <span>📋</span>,
+          label: '复制',
+          onClick: () => {
+            copyItems([node.key])
+            message.success('已复制')
+          }
+        },
+        {
+          key: 'cut',
+          icon: <span>✂️</span>,
+          label: '剪切',
+          onClick: () => {
+            cutItems([node.key])
+            message.success('已剪切')
+          }
+        }
+      )
+
+      if (clipboard && clipboard.nodes.length > 0) {
+        items.push({
           key: 'paste',
           icon: <span>📥</span>,
           label: `粘贴 (${clipboard.nodes.length} 个项目)`,
           onClick: () => handlePaste(node.isDirectory ? node.key : null)
-        }
-      )
-    }
-    
-    // 检查是否是 .novel 文件，添加导出选项
-    const ext = node.name.split('.').pop()?.toLowerCase()
-    if (!node.isDirectory && ext === 'novel') {
+        })
+      }
+
+      // 检查是否是 .novel 文件，添加导出选项
+      const ext = node.name.split('.').pop()?.toLowerCase()
+      if (!node.isDirectory && ext === 'novel') {
+        items.push(
+          { type: 'divider' },
+          {
+            key: 'exportTxt',
+            icon: <ExportOutlined />,
+            label: '导出为 TXT',
+            onClick: () => handleExportNovel(node)
+          }
+        )
+      }
+
       items.push(
         { type: 'divider' },
         {
-          key: 'exportTxt',
-          icon: <ExportOutlined />,
-          label: '导出为 TXT',
-          onClick: () => handleExportNovel(node)
+          key: 'delete',
+          icon: <span>🗑️</span>,
+          label: '删除',
+          danger: true,
+          onClick: () => confirmDelete([node.key], true)
         }
       )
-    }
-    
-    items.push(
+
+      return items
+    },
+    [
+      startNewItem,
+      startRename,
+      copyItems,
+      cutItems,
+      clipboard,
+      handlePaste,
+      confirmDelete,
+      message,
+      handleExportNovel
+    ]
+  )
+
+  // 空白处上下文菜单
+  const emptyAreaContextMenu: MenuProps['items'] = useMemo(
+    () => [
+      {
+        key: 'newFile',
+        icon: <FileAddOutlined />,
+        label: '新建文件',
+        onClick: () => startNewItem(null, 'file')
+      },
+      {
+        key: 'newFolder',
+        icon: <FolderAddOutlined />,
+        label: '新建文件夹',
+        onClick: () => startNewItem(null, 'folder')
+      },
       { type: 'divider' },
       {
-        key: 'delete',
-        icon: <span>🗑️</span>,
-        label: '删除',
-        danger: true,
-        onClick: () => confirmDelete([node.key], true)
+        key: 'refresh',
+        icon: <ReloadOutlined />,
+        label: '刷新',
+        onClick: refreshTree
       }
-    )
-    
-    return items
-  }, [startNewItem, startRename, copyItems, cutItems, clipboard, handlePaste, confirmDelete, message, handleExportNovel])
-  
-  // 空白处上下文菜单
-  const emptyAreaContextMenu: MenuProps['items'] = useMemo(() => [
-    {
-      key: 'newFile',
-      icon: <FileAddOutlined />,
-      label: '新建文件',
-      onClick: () => startNewItem(null, 'file')
-    },
-    {
-      key: 'newFolder',
-      icon: <FolderAddOutlined />,
-      label: '新建文件夹',
-      onClick: () => startNewItem(null, 'folder')
-    },
-    { type: 'divider' },
-    {
-      key: 'refresh',
-      icon: <ReloadOutlined />,
-      label: '刷新',
-      onClick: refreshTree
-    }
-  ], [startNewItem, refreshTree])
-  
+    ],
+    [startNewItem, refreshTree]
+  )
+
   // 打开文件
-  const handleOpenFile = useCallback(async (node: typeof flattenedNodes[0]['node']) => {
-    try {
-      await openFile(node.path, node.name)
-    } catch (error) {
-      console.error('Failed to open file:', error)
-      message.error(`打开文件失败: ${node.name}`)
-    }
-  }, [openFile, message])
-  
+  const handleOpenFile = useCallback(
+    async (node: (typeof flattenedNodes)[0]['node']) => {
+      try {
+        await openFile(node.path, node.name)
+      } catch (error) {
+        console.error('Failed to open file:', error)
+        message.error(`打开文件失败: ${node.name}`)
+      }
+    },
+    [openFile, message]
+  )
+
   // 双击处理
-  const handleDoubleClick = useCallback((node: typeof flattenedNodes[0]['node']) => {
-    if (node.isDirectory) {
-      toggleExpand(node.key)
-    } else {
-      openFile(node.path, node.name)
-    }
-  }, [toggleExpand, openFile])
-  
+  const handleDoubleClick = useCallback(
+    (node: (typeof flattenedNodes)[0]['node']) => {
+      if (node.isDirectory) {
+        toggleExpand(node.key)
+      } else {
+        openFile(node.path, node.name)
+      }
+    },
+    [toggleExpand, openFile]
+  )
+
   // 工具栏操作
   const handleNewFile = useCallback(() => {
     const selectedArray = Array.from(selectedKeys)
@@ -703,14 +750,14 @@ function FileTree(): JSX.Element {
     const targetNode = targetKey ? findNode(targetKey) : null
     startNewItem(targetNode?.isDirectory ? targetKey : null, 'file')
   }, [selectedKeys, findNode, startNewItem])
-  
+
   const handleNewFolder = useCallback(() => {
     const selectedArray = Array.from(selectedKeys)
     const targetKey = selectedArray[0]
     const targetNode = targetKey ? findNode(targetKey) : null
     startNewItem(targetNode?.isDirectory ? targetKey : null, 'folder')
   }, [selectedKeys, findNode, startNewItem])
-  
+
   // 没有项目
   if (!currentProject) {
     return (
@@ -721,19 +768,15 @@ function FileTree(): JSX.Element {
             <div className={styles.emptyContent}>
               <Text type="secondary">没有打开的项目</Text>
               <div className={styles.emptyActions}>
-                <Button 
-                  type="primary" 
-                  icon={<PlusOutlined />} 
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
                   block
                   onClick={openCreateProjectModal}
                 >
                   新建项目
                 </Button>
-                <Button 
-                  icon={<FolderOpenOutlined />} 
-                  block
-                  onClick={openOpenProjectModal}
-                >
+                <Button icon={<FolderOpenOutlined />} block onClick={openOpenProjectModal}>
                   打开项目
                 </Button>
               </div>
@@ -743,15 +786,15 @@ function FileTree(): JSX.Element {
       </div>
     )
   }
-  
+
   return (
     <div className={styles.fileTree}>
       {/* 工具栏 */}
-      <div className={styles.toolbar} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.toolbar} onClick={e => e.stopPropagation()}>
         <Input
           placeholder="搜索文件"
           value={searchPattern}
-          onChange={(e) => debouncedSearch(e.target.value)}
+          onChange={e => debouncedSearch(e.target.value)}
           prefix={<SearchOutlined className={styles.searchIcon} />}
           allowClear
           size="small"
@@ -776,15 +819,28 @@ function FileTree(): JSX.Element {
               className={styles.toolbarBtnSecondary}
             />
           </Tooltip>
-          <Tooltip title={sortOptions.field === 'name' 
-            ? `按名称排序 (${sortOptions.order === 'asc' ? '升序' : '降序'})` 
-            : `按修改时间排序 (${sortOptions.order === 'asc' ? '升序' : '降序'})`}>
+          <Tooltip
+            title={
+              sortOptions.field === 'name'
+                ? `按名称排序 (${sortOptions.order === 'asc' ? '升序' : '降序'})`
+                : `按修改时间排序 (${sortOptions.order === 'asc' ? '升序' : '降序'})`
+            }
+          >
             <Button
               type="text"
               size="small"
-              icon={sortOptions.field === 'name' 
-                ? (sortOptions.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />)
-                : (sortOptions.order === 'asc' ? <FieldTimeOutlined /> : <FieldTimeOutlined style={{ transform: 'scaleY(-1)' }} />)
+              icon={
+                sortOptions.field === 'name' ? (
+                  sortOptions.order === 'asc' ? (
+                    <SortAscendingOutlined />
+                  ) : (
+                    <SortDescendingOutlined />
+                  )
+                ) : sortOptions.order === 'asc' ? (
+                  <FieldTimeOutlined />
+                ) : (
+                  <FieldTimeOutlined style={{ transform: 'scaleY(-1)' }} />
+                )
               }
               onClick={() => {
                 if (sortOptions.field === 'name') {
@@ -793,7 +849,7 @@ function FileTree(): JSX.Element {
                   setSortMode(`name-${sortOptions.order}` as SortMode)
                 }
               }}
-              onContextMenu={(e) => {
+              onContextMenu={e => {
                 e.preventDefault()
                 toggleSortOrder()
               }}
@@ -814,15 +870,8 @@ function FileTree(): JSX.Element {
       </div>
 
       {/* 文件树内容（虚拟滚动） */}
-      <Dropdown
-        menu={{ items: emptyAreaContextMenu }}
-        trigger={['contextMenu']}
-      >
-        <div 
-          ref={treeRef}
-          className={styles.content}
-          onClick={() => clearSelection()}
-        >
+      <Dropdown menu={{ items: emptyAreaContextMenu }} trigger={['contextMenu']}>
+        <div ref={treeRef} className={styles.content} onClick={() => clearSelection()}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20 }}>
               <Spin />
@@ -839,9 +888,9 @@ function FileTree(): JSX.Element {
                 position: 'relative'
               }}
             >
-              {virtualizer.getVirtualItems().map((virtualItem) => {
+              {virtualizer.getVirtualItems().map(virtualItem => {
                 const { node, depth } = flattenedNodes[virtualItem.index]
-                
+
                 // 检查是否是新建项节点
                 if ((node as any).isNewItem) {
                   return (
@@ -853,14 +902,14 @@ function FileTree(): JSX.Element {
                         left: 0,
                         width: '100%',
                         height: virtualItem.size,
-                        transform: `translateY(${virtualItem.start}px)`,
+                        transform: `translateY(${virtualItem.start}px)`
                       }}
                     >
                       <NewItem
                         type={(node as any).newItemType}
                         depth={depth}
                         name={newItemName}
-                        onChange={(name) => useFileTreeStore.setState({ newItemName: name })}
+                        onChange={name => useFileTreeStore.setState({ newItemName: name })}
                         onFinish={async (isBlur = false) => {
                           const currentName = useFileTreeStore.getState().newItemName
                           try {
@@ -879,11 +928,11 @@ function FileTree(): JSX.Element {
                     </div>
                   )
                 }
-                
+
                 const isExpanded = expandedKeys.has(node.key)
                 const isSelected = selectedKeys.has(node.key)
                 const isEditing = editingKey === node.key
-                
+
                 return (
                   <div
                     key={virtualItem.key}
@@ -893,7 +942,7 @@ function FileTree(): JSX.Element {
                       left: 0,
                       width: '100%',
                       height: virtualItem.size,
-                      transform: `translateY(${virtualItem.start}px)`,
+                      transform: `translateY(${virtualItem.start}px)`
                     }}
                   >
                     <TreeNode
@@ -904,7 +953,7 @@ function FileTree(): JSX.Element {
                       isEditing={isEditing}
                       editingName={editingName}
                       onToggleExpand={() => toggleExpand(node.key)}
-                      onSelect={(e) => {
+                      onSelect={e => {
                         e.stopPropagation()
                         select(node.key, e.ctrlKey || e.metaKey ? 'toggle' : 'single')
                         if (!node.isDirectory) {
@@ -912,13 +961,13 @@ function FileTree(): JSX.Element {
                         }
                       }}
                       onDoubleClick={() => handleDoubleClick(node)}
-                      onContextMenu={(e) => {
+                      onContextMenu={e => {
                         e.stopPropagation()
                         if (!selectedKeys.has(node.key)) {
                           select(node.key)
                         }
                       }}
-                      onRenameChange={(name) => useFileTreeStore.setState({ editingName: name })}
+                      onRenameChange={name => useFileTreeStore.setState({ editingName: name })}
                       onRenameFinish={async () => {
                         try {
                           await finishRename(editingName)

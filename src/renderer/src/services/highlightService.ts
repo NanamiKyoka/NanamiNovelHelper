@@ -13,9 +13,7 @@ import type {
 } from '@shared/highlight'
 import type { VocabularyEntry, VocabularyType } from '@shared/vocabulary'
 import type { SensitiveWord } from '@shared/sensitive'
-import {
-  DEFAULT_HIGHLIGHT_CONFIG
-} from '@shared/highlight'
+import { DEFAULT_HIGHLIGHT_CONFIG } from '@shared/highlight'
 
 interface HighlightServiceState {
   /** 高亮配置 */
@@ -32,13 +30,13 @@ interface HighlightServiceState {
   loading: boolean
   /** 错误信息 */
   error: string | null
-  
+
   // 配置操作
   loadConfig: () => Promise<void>
   saveConfig: (config: Partial<HighlightConfig>) => Promise<void>
   updateConfig: (updates: Partial<HighlightConfig>) => void
   updateHoverCardConfig: (config: Partial<HoverCardConfig>) => void
-  
+
   // 模式管理
   buildPatterns: (
     entries: VocabularyEntry[],
@@ -47,13 +45,16 @@ interface HighlightServiceState {
   ) => void
   rebuildAutomaton: () => void
   clearPatterns: () => void
-  
+
   // 匹配操作
   findMatches: (text: string, filePath?: string) => HighlightMatch[]
-  
+
   // 辅助方法
   isFileInScope: (filePath: string) => boolean
-  getEffectivePattern: (entryId: string, typeId: string) => {
+  getEffectivePattern: (
+    entryId: string,
+    typeId: string
+  ) => {
     enabled: boolean
     matchMode: 'wholeWord' | 'partial'
     caseSensitive: boolean
@@ -81,18 +82,18 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
     try {
       const config = await window.electron.highlight.loadConfig()
       const mergedConfig = { ...DEFAULT_HIGHLIGHT_CONFIG, ...config }
-      set({ 
-        config: mergedConfig, 
+      set({
+        config: mergedConfig,
         hoverCardConfig: mergedConfig.hoverCard || DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
-        loading: false, 
-        initialized: true 
+        loading: false,
+        initialized: true
       })
     } catch (error) {
       console.error('Failed to load highlight config:', error)
-      set({ 
-        config: DEFAULT_HIGHLIGHT_CONFIG, 
+      set({
+        config: DEFAULT_HIGHLIGHT_CONFIG,
         hoverCardConfig: DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
-        loading: false, 
+        loading: false,
         initialized: true,
         error: '加载配置失败'
       })
@@ -100,7 +101,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   },
 
   // 保存配置
-  saveConfig: async (config) => {
+  saveConfig: async config => {
     try {
       const newConfig = { ...get().config, ...config }
       await window.electron.highlight.saveConfig(newConfig)
@@ -112,16 +113,18 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   },
 
   // 更新配置（本地）
-  updateConfig: (updates) => {
+  updateConfig: updates => {
     set(state => ({
       config: { ...state.config, ...updates },
       // 如果更新中包含 hoverCard，同步更新
-      ...(updates.hoverCard ? { hoverCardConfig: { ...state.hoverCardConfig, ...updates.hoverCard } } : {})
+      ...(updates.hoverCard
+        ? { hoverCardConfig: { ...state.hoverCardConfig, ...updates.hoverCard } }
+        : {})
     }))
   },
 
   // 更新悬浮卡片配置
-  updateHoverCardConfig: (hoverCardUpdates) => {
+  updateHoverCardConfig: hoverCardUpdates => {
     set(state => {
       const newHoverCardConfig = { ...state.hoverCardConfig, ...hoverCardUpdates }
       return {
@@ -163,7 +166,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
     if (config.match.sensitiveWordHighlight) {
       for (const word of sensitiveWords) {
         const color = config.match.sensitiveWordColors[word.severity] || '#f5222d'
-        
+
         patterns.push({
           id: word.id,
           name: word.name,
@@ -183,14 +186,13 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
     const prevPatternIds = new Set(prevPatterns.map(p => p.id))
     const newPatternIds = new Set(patterns.map(p => p.id))
 
-    const hasChanges = 
+    const hasChanges =
       prevPatternIds.size !== newPatternIds.size ||
       patterns.some(p => {
         const prev = prevPatterns.find(pp => pp.id === p.id)
-        return !prev || 
-          prev.name !== p.name ||
-          prev.color !== p.color ||
-          prev.matchMode !== p.matchMode
+        return (
+          !prev || prev.name !== p.name || prev.color !== p.color || prev.matchMode !== p.matchMode
+        )
       })
 
     if (!hasChanges && automaton && automaton.isBuilt()) {
@@ -227,7 +229,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   // 查找匹配
   findMatches: (text, filePath) => {
     const { automaton, config } = get()
-    
+
     // 检查文件是否在范围内
     if (filePath && !get().isFileInScope(filePath)) {
       return []
@@ -243,9 +245,9 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   },
 
   // 检查文件是否在范围内
-  isFileInScope: (filePath) => {
+  isFileInScope: filePath => {
     const { config } = get()
-    
+
     if (!config.scope.enabled) return false
 
     // 统一路径分隔符为正斜杠，避免 Windows/Linux 差异
@@ -290,14 +292,15 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   // 获取词汇的有效配置
   getEffectivePattern: (entryId, typeId) => {
     const { config } = get()
-    
+
     const entryOverride = config.entryOverrides.find(o => o.entryId === entryId)
     const typeOverride = config.typeOverrides.find(o => o.typeId === typeId)
 
     return {
-      enabled: entryOverride?.enabled ?? (typeOverride?.enabled ?? true),
-      matchMode: entryOverride?.matchMode ?? (typeOverride?.matchMode ?? config.match.matchMode),
-      caseSensitive: entryOverride?.caseSensitive ?? (typeOverride?.caseSensitive ?? config.match.caseSensitive),
+      enabled: entryOverride?.enabled ?? typeOverride?.enabled ?? true,
+      matchMode: entryOverride?.matchMode ?? typeOverride?.matchMode ?? config.match.matchMode,
+      caseSensitive:
+        entryOverride?.caseSensitive ?? typeOverride?.caseSensitive ?? config.match.caseSensitive,
       color: entryOverride?.color ?? null
     }
   },

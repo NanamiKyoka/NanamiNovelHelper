@@ -7,10 +7,7 @@ import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import JSON5 from 'json5'
 import type { HighlightConfig } from '../types/highlight'
-import {
-  DEFAULT_HIGHLIGHT_CONFIG,
-  HIGHLIGHT_CONFIG_FILE
-} from '../types/highlight'
+import { DEFAULT_HIGHLIGHT_CONFIG, HIGHLIGHT_CONFIG_FILE } from '../types/highlight'
 import { PROJECT_META_DIR } from '../types/project'
 import { projectService } from './project'
 import { createLogger } from '../utils/logger'
@@ -34,7 +31,7 @@ class HighlightService {
    */
   loadConfig(): HighlightConfig {
     const configPath = this.getConfigPath()
-    
+
     if (!configPath) {
       // 没有打开项目，返回默认配置
       return DEFAULT_HIGHLIGHT_CONFIG
@@ -49,7 +46,7 @@ class HighlightService {
     try {
       const content = readFileSync(configPath, 'utf-8')
       const loaded = JSON5.parse(content) as HighlightConfig
-      
+
       // 合并默认配置（处理版本升级时新增的字段）
       this.config = {
         ...DEFAULT_HIGHLIGHT_CONFIG,
@@ -60,7 +57,7 @@ class HighlightService {
         performance: { ...DEFAULT_HIGHLIGHT_CONFIG.performance, ...loaded.performance },
         hoverCard: { ...DEFAULT_HIGHLIGHT_CONFIG.hoverCard, ...loaded.hoverCard }
       }
-      
+
       return this.config
     } catch (error) {
       this.logger.error('加载高亮配置失败', error)
@@ -74,7 +71,7 @@ class HighlightService {
    */
   saveConfig(config: Partial<HighlightConfig>): void {
     const configPath = this.getConfigPath()
-    
+
     if (!configPath) {
       throw new Error('No project is open')
     }

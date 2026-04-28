@@ -25,38 +25,49 @@ export function registerFileHandlers(): void {
   })
 
   // 读取文件
-  ipcMain.handle('file:read', async (_, path: string, encoding?: BufferEncoding): Promise<string> => {
-    try {
-      // 参数验证
-      validateParams('file:read ').nonEmptyString(path, 'path').validate()
-      return fileService.readFile(path, encoding)
-    } catch (error) {
-      console.error('Failed to read file:', error)
-      throw error
+  ipcMain.handle(
+    'file:read',
+    async (_, path: string, encoding?: BufferEncoding): Promise<string> => {
+      try {
+        // 参数验证
+        validateParams('file:read ').nonEmptyString(path, 'path').validate()
+        return fileService.readFile(path, encoding)
+      } catch (error) {
+        console.error('Failed to read file:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 写入文件
-  ipcMain.handle('file:write', async (_, path: string, content: string, options?: {
-    encoding?: BufferEncoding
-    createParentDir?: boolean
-  }): Promise<void> => {
-    try {
-      // 参数验证
-      validateParams('file:write ')
-        .nonEmptyString(path, 'path')
-        .custom(() => {
-          if (typeof content !== 'string') {
-            throw new Error('content 必须是字符串')
-          }
-        })
-        .validate()
-      fileService.writeFile(path, content, options)
-    } catch (error) {
-      console.error('Failed to write file:', error)
-      throw error
+  ipcMain.handle(
+    'file:write',
+    async (
+      _,
+      path: string,
+      content: string,
+      options?: {
+        encoding?: BufferEncoding
+        createParentDir?: boolean
+      }
+    ): Promise<void> => {
+      try {
+        // 参数验证
+        validateParams('file:write ')
+          .nonEmptyString(path, 'path')
+          .custom(() => {
+            if (typeof content !== 'string') {
+              throw new Error('content 必须是字符串')
+            }
+          })
+          .validate()
+        fileService.writeFile(path, content, options)
+      } catch (error) {
+        console.error('Failed to write file:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 创建目录
   ipcMain.handle('file:mkdir', async (_, path: string, recursive?: boolean): Promise<void> => {
@@ -71,19 +82,26 @@ export function registerFileHandlers(): void {
   })
 
   // 删除文件或目录
-  ipcMain.handle('file:delete', async (_, path: string, options?: {
-    recursive?: boolean
-    useTrash?: boolean
-  }): Promise<void> => {
-    try {
-      // 参数验证
-      validateParams('file:delete ').nonEmptyString(path, 'path').validate()
-      await fileService.delete(path, options)
-    } catch (error) {
-      console.error('Failed to delete:', error)
-      throw error
+  ipcMain.handle(
+    'file:delete',
+    async (
+      _,
+      path: string,
+      options?: {
+        recursive?: boolean
+        useTrash?: boolean
+      }
+    ): Promise<void> => {
+      try {
+        // 参数验证
+        validateParams('file:delete ').nonEmptyString(path, 'path').validate()
+        await fileService.delete(path, options)
+      } catch (error) {
+        console.error('Failed to delete:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 重命名
   ipcMain.handle('file:rename', async (_, oldPath: string, newPath: string): Promise<void> => {
@@ -101,56 +119,77 @@ export function registerFileHandlers(): void {
   })
 
   // 复制
-  ipcMain.handle('file:copy', async (_, source: string, destination: string, overwrite?: boolean): Promise<void> => {
-    try {
-      // 参数验证
-      validateParams('file:copy ')
-        .nonEmptyString(source, 'source')
-        .nonEmptyString(destination, 'destination')
-        .validate()
-      fileService.copy(source, destination, overwrite)
-    } catch (error) {
-      console.error('Failed to copy:', error)
-      throw error
+  ipcMain.handle(
+    'file:copy',
+    async (_, source: string, destination: string, overwrite?: boolean): Promise<void> => {
+      try {
+        // 参数验证
+        validateParams('file:copy ')
+          .nonEmptyString(source, 'source')
+          .nonEmptyString(destination, 'destination')
+          .validate()
+        fileService.copy(source, destination, overwrite)
+      } catch (error) {
+        console.error('Failed to copy:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 列出目录
-  ipcMain.handle('file:list', async (_, path: string, options?: {
-    recursive?: boolean
-    includeHidden?: boolean
-  }): Promise<ReturnType<typeof fileService.listDir>> => {
-    try {
-      // 参数验证
-      validateParams('file:list ').nonEmptyString(path, 'path').validate()
-      return fileService.listDir(path, options)
-    } catch (error) {
-      console.error('Failed to list directory:', error)
-      throw error
+  ipcMain.handle(
+    'file:list',
+    async (
+      _,
+      path: string,
+      options?: {
+        recursive?: boolean
+        includeHidden?: boolean
+      }
+    ): Promise<ReturnType<typeof fileService.listDir>> => {
+      try {
+        // 参数验证
+        validateParams('file:list ').nonEmptyString(path, 'path').validate()
+        return fileService.listDir(path, options)
+      } catch (error) {
+        console.error('Failed to list directory:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 获取文件树
-  ipcMain.handle('file:get-tree', async (_, includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]): Promise<ReturnType<typeof fileService.getFileTree>> => {
-    try {
-      return fileService.getFileTree(includeHidden, sortOptions, hiddenItems)
-    } catch (error) {
-      console.error('Failed to get file tree:', error)
-      throw error
+  ipcMain.handle(
+    'file:get-tree',
+    async (
+      _,
+      includeHidden?: boolean,
+      sortOptions?: SortOptions,
+      hiddenItems?: string[]
+    ): Promise<ReturnType<typeof fileService.getFileTree>> => {
+      try {
+        return fileService.getFileTree(includeHidden, sortOptions, hiddenItems)
+      } catch (error) {
+        console.error('Failed to get file tree:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 获取文件信息
-  ipcMain.handle('file:get-info', async (_, path: string): Promise<ReturnType<typeof fileService.getFileInfo>> => {
-    try {
-      // 参数验证
-      validateParams('file:get-info ').nonEmptyString(path, 'path').validate()
-      return fileService.getFileInfo(path)
-    } catch (error) {
-      console.error('Failed to get file info:', error)
-      throw error
+  ipcMain.handle(
+    'file:get-info',
+    async (_, path: string): Promise<ReturnType<typeof fileService.getFileInfo>> => {
+      try {
+        // 参数验证
+        validateParams('file:get-info ').nonEmptyString(path, 'path').validate()
+        return fileService.getFileInfo(path)
+      } catch (error) {
+        console.error('Failed to get file info:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // Path API 处理器
   // 解析路径
@@ -210,36 +249,45 @@ export function registerFileHandlers(): void {
   })
 
   // 显示保存对话框
-  ipcMain.handle('file:showSaveDialog', async (_, options: {
-    title?: string
-    defaultPath?: string
-    filters?: Array<{ name: string; extensions: string[] }>
-  }): Promise<string | null> => {
-    try {
-      const result = await dialog.showSaveDialog({
-        title: options.title || '保存文件',
-        defaultPath: options.defaultPath,
-        filters: options.filters || [{ name: '所有文件', extensions: ['*'] }]
-      })
-      return result.canceled ? null : result.filePath
-    } catch (error) {
-      console.error('Failed to show save dialog:', error)
-      throw error
+  ipcMain.handle(
+    'file:showSaveDialog',
+    async (
+      _,
+      options: {
+        title?: string
+        defaultPath?: string
+        filters?: Array<{ name: string; extensions: string[] }>
+      }
+    ): Promise<string | null> => {
+      try {
+        const result = await dialog.showSaveDialog({
+          title: options.title || '保存文件',
+          defaultPath: options.defaultPath,
+          filters: options.filters || [{ name: '所有文件', extensions: ['*'] }]
+        })
+        return result.canceled ? null : result.filePath
+      } catch (error) {
+        console.error('Failed to show save dialog:', error)
+        throw error
+      }
     }
-  })
+  )
 
   // 导出纯文本文件
-  ipcMain.handle('file:exportTxt', async (_, filePath: string, content: string): Promise<boolean> => {
-    try {
-      validateParams('file:exportTxt')
-        .nonEmptyString(filePath, 'filePath')
-        .string(content, 'content')
-        .validate()
-      fs.writeFileSync(filePath, content, 'utf-8')
-      return true
-    } catch (error) {
-      console.error('Failed to export txt file:', error)
-      throw error
+  ipcMain.handle(
+    'file:exportTxt',
+    async (_, filePath: string, content: string): Promise<boolean> => {
+      try {
+        validateParams('file:exportTxt')
+          .nonEmptyString(filePath, 'filePath')
+          .string(content, 'content')
+          .validate()
+        fs.writeFileSync(filePath, content, 'utf-8')
+        return true
+      } catch (error) {
+        console.error('Failed to export txt file:', error)
+        throw error
+      }
     }
-  })
+  )
 }

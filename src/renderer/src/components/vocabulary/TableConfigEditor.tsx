@@ -1,15 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
-import {
-  Table,
-  Switch,
-  InputNumber,
-  Select,
-  Space,
-  Empty
-} from 'antd'
-import {
-  HolderOutlined
-} from '@ant-design/icons'
+import { Table, Switch, InputNumber, Select, Space, Empty } from 'antd'
+import { HolderOutlined } from '@ant-design/icons'
 import {
   DndContext,
   closestCenter,
@@ -44,34 +35,23 @@ interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 }
 
 function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id
+  })
 
   const style: React.CSSProperties = {
     ...props.style,
     transform: CSS.Transform.toString(transform),
     transition,
-    ...(isDragging ? {
-      opacity: 0.5,
-      background: 'var(--ant-color-bg-text-hover)'
-    } : {})
+    ...(isDragging
+      ? {
+          opacity: 0.5,
+          background: 'var(--ant-color-bg-text-hover)'
+        }
+      : {})
   }
 
-  return (
-    <tr
-      {...props}
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-    />
-  )
+  return <tr {...props} ref={setNodeRef} style={style} {...attributes} {...listeners} />
 }
 
 function TableConfigEditor({
@@ -126,28 +106,31 @@ function TableConfigEditor({
   }, [])
 
   // 拖拽结束 - 重新排序
-  const handleDragEnd = useCallback((event: DragEndEvent): void => {
-    const { active, over } = event
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = sortedConfig.findIndex(c => c.fieldId === active.id)
-      const newIndex = sortedConfig.findIndex(c => c.fieldId === over.id)
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedConfig.findIndex(c => c.fieldId === active.id)
+        const newIndex = sortedConfig.findIndex(c => c.fieldId === over.id)
 
-      // 创建新顺序
-      const newConfig = [...sortedConfig]
-      const [movedItem] = newConfig.splice(oldIndex, 1)
-      newConfig.splice(newIndex, 0, movedItem)
+        // 创建新顺序
+        const newConfig = [...sortedConfig]
+        const [movedItem] = newConfig.splice(oldIndex, 1)
+        newConfig.splice(newIndex, 0, movedItem)
 
-      // 更新 order 字段
-      const updatedConfig = newConfig.map((c, i) => ({ ...c, order: i }))
+        // 更新 order 字段
+        const updatedConfig = newConfig.map((c, i) => ({ ...c, order: i }))
 
-      onChange(updatedConfig).catch((error) => {
-        console.error('Failed to reorder columns:', error)
-      })
-    }
+        onChange(updatedConfig).catch(error => {
+          console.error('Failed to reorder columns:', error)
+        })
+      }
 
-    setActiveId(null)
-  }, [sortedConfig, onChange])
+      setActiveId(null)
+    },
+    [sortedConfig, onChange]
+  )
 
   // 当前拖拽的配置项
   const activeConfig = activeId ? syncedConfig.find(c => c.fieldId === activeId) : null
@@ -158,9 +141,7 @@ function TableConfigEditor({
     updates: Partial<TableColumnConfig>
   ): Promise<void> => {
     if (readOnly) return
-    const updated = syncedConfig.map(c =>
-      c.fieldId === fieldId ? { ...c, ...updates } : c
-    )
+    const updated = syncedConfig.map(c => (c.fieldId === fieldId ? { ...c, ...updates } : c))
     await onChange(updated)
   }
 
@@ -191,7 +172,7 @@ function TableConfigEditor({
       render: (visible: boolean, record: TableColumnConfig) => (
         <Switch
           checked={visible}
-          onChange={(checked) => handleUpdate(record.fieldId, { visible: checked })}
+          onChange={checked => handleUpdate(record.fieldId, { visible: checked })}
           disabled={readOnly}
           size="small"
         />
@@ -206,25 +187,29 @@ function TableConfigEditor({
         <Space.Compact>
           <InputNumber
             value={width}
-            onChange={(value) => handleUpdate(record.fieldId, { width: value || 120 })}
+            onChange={value => handleUpdate(record.fieldId, { width: value || 120 })}
             min={50}
             max={500}
             disabled={readOnly}
             size="small"
             style={{ width: 60 }}
           />
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '0 8px',
-            background: 'var(--ant-color-bg-container-disabled)',
-            border: '1px solid var(--ant-color-border)',
-            borderLeft: 'none',
-            borderRadius: '0 6px 6px 0',
-            color: 'var(--ant-color-text-secondary)',
-            fontSize: 12,
-            height: 24
-          }}>px</span>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '0 8px',
+              background: 'var(--ant-color-bg-container-disabled)',
+              border: '1px solid var(--ant-color-border)',
+              borderLeft: 'none',
+              borderRadius: '0 6px 6px 0',
+              color: 'var(--ant-color-text-secondary)',
+              fontSize: 12,
+              height: 24
+            }}
+          >
+            px
+          </span>
         </Space.Compact>
       )
     },
@@ -236,7 +221,7 @@ function TableConfigEditor({
       render: (fixed: 'left' | 'right' | null, record: TableColumnConfig) => (
         <Select
           value={fixed}
-          onChange={(value) => handleUpdate(record.fieldId, { fixed: value })}
+          onChange={value => handleUpdate(record.fieldId, { fixed: value })}
           options={[
             { value: null, label: '不固定' },
             { value: 'left', label: '左侧' },
@@ -251,12 +236,7 @@ function TableConfigEditor({
   ]
 
   if (fields.length === 0) {
-    return (
-      <Empty
-        description="请先添加字段定义"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-      />
-    )
+    return <Empty description="请先添加字段定义" image={Empty.PRESENTED_IMAGE_SIMPLE} />
   }
 
   return (

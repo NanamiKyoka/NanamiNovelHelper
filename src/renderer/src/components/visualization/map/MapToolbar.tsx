@@ -3,8 +3,8 @@
  */
 
 import { Button, Tooltip, Divider } from 'antd'
-import { 
-  SelectOutlined, 
+import {
+  SelectOutlined,
   EditOutlined,
   LinkOutlined,
   UndoOutlined,
@@ -40,16 +40,16 @@ export function MapToolbar({ onSave }: MapToolbarProps) {
   const undo = useMapStore(state => state.undo)
   const redo = useMapStore(state => state.redo)
   const saveCurrentMap = useMapStore(state => state.saveCurrentMap)
-  
+
   const handleToolClick = (toolKey: MapTool) => {
     setTool(toolKey)
   }
-  
+
   const handleSave = () => {
     saveCurrentMap()
     onSave?.()
   }
-  
+
   return (
     <div className={styles.toolbar}>
       <div className={styles.toolsGroup}>
@@ -64,41 +64,27 @@ export function MapToolbar({ onSave }: MapToolbarProps) {
           </Tooltip>
         ))}
       </div>
-      
+
       <Divider type="horizontal" className={styles.divider} />
-      
+
       <div className={styles.toolsGroup}>
         <Tooltip title={`撤销 (Ctrl+Z)${canUndo ? '' : ' - 无操作'}`} placement="right">
-          <Button
-            type="text"
-            icon={<UndoOutlined />}
-            onClick={undo}
-            disabled={!canUndo}
-          />
+          <Button type="text" icon={<UndoOutlined />} onClick={undo} disabled={!canUndo} />
         </Tooltip>
-        
+
         <Tooltip title={`重做 (Ctrl+Y)${canRedo ? '' : ' - 无操作'}`} placement="right">
-          <Button
-            type="text"
-            icon={<RedoOutlined />}
-            onClick={redo}
-            disabled={!canRedo}
-          />
+          <Button type="text" icon={<RedoOutlined />} onClick={redo} disabled={!canRedo} />
         </Tooltip>
       </div>
-      
+
       <Divider type="horizontal" className={styles.divider} />
-      
+
       <div className={styles.toolsGroup}>
         <Tooltip title="保存 (Ctrl+S)" placement="right">
-          <Button
-            type="text"
-            icon={<SaveOutlined />}
-            onClick={handleSave}
-          />
+          <Button type="text" icon={<SaveOutlined />} onClick={handleSave} />
         </Tooltip>
       </div>
-      
+
       <div className={styles.hint}>
         <div className={styles.hintTitle}>绘制提示</div>
         <ul className={styles.hintList}>

@@ -4,16 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Typography,
-  Button,
-  Card,
-  Modal,
-  App,
-  Input,
-  Select,
-  Spin,
-} from 'antd'
+import { Typography, Button, Card, Modal, App, Input, Select, Spin } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -21,7 +12,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   HolderOutlined,
-  EnvironmentOutlined,
+  EnvironmentOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -30,14 +21,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  DragEndEvent
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  rectSortingStrategy,
+  rectSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useMapStore } from '@stores/mapStore'
@@ -75,33 +66,24 @@ function SortableCard({
   getLocalUrl,
   onContextMenu,
   onClick,
-  onDoubleClick,
+  onDoubleClick
 }: SortableCardProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: map.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: map.id
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : 0,
+    zIndex: isDragging ? 1 : 0
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={styles.sortableCardWrapper}
-    >
+    <div ref={setNodeRef} style={style} className={styles.sortableCardWrapper}>
       <Card
         className={styles.mapCard}
-        onContextMenu={(e) => onContextMenu(e, map)}
+        onContextMenu={e => onContextMenu(e, map)}
         onClick={() => onClick(map.id)}
         onDoubleClick={() => onDoubleClick(map.id)}
         styles={{ body: { padding: 0 } }}
@@ -117,23 +99,15 @@ function SortableCard({
             <EnvironmentOutlined className={styles.thumbnailPlaceholder} />
           )}
           {/* 拖拽手柄 */}
-          <div
-            className={styles.dragHandle}
-            {...attributes}
-            {...listeners}
-          >
+          <div className={styles.dragHandle} {...attributes} {...listeners}>
             <HolderOutlined />
           </div>
         </div>
         <div className={styles.cardBody}>
           <div className={styles.mapName}>{map.name}</div>
-          {map.description && (
-            <div className={styles.mapDescription}>{map.description}</div>
-          )}
+          {map.description && <div className={styles.mapDescription}>{map.description}</div>}
           <div className={styles.mapStats}>
-            <span className={styles.stat}>
-              {map.elementCount} 元素
-            </span>
+            <span className={styles.stat}>{map.elementCount} 元素</span>
           </div>
         </div>
       </Card>
@@ -153,7 +127,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
     deleteMap,
     exportMap,
     importMap,
-    reorderMaps,
+    reorderMaps
   } = useMapStore()
 
   const { types: vocabularyTypes, loadTypes } = useVocabularyStore()
@@ -169,11 +143,11 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 需要移动 5px 才开始拖拽，避免误触
-      },
+        distance: 5 // 需要移动 5px 才开始拖拽，避免误触
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -182,7 +156,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
     visible: false,
     x: 0,
     y: 0,
-    map: null,
+    map: null
   })
 
   // 加载数据
@@ -232,7 +206,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
       const newMap = await createMap({
         name: newMapName.trim(),
         description: newMapDescription.trim() || undefined,
-        linkedVocabularyTypes: newMapVocabularyTypes,
+        linkedVocabularyTypes: newMapVocabularyTypes
       })
       if (newMap) {
         message.success('创建成功')
@@ -245,7 +219,15 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
     } finally {
       setIsCreating(false)
     }
-  }, [newMapName, newMapDescription, newMapVocabularyTypes, createMap, message, handleCloseCreateModal, onCreateAndEdit])
+  }, [
+    newMapName,
+    newMapDescription,
+    newMapVocabularyTypes,
+    createMap,
+    message,
+    handleCloseCreateModal,
+    onCreateAndEdit
+  ])
 
   // 右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent, map: MapMeta) => {
@@ -255,54 +237,63 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      map,
+      map
     })
   }, [])
 
   // 删除地图
-  const handleDelete = useCallback(async (mapId: string) => {
-    const mapItem = maps.find(m => m.id === mapId)
-    if (!mapItem) return
+  const handleDelete = useCallback(
+    async (mapId: string) => {
+      const mapItem = maps.find(m => m.id === mapId)
+      if (!mapItem) return
 
-    modal.confirm({
-      title: '确认删除',
-      content: `确定要删除地图「${mapItem.name}」吗？此操作不可恢复。`,
-      okText: '删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        const success = await deleteMap(mapId)
-        if (success) {
-          message.success('删除成功')
-        } else {
-          message.error('删除失败')
+      modal.confirm({
+        title: '确认删除',
+        content: `确定要删除地图「${mapItem.name}」吗？此操作不可恢复。`,
+        okText: '删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: async () => {
+          const success = await deleteMap(mapId)
+          if (success) {
+            message.success('删除成功')
+          } else {
+            message.error('删除失败')
+          }
         }
-      },
-    })
-  }, [maps, deleteMap, modal, message])
+      })
+    },
+    [maps, deleteMap, modal, message]
+  )
 
   // 导出地图
-  const handleExport = useCallback(async (mapId: string) => {
-    const filePath = await exportMap(mapId)
-    if (filePath) {
-      message.success(`已导出到: ${filePath}`)
-    }
-  }, [exportMap, message])
+  const handleExport = useCallback(
+    async (mapId: string) => {
+      const filePath = await exportMap(mapId)
+      if (filePath) {
+        message.success(`已导出到: ${filePath}`)
+      }
+    },
+    [exportMap, message]
+  )
 
   // 拖拽结束处理
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
 
-    const oldIndex = maps.findIndex(m => m.id === active.id)
-    const newIndex = maps.findIndex(m => m.id === over.id)
+      const oldIndex = maps.findIndex(m => m.id === active.id)
+      const newIndex = maps.findIndex(m => m.id === over.id)
 
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newMaps = arrayMove(maps, oldIndex, newIndex)
-      const mapIds = newMaps.map(m => m.id)
-      reorderMaps(mapIds)
-    }
-  }, [maps, reorderMaps])
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newMaps = arrayMove(maps, oldIndex, newIndex)
+        const mapIds = newMaps.map(m => m.id)
+        reorderMaps(mapIds)
+      }
+    },
+    [maps, reorderMaps]
+  )
 
   // 加载更多地图（当点击导入按钮时）
   const handleImportClick = useCallback(async () => {
@@ -342,7 +333,9 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
       {/* 头部 */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Title level={4} style={{ margin: 0 }}>地图</Title>
+          <Title level={4} style={{ margin: 0 }}>
+            地图
+          </Title>
           <Text type="secondary">({maps.length})</Text>
         </div>
         <div className={styles.headerActions}>
@@ -428,7 +421,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
               style={{ width: '100%' }}
               options={vocabularyTypes.map(t => ({
                 label: t.name,
-                value: t.id,
+                value: t.id
               }))}
               allowClear
             />

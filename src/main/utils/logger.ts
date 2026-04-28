@@ -1,18 +1,18 @@
 /**
  * 主进程日志工具
- * 
+ *
  * 重新导出 shared/logger，提供主进程专用的日志创建函数
  */
 
 // 先导入，确保模块加载完成
-import { 
-  Logger, 
-  createLogger as createLoggerBase, 
+import {
+  Logger,
+  createLogger as createLoggerBase,
   logger,
   createMainLogger as createMainLoggerBase,
   type LogLevel,
   type LoggerOptions,
-  type EnvironmentDetector,
+  type EnvironmentDetector
 } from '../../shared/logger'
 
 // 重新导出类型

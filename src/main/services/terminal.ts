@@ -9,12 +9,7 @@ import { platform } from 'os'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
-import {
-  TerminalCreateOptions,
-  TerminalInstance,
-  TerminalSize,
-  ShellInfo
-} from '../types/terminal'
+import { TerminalCreateOptions, TerminalInstance, TerminalSize, ShellInfo } from '../types/terminal'
 
 /**
  * 终端进程实例 (内部使用)
@@ -297,7 +292,7 @@ class TerminalService {
    */
   list(): TerminalInstance[] {
     const list: TerminalInstance[] = []
-    this.terminals.forEach((terminal) => {
+    this.terminals.forEach(terminal => {
       list.push({
         id: terminal.id,
         name: terminal.name,
@@ -314,7 +309,7 @@ class TerminalService {
    * 销毁所有终端
    */
   destroyAll(): void {
-    this.terminals.forEach((terminal) => {
+    this.terminals.forEach(terminal => {
       if (!terminal.exited) {
         terminal.pty.kill()
       }

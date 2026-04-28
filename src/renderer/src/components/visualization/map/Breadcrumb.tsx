@@ -6,7 +6,7 @@ import styles from './Breadcrumb.module.css'
 export function Breadcrumb() {
   const viewStack = useMapStore(state => state.viewStack)
   const goToLevel = useMapStore(state => state.goToLevel)
-  
+
   const getIcon = (level: ViewLevel) => {
     switch (level.type) {
       case 'world':
@@ -17,7 +17,7 @@ export function Breadcrumb() {
         return <BlockOutlined className={styles.breadcrumbIcon} />
     }
   }
-  
+
   const getTypeLabel = (level: ViewLevel) => {
     switch (level.type) {
       case 'world':
@@ -28,7 +28,7 @@ export function Breadcrumb() {
         return '元素'
     }
   }
-  
+
   return (
     <div className={styles.breadcrumb}>
       {viewStack.map((level, index) => (
@@ -43,9 +43,7 @@ export function Breadcrumb() {
               <span className={styles.levelType}>{getTypeLabel(level)}</span>
             )}
           </div>
-          {index < viewStack.length - 1 && (
-            <span className={styles.breadcrumbSeparator}>/</span>
-          )}
+          {index < viewStack.length - 1 && <span className={styles.breadcrumbSeparator}>/</span>}
         </div>
       ))}
     </div>

@@ -13,12 +13,7 @@ import {
   Empty,
   InputNumber
 } from 'antd'
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  HolderOutlined
-} from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, HolderOutlined } from '@ant-design/icons'
 import {
   DndContext,
   closestCenter,
@@ -67,34 +62,23 @@ interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 }
 
 function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id
+  })
 
   const style: React.CSSProperties = {
     ...props.style,
     transform: CSS.Transform.toString(transform),
     transition,
-    ...(isDragging ? {
-      opacity: 0.5,
-      background: 'var(--ant-color-bg-text-hover)'
-    } : {})
+    ...(isDragging
+      ? {
+          opacity: 0.5,
+          background: 'var(--ant-color-bg-text-hover)'
+        }
+      : {})
   }
 
-  return (
-    <tr
-      {...props}
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-    />
-  )
+  return <tr {...props} ref={setNodeRef} style={style} {...attributes} {...listeners} />
 }
 
 function FieldDefinitionEditor({
@@ -134,30 +118,33 @@ function FieldDefinitionEditor({
   }, [])
 
   // 拖拽结束 - 重新排序
-  const handleDragEnd = useCallback((event: DragEndEvent): void => {
-    const { active, over } = event
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = sortedFields.findIndex(f => f.id === active.id)
-      const newIndex = sortedFields.findIndex(f => f.id === over.id)
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedFields.findIndex(f => f.id === active.id)
+        const newIndex = sortedFields.findIndex(f => f.id === over.id)
 
-      // 创建新顺序的字段列表
-      const newFields = [...sortedFields]
-      const [movedField] = newFields.splice(oldIndex, 1)
-      newFields.splice(newIndex, 0, movedField)
+        // 创建新顺序的字段列表
+        const newFields = [...sortedFields]
+        const [movedField] = newFields.splice(oldIndex, 1)
+        newFields.splice(newIndex, 0, movedField)
 
-      // 更新 order 字段
-      const updatedFields = newFields.map((f, i) => ({ ...f, order: i }))
+        // 更新 order 字段
+        const updatedFields = newFields.map((f, i) => ({ ...f, order: i }))
 
-      // 乐观更新
-      onChange(updatedFields).catch((error) => {
-        console.error('Failed to reorder fields:', error)
-        message.error('排序失败')
-      })
-    }
+        // 乐观更新
+        onChange(updatedFields).catch(error => {
+          console.error('Failed to reorder fields:', error)
+          message.error('排序失败')
+        })
+      }
 
-    setActiveId(null)
-  }, [sortedFields, onChange])
+      setActiveId(null)
+    },
+    [sortedFields, onChange]
+  )
 
   // 当前拖拽的字段
   const activeField = activeId ? fields.find(f => f.id === activeId) : null
@@ -181,12 +168,14 @@ function FieldDefinitionEditor({
     setEditingField(field)
 
     // 处理 imageConfig 的加载（将字节转换为 MB）
-    const imageConfigForForm = field.imageConfig ? {
-      maxSize: field.imageConfig.maxSize ? field.imageConfig.maxSize / 1024 / 1024 : undefined,
-      maxWidth: field.imageConfig.maxWidth,
-      maxHeight: field.imageConfig.maxHeight,
-      quality: field.imageConfig.quality
-    } : undefined
+    const imageConfigForForm = field.imageConfig
+      ? {
+          maxSize: field.imageConfig.maxSize ? field.imageConfig.maxSize / 1024 / 1024 : undefined,
+          maxWidth: field.imageConfig.maxWidth,
+          maxHeight: field.imageConfig.maxHeight,
+          quality: field.imageConfig.quality
+        }
+      : undefined
 
     form.setFieldsValue({
       ...field,
@@ -203,14 +192,19 @@ function FieldDefinitionEditor({
       setLoading(true)
 
       const options = values.options
-        ? values.options.split('\n').map((o: string) => o.trim()).filter(Boolean)
+        ? values.options
+            .split('\n')
+            .map((o: string) => o.trim())
+            .filter(Boolean)
         : undefined
 
       // 处理 imageConfig
       let imageConfig = undefined
       if (values.type === 'image' && values.imageConfig) {
         imageConfig = {
-          maxSize: values.imageConfig.maxSize ? values.imageConfig.maxSize * 1024 * 1024 : undefined,
+          maxSize: values.imageConfig.maxSize
+            ? values.imageConfig.maxSize * 1024 * 1024
+            : undefined,
           maxWidth: values.imageConfig.maxWidth,
           maxHeight: values.imageConfig.maxHeight,
           quality: values.imageConfig.quality
@@ -229,9 +223,7 @@ function FieldDefinitionEditor({
       if (editingField) {
         // 编辑现有字段
         updatedFields = fields.map(f =>
-          f.id === editingField.id
-            ? { ...f, ...values, options, imageConfig }
-            : f
+          f.id === editingField.id ? { ...f, ...values, options, imageConfig } : f
         )
       } else {
         // 新建字段
@@ -297,15 +289,14 @@ function FieldDefinitionEditor({
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type: FieldType) =>
-        FIELD_TYPE_OPTIONS.find(o => o.value === type)?.label || type
+      render: (type: FieldType) => FIELD_TYPE_OPTIONS.find(o => o.value === type)?.label || type
     },
     {
       title: '必填',
       dataIndex: 'required',
       key: 'required',
       width: 60,
-      render: (required: boolean) => required ? '是' : '否'
+      render: (required: boolean) => (required ? '是' : '否')
     },
     {
       title: '占位符',
@@ -314,34 +305,33 @@ function FieldDefinitionEditor({
       ellipsis: true,
       render: (placeholder: string) => placeholder || '-'
     },
-    ...(readOnly ? [] : [{
-      title: '操作',
-      key: 'action',
-      width: 100,
-      render: (_: unknown, record: FieldDefinition) => (
-        <Space>
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="确定删除此字段？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="删除"
-            cancelText="取消"
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-            />
-          </Popconfirm>
-        </Space>
-      )
-    } as const])
+    ...(readOnly
+      ? []
+      : [
+          {
+            title: '操作',
+            key: 'action',
+            width: 100,
+            render: (_: unknown, record: FieldDefinition) => (
+              <Space>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
+                />
+                <Popconfirm
+                  title="确定删除此字段？"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="删除"
+                  cancelText="取消"
+                >
+                  <Button type="text" size="small" icon={<DeleteOutlined />} danger />
+                </Popconfirm>
+              </Space>
+            )
+          } as const
+        ])
   ]
 
   return (
@@ -359,10 +349,7 @@ function FieldDefinitionEditor({
       </div>
 
       {fields.length === 0 ? (
-        <Empty
-          description="暂无字段定义"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="暂无字段定义" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <DndContext
           sensors={sensors}
@@ -433,21 +420,17 @@ function FieldDefinitionEditor({
             <Select options={FIELD_TYPE_OPTIONS} />
           </Form.Item>
 
-          <Form.Item
-            noStyle
-            shouldUpdate={(prev, curr) => prev.type !== curr.type}
-          >
+          <Form.Item noStyle shouldUpdate={(prev, curr) => prev.type !== curr.type}>
             {({ getFieldValue }) => {
               const type = getFieldValue('type')
 
               if (type === 'select') {
                 return (
-                  <Form.Item
-                    name="options"
-                    label="选项列表"
-                    extra="每行一个选项"
-                  >
-                    <Input.TextArea rows={4} placeholder="选项1&#10;选项2&#10;选项3" />
+                  <Form.Item name="options" label="选项列表" extra="每行一个选项">
+                    <Input.TextArea
+                      rows={4}
+                      placeholder="选项1&#10;选项2&#10;选项3"
+                    />
                   </Form.Item>
                 )
               }
@@ -485,14 +468,24 @@ function FieldDefinitionEditor({
                       label="最大宽度"
                       extra="单位：像素，超过将自动压缩"
                     >
-                      <InputNumber min={100} max={4000} placeholder="1920" style={{ width: '100%' }} />
+                      <InputNumber
+                        min={100}
+                        max={4000}
+                        placeholder="1920"
+                        style={{ width: '100%' }}
+                      />
                     </Form.Item>
                     <Form.Item
                       name={['imageConfig', 'maxHeight']}
                       label="最大高度"
                       extra="单位：像素，超过将自动压缩"
                     >
-                      <InputNumber min={100} max={4000} placeholder="1080" style={{ width: '100%' }} />
+                      <InputNumber
+                        min={100}
+                        max={4000}
+                        placeholder="1080"
+                        style={{ width: '100%' }}
+                      />
                     </Form.Item>
                     <Form.Item
                       name={['imageConfig', 'quality']}
@@ -520,17 +513,21 @@ function FieldDefinitionEditor({
           <Form.Item name="width" label="表格列宽">
             <Space.Compact>
               <InputNumber min={50} max={500} placeholder="默认 120" style={{ width: 100 }} />
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '0 12px',
-                background: 'var(--ant-color-bg-container-disabled)',
-                border: '1px solid var(--ant-color-border)',
-                borderLeft: 'none',
-                borderRadius: '0 6px 6px 0',
-                color: 'var(--ant-color-text-secondary)',
-                height: 32
-              }}>px</span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '0 12px',
+                  background: 'var(--ant-color-bg-container-disabled)',
+                  border: '1px solid var(--ant-color-border)',
+                  borderLeft: 'none',
+                  borderRadius: '0 6px 6px 0',
+                  color: 'var(--ant-color-text-secondary)',
+                  height: 32
+                }}
+              >
+                px
+              </span>
             </Space.Compact>
           </Form.Item>
         </Form>

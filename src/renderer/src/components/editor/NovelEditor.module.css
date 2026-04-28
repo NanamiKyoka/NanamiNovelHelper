@@ -299,29 +299,29 @@
 }
 
 /* 任务列表样式 */
-.editorContent ul[data-type="taskList"] {
+.editorContent ul[data-type='taskList'] {
   list-style: none;
   padding-left: 0;
 }
 
-.editorContent ul[data-type="taskList"] li {
+.editorContent ul[data-type='taskList'] li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   margin: 4px 0;
 }
 
-.editorContent ul[data-type="taskList"] li > label {
+.editorContent ul[data-type='taskList'] li > label {
   flex-shrink: 0;
   margin-top: 4px;
   cursor: pointer;
 }
 
-.editorContent ul[data-type="taskList"] li > div {
+.editorContent ul[data-type='taskList'] li > div {
   flex: 1;
 }
 
-.editorContent ul[data-type="taskList"] li[data-checked="true"] > div {
+.editorContent ul[data-type='taskList'] li[data-checked='true'] > div {
   text-decoration: line-through;
   color: var(--ant-color-text-secondary);
 }

@@ -155,10 +155,7 @@ function GitPanel(): JSX.Element {
   if (!isRepo) {
     return (
       <div className={styles.empty}>
-        <Empty
-          description="当前项目不是 Git 仓库"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        >
+        <Empty description="当前项目不是 Git 仓库" image={Empty.PRESENTED_IMAGE_SIMPLE}>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowInitModal(true)}>
             初始化仓库
           </Button>
@@ -226,7 +223,7 @@ function GitPanel(): JSX.Element {
           <TextArea
             placeholder="提交消息..."
             value={commitMessage}
-            onChange={(e) => setCommitMessage(e.target.value)}
+            onChange={e => setCommitMessage(e.target.value)}
             rows={3}
             className={styles.commitInput}
           />
@@ -250,7 +247,7 @@ function GitPanel(): JSX.Element {
       {/* 标签页切换 */}
       <Tabs
         activeKey={viewMode}
-        onChange={(key) => setViewMode(key as typeof viewMode)}
+        onChange={key => setViewMode(key as typeof viewMode)}
         className={styles.tabs}
         items={[
           {
@@ -258,9 +255,7 @@ function GitPanel(): JSX.Element {
             label: (
               <span>
                 变更
-                {totalChanges > 0 && (
-                  <span className={styles.badge}>{totalChanges}</span>
-                )}
+                {totalChanges > 0 && <span className={styles.badge}>{totalChanges}</span>}
               </span>
             ),
             children: <ChangesList />

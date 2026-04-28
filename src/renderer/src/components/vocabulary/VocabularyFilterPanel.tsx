@@ -54,7 +54,7 @@ const VocabularyFilterPanel: React.FC<VocabularyFilterPanelProps> = ({
           <Select
             placeholder="选择颜色"
             value={filterColor || undefined}
-            onChange={(v) => onFilterColorChange(v || '')}
+            onChange={v => onFilterColorChange(v || '')}
             allowClear
             style={{ minWidth: 120 }}
             size="small"
@@ -62,7 +62,9 @@ const VocabularyFilterPanel: React.FC<VocabularyFilterPanelProps> = ({
             {allColors.map(color => (
               <Select.Option key={color} value={color}>
                 <Space>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }} />
+                  <div
+                    style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color }}
+                  />
                   <span>{color}</span>
                 </Space>
               </Select.Option>
@@ -101,11 +103,7 @@ const VocabularyFilterPanel: React.FC<VocabularyFilterPanelProps> = ({
         </div>
 
         {activeFilterCount > 0 && (
-          <Button
-            size="small"
-            icon={<ClearOutlined />}
-            onClick={onClearAll}
-          >
+          <Button size="small" icon={<ClearOutlined />} onClick={onClearAll}>
             清除筛选
           </Button>
         )}

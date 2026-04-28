@@ -42,11 +42,20 @@ const PANEL_TITLES: Record<string, string> = {
 }
 
 // 全屏功能面板列表（这些面板需要返回按钮）
-const FULLSCREEN_PANELS = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'aiAssistant', 'map']
+const FULLSCREEN_PANELS = [
+  'vocabulary',
+  'sensitive',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'aiAssistant',
+  'map'
+]
 
 function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarProps): JSX.Element {
-  const sidebarWidth = useSettingsStore((state) => state.globalSettings.sidebarWidth)
-  const setSidebarWidth = useSettingsStore((state) => state.setSidebarWidth)
+  const sidebarWidth = useSettingsStore(state => state.globalSettings.sidebarWidth)
+  const setSidebarWidth = useSettingsStore(state => state.setSidebarWidth)
 
   const handleResize = useCallback(
     (e: MouseEvent) => {
@@ -133,21 +142,27 @@ function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarPro
     >
       {showBackButton && (
         <div className={styles.panelHeader}>
-          <Button 
-            type="text" 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
             onClick={handleBackToFiles}
             className={styles.backButton}
             aria-label="返回文件面板"
           />
-          <Text strong className={styles.panelTitle}>{panelTitle}</Text>
+          <Text strong className={styles.panelTitle}>
+            {panelTitle}
+          </Text>
         </div>
       )}
-      <div className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`} role="region" aria-label={`${panelTitle}面板`}>
+      <div
+        className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`}
+        role="region"
+        aria-label={`${panelTitle}面板`}
+      >
         {renderContent()}
       </div>
-      <div 
-        className={styles.resizeHandle} 
+      <div
+        className={styles.resizeHandle}
         onMouseDown={handleResizeStart}
         role="separator"
         aria-label="调整侧边栏宽度"

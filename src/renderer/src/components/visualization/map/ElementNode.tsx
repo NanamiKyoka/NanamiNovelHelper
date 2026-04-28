@@ -2,12 +2,7 @@ import { useMemo } from 'react'
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import * as Icons from '@ant-design/icons'
-import { 
-  ELEMENT_TYPE_CONFIG, 
-  hexToPixel, 
-  getHexCorners, 
-  HEX_SIZE 
-} from '@renderer/types/map'
+import { ELEMENT_TYPE_CONFIG, hexToPixel, getHexCorners, HEX_SIZE } from '@renderer/types/map'
 import type { MapElement } from '@renderer/types/map'
 import styles from './ElementNode.module.css'
 
@@ -31,37 +26,41 @@ export function ElementNode({
   onEdit
 }: ElementNodeProps) {
   const config = ELEMENT_TYPE_CONFIG[element.elementType]
-  
+
   const IconComponent = useMemo(() => {
     const iconName = element.icon || config.icon
-    return (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] || Icons.QuestionCircleOutlined
+    return (
+      (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] ||
+      Icons.QuestionCircleOutlined
+    )
   }, [element.icon, config.icon])
-  
+
   const centerPosition = useMemo(() => {
     return hexToPixel(element.hexPosition)
   }, [element.hexPosition])
-  
+
   const hexCorners = useMemo(() => {
     return getHexCorners(centerPosition, HEX_SIZE)
   }, [centerPosition])
-  
+
   const hexPath = useMemo(() => {
-    return hexCorners
-      .map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`)
-      .join(' ') + ' Z'
+    return (
+      hexCorners.map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`).join(' ') +
+      ' Z'
+    )
   }, [hexCorners])
-  
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
     onSelect()
     onDragStart()
   }
-  
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
   }
-  
+
   const contextMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
@@ -78,12 +77,9 @@ export function ElementNode({
       onClick: onDelete
     }
   ]
-  
+
   return (
-    <Dropdown
-      menu={{ items: contextMenuItems }}
-      trigger={['contextMenu']}
-    >
+    <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
       <div
         className={`${styles.elementNode} ${isSelected ? styles.elementNodeSelected : ''}`}
         style={{
@@ -114,26 +110,19 @@ export function ElementNode({
             strokeWidth={isSelected ? 3 : 1}
           />
         </svg>
-        
-        <div 
-          className={styles.elementContent}
-          style={{ color: getContrastColor(element.color) }}
-        >
+
+        <div className={styles.elementContent} style={{ color: getContrastColor(element.color) }}>
           <div className={styles.elementIcon}>
             <IconComponent style={{ fontSize: 20 }} />
           </div>
           <div className={styles.elementName}>{element.name}</div>
         </div>
-        
+
         {element.children.length > 0 && (
-          <div className={styles.hasChildrenBadge}>
-            {element.children.length}
-          </div>
+          <div className={styles.hasChildrenBadge}>{element.children.length}</div>
         )}
-        
-        {config.canHaveChildren && (
-          <div className={styles.enterHint}>双击进入</div>
-        )}
+
+        {config.canHaveChildren && <div className={styles.enterHint}>双击进入</div>}
       </div>
     </Dropdown>
   )

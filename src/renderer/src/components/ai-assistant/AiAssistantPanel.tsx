@@ -16,7 +16,7 @@ import {
   Popconfirm,
   message,
   Dropdown,
-  Modal,
+  Modal
 } from 'antd'
 import {
   PlusOutlined,
@@ -33,7 +33,7 @@ import {
   FileTextOutlined,
   HistoryOutlined,
   MoreOutlined,
-  ToolOutlined,
+  ToolOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import type { TemplateListItem, WorkflowListItem, TemplateCategory } from '@shared/ai-assistant'
@@ -50,7 +50,7 @@ const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; color: string }
   character: { label: '人物塑造', color: '#1890ff' },
   plot: { label: '情节设计', color: '#52c41a' },
   worldbuilding: { label: '世界观构建', color: '#722ed1' },
-  polishing: { label: '润色修改', color: '#fa8c16' },
+  polishing: { label: '润色修改', color: '#fa8c16' }
 }
 
 // 分类图标
@@ -58,7 +58,7 @@ const CATEGORY_ICONS: Record<TemplateCategory, React.ReactNode> = {
   character: <UserOutlined />,
   plot: <ThunderboltOutlined />,
   worldbuilding: <GlobalOutlined />,
-  polishing: <FileTextOutlined />,
+  polishing: <FileTextOutlined />
 }
 
 function AiAssistantPanel(): JSX.Element {
@@ -80,11 +80,11 @@ function AiAssistantPanel(): JSX.Element {
     exportWorkflow,
     importTemplate,
     importWorkflow,
-    setActiveTab,
+    setActiveTab
   } = useAiAssistantStore()
 
   const [searchText, setSearchText] = useState('')
-  
+
   // 全屏编辑器状态
   const [showTemplateEditor, setShowTemplateEditor] = useState(false)
   const [editingTemplateId, setEditingTemplateId] = useState<string | undefined>(undefined)
@@ -111,10 +111,10 @@ function AiAssistantPanel(): JSX.Element {
     if (!searchText) return templateList
     const lower = searchText.toLowerCase()
     return templateList.filter(
-      (t) =>
+      t =>
         t.name.toLowerCase().includes(lower) ||
         t.description?.toLowerCase().includes(lower) ||
-        t.tags.some((tag) => tag.toLowerCase().includes(lower))
+        t.tags.some(tag => tag.toLowerCase().includes(lower))
     )
   }, [templateList, searchText])
 
@@ -123,10 +123,10 @@ function AiAssistantPanel(): JSX.Element {
     if (!searchText) return workflowList
     const lower = searchText.toLowerCase()
     return workflowList.filter(
-      (w) =>
+      w =>
         w.name.toLowerCase().includes(lower) ||
         w.description?.toLowerCase().includes(lower) ||
-        w.tags.some((tag) => tag.toLowerCase().includes(lower))
+        w.tags.some(tag => tag.toLowerCase().includes(lower))
     )
   }, [workflowList, searchText])
 
@@ -224,7 +224,7 @@ function AiAssistantPanel(): JSX.Element {
       const input = document.createElement('input')
       input.type = 'file'
       input.accept = '.json5,.json'
-      input.onchange = async (e) => {
+      input.onchange = async e => {
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) return
 
@@ -279,7 +279,7 @@ function AiAssistantPanel(): JSX.Element {
               key: 'export',
               icon: <ExportOutlined />,
               label: '导出',
-              onClick: () => handleExportTemplate(item.id),
+              onClick: () => handleExportTemplate(item.id)
             },
             {
               key: 'delete',
@@ -298,15 +298,15 @@ function AiAssistantPanel(): JSX.Element {
                   onOk: () => {
                     deleteTemplate(item.id)
                     message.success('删除成功')
-                  },
+                  }
                 })
-              },
-            },
-          ],
+              }
+            }
+          ]
         }}
       >
         <Button type="text" size="small" icon={<MoreOutlined />} />
-      </Dropdown>,
+      </Dropdown>
     ]
 
     return (
@@ -315,7 +315,9 @@ function AiAssistantPanel(): JSX.Element {
           avatar={CATEGORY_ICONS[item.category]}
           title={
             <div className={styles.titleRow}>
-              <Text strong className={styles.templateName}>{item.name}</Text>
+              <Text strong className={styles.templateName}>
+                {item.name}
+              </Text>
               <div className={styles.tagRow}>
                 <Tag color={categoryConfig.color} style={{ margin: 0 }}>
                   {categoryConfig.label}
@@ -344,7 +346,7 @@ function AiAssistantPanel(): JSX.Element {
                 </Text>
                 {item.tags.length > 0 && (
                   <div className={styles.tags}>
-                    {item.tags.slice(0, 3).map((tag) => (
+                    {item.tags.slice(0, 3).map(tag => (
                       <Tag key={tag} style={{ margin: 0, fontSize: 11 }}>
                         {tag}
                       </Tag>
@@ -387,7 +389,7 @@ function AiAssistantPanel(): JSX.Element {
               key: 'export',
               icon: <ExportOutlined />,
               label: '导出',
-              onClick: () => handleExportWorkflow(item.id),
+              onClick: () => handleExportWorkflow(item.id)
             },
             {
               key: 'delete',
@@ -406,15 +408,15 @@ function AiAssistantPanel(): JSX.Element {
                   onOk: () => {
                     deleteWorkflow(item.id)
                     message.success('删除成功')
-                  },
+                  }
                 })
-              },
-            },
-          ],
+              }
+            }
+          ]
         }}
       >
         <Button type="text" size="small" icon={<MoreOutlined />} />
-      </Dropdown>,
+      </Dropdown>
     ]
 
     return (
@@ -423,7 +425,9 @@ function AiAssistantPanel(): JSX.Element {
           avatar={CATEGORY_ICONS[item.category]}
           title={
             <div className={styles.titleRow}>
-              <Text strong className={styles.templateName}>{item.name}</Text>
+              <Text strong className={styles.templateName}>
+                {item.name}
+              </Text>
               <div className={styles.tagRow}>
                 <Tag color={categoryConfig.color} style={{ margin: 0 }}>
                   {categoryConfig.label}
@@ -454,12 +458,12 @@ function AiAssistantPanel(): JSX.Element {
   }
 
   // 渲染执行历史项
-  const renderHistoryItem = (item: typeof executionHistory[0]) => {
+  const renderHistoryItem = (item: (typeof executionHistory)[0]) => {
     const statusConfig = {
       running: { color: 'processing', text: '执行中' },
       completed: { color: 'success', text: '已完成' },
       cancelled: { color: 'default', text: '已取消' },
-      error: { color: 'error', text: '出错' },
+      error: { color: 'error', text: '出错' }
     }
     const config = statusConfig[item.status]
 
@@ -475,7 +479,7 @@ function AiAssistantPanel(): JSX.Element {
             }}
           >
             <Button type="text" size="small" icon={<DeleteOutlined />} danger />
-          </Popconfirm>,
+          </Popconfirm>
         ]}
       >
         <List.Item.Meta
@@ -512,13 +516,10 @@ function AiAssistantPanel(): JSX.Element {
             <Input.Search
               placeholder="搜索模板..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={e => setSearchText(e.target.value)}
             />
             <Space>
-              <Button
-                icon={<ImportOutlined />}
-                onClick={() => handleImport('template')}
-              >
+              <Button icon={<ImportOutlined />} onClick={() => handleImport('template')}>
                 导入
               </Button>
               <Button
@@ -535,16 +536,11 @@ function AiAssistantPanel(): JSX.Element {
             renderItem={renderTemplateItem}
             loading={isLoading}
             locale={{
-              emptyText: (
-                <Empty
-                  description="暂无模板"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ),
+              emptyText: <Empty description="暂无模板" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             }}
           />
         </div>
-      ),
+      )
     },
     {
       key: 'workflows',
@@ -560,13 +556,10 @@ function AiAssistantPanel(): JSX.Element {
             <Input.Search
               placeholder="搜索工作流..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={e => setSearchText(e.target.value)}
             />
             <Space>
-              <Button
-                icon={<ImportOutlined />}
-                onClick={() => handleImport('workflow')}
-              >
+              <Button icon={<ImportOutlined />} onClick={() => handleImport('workflow')}>
                 导入
               </Button>
               <Button
@@ -583,16 +576,11 @@ function AiAssistantPanel(): JSX.Element {
             renderItem={renderWorkflowItem}
             loading={isLoading}
             locale={{
-              emptyText: (
-                <Empty
-                  description="暂无工作流"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ),
+              emptyText: <Empty description="暂无工作流" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             }}
           />
         </div>
-      ),
+      )
     },
     {
       key: 'history',
@@ -608,17 +596,12 @@ function AiAssistantPanel(): JSX.Element {
             dataSource={executionHistory}
             renderItem={renderHistoryItem}
             locale={{
-              emptyText: (
-                <Empty
-                  description="暂无执行记录"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              ),
+              emptyText: <Empty description="暂无执行记录" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             }}
           />
         </div>
-      ),
-    },
+      )
+    }
   ]
 
   return (
@@ -626,19 +609,14 @@ function AiAssistantPanel(): JSX.Element {
       <div className={styles.container}>
         {/* 动态 SKILL 管理按钮 */}
         <div className={styles.skillButtonContainer}>
-          <Button
-            type="dashed"
-            block
-            icon={<ToolOutlined />}
-            onClick={handleOpenDynamicSkillPanel}
-          >
+          <Button type="dashed" block icon={<ToolOutlined />} onClick={handleOpenDynamicSkillPanel}>
             管理动态 SKILL
           </Button>
         </div>
 
         <Tabs
           activeKey={activeTab}
-          onChange={(key) => setActiveTab(key as typeof activeTab)}
+          onChange={key => setActiveTab(key as typeof activeTab)}
           items={tabItems}
           size="small"
           className={styles.tabs}
@@ -656,16 +634,13 @@ function AiAssistantPanel(): JSX.Element {
           body: {
             height: 'calc(100vh - 55px)',
             overflow: 'hidden',
-            padding: 0,
+            padding: 0
           }
         }}
         destroyOnHidden
         title={editingTemplateId ? '编辑模板' : '新建模板'}
       >
-        <TemplateEditor
-          templateId={editingTemplateId}
-          onBack={handleCloseTemplateEditor}
-        />
+        <TemplateEditor templateId={editingTemplateId} onBack={handleCloseTemplateEditor} />
       </Modal>
 
       {/* 工作流编辑器全屏模态框 */}
@@ -679,16 +654,13 @@ function AiAssistantPanel(): JSX.Element {
           body: {
             height: 'calc(100vh - 55px)',
             overflow: 'hidden',
-            padding: 0,
+            padding: 0
           }
         }}
         destroyOnHidden
         title={editingWorkflowId ? '编辑工作流' : '新建工作流'}
       >
-        <WorkflowEditor
-          workflowId={editingWorkflowId}
-          onBack={handleCloseWorkflowEditor}
-        />
+        <WorkflowEditor workflowId={editingWorkflowId} onBack={handleCloseWorkflowEditor} />
       </Modal>
 
       {/* 动态 SKILL 管理面板 */}
@@ -702,15 +674,13 @@ function AiAssistantPanel(): JSX.Element {
           body: {
             height: 'calc(100vh - 55px)',
             overflow: 'hidden',
-            padding: 0,
+            padding: 0
           }
         }}
         destroyOnHidden
         title="动态 SKILL 管理"
       >
-        <DynamicSkillPanel
-          onBack={handleCloseDynamicSkillPanel}
-        />
+        <DynamicSkillPanel onBack={handleCloseDynamicSkillPanel} />
       </Modal>
 
       {/* 工作流执行器模态框 */}

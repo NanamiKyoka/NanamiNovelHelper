@@ -14,18 +14,18 @@ const PROVIDER_CONFIGS: Record<AIProvider, ApiConfig> = {
   openai: {
     baseUrl: 'https://api.openai.com/v1',
     apiKeyName: 'openai_api_key',
-    defaultModel: 'gpt-4',
+    defaultModel: 'gpt-4'
   },
   anthropic: {
     baseUrl: 'https://api.anthropic.com/v1',
     apiKeyName: 'anthropic_api_key',
-    defaultModel: 'claude-3-opus-20240229',
+    defaultModel: 'claude-3-opus-20240229'
   },
   custom: {
     baseUrl: '',
     apiKeyName: 'custom_api_key',
-    defaultModel: '',
-  },
+    defaultModel: ''
+  }
 }
 
 interface OpenAiCompatibleResponse {
@@ -52,7 +52,7 @@ class AiApiService {
         return {
           success: false,
           error: `未配置 ${provider} API Key，请在设置中配置`,
-          duration: Date.now() - startTime,
+          duration: Date.now() - startTime
         }
       }
 
@@ -67,14 +67,14 @@ class AiApiService {
           return {
             success: false,
             error: `不支持的 AI 提供商: ${provider}`,
-            duration: Date.now() - startTime,
+            duration: Date.now() - startTime
           }
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : '未知错误',
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     }
   }
@@ -100,40 +100,40 @@ class AiApiService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model,
           messages,
           temperature: options.temperature ?? DEFAULT_TEMPERATURE,
-          max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
-        }),
+          max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS
+        })
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})) as OpenAiCompatibleResponse
+        const errorData = (await response.json().catch(() => ({}))) as OpenAiCompatibleResponse
         return {
           success: false,
           error: errorData.error?.message || `HTTP ${response.status}`,
-          duration: Date.now() - startTime,
+          duration: Date.now() - startTime
         }
       }
 
-      const data = await response.json() as OpenAiCompatibleResponse
+      const data = (await response.json()) as OpenAiCompatibleResponse
       return {
         success: true,
         content: data.choices?.[0]?.message?.content || '',
         tokensUsed: {
           input: data.usage?.prompt_tokens || 0,
-          output: data.usage?.completion_tokens || 0,
+          output: data.usage?.completion_tokens || 0
         },
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : '网络请求失败',
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     }
   }
@@ -153,40 +153,40 @@ class AiApiService {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
           model,
           max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
           system: options.systemPrompt,
-          messages: [{ role: 'user', content: prompt }],
-        }),
+          messages: [{ role: 'user', content: prompt }]
+        })
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})) as AnthropicResponse
+        const errorData = (await response.json().catch(() => ({}))) as AnthropicResponse
         return {
           success: false,
           error: errorData.error?.message || `HTTP ${response.status}`,
-          duration: Date.now() - startTime,
+          duration: Date.now() - startTime
         }
       }
 
-      const data = await response.json() as AnthropicResponse
+      const data = (await response.json()) as AnthropicResponse
       return {
         success: true,
         content: data.content?.[0]?.text || '',
         tokensUsed: {
           input: data.usage?.input_tokens || 0,
-          output: data.usage?.output_tokens || 0,
+          output: data.usage?.output_tokens || 0
         },
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : '网络请求失败',
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     }
   }
@@ -202,7 +202,7 @@ class AiApiService {
       return {
         success: false,
         error: '未配置自定义 API Base URL，请在设置中配置',
-        duration: Date.now() - startTime,
+        duration: Date.now() - startTime
       }
     }
 
@@ -221,12 +221,12 @@ class AiApiService {
     const result = await this.call('Hello', {
       provider,
       model: config.defaultModel,
-      maxTokens: 10,
+      maxTokens: 10
     })
 
     return {
       success: result.success,
-      error: result.error,
+      error: result.error
     }
   }
 

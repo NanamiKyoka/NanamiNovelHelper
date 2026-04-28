@@ -47,13 +47,9 @@ import { CSS } from '@dnd-kit/utilities'
 import IconPicker, { getIconPreview, type IconValue } from './IconPicker'
 import { v4 as uuidv4 } from 'uuid'
 import { useVocabularyStore } from '../../stores/vocabularyStore'
-import type { 
-  VocabularyType, 
-  FieldDefinition, 
-  TableColumnConfig 
-} from '@shared/vocabulary'
-import { 
-  getBuiltInVocabularyTypes, 
+import type { VocabularyType, FieldDefinition, TableColumnConfig } from '@shared/vocabulary'
+import {
+  getBuiltInVocabularyTypes,
   VOCABULARY_DEFAULT_COLORS,
   CHARACTER_FIELDS,
   LOCATION_FIELDS,
@@ -68,22 +64,22 @@ import styles from './VocabularyTypeSettings.module.css'
 
 // 类型图标映射
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  'character': <TeamOutlined />,
-  'location': <EnvironmentOutlined />,
-  'organization': <TeamOutlined />,
-  'item': <GiftOutlined />,
-  'magic': <ThunderboltOutlined />,
-  'event': <CalendarOutlined />
+  character: <TeamOutlined />,
+  location: <EnvironmentOutlined />,
+  organization: <TeamOutlined />,
+  item: <GiftOutlined />,
+  magic: <ThunderboltOutlined />,
+  event: <CalendarOutlined />
 }
 
 // 内置类型对应的字段模板
 const BUILTIN_FIELDS_MAP: Record<string, FieldDefinition[]> = {
-  'character': CHARACTER_FIELDS,
-  'location': LOCATION_FIELDS,
-  'organization': ORGANIZATION_FIELDS,
-  'item': ITEM_FIELDS,
-  'magic': MAGIC_FIELDS,
-  'event': EVENT_FIELDS
+  character: CHARACTER_FIELDS,
+  location: LOCATION_FIELDS,
+  organization: ORGANIZATION_FIELDS,
+  item: ITEM_FIELDS,
+  magic: MAGIC_FIELDS,
+  event: EVENT_FIELDS
 }
 
 // 新建类型的方式
@@ -111,14 +107,9 @@ function SortableTypeItem({
   getTypeIcon,
   readOnly
 }: SortableTypeItemProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: type.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: type.id
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -138,7 +129,7 @@ function SortableTypeItem({
           className={styles.dragHandle}
           {...attributes}
           {...listeners}
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           <HolderOutlined />
         </div>
@@ -156,7 +147,10 @@ function SortableTypeItem({
             type="text"
             size="small"
             icon={<CopyOutlined />}
-            onClick={(e) => { e.stopPropagation(); onDuplicate() }}
+            onClick={e => {
+              e.stopPropagation()
+              onDuplicate()
+            }}
             disabled={readOnly}
           />
         </Tooltip>
@@ -165,14 +159,20 @@ function SortableTypeItem({
             type="text"
             size="small"
             icon={<EditOutlined />}
-            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            onClick={e => {
+              e.stopPropagation()
+              onEdit()
+            }}
             disabled={readOnly}
           />
         </Tooltip>
         <Popconfirm
           title="确定删除此类型？相关的词汇数据将保留。"
-          onConfirm={(e) => { e?.stopPropagation(); onDelete() }}
-          onCancel={(e) => e?.stopPropagation()}
+          onConfirm={e => {
+            e?.stopPropagation()
+            onDelete()
+          }}
+          onCancel={e => e?.stopPropagation()}
           okText="删除"
           cancelText="取消"
         >
@@ -182,7 +182,7 @@ function SortableTypeItem({
               size="small"
               icon={<DeleteOutlined />}
               danger
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
               disabled={readOnly}
             />
           </Tooltip>
@@ -202,27 +202,20 @@ interface VocabularyTypeSettingsProps {
   onSelectedTypeIdChange?: (typeId: string | null) => void
 }
 
-function VocabularyTypeSettings({ 
+function VocabularyTypeSettings({
   readOnly = false,
   hideTypeList = false,
   selectedTypeId: externalSelectedTypeId,
   onSelectedTypeIdChange
 }: VocabularyTypeSettingsProps): JSX.Element {
-  const { 
-    types, 
-    loadTypes, 
-    addType, 
-    updateType, 
-    deleteType,
-    reorderTypes,
-    isLoaded 
-  } = useVocabularyStore()
-  
+  const { types, loadTypes, addType, updateType, deleteType, reorderTypes, isLoaded } =
+    useVocabularyStore()
+
   const [internalSelectedTypeId, setInternalSelectedTypeId] = useState<string | null>(null)
-  
+
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
-  
+
   // DnD 传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -234,9 +227,10 @@ function VocabularyTypeSettings({
       coordinateGetter: sortableKeyboardCoordinates
     })
   )
-  
+
   // 使用外部或内部的选中类型
-  const selectedTypeId = externalSelectedTypeId !== undefined ? externalSelectedTypeId : internalSelectedTypeId
+  const selectedTypeId =
+    externalSelectedTypeId !== undefined ? externalSelectedTypeId : internalSelectedTypeId
   const setSelectedTypeId = (id: string | null) => {
     if (onSelectedTypeIdChange) {
       onSelectedTypeIdChange(id)
@@ -252,7 +246,7 @@ function VocabularyTypeSettings({
   const [loading, setLoading] = useState(false)
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false)
   const [selectedIcon, setSelectedIcon] = useState<IconValue | undefined>()
-  
+
   // 获取类型图标（支持自定义图标或默认图标）
   const getTypeIcon = (type: VocabularyType): React.ReactNode => {
     if (type.icon) {
@@ -280,28 +274,31 @@ function VocabularyTypeSettings({
   const handleDragStart = useCallback((event: DragStartEvent): void => {
     setActiveId(event.active.id as string)
   }, [])
-  
+
   // 拖拽结束
-  const handleDragEnd = useCallback((event: DragEndEvent): void => {
-    const { active, over } = event
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = sortedTypes.findIndex(t => t.id === active.id)
-      const newIndex = sortedTypes.findIndex(t => t.id === over.id)
-      
-      const newTypes = arrayMove(sortedTypes, oldIndex, newIndex)
-      const newTypeIds = newTypes.map(t => t.id)
-      
-      // 调用 reorderTypes 更新顺序
-      reorderTypes(newTypeIds).catch((error) => {
-        console.error('Failed to reorder types:', error)
-        message.error('排序失败')
-      })
-    }
-    
-    setActiveId(null)
-  }, [sortedTypes, reorderTypes])
-  
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      const { active, over } = event
+
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedTypes.findIndex(t => t.id === active.id)
+        const newIndex = sortedTypes.findIndex(t => t.id === over.id)
+
+        const newTypes = arrayMove(sortedTypes, oldIndex, newIndex)
+        const newTypeIds = newTypes.map(t => t.id)
+
+        // 调用 reorderTypes 更新顺序
+        reorderTypes(newTypeIds).catch(error => {
+          console.error('Failed to reorder types:', error)
+          message.error('排序失败')
+        })
+      }
+
+      setActiveId(null)
+    },
+    [sortedTypes, reorderTypes]
+  )
+
   // 当前拖拽的类型
   const activeType = activeId ? types.find(t => t.id === activeId) : null
 
@@ -318,7 +315,7 @@ function VocabularyTypeSettings({
     setSelectedTemplate(template || null)
     form.resetFields()
     setSelectedIcon(undefined)
-    
+
     if (mode === 'template' && template) {
       form.setFieldsValue({
         name: template.name,
@@ -327,15 +324,16 @@ function VocabularyTypeSettings({
       })
       // 设置图标预览
       if (template.icon) {
-        setSelectedIcon({ 
-          type: /[\p{Emoji}]/u.test(template.icon) ? 'emoji' : 'ant', 
-          value: template.icon 
+        setSelectedIcon({
+          type: /[\p{Emoji}]/u.test(template.icon) ? 'emoji' : 'ant',
+          value: template.icon
         })
       }
     } else {
       form.setFieldsValue({
         name: '',
-        color: VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
+        color:
+          VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
       })
     }
     setIsTypeModalOpen(true)
@@ -354,9 +352,9 @@ function VocabularyTypeSettings({
     })
     // 设置图标预览
     if (type.icon) {
-      setSelectedIcon({ 
-        type: /[\p{Emoji}]/u.test(type.icon) ? 'emoji' : 'ant', 
-        value: type.icon 
+      setSelectedIcon({
+        type: /[\p{Emoji}]/u.test(type.icon) ? 'emoji' : 'ant',
+        value: type.icon
       })
     } else {
       setSelectedIcon(undefined)
@@ -369,10 +367,9 @@ function VocabularyTypeSettings({
     try {
       const values = await form.validateFields()
       setLoading(true)
-      
-      const colorValue = typeof values.color === 'string' 
-        ? values.color 
-        : values.color?.toHexString?.() || '#1890ff'
+
+      const colorValue =
+        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || '#1890ff'
 
       if (editingType) {
         // 编辑现有类型
@@ -385,13 +382,13 @@ function VocabularyTypeSettings({
       } else {
         // 新建类型
         let fields: FieldDefinition[] = []
-        
+
         if (createMode === 'template' && selectedTemplate) {
           // 从模板创建 - 使用模板的字段
           const templateFields = BUILTIN_FIELDS_MAP[selectedTemplate.id] || []
           fields = templateFields.map(f => ({ ...f, id: uuidv4() }))
         }
-        
+
         await addType({
           name: values.name,
           icon: values.icon,
@@ -403,7 +400,7 @@ function VocabularyTypeSettings({
         })
         message.success('创建成功')
       }
-      
+
       setIsTypeModalOpen(false)
       setCreateMode(null)
       setSelectedTemplate(null)
@@ -418,7 +415,7 @@ function VocabularyTypeSettings({
   // 复制类型（复制所有字段）
   const handleDuplicateType = async (type: VocabularyType): Promise<void> => {
     if (readOnly) return
-    
+
     await addType({
       name: type.name + ' (副本)',
       icon: type.icon,
@@ -447,16 +444,22 @@ function VocabularyTypeSettings({
   }
 
   // 更新字段定义
-  const handleFieldsChange = useCallback(async (fields: FieldDefinition[]): Promise<void> => {
-    if (!selectedTypeId || readOnly) return
-    await updateType(selectedTypeId, { fields })
-  }, [selectedTypeId, readOnly, updateType])
+  const handleFieldsChange = useCallback(
+    async (fields: FieldDefinition[]): Promise<void> => {
+      if (!selectedTypeId || readOnly) return
+      await updateType(selectedTypeId, { fields })
+    },
+    [selectedTypeId, readOnly, updateType]
+  )
 
   // 更新表格配置
-  const handleTableConfigChange = useCallback(async (columns: TableColumnConfig[]): Promise<void> => {
-    if (!selectedTypeId || readOnly) return
-    await updateType(selectedTypeId, { tableConfig: columns })
-  }, [selectedTypeId, readOnly, updateType])
+  const handleTableConfigChange = useCallback(
+    async (columns: TableColumnConfig[]): Promise<void> => {
+      if (!selectedTypeId || readOnly) return
+      await updateType(selectedTypeId, { tableConfig: columns })
+    },
+    [selectedTypeId, readOnly, updateType]
+  )
 
   // 处理类型项的操作
   const handleTypeSelect = (typeId: string): void => {
@@ -513,25 +516,17 @@ function VocabularyTypeSettings({
               <span>{selectedType.name}</span>
             </div>
             <Space>
-              <Dropdown 
-                menu={{ items: createMenuItems }} 
-                trigger={['click']}
-                disabled={readOnly}
-              >
+              <Dropdown menu={{ items: createMenuItems }} trigger={['click']} disabled={readOnly}>
                 <Button size="small" icon={<PlusOutlined />} disabled={readOnly}>
                   新建类型
                 </Button>
               </Dropdown>
-              <Button 
-                size="small" 
-                onClick={() => handleEditType(selectedType)} 
-                disabled={readOnly}
-              >
+              <Button size="small" onClick={() => handleEditType(selectedType)} disabled={readOnly}>
                 编辑基本信息
               </Button>
             </Space>
           </div>
-          
+
           {/* 字段定义编辑器 */}
           <div className={styles.configSection}>
             <h3>字段定义</h3>
@@ -563,12 +558,14 @@ function VocabularyTypeSettings({
     return (
       <div className={`${styles.container} ${styles.containerHideTypeList}`}>
         {configPanel}
-        
+
         {/* 类型基本信息弹窗 */}
         <Modal
-          title={editingType ? '编辑类型' : (createMode === 'template' ? '从模板创建' : '新建自定义类型')}
+          title={
+            editingType ? '编辑类型' : createMode === 'template' ? '从模板创建' : '新建自定义类型'
+          }
           open={isTypeModalOpen}
-          onCancel={() => { 
+          onCancel={() => {
             setIsTypeModalOpen(false)
             setCreateMode(null)
             setSelectedTemplate(null)
@@ -579,17 +576,29 @@ function VocabularyTypeSettings({
           cancelText="取消"
         >
           {createMode === 'template' && selectedTemplate && (
-            <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
-              <div style={{ fontWeight: 500, marginBottom: 8 }}>
-                模板：{selectedTemplate.name}
-              </div>
+            <div
+              style={{
+                marginBottom: 16,
+                padding: 12,
+                background: 'var(--bg-muted)',
+                borderRadius: 4
+              }}
+            >
+              <div style={{ fontWeight: 500, marginBottom: 8 }}>模板：{selectedTemplate.name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 将预设 {BUILTIN_FIELDS_MAP[selectedTemplate.id]?.length || 0} 个字段
               </div>
             </div>
           )}
           {createMode === 'custom' && (
-            <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
+            <div
+              style={{
+                marginBottom: 16,
+                padding: 12,
+                background: 'var(--bg-muted)',
+                borderRadius: 4
+              }}
+            >
               <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 从空白开始创建，后续可在字段定义中添加字段
               </div>
@@ -603,14 +612,11 @@ function VocabularyTypeSettings({
             >
               <Input placeholder="如：角色、地点、组织" />
             </Form.Item>
-            
+
             <Form.Item label="图标">
-              <div 
-                className={styles.iconPreviewBox}
-                onClick={() => setIsIconPickerOpen(true)}
-              >
-                <div 
-                  className={styles.iconPreview} 
+              <div className={styles.iconPreviewBox} onClick={() => setIsIconPickerOpen(true)}>
+                <div
+                  className={styles.iconPreview}
                   style={{ backgroundColor: form.getFieldValue('color') || '#1890ff' }}
                 >
                   {getIconPreview(selectedIcon?.value, <TagOutlined />)}
@@ -618,22 +624,22 @@ function VocabularyTypeSettings({
                 <span className={styles.iconHint}>点击选择图标</span>
               </div>
             </Form.Item>
-            
+
             <Form.Item name="icon" hidden>
               <Input />
             </Form.Item>
-            
+
             <Form.Item name="color" label="默认颜色">
               <ColorPicker format="hex" />
             </Form.Item>
           </Form>
         </Modal>
-        
+
         {/* 图标选择器弹窗 */}
         <IconPicker
           open={isIconPickerOpen}
           value={selectedIcon}
-          onChange={(iconValue) => {
+          onChange={iconValue => {
             setSelectedIcon(iconValue)
             form.setFieldValue('icon', iconValue.value)
             setIsIconPickerOpen(false)
@@ -650,11 +656,7 @@ function VocabularyTypeSettings({
       <div className={styles.typeListPanel}>
         <div className={styles.typeListHeader}>
           <span>类型列表</span>
-          <Dropdown 
-            menu={{ items: createMenuItems }} 
-            trigger={['click']}
-            disabled={readOnly}
-          >
+          <Dropdown menu={{ items: createMenuItems }} trigger={['click']} disabled={readOnly}>
             <Button type="primary" icon={<PlusOutlined />} size="small">
               新建
             </Button>
@@ -675,7 +677,7 @@ function VocabularyTypeSettings({
                 strategy={verticalListSortingStrategy}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {sortedTypes.map((type) => (
+                  {sortedTypes.map(type => (
                     <SortableTypeItem
                       key={type.id}
                       type={type}
@@ -690,12 +692,15 @@ function VocabularyTypeSettings({
                   ))}
                 </div>
               </SortableContext>
-              
+
               <DragOverlay>
                 {activeType ? (
                   <div className={styles.overlayItem}>
                     <div className={styles.typeItemContent}>
-                      <div className={styles.typeIcon} style={{ backgroundColor: activeType.color }}>
+                      <div
+                        className={styles.typeIcon}
+                        style={{ backgroundColor: activeType.color }}
+                      >
                         {getTypeIcon(activeType)}
                       </div>
                       <div className={styles.typeInfo}>
@@ -716,9 +721,11 @@ function VocabularyTypeSettings({
 
       {/* 类型基本信息弹窗 */}
       <Modal
-        title={editingType ? '编辑类型' : (createMode === 'template' ? '从模板创建' : '新建自定义类型')}
+        title={
+          editingType ? '编辑类型' : createMode === 'template' ? '从模板创建' : '新建自定义类型'
+        }
         open={isTypeModalOpen}
-        onCancel={() => { 
+        onCancel={() => {
           setIsTypeModalOpen(false)
           setCreateMode(null)
           setSelectedTemplate(null)
@@ -729,17 +736,29 @@ function VocabularyTypeSettings({
         cancelText="取消"
       >
         {createMode === 'template' && selectedTemplate && (
-          <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
-            <div style={{ fontWeight: 500, marginBottom: 8 }}>
-              模板：{selectedTemplate.name}
-            </div>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              background: 'var(--bg-muted)',
+              borderRadius: 4
+            }}
+          >
+            <div style={{ fontWeight: 500, marginBottom: 8 }}>模板：{selectedTemplate.name}</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               将预设 {BUILTIN_FIELDS_MAP[selectedTemplate.id]?.length || 0} 个字段
             </div>
           </div>
         )}
         {createMode === 'custom' && (
-          <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-muted)', borderRadius: 4 }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              background: 'var(--bg-muted)',
+              borderRadius: 4
+            }}
+          >
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               从空白开始创建，后续可在字段定义中添加字段
             </div>
@@ -753,14 +772,11 @@ function VocabularyTypeSettings({
           >
             <Input placeholder="如：角色、地点、组织" />
           </Form.Item>
-          
+
           <Form.Item label="图标">
-            <div 
-              className={styles.iconPreviewBox}
-              onClick={() => setIsIconPickerOpen(true)}
-            >
-              <div 
-                className={styles.iconPreview} 
+            <div className={styles.iconPreviewBox} onClick={() => setIsIconPickerOpen(true)}>
+              <div
+                className={styles.iconPreview}
                 style={{ backgroundColor: form.getFieldValue('color') || '#1890ff' }}
               >
                 {getIconPreview(selectedIcon?.value, <TagOutlined />)}
@@ -768,22 +784,22 @@ function VocabularyTypeSettings({
               <span className={styles.iconHint}>点击选择图标</span>
             </div>
           </Form.Item>
-          
+
           <Form.Item name="icon" hidden>
             <Input />
           </Form.Item>
-          
+
           <Form.Item name="color" label="默认颜色">
             <ColorPicker format="hex" />
           </Form.Item>
         </Form>
       </Modal>
-      
+
       {/* 图标选择器弹窗 */}
       <IconPicker
         open={isIconPickerOpen}
         value={selectedIcon}
-        onChange={(iconValue) => {
+        onChange={iconValue => {
           setSelectedIcon(iconValue)
           form.setFieldValue('icon', iconValue.value)
           setIsIconPickerOpen(false)

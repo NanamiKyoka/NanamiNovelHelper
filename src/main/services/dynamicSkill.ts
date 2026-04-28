@@ -16,7 +16,7 @@ import type {
   DynamicSkillExecutionResult,
   SkillWhitelistConfig,
   SkillWhitelistEntry,
-  SkillExecutionContext,
+  SkillExecutionContext
 } from '@shared/ai-assistant'
 import { app, shell } from 'electron'
 import { createLogger } from '../utils/logger'
@@ -123,7 +123,11 @@ export class DynamicSkillService {
     if (!this.whitelistPath || !this.whitelistConfig) return
 
     this.whitelistConfig.updatedAt = new Date().toISOString()
-    await fs.promises.writeFile(this.whitelistPath, JSON.stringify(this.whitelistConfig, null, 2), 'utf-8')
+    await fs.promises.writeFile(
+      this.whitelistPath,
+      JSON.stringify(this.whitelistConfig, null, 2),
+      'utf-8'
+    )
   }
 
   /**
@@ -139,7 +143,7 @@ export class DynamicSkillService {
   isSkillTrusted(skillId: string, skillPath: string): boolean {
     if (!this.whitelistConfig) return false
 
-    const entry = this.whitelistConfig.entries.find((e) => e.skillId === skillId)
+    const entry = this.whitelistConfig.entries.find(e => e.skillId === skillId)
     if (!entry) return false
 
     // 检查路径 hash 是否匹配（检测 SKILL 是否被修改）
@@ -153,12 +157,12 @@ export class DynamicSkillService {
   async trustSkill(skillId: string, skillName: string, skillPath: string): Promise<void> {
     if (!this.whitelistConfig) return
 
-    const existingIndex = this.whitelistConfig.entries.findIndex((e) => e.skillId === skillId)
+    const existingIndex = this.whitelistConfig.entries.findIndex(e => e.skillId === skillId)
     const entry: SkillWhitelistEntry = {
       skillId,
       skillName,
       addedAt: new Date().toISOString(),
-      pathHash: this.calculatePathHash(skillPath),
+      pathHash: this.calculatePathHash(skillPath)
     }
 
     if (existingIndex >= 0) {
@@ -176,7 +180,7 @@ export class DynamicSkillService {
   async untrustSkill(skillId: string): Promise<void> {
     if (!this.whitelistConfig) return
 
-    this.whitelistConfig.entries = this.whitelistConfig.entries.filter((e) => e.skillId !== skillId)
+    this.whitelistConfig.entries = this.whitelistConfig.entries.filter(e => e.skillId !== skillId)
     await this.saveWhitelist()
   }
 
@@ -251,7 +255,7 @@ export class DynamicSkillService {
       metadata,
       tools,
       instructions: body,
-      isTrusted: this.isSkillTrusted(skillId, skillPath),
+      isTrusted: this.isSkillTrusted(skillId, skillPath)
     }
   }
 
@@ -275,7 +279,7 @@ export class DynamicSkillService {
           dependencies: frontmatter.dependencies as string[] | undefined,
           tags: frontmatter.tags as string[] | undefined,
           requiresConfirmation: frontmatter.requiresConfirmation as boolean | undefined,
-          timeout: frontmatter.timeout as number | undefined,
+          timeout: frontmatter.timeout as number | undefined
         }
 
         return { metadata, body }
@@ -288,9 +292,9 @@ export class DynamicSkillService {
     return {
       metadata: {
         name: 'Unnamed Skill',
-        description: '',
+        description: ''
       },
-      body: content,
+      body: content
     }
   }
 
@@ -311,7 +315,7 @@ export class DynamicSkillService {
       if (file.endsWith('.py') || file.endsWith('.js')) {
         const toolId = path.basename(file, path.extname(file))
         const scriptPath = path.join(scriptsDir, file)
-        
+
         // 尝试从脚本注释中提取描述
         const description = await this.extractScriptDescription(scriptPath)
 
@@ -319,7 +323,7 @@ export class DynamicSkillService {
           id: toolId,
           name: toolId.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2'),
           description,
-          parameters: [], // 需要在 tools.json 中明确定义
+          parameters: [] // 需要在 tools.json 中明确定义
         })
       }
     }
@@ -379,7 +383,7 @@ export class DynamicSkillService {
    */
   async executeTool(
     request: DynamicSkillExecutionRequest,
-    onOutput?: (line: string) => void,
+    onOutput?: (line: string) => void
   ): Promise<DynamicSkillExecutionResult> {
     const { skillId, toolId, parameters, context } = request
     const executionId = `${skillId}-${toolId}-${Date.now()}`
@@ -387,7 +391,7 @@ export class DynamicSkillService {
     const result: DynamicSkillExecutionResult = {
       executionId,
       status: 'pending',
-      outputLines: [],
+      outputLines: []
     }
 
     const skill = this.skillsCache.get(skillId)
@@ -397,7 +401,7 @@ export class DynamicSkillService {
       return result
     }
 
-    const tool = skill.tools.find((t) => t.id === toolId)
+    const tool = skill.tools.find(t => t.id === toolId)
     if (!tool) {
       result.status = 'error'
       result.error = `Tool not found: ${toolId} in SKILL ${skillId}`
@@ -414,7 +418,14 @@ export class DynamicSkillService {
       return result
     }
 
-    return this.executeScript(executionId, scriptPath, parameters, context, tool.timeout || skill.metadata.timeout, onOutput)
+    return this.executeScript(
+      executionId,
+      scriptPath,
+      parameters,
+      context,
+      tool.timeout || skill.metadata.timeout,
+      onOutput
+    )
   }
 
   /**
@@ -451,13 +462,13 @@ export class DynamicSkillService {
     parameters: Record<string, unknown>,
     context: SkillExecutionContext,
     timeout: number | undefined,
-    onOutput?: (line: string) => void,
+    onOutput?: (line: string) => void
   ): Promise<DynamicSkillExecutionResult> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const result: DynamicSkillExecutionResult = {
         executionId,
         status: 'running',
-        outputLines: [],
+        outputLines: []
       }
 
       const startTime = Date.now()
@@ -467,7 +478,7 @@ export class DynamicSkillService {
       const env = {
         ...process.env,
         NANAMI_PROJECT_PATH: context.projectPath,
-        NANAMI_CURRENT_CHAPTER: context.currentChapter?.path || '',
+        NANAMI_CURRENT_CHAPTER: context.currentChapter?.path || ''
       }
 
       // 将参数和环境作为 JSON 传递给脚本
@@ -477,8 +488,8 @@ export class DynamicSkillService {
           projectPath: context.projectPath,
           currentChapterPath: context.currentChapter?.path,
           currentChapterContent: context.currentChapter?.content,
-          selectedText: context.selectedText,
-        },
+          selectedText: context.selectedText
+        }
       })
 
       let command: string
@@ -495,7 +506,7 @@ export class DynamicSkillService {
       const proc = spawn(command, args, {
         cwd: path.dirname(scriptPath),
         env,
-        stdio: ['pipe', 'pipe', 'pipe'],
+        stdio: ['pipe', 'pipe', 'pipe']
       })
 
       this.runningProcesses.set(executionId, proc)
@@ -516,7 +527,10 @@ export class DynamicSkillService {
 
       // 收集输出
       proc.stdout?.on('data', (data: Buffer) => {
-        const lines = data.toString().split('\n').filter((l) => l.trim())
+        const lines = data
+          .toString()
+          .split('\n')
+          .filter(l => l.trim())
         for (const line of lines) {
           result.outputLines.push(line)
           result.status = 'streaming'
@@ -525,14 +539,17 @@ export class DynamicSkillService {
       })
 
       proc.stderr?.on('data', (data: Buffer) => {
-        const lines = data.toString().split('\n').filter((l) => l.trim())
+        const lines = data
+          .toString()
+          .split('\n')
+          .filter(l => l.trim())
         for (const line of lines) {
           result.outputLines.push(`[stderr] ${line}`)
           onOutput?.(`[stderr] ${line}`)
         }
       })
 
-      proc.on('close', (code) => {
+      proc.on('close', code => {
         clearTimeout(timeoutHandle)
         this.runningProcesses.delete(executionId)
 
@@ -561,7 +578,7 @@ export class DynamicSkillService {
         resolve(result)
       })
 
-      proc.on('error', (err) => {
+      proc.on('error', err => {
         clearTimeout(timeoutHandle)
         this.runningProcesses.delete(executionId)
 
@@ -629,13 +646,16 @@ export class DynamicSkillService {
     await fs.promises.mkdir(path.join(skillPath, 'scripts'), { recursive: true })
 
     // 生成 SKILL.md 内容
-    const skillMdContent = this.generateSkillMd({
-      name: options.name,
-      description: options.description,
-      version: options.version,
-      author: options.author,
-      tags: options.tags,
-    }, options.instructions || '')
+    const skillMdContent = this.generateSkillMd(
+      {
+        name: options.name,
+        description: options.description,
+        version: options.version,
+        author: options.author,
+        tags: options.tags
+      },
+      options.instructions || ''
+    )
 
     // 写入 SKILL.md
     await fs.promises.writeFile(path.join(skillPath, 'SKILL.md'), skillMdContent, 'utf-8')
@@ -684,7 +704,7 @@ export class DynamicSkillService {
       author: options.author ?? metadata.author,
       tags: options.tags ?? metadata.tags,
       requiresConfirmation: metadata.requiresConfirmation,
-      timeout: metadata.timeout,
+      timeout: metadata.timeout
     }
 
     // 生成新的 SKILL.md 内容
@@ -734,13 +754,14 @@ export class DynamicSkillService {
   private generateSkillMd(metadata: DynamicSkillMetadata, instructions: string): string {
     const frontmatter: Record<string, unknown> = {
       name: metadata.name,
-      description: metadata.description,
+      description: metadata.description
     }
 
     if (metadata.version) frontmatter.version = metadata.version
     if (metadata.author) frontmatter.author = metadata.author
     if (metadata.tags && metadata.tags.length > 0) frontmatter.tags = metadata.tags
-    if (metadata.requiresConfirmation !== undefined) frontmatter.requiresConfirmation = metadata.requiresConfirmation
+    if (metadata.requiresConfirmation !== undefined)
+      frontmatter.requiresConfirmation = metadata.requiresConfirmation
     if (metadata.timeout !== undefined) frontmatter.timeout = metadata.timeout
 
     const frontmatterYaml = yaml.dump(frontmatter, { indent: 2, lineWidth: -1 })

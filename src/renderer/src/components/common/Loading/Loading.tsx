@@ -1,6 +1,6 @@
 /**
  * 统一加载状态组件
- * 
+ *
  * 提供一致的加载体验，支持多种展示形式
  */
 
@@ -30,7 +30,7 @@ export function Loading({
     styles.container,
     fullscreen && styles.fullscreen,
     centered && styles.centered,
-    className,
+    className
   ]
     .filter(Boolean)
     .join(' ')

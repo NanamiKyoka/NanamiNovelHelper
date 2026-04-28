@@ -2,7 +2,16 @@
  * 徽章类型定义
  */
 
-export type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
+export type BadgeType =
+  | 'vocabulary'
+  | 'sensitive'
+  | 'randomName'
+  | 'relationship'
+  | 'timeline'
+  | 'sequenceChart'
+  | 'organization'
+  | 'map'
+  | 'terminal'
 
 export interface BadgeConfig {
   id: BadgeType
@@ -11,7 +20,17 @@ export interface BadgeConfig {
   order: number
 }
 
-export const DEFAULT_BADGE_ORDER: BadgeType[] = ['vocabulary', 'sensitive', 'randomName', 'relationship', 'timeline', 'sequenceChart', 'organization', 'map', 'terminal']
+export const DEFAULT_BADGE_ORDER: BadgeType[] = [
+  'vocabulary',
+  'sensitive',
+  'randomName',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'map',
+  'terminal'
+]
 
 export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: string }> = {
   vocabulary: { label: '词汇查询', icon: 'TagOutlined' },
@@ -26,11 +45,31 @@ export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: stri
 }
 
 /** 左侧边栏徽章类型（仅包含有全屏功能的） */
-export type SidebarBadgeType = 'vocabulary' | 'sensitive' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'aiAssistant' | 'map'
+export type SidebarBadgeType =
+  | 'vocabulary'
+  | 'sensitive'
+  | 'relationship'
+  | 'timeline'
+  | 'sequenceChart'
+  | 'organization'
+  | 'aiAssistant'
+  | 'map'
 
-export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = ['vocabulary', 'sensitive', 'relationship', 'timeline', 'sequenceChart', 'organization', 'aiAssistant', 'map']
+export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = [
+  'vocabulary',
+  'sensitive',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'aiAssistant',
+  'map'
+]
 
-export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<SidebarBadgeType, { label: string; icon: string }> = {
+export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<
+  SidebarBadgeType,
+  { label: string; icon: string }
+> = {
   vocabulary: { label: '词汇查询', icon: 'TagOutlined' },
   sensitive: { label: '敏感词', icon: 'WarningOutlined' },
   relationship: { label: '关系图', icon: 'ApartmentOutlined' },

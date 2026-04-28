@@ -22,26 +22,145 @@ interface ShortcutConfig {
 const STORAGE_KEY = 'nanami-shortcuts'
 
 const DEFAULT_SHORTCUTS: ShortcutConfig[] = [
-  { id: 'file.new', name: '新建文件', description: '创建新文件', defaultKey: 'Ctrl+N', currentKey: 'Ctrl+N', category: '文件' },
-  { id: 'file.open', name: '打开文件', description: '打开现有文件', defaultKey: 'Ctrl+O', currentKey: 'Ctrl+O', category: '文件' },
-  { id: 'file.save', name: '保存文件', description: '保存当前文件', defaultKey: 'Ctrl+S', currentKey: 'Ctrl+S', category: '文件' },
-  { id: 'file.saveAll', name: '保存全部', description: '保存所有文件', defaultKey: 'Ctrl+Shift+S', currentKey: 'Ctrl+Shift+S', category: '文件' },
-  
-  { id: 'edit.undo', name: '撤销', description: '撤销上一步操作', defaultKey: 'Ctrl+Z', currentKey: 'Ctrl+Z', category: '编辑' },
-  { id: 'edit.redo', name: '重做', description: '重做上一步操作', defaultKey: 'Ctrl+Y', currentKey: 'Ctrl+Y', category: '编辑' },
-  { id: 'edit.cut', name: '剪切', description: '剪切选中内容', defaultKey: 'Ctrl+X', currentKey: 'Ctrl+X', category: '编辑' },
-  { id: 'edit.copy', name: '复制', description: '复制选中内容', defaultKey: 'Ctrl+C', currentKey: 'Ctrl+C', category: '编辑' },
-  { id: 'edit.paste', name: '粘贴', description: '粘贴内容', defaultKey: 'Ctrl+V', currentKey: 'Ctrl+V', category: '编辑' },
-  { id: 'edit.find', name: '查找', description: '在当前文件中查找', defaultKey: 'Ctrl+F', currentKey: 'Ctrl+F', category: '编辑' },
-  { id: 'edit.replace', name: '替换', description: '在当前文件中替换', defaultKey: 'Ctrl+H', currentKey: 'Ctrl+H', category: '编辑' },
-  
-  { id: 'view.sidebar', name: '切换侧边栏', description: '显示/隐藏侧边栏', defaultKey: 'Ctrl+B', currentKey: 'Ctrl+B', category: '视图' },
-  { id: 'view.settings', name: '打开设置', description: '打开设置页面', defaultKey: 'Ctrl+,', currentKey: 'Ctrl+,', category: '视图' },
-  { id: 'view.fullscreen', name: '全屏', description: '切换全屏模式', defaultKey: 'F11', currentKey: 'F11', category: '视图' },
-  
-  { id: 'format.bold', name: '加粗', description: '将选中文字加粗', defaultKey: 'Ctrl+B', currentKey: 'Ctrl+B', category: '格式' },
-  { id: 'format.italic', name: '斜体', description: '将选中文字设为斜体', defaultKey: 'Ctrl+I', currentKey: 'Ctrl+I', category: '格式' },
-  { id: 'format.heading', name: '标题', description: '切换标题级别', defaultKey: 'Ctrl+1', currentKey: 'Ctrl+1', category: '格式' },
+  {
+    id: 'file.new',
+    name: '新建文件',
+    description: '创建新文件',
+    defaultKey: 'Ctrl+N',
+    currentKey: 'Ctrl+N',
+    category: '文件'
+  },
+  {
+    id: 'file.open',
+    name: '打开文件',
+    description: '打开现有文件',
+    defaultKey: 'Ctrl+O',
+    currentKey: 'Ctrl+O',
+    category: '文件'
+  },
+  {
+    id: 'file.save',
+    name: '保存文件',
+    description: '保存当前文件',
+    defaultKey: 'Ctrl+S',
+    currentKey: 'Ctrl+S',
+    category: '文件'
+  },
+  {
+    id: 'file.saveAll',
+    name: '保存全部',
+    description: '保存所有文件',
+    defaultKey: 'Ctrl+Shift+S',
+    currentKey: 'Ctrl+Shift+S',
+    category: '文件'
+  },
+
+  {
+    id: 'edit.undo',
+    name: '撤销',
+    description: '撤销上一步操作',
+    defaultKey: 'Ctrl+Z',
+    currentKey: 'Ctrl+Z',
+    category: '编辑'
+  },
+  {
+    id: 'edit.redo',
+    name: '重做',
+    description: '重做上一步操作',
+    defaultKey: 'Ctrl+Y',
+    currentKey: 'Ctrl+Y',
+    category: '编辑'
+  },
+  {
+    id: 'edit.cut',
+    name: '剪切',
+    description: '剪切选中内容',
+    defaultKey: 'Ctrl+X',
+    currentKey: 'Ctrl+X',
+    category: '编辑'
+  },
+  {
+    id: 'edit.copy',
+    name: '复制',
+    description: '复制选中内容',
+    defaultKey: 'Ctrl+C',
+    currentKey: 'Ctrl+C',
+    category: '编辑'
+  },
+  {
+    id: 'edit.paste',
+    name: '粘贴',
+    description: '粘贴内容',
+    defaultKey: 'Ctrl+V',
+    currentKey: 'Ctrl+V',
+    category: '编辑'
+  },
+  {
+    id: 'edit.find',
+    name: '查找',
+    description: '在当前文件中查找',
+    defaultKey: 'Ctrl+F',
+    currentKey: 'Ctrl+F',
+    category: '编辑'
+  },
+  {
+    id: 'edit.replace',
+    name: '替换',
+    description: '在当前文件中替换',
+    defaultKey: 'Ctrl+H',
+    currentKey: 'Ctrl+H',
+    category: '编辑'
+  },
+
+  {
+    id: 'view.sidebar',
+    name: '切换侧边栏',
+    description: '显示/隐藏侧边栏',
+    defaultKey: 'Ctrl+B',
+    currentKey: 'Ctrl+B',
+    category: '视图'
+  },
+  {
+    id: 'view.settings',
+    name: '打开设置',
+    description: '打开设置页面',
+    defaultKey: 'Ctrl+,',
+    currentKey: 'Ctrl+,',
+    category: '视图'
+  },
+  {
+    id: 'view.fullscreen',
+    name: '全屏',
+    description: '切换全屏模式',
+    defaultKey: 'F11',
+    currentKey: 'F11',
+    category: '视图'
+  },
+
+  {
+    id: 'format.bold',
+    name: '加粗',
+    description: '将选中文字加粗',
+    defaultKey: 'Ctrl+B',
+    currentKey: 'Ctrl+B',
+    category: '格式'
+  },
+  {
+    id: 'format.italic',
+    name: '斜体',
+    description: '将选中文字设为斜体',
+    defaultKey: 'Ctrl+I',
+    currentKey: 'Ctrl+I',
+    category: '格式'
+  },
+  {
+    id: 'format.heading',
+    name: '标题',
+    description: '切换标题级别',
+    defaultKey: 'Ctrl+1',
+    currentKey: 'Ctrl+1',
+    category: '格式'
+  }
 ]
 
 function loadShortcuts(): ShortcutConfig[] {
@@ -62,13 +181,16 @@ function loadShortcuts(): ShortcutConfig[] {
 
 function saveShortcuts(shortcuts: ShortcutConfig[]): void {
   try {
-    const customKeys = shortcuts.reduce((acc, s) => {
-      if (s.currentKey !== s.defaultKey) {
-        acc[s.id] = s.currentKey
-      }
-      return acc
-    }, {} as Record<string, string>)
-    
+    const customKeys = shortcuts.reduce(
+      (acc, s) => {
+        if (s.currentKey !== s.defaultKey) {
+          acc[s.id] = s.currentKey
+        }
+        return acc
+      },
+      {} as Record<string, string>
+    )
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(customKeys))
   } catch (error) {
     console.error('Failed to save shortcuts:', error)
@@ -95,34 +217,35 @@ export function ShortcutsSettings(): JSX.Element {
 
   const handleSave = useCallback(() => {
     if (!editingId) return
-    
+
     const conflict = shortcuts.find(s => s.id !== editingId && s.currentKey === currentEditKey)
     if (conflict) {
       message.warning(`快捷键与「${conflict.name}」冲突，请选择其他组合`)
       return
     }
-    
+
     if (!currentEditKey || currentEditKey.length < 2) {
       message.error('请输入有效的快捷键组合')
       return
     }
-    
-    setShortcuts(prev => prev.map(s => 
-      s.id === editingId ? { ...s, currentKey: currentEditKey } : s
-    ))
+
+    setShortcuts(prev =>
+      prev.map(s => (s.id === editingId ? { ...s, currentKey: currentEditKey } : s))
+    )
     setEditModalOpen(false)
     message.success(`快捷键「${currentEditKey}」已保存`)
   }, [editingId, currentEditKey, shortcuts])
 
-  const handleReset = useCallback((id: string) => {
-    const shortcut = shortcuts.find(s => s.id === id)
-    if (shortcut) {
-      setShortcuts(prev => prev.map(s => 
-        s.id === id ? { ...s, currentKey: s.defaultKey } : s
-      ))
-      message.success(`已重置为默认快捷键「${shortcut.defaultKey}」`)
-    }
-  }, [shortcuts])
+  const handleReset = useCallback(
+    (id: string) => {
+      const shortcut = shortcuts.find(s => s.id === id)
+      if (shortcut) {
+        setShortcuts(prev => prev.map(s => (s.id === id ? { ...s, currentKey: s.defaultKey } : s)))
+        message.success(`已重置为默认快捷键「${shortcut.defaultKey}」`)
+      }
+    },
+    [shortcuts]
+  )
 
   const handleResetAll = useCallback(() => {
     Modal.confirm({
@@ -139,27 +262,30 @@ export function ShortcutsSettings(): JSX.Element {
     })
   }, [])
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!recording) return
-    
-    e.preventDefault()
-    e.stopPropagation()
-    
-    const keys: string[] = []
-    if (e.ctrlKey) keys.push('Ctrl')
-    if (e.shiftKey) keys.push('Shift')
-    if (e.altKey) keys.push('Alt')
-    if (e.metaKey) keys.push('Meta')
-    
-    const key = e.key
-    if (!['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
-      keys.push(key.toUpperCase())
-    }
-    
-    if (keys.length > 1) {
-      setCurrentEditKey(keys.join('+'))
-    }
-  }, [recording])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!recording) return
+
+      e.preventDefault()
+      e.stopPropagation()
+
+      const keys: string[] = []
+      if (e.ctrlKey) keys.push('Ctrl')
+      if (e.shiftKey) keys.push('Shift')
+      if (e.altKey) keys.push('Alt')
+      if (e.metaKey) keys.push('Meta')
+
+      const key = e.key
+      if (!['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
+        keys.push(key.toUpperCase())
+      }
+
+      if (keys.length > 1) {
+        setCurrentEditKey(keys.join('+'))
+      }
+    },
+    [recording]
+  )
 
   const columns = [
     {
@@ -171,7 +297,9 @@ export function ShortcutsSettings(): JSX.Element {
         <div>
           <Text strong>{name}</Text>
           <br />
-          <Text type="secondary" style={{ fontSize: 12 }}>{record.description}</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {record.description}
+          </Text>
         </div>
       )
     },
@@ -181,9 +309,7 @@ export function ShortcutsSettings(): JSX.Element {
       key: 'currentKey',
       width: 150,
       render: (key: string, record: ShortcutConfig) => (
-        <Tag color={key !== record.defaultKey ? 'blue' : 'default'}>
-          {key}
-        </Tag>
+        <Tag color={key !== record.defaultKey ? 'blue' : 'default'}>{key}</Tag>
       )
     },
     {
@@ -216,13 +342,16 @@ export function ShortcutsSettings(): JSX.Element {
     }
   ]
 
-  const groupedShortcuts = shortcuts.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = []
-    }
-    acc[item.category].push(item)
-    return acc
-  }, {} as Record<string, ShortcutConfig[]>)
+  const groupedShortcuts = shortcuts.reduce(
+    (acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = []
+      }
+      acc[item.category].push(item)
+      return acc
+    },
+    {} as Record<string, ShortcutConfig[]>
+  )
 
   const customCount = shortcuts.filter(s => s.currentKey !== s.defaultKey).length
 
@@ -263,7 +392,7 @@ export function ShortcutsSettings(): JSX.Element {
           <Input
             className={styles.keyInput}
             value={currentEditKey}
-            onChange={(e) => setCurrentEditKey(e.target.value)}
+            onChange={e => setCurrentEditKey(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => setRecording(true)}
             onBlur={() => setRecording(false)}

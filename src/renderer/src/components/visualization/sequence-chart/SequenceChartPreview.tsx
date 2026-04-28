@@ -15,14 +15,14 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverlay,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
@@ -48,7 +48,7 @@ const BUILT_IN_EVENT_TYPES: SequenceEventType[] = [
   { id: 'conflict', name: '冲突', color: '#fa541c', isBuiltIn: true, order: 6 },
   { id: 'revelation', name: '揭秘', color: '#13c2c2', isBuiltIn: true, order: 7 },
   { id: 'death', name: '死亡', color: '#595959', isBuiltIn: true, order: 8 },
-  { id: 'other', name: '其他', color: '#8c8c8c', isBuiltIn: true, order: 9 },
+  { id: 'other', name: '其他', color: '#8c8c8c', isBuiltIn: true, order: 9 }
 ]
 
 // 可排序的事件行组件（左侧列表）
@@ -63,29 +63,25 @@ function SortableEventRow({
   event,
   index,
   isEditMode,
-  getEventColor,
+  getEventColor
 }: SortableEventRowProps): JSX.Element {
   const { token } = theme.useToken()
-  
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: event.id, disabled: !isEditMode })
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: event.id,
+    disabled: !isEditMode
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   }
 
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
+    <div
+      ref={setNodeRef}
+      style={style}
       className={`${styles.eventRowWrapper}${isEditMode ? ` ${styles.editing}` : ''}`}
     >
       <div className={styles.eventRow}>
@@ -113,16 +109,11 @@ function SortableEventRow({
 function SequenceChartPreview({
   chartId,
   onClose,
-  onEnterEditMode,
+  onEnterEditMode
 }: SequenceChartPreviewProps): JSX.Element {
   const { message } = App.useApp()
 
-  const {
-    currentChart,
-    isLoading,
-    loadChart,
-    moveEvent,
-  } = useSequenceChartStore()
+  const { currentChart, isLoading, loadChart, moveEvent } = useSequenceChartStore()
 
   const timelineBodyRef = useRef<HTMLDivElement>(null)
   const eventListBodyRef = useRef<HTMLDivElement>(null)
@@ -137,11 +128,11 @@ function SequenceChartPreview({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-      },
+        distance: 5
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -152,15 +143,20 @@ function SequenceChartPreview({
 
   // 获取事件类型列表
   const eventTypes = useMemo(() => {
-    return currentChart ? [...BUILT_IN_EVENT_TYPES, ...(currentChart.customEventTypes || [])] : BUILT_IN_EVENT_TYPES
+    return currentChart
+      ? [...BUILT_IN_EVENT_TYPES, ...(currentChart.customEventTypes || [])]
+      : BUILT_IN_EVENT_TYPES
   }, [currentChart])
 
   // 获取事件类型颜色
-  const getEventColor = useCallback((event: SequenceEvent): string => {
-    if (event.color) return event.color
-    const type = eventTypes.find(t => t.id === event.eventTypeId)
-    return type?.color || '#1890ff'
-  }, [eventTypes])
+  const getEventColor = useCallback(
+    (event: SequenceEvent): string => {
+      if (event.color) return event.color
+      const type = eventTypes.find(t => t.id === event.eventTypeId)
+      return type?.color || '#1890ff'
+    },
+    [eventTypes]
+  )
 
   // 计算单元格位置
   const cellWidth = 40
@@ -170,14 +166,14 @@ function SequenceChartPreview({
     if (!currentChart?.events.length) {
       return { minCell: 1, maxCell: 50 }
     }
-    
+
     let maxCell = 50
     currentChart.events.forEach(event => {
       if (event.timeInfo.cellEnd > maxCell) {
         maxCell = event.timeInfo.cellEnd
       }
     })
-    
+
     return { minCell: 1, maxCell: maxCell + 10 }
   }, [currentChart])
 
@@ -198,20 +194,20 @@ function SequenceChartPreview({
       const { active, over } = event
 
       if (over && active.id !== over.id) {
-        const oldIndex = sortedEvents.findIndex((e) => e.id === active.id)
-        const newIndex = sortedEvents.findIndex((e) => e.id === over.id)
+        const oldIndex = sortedEvents.findIndex(e => e.id === active.id)
+        const newIndex = sortedEvents.findIndex(e => e.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
           // 创建新排序的事件数组
           const newEvents = arrayMove(sortedEvents, oldIndex, newIndex).map((evt, index) => ({
             ...evt,
-            order: index,
+            order: index
           }))
 
           // 调用 moveEvent 更新顺序
           try {
             // 使用第一个需要移动的事件来触发后端更新
-            const movedEvent = newEvents.find((e) => e.id === active.id)
+            const movedEvent = newEvents.find(e => e.id === active.id)
             if (movedEvent) {
               await moveEvent(movedEvent.id, newIndex)
             }
@@ -228,11 +224,11 @@ function SequenceChartPreview({
   )
 
   // 当前拖拽的事件
-  const activeEvent = activeId ? sortedEvents.find((e) => e.id === activeId) : null
+  const activeEvent = activeId ? sortedEvents.find(e => e.id === activeId) : null
 
   // 切换编辑模式
   const toggleEditMode = useCallback((): void => {
-    setIsEditMode((prev) => !prev)
+    setIsEditMode(prev => !prev)
   }, [])
 
   // 同步滚动：左侧事件列表和右侧时间轴垂直滚动同步
@@ -274,8 +270,12 @@ function SequenceChartPreview({
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>返回</Button>
-          <Title level={5} className={styles.title}>{currentChart.name}</Title>
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>
+            返回
+          </Button>
+          <Title level={5} className={styles.title}>
+            {currentChart.name}
+          </Title>
         </div>
         <div className={styles.toolbarRight}>
           {isEditMode && (
@@ -310,15 +310,13 @@ function SequenceChartPreview({
             <span className={styles.colIndex}>#</span>
             <span className={styles.colTitle}>事件</span>
           </div>
-          <div 
-            className={styles.eventListBody} 
+          <div
+            className={styles.eventListBody}
             ref={eventListBodyRef}
             onScroll={handleEventListScroll}
           >
             {sortedEvents.length === 0 ? (
-              <div className={styles.emptyList}>
-                暂无事件
-              </div>
+              <div className={styles.emptyList}>暂无事件</div>
             ) : (
               <DndContext
                 sensors={sensors}
@@ -327,7 +325,7 @@ function SequenceChartPreview({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={sortedEvents.map((e) => e.id)}
+                  items={sortedEvents.map(e => e.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   {sortedEvents.map((event, index) => (
@@ -360,20 +358,19 @@ function SequenceChartPreview({
 
         {/* 右侧时间轴 */}
         <div className={styles.timeline}>
-          <div 
-            className={styles.timelineBody} 
+          <div
+            className={styles.timelineBody}
             ref={timelineBodyRef}
             onScroll={handleTimelineScroll}
           >
             {/* 时间轴标签 - 放入可滚动容器内 */}
             <div className={styles.timelineHeader}>
-              <div className={styles.timelineLabels} style={{ width: (timeRange.maxCell - timeRange.minCell + 1) * cellWidth }}>
+              <div
+                className={styles.timelineLabels}
+                style={{ width: (timeRange.maxCell - timeRange.minCell + 1) * cellWidth }}
+              >
                 {Array.from({ length: timeRange.maxCell - timeRange.minCell + 1 }, (_, i) => (
-                  <div
-                    key={i}
-                    className={styles.timelineLabel}
-                    style={{ width: cellWidth }}
-                  >
+                  <div key={i} className={styles.timelineLabel} style={{ width: cellWidth }}>
                     {timeRange.minCell + i}
                   </div>
                 ))}
@@ -384,7 +381,7 @@ function SequenceChartPreview({
               style={{ width: (timeRange.maxCell - timeRange.minCell + 1) * cellWidth }}
             >
               {/* 渲染事件行 */}
-              {sortedEvents.map((event) => {
+              {sortedEvents.map(event => {
                 const color = getEventColor(event)
                 const startCell = (event.timeInfo.cellStart || 1) - timeRange.minCell
                 const endCell = (event.timeInfo.cellEnd || 10) - timeRange.minCell
@@ -402,13 +399,15 @@ function SequenceChartPreview({
                       />
                     ))}
                     {/* 事件条 */}
-                    <Tooltip title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`}>
+                    <Tooltip
+                      title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`}
+                    >
                       <div
                         className={styles.eventBar}
                         style={{
                           left,
                           width: Math.max(width - 4, 20),
-                          backgroundColor: color,
+                          backgroundColor: color
                         }}
                       >
                         <span className={styles.eventBarText}>{event.title}</span>

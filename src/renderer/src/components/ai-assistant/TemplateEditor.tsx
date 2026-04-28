@@ -19,7 +19,7 @@ import {
   Switch,
   InputNumber,
   Empty,
-  Popconfirm,
+  Popconfirm
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -28,7 +28,7 @@ import {
   CopyOutlined,
   SaveOutlined,
   EyeOutlined,
-  SettingOutlined,
+  SettingOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
@@ -39,7 +39,7 @@ import type {
   VariableDefinition,
   TemplateCategory,
   VariableType,
-  VariableValue,
+  VariableValue
 } from '@shared/ai-assistant'
 import styles from './TemplateEditor.module.css'
 
@@ -52,7 +52,7 @@ const CATEGORY_OPTIONS: { value: TemplateCategory; label: string }[] = [
   { value: 'character', label: '人物塑造' },
   { value: 'plot', label: '情节设计' },
   { value: 'worldbuilding', label: '世界观构建' },
-  { value: 'polishing', label: '润色修改' },
+  { value: 'polishing', label: '润色修改' }
 ]
 
 // 变量类型配置
@@ -67,7 +67,7 @@ const VARIABLE_TYPE_OPTIONS: { value: VariableType; label: string; description: 
   { value: 'select', label: '单选', description: '从预设选项中选择一个' },
   { value: 'multiselect', label: '多选', description: '从预设选项中选择多个' },
   { value: 'number', label: '数字', description: '输入数字' },
-  { value: 'boolean', label: '布尔值', description: '是/否开关' },
+  { value: 'boolean', label: '布尔值', description: '是/否开关' }
 ]
 
 interface TemplateEditorProps {
@@ -76,17 +76,25 @@ interface TemplateEditorProps {
   onExecute?: (template: PromptTemplate) => void
 }
 
-function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateEditorProps): JSX.Element {
+function TemplateEditor({
+  templateId,
+  onBack,
+  onExecute: _onExecute
+}: TemplateEditorProps): JSX.Element {
   const {
     templates,
     currentTemplate,
     loadTemplate,
     saveTemplate,
     setCurrentTemplate,
-    resolveVariables,
+    resolveVariables
   } = useAiAssistantStore()
 
-  const { types: vocabularyTypes, loadTypes: loadVocabularyTypes, isLoaded: vocabLoaded } = useVocabularyStore()
+  const {
+    types: vocabularyTypes,
+    loadTypes: loadVocabularyTypes,
+    isLoaded: vocabLoaded
+  } = useVocabularyStore()
   const { graphList: relationshipGraphs, loadList: loadRelationshipList } = useRelationshipStore()
   const { timelineList, loadList: loadTimelineList } = useTimelineStore()
 
@@ -109,7 +117,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
   // 加载模板数据
   useEffect(() => {
     if (templateId) {
-      const template = templates.find((t) => t.id === templateId)
+      const template = templates.find(t => t.id === templateId)
       if (template) {
         setCurrentTemplate(template)
         form.setFieldsValue({
@@ -117,7 +125,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
           description: template.description,
           category: template.category,
           tags: template.tags,
-          content: template.content,
+          content: template.content
         })
         setVariables(template.variables)
         setContent(template.content)
@@ -141,7 +149,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
         description: currentTemplate.description,
         category: currentTemplate.category,
         tags: currentTemplate.tags,
-        content: currentTemplate.content,
+        content: currentTemplate.content
       })
       setVariables(currentTemplate.variables)
       setContent(currentTemplate.content)
@@ -156,21 +164,19 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
       key: `变量${variables.length + 1}`,
       type: 'text',
       required: false,
-      order: variables.length,
+      order: variables.length
     }
     setVariables([...variables, newVariable])
   }
 
   // 更新变量
   const handleUpdateVariable = (id: string, updates: Partial<VariableDefinition>) => {
-    setVariables(
-      variables.map((v) => (v.id === id ? { ...v, ...updates } : v))
-    )
+    setVariables(variables.map(v => (v.id === id ? { ...v, ...updates } : v)))
   }
 
   // 删除变量
   const handleDeleteVariable = (id: string) => {
-    setVariables(variables.filter((v) => v.id !== id))
+    setVariables(variables.filter(v => v.id !== id))
   }
 
   // 保存模板
@@ -189,7 +195,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
         content: content, // 使用 state 中的 content
         isBuiltIn: false,
         source: 'project',
-        order: currentTemplate?.order || 0,
+        order: currentTemplate?.order || 0
       }
 
       await saveTemplate(template)
@@ -212,7 +218,9 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
         className={styles.variableCard}
         title={
           <Space>
-            <Tag color="blue">{VARIABLE_TYPE_OPTIONS.find((t) => t.value === variable.type)?.label}</Tag>
+            <Tag color="blue">
+              {VARIABLE_TYPE_OPTIONS.find(t => t.value === variable.type)?.label}
+            </Tag>
             <Text strong>{variable.name}</Text>
             {variable.required && <Tag color="red">必填</Tag>}
           </Space>
@@ -244,7 +252,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
             <label>变量名：</label>
             <Input
               value={variable.name}
-              onChange={(e) => handleUpdateVariable(variable.id, { name: e.target.value })}
+              onChange={e => handleUpdateVariable(variable.id, { name: e.target.value })}
               placeholder="显示名称"
               style={{ width: 120 }}
             />
@@ -253,7 +261,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
             <label>引用键：</label>
             <Input
               value={variable.key}
-              onChange={(e) => handleUpdateVariable(variable.id, { key: e.target.value })}
+              onChange={e => handleUpdateVariable(variable.id, { key: e.target.value })}
               placeholder="用于 {{key}} 引用"
               style={{ width: 120 }}
               addonBefore="{{"
@@ -264,10 +272,10 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
             <label>类型：</label>
             <Select
               value={variable.type}
-              onChange={(type) => handleUpdateVariable(variable.id, { type })}
-              options={VARIABLE_TYPE_OPTIONS.map((t) => ({
+              onChange={type => handleUpdateVariable(variable.id, { type })}
+              options={VARIABLE_TYPE_OPTIONS.map(t => ({
                 value: t.value,
-                label: t.label,
+                label: t.label
               }))}
               style={{ width: 200 }}
             />
@@ -276,14 +284,14 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
             <label>必填：</label>
             <Switch
               checked={variable.required}
-              onChange={(checked) => handleUpdateVariable(variable.id, { required: checked })}
+              onChange={checked => handleUpdateVariable(variable.id, { required: checked })}
             />
           </div>
           <div className={styles.variableRow}>
             <label>占位符：</label>
             <Input
               value={variable.placeholder}
-              onChange={(e) => handleUpdateVariable(variable.id, { placeholder: e.target.value })}
+              onChange={e => handleUpdateVariable(variable.id, { placeholder: e.target.value })}
               placeholder="输入提示"
               style={{ width: 200 }}
             />
@@ -295,8 +303,8 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
               <label>词汇类型：</label>
               <Select
                 value={variable.vocabularyTypeId}
-                onChange={(id) => handleUpdateVariable(variable.id, { vocabularyTypeId: id })}
-                options={vocabularyTypes.map((t) => ({ value: t.id, label: t.name }))}
+                onChange={id => handleUpdateVariable(variable.id, { vocabularyTypeId: id })}
+                options={vocabularyTypes.map(t => ({ value: t.id, label: t.name }))}
                 placeholder="选择词汇类型"
                 style={{ width: 200 }}
               />
@@ -308,8 +316,8 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
               <label>关系图：</label>
               <Select
                 value={variable.graphId}
-                onChange={(id) => handleUpdateVariable(variable.id, { graphId: id })}
-                options={relationshipGraphs.map((g) => ({ value: g.id, label: g.name }))}
+                onChange={id => handleUpdateVariable(variable.id, { graphId: id })}
+                options={relationshipGraphs.map(g => ({ value: g.id, label: g.name }))}
                 placeholder="选择关系图"
                 style={{ width: 200 }}
               />
@@ -321,8 +329,8 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
               <label>时间线：</label>
               <Select
                 value={variable.timelineId}
-                onChange={(id) => handleUpdateVariable(variable.id, { timelineId: id })}
-                options={timelineList.map((t) => ({ value: t.id, label: t.name }))}
+                onChange={id => handleUpdateVariable(variable.id, { timelineId: id })}
+                options={timelineList.map(t => ({ value: t.id, label: t.name }))}
                 placeholder="选择时间线"
                 style={{ width: 200 }}
               />
@@ -335,7 +343,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
               <Select
                 mode="tags"
                 value={variable.options}
-                onChange={(options) => handleUpdateVariable(variable.id, { options })}
+                onChange={options => handleUpdateVariable(variable.id, { options })}
                 placeholder="输入选项后按回车"
                 style={{ width: 300 }}
               />
@@ -347,7 +355,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
               <label>默认值：</label>
               <InputNumber
                 value={variable.defaultValue as number}
-                onChange={(val) => handleUpdateVariable(variable.id, { defaultValue: val })}
+                onChange={val => handleUpdateVariable(variable.id, { defaultValue: val })}
                 style={{ width: 120 }}
               />
             </div>
@@ -386,12 +394,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
           >
             预览
           </Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={saving}
-            onClick={handleSave}
-          >
+          <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
             保存
           </Button>
         </Space>
@@ -435,7 +438,7 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
           <div className={styles.contentSection}>
             <TextArea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={e => setContent(e.target.value)}
               placeholder="在此编写提示词模板，使用 {{变量名}} 插入变量..."
               className={styles.contentEditor}
             />
@@ -454,22 +457,14 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
             <Title level={5}>
               <SettingOutlined /> 变量定义
             </Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              size="small"
-              onClick={handleAddVariable}
-            >
+            <Button type="primary" icon={<PlusOutlined />} size="small" onClick={handleAddVariable}>
               添加变量
             </Button>
           </div>
 
           <div className={styles.variablesList}>
             {variables.length === 0 ? (
-              <Empty
-                description="暂无变量"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
+              <Empty description="暂无变量" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
               variables.map(renderVariableEditor)
             )}
@@ -478,16 +473,16 @@ function TemplateEditor({ templateId, onBack, onExecute: _onExecute }: TemplateE
           {previewMode && variables.length > 0 && (
             <div className={styles.previewVariables}>
               <Title level={5}>预览变量值</Title>
-              {variables.map((v) => (
+              {variables.map(v => (
                 <div key={v.id} className={styles.previewVariableItem}>
                   <label>{v.name}:</label>
                   <Input
                     placeholder={v.placeholder || `输入${v.name}`}
                     value={(previewVariables[v.id]?.value as string) || ''}
-                    onChange={(e) =>
+                    onChange={e =>
                       setPreviewVariables({
                         ...previewVariables,
-                        [v.id]: { variableId: v.id, value: e.target.value },
+                        [v.id]: { variableId: v.id, value: e.target.value }
                       })
                     }
                   />

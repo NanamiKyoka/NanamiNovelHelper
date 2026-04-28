@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
-import { MinusOutlined, FullscreenOutlined, FullscreenExitOutlined, CloseOutlined } from '@ant-design/icons'
+import {
+  MinusOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined,
+  CloseOutlined
+} from '@ant-design/icons'
 import MenuBar from './MenuBar'
 import styles from './TitleBar.module.css'
 
@@ -8,12 +13,12 @@ function TitleBar(): JSX.Element {
 
   useEffect(() => {
     // 监听最大化状态变化
-    window.electron?.window?.onMaximizeChange?.((maximized) => {
+    window.electron?.window?.onMaximizeChange?.(maximized => {
       setIsMaximized(maximized)
     })
 
     // 初始状态
-    window.electron?.window?.isMaximized?.().then((maximized) => {
+    window.electron?.window?.isMaximized?.().then(maximized => {
       setIsMaximized(maximized)
     })
 
@@ -44,7 +49,7 @@ function TitleBar(): JSX.Element {
 
       {/* 右侧：窗口控制按钮 */}
       <div className={styles.windowControls}>
-        <button 
+        <button
           className={`${styles.controlButton} ${styles.minimize}`}
           onClick={handleMinimize}
           title="最小化"
@@ -52,15 +57,15 @@ function TitleBar(): JSX.Element {
         >
           <MinusOutlined />
         </button>
-        <button 
+        <button
           className={`${styles.controlButton} ${styles.maximize}`}
           onClick={handleMaximize}
-          title={isMaximized ? "还原" : "最大化"}
-          aria-label={isMaximized ? "还原窗口" : "最大化窗口"}
+          title={isMaximized ? '还原' : '最大化'}
+          aria-label={isMaximized ? '还原窗口' : '最大化窗口'}
         >
           {isMaximized ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
         </button>
-        <button 
+        <button
           className={`${styles.controlButton} ${styles.close}`}
           onClick={handleClose}
           title="关闭"

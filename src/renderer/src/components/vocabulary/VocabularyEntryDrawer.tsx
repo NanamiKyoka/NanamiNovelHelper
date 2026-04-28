@@ -63,7 +63,11 @@ const VocabularyEntryDrawer: React.FC<VocabularyEntryDrawerProps> = ({
     <Drawer
       title={
         <Space>
-          <span>{editingEntry ? `编辑${currentTypeDefinition?.name || '词汇'}` : `新建${currentTypeDefinition?.name || '词汇'}`}</span>
+          <span>
+            {editingEntry
+              ? `编辑${currentTypeDefinition?.name || '词汇'}`
+              : `新建${currentTypeDefinition?.name || '词汇'}`}
+          </span>
           <Button
             type="link"
             size="small"
@@ -118,8 +122,7 @@ const VocabularyEntryDrawer: React.FC<VocabularyEntryDrawerProps> = ({
             >
               {renderFieldInput(field)}
             </Form.Item>
-          ))
-        }
+          ))}
 
         <Form.Item name="description" label="备注">
           <Input.TextArea rows={3} placeholder="备注说明" />
@@ -129,16 +132,9 @@ const VocabularyEntryDrawer: React.FC<VocabularyEntryDrawerProps> = ({
           <Select mode="tags" placeholder="添加标签" />
         </Form.Item>
 
-        <Form.Item
-          name="linkedFilePath"
-          label="关联文件"
-        >
+        <Form.Item name="linkedFilePath" label="关联文件">
           <Space.Compact style={{ width: '100%' }}>
-            <Input
-              placeholder="关联的 Markdown 文件路径"
-              disabled
-              style={{ flex: 1 }}
-            />
+            <Input placeholder="关联的 Markdown 文件路径" disabled style={{ flex: 1 }} />
             {editingEntry?.linkedFilePath && (
               <Tooltip title="打开文件">
                 <Button
@@ -149,10 +145,7 @@ const VocabularyEntryDrawer: React.FC<VocabularyEntryDrawerProps> = ({
             )}
             {editingEntry && (
               <Tooltip title={editingEntry.linkedFilePath ? '重新生成关联文件' : '创建关联文件'}>
-                <Button
-                  icon={<FileAddOutlined />}
-                  onClick={onCreateLinkedFile}
-                />
+                <Button icon={<FileAddOutlined />} onClick={onCreateLinkedFile} />
               </Tooltip>
             )}
           </Space.Compact>

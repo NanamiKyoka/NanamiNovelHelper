@@ -6,7 +6,7 @@ import {
   Errors,
   handleError,
   handleErrorAsync,
-  isServiceError,
+  isServiceError
 } from './errors'
 
 describe('ErrorCode', () => {
@@ -52,7 +52,7 @@ describe('ServiceError', () => {
       code: ErrorCode.NOT_FOUND,
       message: 'Test message',
       module: 'TestModule',
-      name: 'ServiceError',
+      name: 'ServiceError'
     })
   })
 
@@ -60,7 +60,7 @@ describe('ServiceError', () => {
     const original = new ServiceError(ErrorCode.FILE_NOT_FOUND, 'File missing', { module: 'FS' })
     const json = original.toJSON()
     const restored = ServiceError.fromJSON(json)
-    
+
     expect(restored.code).toBe(original.code)
     expect(restored.message).toBe(original.message)
     expect(restored.module).toBe(original.module)
@@ -129,36 +129,55 @@ describe('handleError', () => {
   })
 
   it('should return null on failure by default', () => {
-    const result = handleError(() => {
-      throw new Error('fail')
-    }, { module: 'Test', operation: 'compute' })
+    const result = handleError(
+      () => {
+        throw new Error('fail')
+      },
+      { module: 'Test', operation: 'compute' }
+    )
     expect(result).toBeNull()
   })
 
   it('should return defaultValue on failure', () => {
-    const result = handleError(() => {
-      throw new Error('fail')
-    }, { module: 'Test', operation: 'compute', defaultValue: 0 })
+    const result = handleError(
+      () => {
+        throw new Error('fail')
+      },
+      { module: 'Test', operation: 'compute', defaultValue: 0 }
+    )
     expect(result).toBe(0)
   })
 
   it('should rethrow ServiceError when throw is true', () => {
     const serviceError = new ServiceError(ErrorCode.NOT_FOUND)
     expect(() => {
-      handleError(() => { throw serviceError }, { module: 'Test', operation: 'test', throw: true })
+      handleError(
+        () => {
+          throw serviceError
+        },
+        { module: 'Test', operation: 'test', throw: true }
+      )
     }).toThrow(serviceError)
   })
 
   it('should wrap non-ServiceError when throw is true', () => {
     expect(() => {
-      handleError(() => { throw new Error('plain error') }, { module: 'Test', operation: 'test', throw: true })
+      handleError(
+        () => {
+          throw new Error('plain error')
+        },
+        { module: 'Test', operation: 'test', throw: true }
+      )
     }).toThrow(ServiceError)
   })
 
   it('should not log when log is false', () => {
-    const result = handleError(() => {
-      throw new Error('quiet fail')
-    }, { module: 'Test', operation: 'test', log: false })
+    const result = handleError(
+      () => {
+        throw new Error('quiet fail')
+      },
+      { module: 'Test', operation: 'test', log: false }
+    )
     expect(result).toBeNull()
   })
 })
@@ -170,17 +189,23 @@ describe('handleErrorAsync', () => {
   })
 
   it('should return null on failure by default', async () => {
-    const result = await handleErrorAsync(async () => {
-      throw new Error('fail')
-    }, { module: 'Test', operation: 'compute' })
+    const result = await handleErrorAsync(
+      async () => {
+        throw new Error('fail')
+      },
+      { module: 'Test', operation: 'compute' }
+    )
     expect(result).toBeNull()
   })
 
   it('should rethrow when throw is true', async () => {
     await expect(async () => {
-      await handleErrorAsync(async () => {
-        throw new ServiceError(ErrorCode.SERVICE_ERROR)
-      }, { module: 'Test', operation: 'test', throw: true })
+      await handleErrorAsync(
+        async () => {
+          throw new ServiceError(ErrorCode.SERVICE_ERROR)
+        },
+        { module: 'Test', operation: 'test', throw: true }
+      )
     }).rejects.toThrow(ServiceError)
   })
 })

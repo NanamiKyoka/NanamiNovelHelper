@@ -77,9 +77,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
 
   protected sortItems(items: SequenceChartMeta[]): SequenceChartMeta[] {
     // 按更新时间排序
-    return items.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
+    return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }
 
   // ============================================
@@ -95,9 +93,8 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
 
     // 获取当前最大 order
     const existingCharts = this.getList()
-    const maxOrder = existingCharts.length > 0
-      ? Math.max(...existingCharts.map(c => c.order ?? 0))
-      : -1
+    const maxOrder =
+      existingCharts.length > 0 ? Math.max(...existingCharts.map(c => c.order ?? 0)) : -1
 
     const axisConfig: TimelineAxisConfig = {
       ...DEFAULT_AXIS_CONFIG,
@@ -164,10 +161,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
   /**
    * 添加事件
    */
-  addEvent(
-    chartId: string,
-    event: CreateSequenceEventOptions
-  ): SequenceEvent | null {
+  addEvent(chartId: string, event: CreateSequenceEventOptions): SequenceEvent | null {
     const chart = this.get(chartId)
     if (!chart) return null
 
@@ -319,11 +313,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
   /**
    * 移动事件（改变顺序）
    */
-  moveEvent(
-    chartId: string,
-    eventId: string,
-    newOrder: number
-  ): SequenceEvent[] | null {
+  moveEvent(chartId: string, eventId: string, newOrder: number): SequenceEvent[] | null {
     const chart = this.get(chartId)
     if (!chart) return null
 
@@ -375,10 +365,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
     if (chart.axisConfig.autoExtend) {
       const currentMax = chart.axisConfig.initialCellCount
       if (cellEnd >= currentMax - 10) {
-        chart.axisConfig.initialCellCount = Math.min(
-          cellEnd + 50,
-          chart.axisConfig.maxCellCount
-        )
+        chart.axisConfig.initialCellCount = Math.min(cellEnd + 50, chart.axisConfig.maxCellCount)
       }
     }
 
@@ -434,8 +421,7 @@ class SequenceChartService extends BaseService<SequenceChart, SequenceChartMeta>
     const customTypes = chart.customEventTypes || []
 
     // 合并内置类型和自定义类型，按 order 排序
-    return [...BUILT_IN_EVENT_TYPES, ...customTypes]
-      .sort((a, b) => a.order - b.order)
+    return [...BUILT_IN_EVENT_TYPES, ...customTypes].sort((a, b) => a.order - b.order)
   }
 
   /**

@@ -46,10 +46,7 @@ function SequenceChartPanel(): JSX.Element {
   return (
     <div className={styles.container}>
       {viewMode === 'list' && (
-        <SequenceChartList
-          onOpenChart={handleSelectChart}
-          onCreateChart={handleCreateAndPreview}
-        />
+        <SequenceChartList onOpenChart={handleSelectChart} onCreateChart={handleCreateAndPreview} />
       )}
       {viewMode === 'preview' && currentChartId && (
         <SequenceChartPreview
@@ -59,10 +56,7 @@ function SequenceChartPanel(): JSX.Element {
         />
       )}
       {viewMode === 'editor' && currentChartId && (
-        <SequenceChartFullscreen
-          chartId={currentChartId}
-          onBack={handleExitEditor}
-        />
+        <SequenceChartFullscreen chartId={currentChartId} onBack={handleExitEditor} />
       )}
     </div>
   )

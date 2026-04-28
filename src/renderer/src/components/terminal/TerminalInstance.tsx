@@ -24,7 +24,7 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
   const cleanupRef = useRef<(() => void) | null>(null)
   const isInitializedRef = useRef(false)
 
-  const resolvedMode = useThemeStore((state) => state.resolvedMode)
+  const resolvedMode = useThemeStore(state => state.resolvedMode)
   const { destroyTerminal } = useTerminalStore()
 
   // 判断是否为暗色主题
@@ -112,22 +112,22 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
     window.electron.terminal.resize(id, cols, rows)
 
     // 监听用户输入
-    const onDataDisposable = terminal.onData((data) => {
+    const onDataDisposable = terminal.onData(data => {
       window.electron.terminal.write(id, data)
     })
 
     // 监听终端输出
-    const removeDataListener = window.electron.terminal.onData(id, (data) => {
+    const removeDataListener = window.electron.terminal.onData(id, data => {
       terminal.write(data)
     })
 
     // 监听终端退出
-    const removeExitListener = window.electron.terminal.onExit(id, (exitCode) => {
+    const removeExitListener = window.electron.terminal.onExit(id, exitCode => {
       terminal.writeln(`\r\n\x1b[33m进程已退出，退出码: ${exitCode}\x1b[0m`)
       terminal.writeln('\x1b[90m按 Enter 键关闭终端\x1b[0m')
-      
+
       // 监听 Enter 键关闭
-      const onEnterDisposable = terminal.onData((data) => {
+      const onEnterDisposable = terminal.onData(data => {
         if (data === '\r') {
           destroyTerminal(id)
           onEnterDisposable.dispose()

@@ -39,9 +39,7 @@ function TimelinePanel(): JSX.Element {
 
   return (
     <div className={styles.container}>
-      {viewMode === 'list' && (
-        <TimelineList onSelectTimeline={handleSelectTimeline} />
-      )}
+      {viewMode === 'list' && <TimelineList onSelectTimeline={handleSelectTimeline} />}
       {viewMode === 'preview' && currentTimelineId && (
         <TimelinePreview
           timelineId={currentTimelineId}
@@ -50,10 +48,7 @@ function TimelinePanel(): JSX.Element {
         />
       )}
       {viewMode === 'editor' && currentTimelineId && (
-        <TimelineFullscreen
-          timelineId={currentTimelineId}
-          onBack={handleExitEditor}
-        />
+        <TimelineFullscreen timelineId={currentTimelineId} onBack={handleExitEditor} />
       )}
     </div>
   )

@@ -5,11 +5,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button, message, Spin, Image } from 'antd'
-import {
-  PictureOutlined,
-  DeleteOutlined,
-  UploadOutlined
-} from '@ant-design/icons'
+import { PictureOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ImageFieldConfig } from '@shared/vocabulary'
 import styles from './ImageUpload.module.css'
 
@@ -39,7 +35,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const finalConfig = { ...DEFAULT_CONFIG, ...config }
 
   // 加载图片预览
@@ -69,57 +65,62 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
   }, [value])
 
   // 处理文件上传
-  const handleUpload = useCallback(async (file: File): Promise<void> => {
-    if (disabled) return
+  const handleUpload = useCallback(
+    async (file: File): Promise<void> => {
+      if (disabled) return
 
-    // 检查格式
-    const ext = file.name.split('.').pop()?.toLowerCase() || ''
-    if (!finalConfig.allowedFormats.includes(ext)) {
-      message.error(`不支持的图片格式: ${ext}`)
-      return
-    }
+      // 检查格式
+      const ext = file.name.split('.').pop()?.toLowerCase() || ''
+      if (!finalConfig.allowedFormats.includes(ext)) {
+        message.error(`不支持的图片格式: ${ext}`)
+        return
+      }
 
-    // 检查大小
-    if (file.size > finalConfig.maxSize) {
-      message.error(`图片大小超出限制: ${(file.size / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`)
-      return
-    }
+      // 检查大小
+      if (file.size > finalConfig.maxSize) {
+        message.error(
+          `图片大小超出限制: ${(file.size / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`
+        )
+        return
+      }
 
-    setLoading(true)
-    try {
-      // 读取文件为 Base64
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string
-        try {
-          // 上传到主进程处理（压缩、保存）
-          const result = await window.electron.image.uploadFromBase64(base64, {
-            maxSize: finalConfig.maxSize,
-            allowedFormats: finalConfig.allowedFormats,
-            maxWidth: finalConfig.maxWidth,
-            maxHeight: finalConfig.maxHeight,
-            quality: finalConfig.quality
-          })
-          onChange?.(result.path)
-          message.success('图片上传成功')
-        } catch (error) {
-          console.error('Failed to upload image:', error)
-          message.error('图片上传失败')
-        } finally {
+      setLoading(true)
+      try {
+        // 读取文件为 Base64
+        const reader = new FileReader()
+        reader.onload = async e => {
+          const base64 = e.target?.result as string
+          try {
+            // 上传到主进程处理（压缩、保存）
+            const result = await window.electron.image.uploadFromBase64(base64, {
+              maxSize: finalConfig.maxSize,
+              allowedFormats: finalConfig.allowedFormats,
+              maxWidth: finalConfig.maxWidth,
+              maxHeight: finalConfig.maxHeight,
+              quality: finalConfig.quality
+            })
+            onChange?.(result.path)
+            message.success('图片上传成功')
+          } catch (error) {
+            console.error('Failed to upload image:', error)
+            message.error('图片上传失败')
+          } finally {
+            setLoading(false)
+          }
+        }
+        reader.onerror = () => {
+          message.error('读取文件失败')
           setLoading(false)
         }
-      }
-      reader.onerror = () => {
-        message.error('读取文件失败')
+        reader.readAsDataURL(file)
+      } catch (error) {
+        console.error('Failed to upload image:', error)
+        message.error('图片上传失败')
         setLoading(false)
       }
-      reader.readAsDataURL(file)
-    } catch (error) {
-      console.error('Failed to upload image:', error)
-      message.error('图片上传失败')
-      setLoading(false)
-    }
-  }, [disabled, finalConfig, onChange])
+    },
+    [disabled, finalConfig, onChange]
+  )
 
   // 文件输入变化
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -159,7 +160,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent): void => {
       if (disabled) return
-      
+
       // 检查是否在当前组件内聚焦
       if (!containerRef.current?.contains(document.activeElement)) {
         return
@@ -282,8 +283,8 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
             </Button>
           </div>
           <p className={styles.formats}>
-            支持: {finalConfig.allowedFormats.join(', ').toUpperCase()} 
-            {' '}| 最大: {(finalConfig.maxSize / 1024 / 1024).toFixed(0)}MB
+            支持: {finalConfig.allowedFormats.join(', ').toUpperCase()} | 最大:{' '}
+            {(finalConfig.maxSize / 1024 / 1024).toFixed(0)}MB
           </p>
         </div>
       )}

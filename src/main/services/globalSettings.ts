@@ -259,8 +259,8 @@ class GlobalSettingsService {
    * 验证徽章顺序
    */
   private validateBadgeOrder(order: BadgeType[]): BadgeType[] {
-    const validOrder = order.filter((b) => DEFAULT_BADGE_ORDER.includes(b))
-    const missingBadges = DEFAULT_BADGE_ORDER.filter((b) => !validOrder.includes(b))
+    const validOrder = order.filter(b => DEFAULT_BADGE_ORDER.includes(b))
+    const missingBadges = DEFAULT_BADGE_ORDER.filter(b => !validOrder.includes(b))
     return [...validOrder, ...missingBadges]
   }
 
@@ -268,8 +268,8 @@ class GlobalSettingsService {
    * 验证侧边栏徽章顺序
    */
   private validateSidebarBadgeOrder(order: string[]): string[] {
-    const validOrder = order.filter((b) => DEFAULT_SIDEBAR_BADGE_ORDER.includes(b))
-    const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter((b) => !validOrder.includes(b))
+    const validOrder = order.filter(b => DEFAULT_SIDEBAR_BADGE_ORDER.includes(b))
+    const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter(b => !validOrder.includes(b))
     return [...validOrder, ...missingBadges]
   }
 
@@ -313,7 +313,7 @@ class GlobalSettingsService {
     const apiKeys = encryptedKeysStore.get('apiKeys')
     const encrypted = apiKeys[keyName]
     if (!encrypted) return null
-    
+
     try {
       return this.decrypt(encrypted)
     } catch {

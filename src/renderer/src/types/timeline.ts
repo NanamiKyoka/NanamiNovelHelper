@@ -219,7 +219,7 @@ export interface UpdateNodeOptions {
 /**
  * 操作类型
  */
-export type TimelineActionType = 
+export type TimelineActionType =
   | 'create_timeline'
   | 'delete_timeline'
   | 'update_timeline'

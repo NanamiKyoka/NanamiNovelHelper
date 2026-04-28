@@ -22,7 +22,7 @@ import {
   Tooltip,
   Input,
   Select,
-  InputNumber,
+  InputNumber
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -37,13 +37,9 @@ import {
   DeleteOutlined,
   MinusCircleOutlined,
   SaveOutlined,
-  CloseOutlined,
+  CloseOutlined
 } from '@ant-design/icons'
-import type {
-  DynamicSkill,
-  DynamicSkillTool,
-  SkillWhitelistEntry,
-} from '@shared/ai-assistant'
+import type { DynamicSkill, DynamicSkillTool, SkillWhitelistEntry } from '@shared/ai-assistant'
 import styles from './DynamicSkillPanel.module.css'
 
 const { Header, Content, Sider } = Layout
@@ -60,7 +56,7 @@ const PARAM_TYPE_OPTIONS = [
   { label: '数字', value: 'number' },
   { label: '布尔值', value: 'boolean' },
   { label: '数组', value: 'array' },
-  { label: '对象', value: 'object' },
+  { label: '对象', value: 'object' }
 ]
 
 // 参数类型
@@ -113,7 +109,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
     try {
       const [skillList, whitelistData] = await Promise.all([
         window.electron.dynamicSkill.getList(),
-        window.electron.dynamicSkill.getWhitelist(),
+        window.electron.dynamicSkill.getWhitelist()
       ])
       setSkills(skillList)
       setWhitelist(whitelistData)
@@ -147,20 +143,17 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   // 添加到白名单
   const handleAddToWhitelist = async (skill: DynamicSkill) => {
     try {
-      await window.electron.dynamicSkill.addToWhitelist(
-        skill.id,
-        skill.metadata.name,
-        skill.path
-      )
-      setWhitelist([...whitelist, {
-        skillId: skill.id,
-        skillName: skill.metadata.name,
-        addedAt: new Date().toISOString(),
-        pathHash: skill.path,
-      }])
-      setSkills(skills.map(s => 
-        s.id === skill.id ? { ...s, isTrusted: true } : s
-      ))
+      await window.electron.dynamicSkill.addToWhitelist(skill.id, skill.metadata.name, skill.path)
+      setWhitelist([
+        ...whitelist,
+        {
+          skillId: skill.id,
+          skillName: skill.metadata.name,
+          addedAt: new Date().toISOString(),
+          pathHash: skill.path
+        }
+      ])
+      setSkills(skills.map(s => (s.id === skill.id ? { ...s, isTrusted: true } : s)))
       message.success(`已信任 SKILL: ${skill.metadata.name}`)
     } catch (error) {
       console.error('Failed to add to whitelist:', error)
@@ -173,9 +166,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
     try {
       await window.electron.dynamicSkill.removeFromWhitelist(skillId)
       setWhitelist(whitelist.filter(w => w.skillId !== skillId))
-      setSkills(skills.map(s => 
-        s.id === skillId ? { ...s, isTrusted: false } : s
-      ))
+      setSkills(skills.map(s => (s.id === skillId ? { ...s, isTrusted: false } : s)))
       message.success('已取消信任')
     } catch (error) {
       console.error('Failed to remove from whitelist:', error)
@@ -201,20 +192,23 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       author: skill.metadata.author || '',
       tags: skill.metadata.tags || [],
       instructions: skill.instructions || '',
-      tools: skill.tools.length > 0 ? skill.tools.map(tool => ({
-        id: generateId(),
-        toolId: tool.id,
-        name: tool.name,
-        description: tool.description || '',
-        parameters: (tool.parameters || []).map(p => ({
-          id: generateId(),
-          name: p.name,
-          type: p.type || 'string',
-          required: p.required || false,
-          description: p.description || '',
-        })),
-        timeout: tool.timeout,
-      })) : [{ id: generateId(), toolId: '', name: '', description: '', parameters: [] }],
+      tools:
+        skill.tools.length > 0
+          ? skill.tools.map(tool => ({
+              id: generateId(),
+              toolId: tool.id,
+              name: tool.name,
+              description: tool.description || '',
+              parameters: (tool.parameters || []).map(p => ({
+                id: generateId(),
+                name: p.name,
+                type: p.type || 'string',
+                required: p.required || false,
+                description: p.description || ''
+              })),
+              timeout: tool.timeout
+            }))
+          : [{ id: generateId(), toolId: '', name: '', description: '', parameters: [] }]
     })
   }
 
@@ -226,7 +220,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
 
   // 更新编辑数据
   const updateEditData = (updates: Partial<SkillEditData>) => {
-    setEditData(prev => prev ? { ...prev, ...updates } : null)
+    setEditData(prev => (prev ? { ...prev, ...updates } : null))
   }
 
   // 更新工具数据
@@ -235,9 +229,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev) return null
       return {
         ...prev,
-        tools: prev.tools.map(t => 
-          t.id === toolId ? { ...t, ...updates } : t
-        ),
+        tools: prev.tools.map(t => (t.id === toolId ? { ...t, ...updates } : t))
       }
     })
   }
@@ -248,13 +240,16 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev) return null
       return {
         ...prev,
-        tools: [...prev.tools, {
-          id: generateId(),
-          toolId: '',
-          name: '',
-          description: '',
-          parameters: [],
-        }],
+        tools: [
+          ...prev.tools,
+          {
+            id: generateId(),
+            toolId: '',
+            name: '',
+            description: '',
+            parameters: []
+          }
+        ]
       }
     })
   }
@@ -265,7 +260,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev || prev.tools.length <= 1) return prev
       return {
         ...prev,
-        tools: prev.tools.filter(t => t.id !== toolId),
+        tools: prev.tools.filter(t => t.id !== toolId)
       }
     })
   }
@@ -276,11 +271,17 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev) return null
       return {
         ...prev,
-        tools: prev.tools.map(t => 
-          t.id === toolId 
-            ? { ...t, parameters: [...t.parameters, { id: generateId(), name: '', type: 'string', required: false, description: '' }] }
+        tools: prev.tools.map(t =>
+          t.id === toolId
+            ? {
+                ...t,
+                parameters: [
+                  ...t.parameters,
+                  { id: generateId(), name: '', type: 'string', required: false, description: '' }
+                ]
+              }
             : t
-        ),
+        )
       }
     })
   }
@@ -291,11 +292,14 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev) return null
       return {
         ...prev,
-        tools: prev.tools.map(t => 
-          t.id === toolId 
-            ? { ...t, parameters: t.parameters.map(p => p.id === paramId ? { ...p, ...updates } : p) }
+        tools: prev.tools.map(t =>
+          t.id === toolId
+            ? {
+                ...t,
+                parameters: t.parameters.map(p => (p.id === paramId ? { ...p, ...updates } : p))
+              }
             : t
-        ),
+        )
       }
     })
   }
@@ -306,11 +310,9 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       if (!prev) return null
       return {
         ...prev,
-        tools: prev.tools.map(t => 
-          t.id === toolId 
-            ? { ...t, parameters: t.parameters.filter(p => p.id !== paramId) }
-            : t
-        ),
+        tools: prev.tools.map(t =>
+          t.id === toolId ? { ...t, parameters: t.parameters.filter(p => p.id !== paramId) } : t
+        )
       }
     })
   }
@@ -356,9 +358,9 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           name: param.name,
           type: param.type || 'string',
           required: param.required || false,
-          description: param.description || '',
+          description: param.description || ''
         })),
-        timeout: tool.timeout,
+        timeout: tool.timeout
       }))
 
       await window.electron.dynamicSkill.update(skillId, {
@@ -368,7 +370,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
         author: editData.author,
         tags: editData.tags,
         tools,
-        instructions: editData.instructions,
+        instructions: editData.instructions
       })
 
       message.success('SKILL 更新成功')
@@ -414,37 +416,35 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           <ToolOutlined />
           <Text strong>{name}</Text>
         </Space>
-      ),
+      )
     },
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
       width: 150,
-      render: (id: string) => <Text code>{id}</Text>,
+      render: (id: string) => <Text code>{id}</Text>
     },
     {
       title: '描述',
       dataIndex: 'description',
       key: 'description',
-      ellipsis: true,
+      ellipsis: true
     },
     {
       title: '参数',
       dataIndex: 'parameters',
       key: 'parameters',
       width: 100,
-      render: (params: DynamicSkillTool['parameters']) => (
-        <Tag>{params.length} 个参数</Tag>
-      ),
+      render: (params: DynamicSkillTool['parameters']) => <Tag>{params.length} 个参数</Tag>
     },
     {
       title: '超时',
       dataIndex: 'timeout',
       key: 'timeout',
       width: 80,
-      render: (timeout?: number) => timeout ? `${timeout / 1000}s` : '30s',
-    },
+      render: (timeout?: number) => (timeout ? `${timeout / 1000}s` : '30s')
+    }
   ]
 
   // 参数表格列定义
@@ -453,32 +453,28 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       title: '参数名',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
+      width: 120
     },
     {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
       width: 80,
-      render: (type: string) => <Tag color="blue">{type}</Tag>,
+      render: (type: string) => <Tag color="blue">{type}</Tag>
     },
     {
       title: '必填',
       dataIndex: 'required',
       key: 'required',
       width: 60,
-      render: (required?: boolean) => required ? (
-        <Tag color="red">必填</Tag>
-      ) : (
-        <Tag>可选</Tag>
-      ),
+      render: (required?: boolean) => (required ? <Tag color="red">必填</Tag> : <Tag>可选</Tag>)
     },
     {
       title: '描述',
       dataIndex: 'description',
       key: 'description',
-      ellipsis: true,
-    },
+      ellipsis: true
+    }
   ]
 
   // 渲染预览模式
@@ -491,12 +487,12 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           <Descriptions.Item label="版本">{skill.metadata.version || '-'}</Descriptions.Item>
           <Descriptions.Item label="作者">{skill.metadata.author || '-'}</Descriptions.Item>
           <Descriptions.Item label="路径">
-            <Text code style={{ fontSize: 12 }}>{skill.path}</Text>
+            <Text code style={{ fontSize: 12 }}>
+              {skill.path}
+            </Text>
           </Descriptions.Item>
           <Descriptions.Item label="标签" span={2}>
-            {skill.metadata.tags?.map(tag => (
-              <Tag key={tag}>{tag}</Tag>
-            )) || '-'}
+            {skill.metadata.tags?.map(tag => <Tag key={tag}>{tag}</Tag>) || '-'}
           </Descriptions.Item>
           <Descriptions.Item label="依赖" span={2}>
             {skill.metadata.dependencies?.join(', ') || '-'}
@@ -518,7 +514,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
         rowKey="id"
         pagination={false}
         expandable={{
-          expandedRowRender: (tool) => (
+          expandedRowRender: tool => (
             <div className={styles.paramTable}>
               <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
                 参数定义：
@@ -536,7 +532,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
               )}
             </div>
           ),
-          rowExpandable: (tool) => tool.parameters.length > 0,
+          rowExpandable: tool => tool.parameters.length > 0
         }}
       />
 
@@ -564,20 +560,24 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           {/* 基本信息 */}
           <Card size="small" title="基本信息" className={styles.infoCard}>
             <div className={styles.formItem}>
-              <label className={styles.formLabel}>SKILL 名称 <span className={styles.required}>*</span></label>
+              <label className={styles.formLabel}>
+                SKILL 名称 <span className={styles.required}>*</span>
+              </label>
               <Input
                 value={editData.name}
-                onChange={(e) => updateEditData({ name: e.target.value })}
+                onChange={e => updateEditData({ name: e.target.value })}
                 placeholder="我的技能"
               />
             </div>
 
             <div className={styles.formItem}>
-              <label className={styles.formLabel}>描述 <span className={styles.required}>*</span></label>
+              <label className={styles.formLabel}>
+                描述 <span className={styles.required}>*</span>
+              </label>
               <TextArea
                 rows={2}
                 value={editData.description}
-                onChange={(e) => updateEditData({ description: e.target.value })}
+                onChange={e => updateEditData({ description: e.target.value })}
                 placeholder="描述此 SKILL 的功能和用途"
               />
               <span className={styles.formExtra}>用于 AI 判断何时使用此 SKILL</span>
@@ -589,7 +589,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                 <Input
                   style={{ width: 120 }}
                   value={editData.version}
-                  onChange={(e) => updateEditData({ version: e.target.value })}
+                  onChange={e => updateEditData({ version: e.target.value })}
                   placeholder="1.0.0"
                 />
               </div>
@@ -598,7 +598,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                 <Input
                   style={{ width: 150 }}
                   value={editData.author}
-                  onChange={(e) => updateEditData({ author: e.target.value })}
+                  onChange={e => updateEditData({ author: e.target.value })}
                   placeholder="作者名称"
                 />
               </div>
@@ -610,7 +610,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                 mode="tags"
                 style={{ width: '100%' }}
                 value={editData.tags}
-                onChange={(tags) => updateEditData({ tags })}
+                onChange={tags => updateEditData({ tags })}
                 placeholder="输入标签后按回车添加"
                 tokenSeparators={[',']}
               />
@@ -622,7 +622,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
             <TextArea
               rows={4}
               value={editData.instructions}
-              onChange={(e) => updateEditData({ instructions: e.target.value })}
+              onChange={e => updateEditData({ instructions: e.target.value })}
               placeholder="供 AI 参考的详细说明文档..."
             />
           </Card>
@@ -633,45 +633,54 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           </Divider>
 
           {editData.tools.map((tool, toolIndex) => (
-            <Card 
+            <Card
               key={tool.id}
-              size="small" 
+              size="small"
               style={{ marginBottom: 16 }}
               title={`工具 #${toolIndex + 1}`}
-              extra={editData.tools.length > 1 && (
-                <Button
-                  type="link"
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => removeTool(tool.id)}
-                >
-                  删除
-                </Button>
-              )}
+              extra={
+                editData.tools.length > 1 && (
+                  <Button
+                    type="link"
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => removeTool(tool.id)}
+                  >
+                    删除
+                  </Button>
+                )
+              }
             >
               <Space style={{ width: '100%' }} align="start">
                 <div className={styles.formItem} style={{ marginBottom: 8, width: 140 }}>
-                  <label className={styles.formLabel}>工具 ID <span className={styles.required}>*</span></label>
+                  <label className={styles.formLabel}>
+                    工具 ID <span className={styles.required}>*</span>
+                  </label>
                   <Input
                     value={tool.toolId}
-                    onChange={(e) => updateTool(tool.id, { toolId: e.target.value })}
+                    onChange={e => updateTool(tool.id, { toolId: e.target.value })}
                     placeholder="tool-id"
                   />
                 </div>
                 <div className={styles.formItem} style={{ marginBottom: 8, width: 140 }}>
-                  <label className={styles.formLabel}>工具名称 <span className={styles.required}>*</span></label>
+                  <label className={styles.formLabel}>
+                    工具名称 <span className={styles.required}>*</span>
+                  </label>
                   <Input
                     value={tool.name}
-                    onChange={(e) => updateTool(tool.id, { name: e.target.value })}
+                    onChange={e => updateTool(tool.id, { name: e.target.value })}
                     placeholder="工具名称"
                   />
                 </div>
-                <div className={styles.formItem} style={{ marginBottom: 8, flex: 1, minWidth: 150 }}>
+                <div
+                  className={styles.formItem}
+                  style={{ marginBottom: 8, flex: 1, minWidth: 150 }}
+                >
                   <label className={styles.formLabel}>描述</label>
                   <Input
                     value={tool.description}
-                    onChange={(e) => updateTool(tool.id, { description: e.target.value })}
+                    onChange={e => updateTool(tool.id, { description: e.target.value })}
                     placeholder="工具描述"
                   />
                 </div>
@@ -681,7 +690,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                     min={1000}
                     style={{ width: '100%' }}
                     value={tool.timeout}
-                    onChange={(v) => updateTool(tool.id, { timeout: v || undefined })}
+                    onChange={v => updateTool(tool.id, { timeout: v || undefined })}
                     placeholder="30000"
                   />
                 </div>
@@ -700,27 +709,24 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                     添加参数
                   </Button>
                 </div>
-                {tool.parameters.map((param) => (
-                  <div 
-                    key={param.id}
-                    className={styles.paramRow}
-                  >
+                {tool.parameters.map(param => (
+                  <div key={param.id} className={styles.paramRow}>
                     <Input
                       style={{ width: 100 }}
                       value={param.name}
-                      onChange={(e) => updateParameter(tool.id, param.id, { name: e.target.value })}
+                      onChange={e => updateParameter(tool.id, param.id, { name: e.target.value })}
                       placeholder="参数名"
                     />
                     <Select
                       style={{ width: 90 }}
                       value={param.type}
-                      onChange={(v) => updateParameter(tool.id, param.id, { type: v })}
+                      onChange={v => updateParameter(tool.id, param.id, { type: v })}
                       options={PARAM_TYPE_OPTIONS}
                     />
                     <Select
                       style={{ width: 70 }}
                       value={param.required}
-                      onChange={(v) => updateParameter(tool.id, param.id, { required: v })}
+                      onChange={v => updateParameter(tool.id, param.id, { required: v })}
                     >
                       <Select.Option value={false}>可选</Select.Option>
                       <Select.Option value={true}>必填</Select.Option>
@@ -728,12 +734,14 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                     <Input
                       style={{ flex: 1, minWidth: 120 }}
                       value={param.description}
-                      onChange={(e) => updateParameter(tool.id, param.id, { description: e.target.value })}
+                      onChange={e =>
+                        updateParameter(tool.id, param.id, { description: e.target.value })
+                      }
                       placeholder="描述"
                     />
-                    <MinusCircleOutlined 
+                    <MinusCircleOutlined
                       style={{ color: 'var(--color-error)', cursor: 'pointer' }}
-                      onClick={() => removeParameter(tool.id, param.id)} 
+                      onClick={() => removeParameter(tool.id, param.id)}
                     />
                   </div>
                 ))}
@@ -741,12 +749,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
             </Card>
           ))}
 
-          <Button
-            type="dashed"
-            onClick={addTool}
-            block
-            icon={<PlusOutlined />}
-          >
+          <Button type="dashed" onClick={addTool} block icon={<PlusOutlined />}>
             添加工具
           </Button>
         </div>
@@ -769,11 +772,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
           <Tag color="blue">{skills.length} 个 SKILL</Tag>
         </Space>
         <Space>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleReload}
-            loading={loading}
-          >
+          <Button icon={<ReloadOutlined />} onClick={handleReload} loading={loading}>
             刷新
           </Button>
         </Space>
@@ -786,10 +785,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
               <Spin size="large" tip="加载中..." />
             </div>
           ) : skills.length === 0 ? (
-            <Empty
-              description="暂无 SKILL"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            >
+            <Empty description="暂无 SKILL" image={Empty.PRESENTED_IMAGE_SIMPLE}>
               <Space direction="vertical">
                 <Text type="secondary">
                   在项目目录 .novelhelper/data/ai-assistant/skills/ 中添加 SKILL 文件夹
@@ -800,7 +796,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
             <Collapse
               accordion
               activeKey={selectedSkill?.id}
-              onChange={(key) => {
+              onChange={key => {
                 if (key) {
                   const skill = skills.find(s => s.id === key)
                   setSelectedSkill(skill || null)
@@ -814,7 +810,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                   setEditData(null)
                 }
               }}
-              items={skills.map((skill) => {
+              items={skills.map(skill => {
                 const isEditing = editingSkillId === skill.id
                 return {
                   key: skill.id,
@@ -823,15 +819,19 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                       <Text strong>{skill.metadata.name}</Text>
                       <Text type="secondary">({skill.tools.length} 个工具)</Text>
                       {isSkillTrusted(skill.id) ? (
-                        <Tag color="green" icon={<SafetyOutlined />}>已信任</Tag>
+                        <Tag color="green" icon={<SafetyOutlined />}>
+                          已信任
+                        </Tag>
                       ) : (
-                        <Tag color="orange" icon={<ExclamationCircleOutlined />}>未信任</Tag>
+                        <Tag color="orange" icon={<ExclamationCircleOutlined />}>
+                          未信任
+                        </Tag>
                       )}
                       {isEditing && <Tag color="blue">编辑中</Tag>}
                     </Space>
                   ),
                   extra: (
-                    <Space onClick={(e) => e.stopPropagation()}>
+                    <Space onClick={e => e.stopPropagation()}>
                       {isEditing ? (
                         <>
                           <Button
@@ -839,7 +839,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                             size="small"
                             icon={<SaveOutlined />}
                             loading={submitting}
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation()
                               handleSaveEdit(skill.id)
                             }}
@@ -849,7 +849,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                           <Button
                             size="small"
                             icon={<CloseOutlined />}
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation()
                               handleCancelEdit()
                             }}
@@ -865,7 +865,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                               type="link"
                               size="small"
                               icon={<EditOutlined />}
-                              onClick={(e) => handleStartEdit(skill, e)}
+                              onClick={e => handleStartEdit(skill, e)}
                             >
                               编辑
                             </Button>
@@ -887,11 +887,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                               title="确定取消信任此 SKILL？"
                               onConfirm={() => handleRemoveFromWhitelist(skill.id)}
                             >
-                              <Button
-                                type="link"
-                                size="small"
-                                danger
-                              >
+                              <Button type="link" size="small" danger>
                                 取消信任
                               </Button>
                             </Popconfirm>
@@ -904,12 +900,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                             cancelText="取消"
                             okButtonProps={{ danger: true }}
                           >
-                            <Button
-                              type="link"
-                              size="small"
-                              danger
-                              icon={<DeleteOutlined />}
-                            >
+                            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
                               删除
                             </Button>
                           </Popconfirm>
@@ -917,7 +908,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                       )}
                     </Space>
                   ),
-                  children: isEditing ? renderEditMode(skill) : renderPreviewMode(skill),
+                  children: isEditing ? renderEditMode(skill) : renderPreviewMode(skill)
                 }
               })}
             />
@@ -944,7 +935,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
               <Title level={5}>SKILL 结构</Title>
               <Paragraph style={{ fontSize: 12 }}>
                 <pre className={styles.codeBlock}>
-{`.novelhelper/data/ai-assistant/skills/
+                  {`.novelhelper/data/ai-assistant/skills/
 └── my-skill/
     ├── SKILL.md       # 元数据
     ├── tools.json     # 工具定义
@@ -958,7 +949,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
               <Title level={5}>SKILL.md 格式</Title>
               <Paragraph style={{ fontSize: 12 }}>
                 <pre className={styles.codeBlock}>
-{`---
+                  {`---
 name: 我的技能
 description: 用于 AI 判断何时使用
 version: 1.0.0

@@ -4,12 +4,7 @@
 
 import { useState } from 'react'
 import { Button, Empty, Tooltip, Space, Dropdown, Modal } from 'antd'
-import {
-  PlusOutlined,
-  MinusOutlined,
-  ReloadOutlined,
-  UndoOutlined
-} from '@ant-design/icons'
+import { PlusOutlined, MinusOutlined, ReloadOutlined, UndoOutlined } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'
 import DiffViewer from './DiffViewer'
 import type { GitFileChange } from '@shared/git'
@@ -19,14 +14,7 @@ import styles from './GitPanel.module.css'
 const { confirm } = Modal
 
 function ChangesList(): JSX.Element {
-  const {
-    repository,
-    selectedFile,
-    selectFile,
-    add,
-    restore,
-    currentDiff
-  } = useGitStore()
+  const { repository, selectedFile, selectFile, add, unstage, restore, currentDiff } = useGitStore()
 
   const [loading, setLoading] = useState<string | null>(null)
 
@@ -64,7 +52,7 @@ function ChangesList(): JSX.Element {
   const handleUnstage = async (file: GitFileChange) => {
     setLoading(file.path)
     try {
-      await restore([file.path], 'HEAD')
+      await unstage([file.path])
     } finally {
       setLoading(null)
     }
@@ -142,9 +130,7 @@ function ChangesList(): JSX.Element {
           className={`${styles.fileItem} ${isSelected ? styles.selected : ''}`}
           onClick={() => handleFileClick(file)}
         >
-          <span className={`${styles.fileStatus} ${styles[file.status]}`}>
-            {file.statusShort}
-          </span>
+          <span className={`${styles.fileStatus} ${styles[file.status]}`}>{file.statusShort}</span>
           <span className={styles.fileName} title={file.path}>
             {file.path}
           </span>
@@ -160,7 +146,7 @@ function ChangesList(): JSX.Element {
                   type="text"
                   icon={<MinusOutlined />}
                   loading={isLoading}
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation()
                     handleUnstage(file)
                   }}
@@ -174,7 +160,7 @@ function ChangesList(): JSX.Element {
                     type="text"
                     icon={<PlusOutlined />}
                     loading={isLoading}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       handleStage(file)
                     }}
@@ -186,7 +172,7 @@ function ChangesList(): JSX.Element {
                     type="text"
                     danger
                     icon={<UndoOutlined />}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       handleDiscard(file)
                     }}
@@ -220,7 +206,7 @@ function ChangesList(): JSX.Element {
             <span className={styles.sectionCount}>{stagedChanges.length}</span>
           </div>
           <ul className={styles.fileList}>
-            {stagedChanges.map((file) => renderFileItem(file, true))}
+            {stagedChanges.map(file => renderFileItem(file, true))}
           </ul>
         </div>
       )}
@@ -243,9 +229,7 @@ function ChangesList(): JSX.Element {
               <span className={styles.sectionCount}>{changes.length}</span>
             </Space>
           </div>
-          <ul className={styles.fileList}>
-            {changes.map((file) => renderFileItem(file, false))}
-          </ul>
+          <ul className={styles.fileList}>{changes.map(file => renderFileItem(file, false))}</ul>
         </div>
       )}
 

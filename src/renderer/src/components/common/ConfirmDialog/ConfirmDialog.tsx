@@ -1,11 +1,16 @@
 /**
  * 统一确认对话框组件
- * 
+ *
  * 提供一致的用户确认体验
  */
 
 import { Modal, ModalProps } from 'antd'
-import { ExclamationCircleOutlined, InfoCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import {
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined
+} from '@ant-design/icons'
 import styles from './ConfirmDialog.module.css'
 
 export interface ConfirmDialogProps extends Omit<ModalProps, 'onOk' | 'onCancel'> {
@@ -29,24 +34,24 @@ export interface ConfirmDialogProps extends Omit<ModalProps, 'onOk' | 'onCancel'
 const TYPE_CONFIG = {
   confirm: {
     icon: <ExclamationCircleOutlined style={{ color: 'var(--color-warning)' }} />,
-    okType: 'primary' as const,
+    okType: 'primary' as const
   },
   info: {
     icon: <InfoCircleOutlined style={{ color: 'var(--color-info)' }} />,
-    okType: 'primary' as const,
+    okType: 'primary' as const
   },
   success: {
     icon: <CheckCircleOutlined style={{ color: 'var(--color-success)' }} />,
-    okType: 'primary' as const,
+    okType: 'primary' as const
   },
   warning: {
     icon: <ExclamationCircleOutlined style={{ color: 'var(--color-warning)' }} />,
-    okType: 'primary' as const,
+    okType: 'primary' as const
   },
   danger: {
     icon: <CloseCircleOutlined style={{ color: 'var(--color-error)' }} />,
-    okType: 'primary' as const,
-  },
+    okType: 'primary' as const
+  }
 }
 
 /**
@@ -131,7 +136,7 @@ export function UnsavedConfirmDialog({
   onSave,
   onDiscard,
   onCancel,
-  loading,
+  loading
 }: {
   onSave?: () => void | Promise<void>
   onDiscard?: () => void
@@ -139,7 +144,7 @@ export function UnsavedConfirmDialog({
   loading?: boolean
 }) {
   const titleId = 'unsaved-dialog-title'
-  
+
   return (
     <Modal
       title={
@@ -158,15 +163,26 @@ export function UnsavedConfirmDialog({
       aria-labelledby={titleId}
       aria-modal="true"
       footer={[
-        <button key="discard" className={styles.discardBtn} onClick={onDiscard} aria-label="不保存并关闭">
+        <button
+          key="discard"
+          className={styles.discardBtn}
+          onClick={onDiscard}
+          aria-label="不保存并关闭"
+        >
           不保存
         </button>,
         <button key="cancel" className={styles.cancelBtn} onClick={onCancel} aria-label="取消操作">
           取消
         </button>,
-        <button key="save" className={styles.saveBtn} onClick={onSave} disabled={loading} aria-label="保存更改">
+        <button
+          key="save"
+          className={styles.saveBtn}
+          onClick={onSave}
+          disabled={loading}
+          aria-label="保存更改"
+        >
           {loading ? '保存中...' : '保存'}
-        </button>,
+        </button>
       ]}
     >
       当前有未保存的更改，是否保存？

@@ -5,7 +5,19 @@
 
 import { useMemo } from 'react'
 import { Switch, message, Divider, Card } from 'antd'
-import { TagOutlined, WarningOutlined, UserAddOutlined, ApartmentOutlined, ClockCircleOutlined, TableOutlined, TeamOutlined, EnvironmentOutlined, CodeOutlined, InfoCircleOutlined, EyeOutlined } from '@ant-design/icons'
+import {
+  TagOutlined,
+  WarningOutlined,
+  UserAddOutlined,
+  ApartmentOutlined,
+  ClockCircleOutlined,
+  TableOutlined,
+  TeamOutlined,
+  EnvironmentOutlined,
+  CodeOutlined,
+  InfoCircleOutlined,
+  EyeOutlined
+} from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import type { BadgeVisibility, SidebarBadgeVisibility } from '@shared/settings'
 import { DEFAULT_BADGE_VISIBILITY, DEFAULT_SIDEBAR_BADGE_VISIBILITY } from '@shared/settings'
@@ -79,10 +91,10 @@ const BADGE_CONFIG = [
 ]
 
 function GlobalLayoutSettings(): JSX.Element {
-  const globalSettings = useSettingsStore((state) => state.globalSettings)
-  const updateBadgeVisibility = useSettingsStore((state) => state.updateBadgeVisibility)
-  const updateSidebarBadgeVisibility = useSettingsStore((state) => state.updateSidebarBadgeVisibility)
-  const setShowHiddenFiles = useSettingsStore((state) => state.setShowHiddenFiles)
+  const globalSettings = useSettingsStore(state => state.globalSettings)
+  const updateBadgeVisibility = useSettingsStore(state => state.updateBadgeVisibility)
+  const updateSidebarBadgeVisibility = useSettingsStore(state => state.updateSidebarBadgeVisibility)
+  const setShowHiddenFiles = useSettingsStore(state => state.setShowHiddenFiles)
 
   const badgeVisibility = useMemo(() => {
     return globalSettings.layout?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
@@ -126,13 +138,15 @@ function GlobalLayoutSettings(): JSX.Element {
         <p className={baseStyles.hint}>
           控制徽章的显示位置。可以同时在右侧工具栏和左侧边栏显示入口。这些设置将应用于所有项目。
         </p>
-        
+
         <div className={styles.badgeList}>
-          {BADGE_CONFIG.map((badge) => {
+          {BADGE_CONFIG.map(badge => {
             const IconComponent = badge.icon
             const isBadgeVisible = badgeVisibility[badge.key]
-            const isSidebarVisible = badge.hasSidebarEntry ? sidebarBadgeVisibility[badge.key as keyof SidebarBadgeVisibility] : false
-            
+            const isSidebarVisible = badge.hasSidebarEntry
+              ? sidebarBadgeVisibility[badge.key as keyof SidebarBadgeVisibility]
+              : false
+
             return (
               <div key={badge.key} className={styles.badgeItem}>
                 <div className={styles.badgeItemLeft}>
@@ -149,7 +163,7 @@ function GlobalLayoutSettings(): JSX.Element {
                     <span className={styles.switchLabel}>右侧徽章</span>
                     <Switch
                       checked={isBadgeVisible}
-                      onChange={(checked) => handleBadgeToggle(badge.key, checked)}
+                      onChange={checked => handleBadgeToggle(badge.key, checked)}
                       size="small"
                     />
                   </div>
@@ -160,7 +174,12 @@ function GlobalLayoutSettings(): JSX.Element {
                         <span className={styles.switchLabel}>左侧入口</span>
                         <Switch
                           checked={isSidebarVisible}
-                          onChange={(checked) => handleSidebarBadgeToggle(badge.key as keyof SidebarBadgeVisibility, checked)}
+                          onChange={checked =>
+                            handleSidebarBadgeToggle(
+                              badge.key as keyof SidebarBadgeVisibility,
+                              checked
+                            )
+                          }
                           size="small"
                         />
                       </div>
@@ -174,10 +193,8 @@ function GlobalLayoutSettings(): JSX.Element {
       </Card>
 
       <Card title="文件显示" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          文件树的显示选项。
-        </p>
-        
+        <p className={baseStyles.hint}>文件树的显示选项。</p>
+
         <div className={styles.badgeList}>
           <div className={styles.badgeItem}>
             <div className={styles.badgeItemLeft}>
@@ -186,7 +203,9 @@ function GlobalLayoutSettings(): JSX.Element {
               </div>
               <div className={styles.badgeInfo}>
                 <span className={styles.badgeName}>显示隐藏文件</span>
-                <span className={styles.badgeDesc}>显示以 . 开头的文件和目录（如 .novelhelper）</span>
+                <span className={styles.badgeDesc}>
+                  显示以 . 开头的文件和目录（如 .novelhelper）
+                </span>
               </div>
             </div>
             <Switch

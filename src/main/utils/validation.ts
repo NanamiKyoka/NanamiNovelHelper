@@ -79,14 +79,18 @@ export const validators = {
 
   /** 验证字符串数组 */
   stringArray: (value: unknown, field: string): string[] => {
-    if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
+    if (!Array.isArray(value) || !value.every(item => typeof item === 'string')) {
       throw new ValidationError(field, 'string[]', value)
     }
     return value as string[]
   },
 
   /** 验证可选值 */
-  optional: <T>(validator: (value: unknown, field: string) => T, value: unknown, field: string): T | undefined => {
+  optional: <T>(
+    validator: (value: unknown, field: string) => T,
+    value: unknown,
+    field: string
+  ): T | undefined => {
     if (value === undefined || value === null) {
       return undefined
     }
@@ -94,12 +98,14 @@ export const validators = {
   },
 
   /** 验证枚举值 */
-  enum: <T extends string>(values: readonly T[]) => (value: unknown, field: string): T => {
-    if (typeof value !== 'string' || !values.includes(value as T)) {
-      throw new ValidationError(field, `枚举值 (${values.join(' | ')})`, value)
+  enum:
+    <T extends string>(values: readonly T[]) =>
+    (value: unknown, field: string): T => {
+      if (typeof value !== 'string' || !values.includes(value as T)) {
+        throw new ValidationError(field, `枚举值 (${values.join(' | ')})`, value)
+      }
+      return value as T
     }
-    return value as T
-  }
 }
 
 /**

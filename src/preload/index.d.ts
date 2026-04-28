@@ -261,7 +261,16 @@ interface ProjectBackupSettings {
 /**
  * 徽章类型
  */
-type BadgeType = 'vocabulary' | 'sensitive' | 'randomName' | 'relationship' | 'timeline' | 'sequenceChart' | 'organization' | 'map' | 'terminal'
+type BadgeType =
+  | 'vocabulary'
+  | 'sensitive'
+  | 'randomName'
+  | 'relationship'
+  | 'timeline'
+  | 'sequenceChart'
+  | 'organization'
+  | 'map'
+  | 'terminal'
 
 /**
  * 默认徽章顺序
@@ -721,7 +730,15 @@ interface ShellInfo {
  */
 type GitMode = 'system' | 'isomorphic' | 'auto'
 
-type GitFileStatus = 'modified' | 'added' | 'deleted' | 'renamed' | 'copied' | 'untracked' | 'ignored' | 'unmodified'
+type GitFileStatus =
+  | 'modified'
+  | 'added'
+  | 'deleted'
+  | 'renamed'
+  | 'copied'
+  | 'untracked'
+  | 'ignored'
+  | 'unmodified'
 
 type GitFileStatusShort = 'M' | 'A' | 'D' | 'R' | 'C' | '?' | '!' | ' '
 
@@ -851,7 +868,9 @@ export interface WindowAPI {
   removeMaximizeListener: () => void
   onFullScreenChange: (callback: (isFullscreen: boolean) => void) => void
   removeFullScreenListener: () => void
-  onFileChange: (callback: (event: { type: 'add' | 'change' | 'unlink'; path: string }) => void) => void
+  onFileChange: (
+    callback: (event: { type: 'add' | 'change' | 'unlink'; path: string }) => void
+  ) => void
   removeFileChangeListener: () => void
 }
 
@@ -886,7 +905,9 @@ export interface VocabularyAPI {
   // 条目管理
   loadEntries: (typeId?: string) => Promise<VocabularyEntry[]>
   saveEntries: (typeId: string, entries: VocabularyEntry[]) => Promise<void>
-  addEntry: (entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<VocabularyEntry>
+  addEntry: (
+    entry: Omit<VocabularyEntry, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<VocabularyEntry>
   updateEntry: (id: string, updates: Partial<VocabularyEntry>) => Promise<VocabularyEntry | null>
   deleteEntry: (id: string) => Promise<boolean>
   // 关联文件
@@ -907,7 +928,9 @@ export interface SensitiveAPI {
   addWord: (word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SensitiveWord>
   updateWord: (id: string, updates: Partial<SensitiveWord>) => Promise<SensitiveWord | null>
   deleteWord: (id: string) => Promise<boolean>
-  importWords: (words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<number>
+  importWords: (
+    words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>>
+  ) => Promise<number>
 }
 
 /**
@@ -941,7 +964,9 @@ export interface GlobalSettingsAPI {
   getBadgeOrder: () => Promise<BadgeType[]>
   updateBadgeOrder: (order: BadgeType[]) => Promise<BadgeType[]>
   getSidebarBadgeVisibility: () => Promise<SidebarBadgeVisibility>
-  updateSidebarBadgeVisibility: (settings: Partial<SidebarBadgeVisibility>) => Promise<SidebarBadgeVisibility>
+  updateSidebarBadgeVisibility: (
+    settings: Partial<SidebarBadgeVisibility>
+  ) => Promise<SidebarBadgeVisibility>
   getSidebarBadgeOrder: () => Promise<string[]>
   updateSidebarBadgeOrder: (order: string[]) => Promise<string[]>
   getShowHiddenFiles: () => Promise<boolean>
@@ -965,7 +990,9 @@ export interface ProjectSettingsAPI {
   getEditor: () => Promise<ProjectEditorSettings>
   updateEditor: (settings: Partial<ProjectEditorSettings>) => Promise<ProjectEditorSettings>
   getHighlight: () => Promise<ProjectHighlightSettings>
-  updateHighlight: (settings: Partial<ProjectHighlightSettings>) => Promise<ProjectHighlightSettings>
+  updateHighlight: (
+    settings: Partial<ProjectHighlightSettings>
+  ) => Promise<ProjectHighlightSettings>
   getBackup: () => Promise<ProjectBackupSettings>
   updateBackup: (settings: Partial<ProjectBackupSettings>) => Promise<ProjectBackupSettings>
   getAutoCreateVocabularyFile: () => Promise<boolean>
@@ -1004,20 +1031,44 @@ export interface RelationshipAPI {
   getList: () => Promise<RelationshipGraphMeta[]>
   get: (graphId: string) => Promise<RelationshipGraph | null>
   create: (options: CreateRelationshipGraphOptions) => Promise<RelationshipGraph>
-  update: (graphId: string, updates: UpdateRelationshipGraphOptions) => Promise<RelationshipGraph | null>
+  update: (
+    graphId: string,
+    updates: UpdateRelationshipGraphOptions
+  ) => Promise<RelationshipGraph | null>
   delete: (graphId: string) => Promise<boolean>
   // 节点管理
-  addNode: (graphId: string, node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>) => Promise<RelationshipNode | null>
-  updateNode: (graphId: string, nodeId: string, updates: Partial<RelationshipNode>) => Promise<RelationshipNode | null>
+  addNode: (
+    graphId: string,
+    node: Omit<RelationshipNode, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<RelationshipNode | null>
+  updateNode: (
+    graphId: string,
+    nodeId: string,
+    updates: Partial<RelationshipNode>
+  ) => Promise<RelationshipNode | null>
   deleteNode: (graphId: string, nodeId: string) => Promise<boolean>
   // 边管理
-  addEdge: (graphId: string, edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>) => Promise<RelationshipEdge | null>
-  updateEdge: (graphId: string, edgeId: string, updates: Partial<RelationshipEdge>) => Promise<RelationshipEdge | null>
+  addEdge: (
+    graphId: string,
+    edge: Omit<RelationshipEdge, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<RelationshipEdge | null>
+  updateEdge: (
+    graphId: string,
+    edgeId: string,
+    updates: Partial<RelationshipEdge>
+  ) => Promise<RelationshipEdge | null>
   deleteEdge: (graphId: string, edgeId: string) => Promise<boolean>
   // 关系类型管理
   getRelationTypes: (graphId: string) => Promise<RelationType[]>
-  addRelationType: (graphId: string, type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>) => Promise<RelationType | null>
-  updateRelationType: (graphId: string, typeId: string, updates: Partial<RelationType>) => Promise<RelationType | null>
+  addRelationType: (
+    graphId: string,
+    type: Omit<RelationType, 'id' | 'isBuiltIn' | 'order'>
+  ) => Promise<RelationType | null>
+  updateRelationType: (
+    graphId: string,
+    typeId: string,
+    updates: Partial<RelationType>
+  ) => Promise<RelationType | null>
   deleteRelationType: (graphId: string, typeId: string) => Promise<boolean>
   // 缩略图
   saveThumbnail: (graphId: string, dataUrl: string) => Promise<string | null>
@@ -1040,16 +1091,35 @@ export interface TimelineAPI {
   update: (timelineId: string, updates: UpdateTimelineOptions) => Promise<Timeline | null>
   delete: (timelineId: string) => Promise<boolean>
   // 节点管理
-  addNode: (timelineId: string, node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<TimelineNode | null>
-  updateNode: (timelineId: string, nodeId: string, updates: Partial<TimelineNode>) => Promise<TimelineNode | null>
+  addNode: (
+    timelineId: string,
+    node: Omit<TimelineNode, 'id' | 'createdAt' | 'updatedAt' | 'order'>
+  ) => Promise<TimelineNode | null>
+  updateNode: (
+    timelineId: string,
+    nodeId: string,
+    updates: Partial<TimelineNode>
+  ) => Promise<TimelineNode | null>
   deleteNode: (timelineId: string, nodeId: string) => Promise<boolean>
   batchDeleteNodes: (timelineId: string, nodeIds: string[]) => Promise<number>
   moveNode: (timelineId: string, nodeId: string, newOrder: number) => Promise<TimelineNode[] | null>
-  batchMoveNodes: (timelineId: string, nodeIds: string[], targetOrder: number) => Promise<TimelineNode[] | null>
+  batchMoveNodes: (
+    timelineId: string,
+    nodeIds: string[],
+    targetOrder: number
+  ) => Promise<TimelineNode[] | null>
   updateNodes: (timelineId: string, nodes: TimelineNode[]) => Promise<Timeline | null>
   // 分支管理
-  createBranch: (parentTimelineId: string, branchFromNodeId: string, name?: string) => Promise<Timeline | null>
-  mergeBranch: (branchTimelineId: string, targetTimelineId: string, targetNodeId?: string) => Promise<boolean>
+  createBranch: (
+    parentTimelineId: string,
+    branchFromNodeId: string,
+    name?: string
+  ) => Promise<Timeline | null>
+  mergeBranch: (
+    branchTimelineId: string,
+    targetTimelineId: string,
+    targetNodeId?: string
+  ) => Promise<boolean>
   getBranches: (parentTimelineId: string) => Promise<TimelineMeta[]>
   getBranchSourceNode: (timelineId: string) => Promise<TimelineNode | null>
   // 缩略图
@@ -1077,16 +1147,32 @@ export interface SequenceChartAPI {
   delete: (chartId: string) => Promise<boolean>
   // 事件管理
   addEvent: (chartId: string, event: CreateSequenceEventOptions) => Promise<SequenceEvent | null>
-  updateEvent: (chartId: string, eventId: string, updates: UpdateSequenceEventOptions) => Promise<SequenceEvent | null>
+  updateEvent: (
+    chartId: string,
+    eventId: string,
+    updates: UpdateSequenceEventOptions
+  ) => Promise<SequenceEvent | null>
   deleteEvent: (chartId: string, eventId: string) => Promise<boolean>
   batchDeleteEvents: (chartId: string, eventIds: string[]) => Promise<number>
   moveEvent: (chartId: string, eventId: string, newOrder: number) => Promise<SequenceEvent[] | null>
-  updateEventTime: (chartId: string, eventId: string, cellStart: number, cellEnd: number) => Promise<SequenceEvent | null>
+  updateEventTime: (
+    chartId: string,
+    eventId: string,
+    cellStart: number,
+    cellEnd: number
+  ) => Promise<SequenceEvent | null>
   updateEvents: (chartId: string, events: SequenceEvent[]) => Promise<SequenceChart | null>
   // 事件类型管理
   getEventTypes: (chartId: string) => Promise<SequenceEventType[]>
-  addEventType: (chartId: string, type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>) => Promise<SequenceEventType | null>
-  updateEventType: (chartId: string, typeId: string, updates: Partial<SequenceEventType>) => Promise<SequenceEventType | null>
+  addEventType: (
+    chartId: string,
+    type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>
+  ) => Promise<SequenceEventType | null>
+  updateEventType: (
+    chartId: string,
+    typeId: string,
+    updates: Partial<SequenceEventType>
+  ) => Promise<SequenceEventType | null>
   deleteEventType: (chartId: string, typeId: string) => Promise<boolean>
   // 缩略图
   saveThumbnail: (chartId: string, dataUrl: string) => Promise<string | null>
@@ -1109,13 +1195,27 @@ export interface OrganizationAPI {
   getList: () => Promise<OrganizationGraphMeta[]>
   get: (graphId: string) => Promise<OrganizationGraph | null>
   create: (options: CreateOrganizationGraphOptions) => Promise<OrganizationGraph>
-  update: (graphId: string, updates: UpdateOrganizationGraphOptions) => Promise<OrganizationGraph | null>
+  update: (
+    graphId: string,
+    updates: UpdateOrganizationGraphOptions
+  ) => Promise<OrganizationGraph | null>
   delete: (graphId: string) => Promise<boolean>
   // 节点管理
-  addNode: (graphId: string, options: CreateOrganizationNodeOptions) => Promise<OrganizationNode | null>
-  updateNode: (graphId: string, nodeId: string, updates: UpdateOrganizationNodeOptions) => Promise<OrganizationNode | null>
+  addNode: (
+    graphId: string,
+    options: CreateOrganizationNodeOptions
+  ) => Promise<OrganizationNode | null>
+  updateNode: (
+    graphId: string,
+    nodeId: string,
+    updates: UpdateOrganizationNodeOptions
+  ) => Promise<OrganizationNode | null>
   deleteNode: (graphId: string, nodeId: string) => Promise<boolean>
-  moveNode: (graphId: string, nodeId: string, newParentId: string | undefined) => Promise<OrganizationNode | null>
+  moveNode: (
+    graphId: string,
+    nodeId: string,
+    newParentId: string | undefined
+  ) => Promise<OrganizationNode | null>
   getChildren: (graphId: string, parentId: string | undefined) => Promise<OrganizationNode[]>
   getDescendants: (graphId: string, nodeId: string) => Promise<OrganizationNode[]>
   getAncestors: (graphId: string, nodeId: string) => Promise<OrganizationNode[]>
@@ -1135,22 +1235,36 @@ export interface OrganizationAPI {
 export interface FileAPI {
   exists: (path: string) => Promise<boolean>
   read: (path: string, encoding?: BufferEncoding) => Promise<string>
-  write: (path: string, content: string, options?: {
-    encoding?: BufferEncoding
-    createParentDir?: boolean
-  }) => Promise<void>
+  write: (
+    path: string,
+    content: string,
+    options?: {
+      encoding?: BufferEncoding
+      createParentDir?: boolean
+    }
+  ) => Promise<void>
   mkdir: (path: string, recursive?: boolean) => Promise<void>
-  delete: (path: string, options?: {
-    recursive?: boolean
-    useTrash?: boolean
-  }) => Promise<void>
+  delete: (
+    path: string,
+    options?: {
+      recursive?: boolean
+      useTrash?: boolean
+    }
+  ) => Promise<void>
   rename: (oldPath: string, newPath: string) => Promise<void>
   copy: (source: string, destination: string, overwrite?: boolean) => Promise<void>
-  list: (path: string, options?: {
-    recursive?: boolean
-    includeHidden?: boolean
-  }) => Promise<FileNode[]>
-  getTree: (includeHidden?: boolean, sortOptions?: SortOptions, hiddenItems?: string[]) => Promise<FileNode[]>
+  list: (
+    path: string,
+    options?: {
+      recursive?: boolean
+      includeHidden?: boolean
+    }
+  ) => Promise<FileNode[]>
+  getTree: (
+    includeHidden?: boolean,
+    sortOptions?: SortOptions,
+    hiddenItems?: string[]
+  ) => Promise<FileNode[]>
   getInfo: (path: string) => Promise<FileNode>
   showSaveDialog: (options?: {
     title?: string
@@ -1213,7 +1327,11 @@ export interface TerminalWindowAPI {
 export interface GitAPI {
   // 仓库管理
   isRepo: (repoPath: string) => Promise<boolean>
-  init: (options: { path: string; defaultBranch?: string; initialCommit?: string }) => Promise<GitResult<void>>
+  init: (options: {
+    path: string
+    defaultBranch?: string
+    initialCommit?: string
+  }) => Promise<GitResult<void>>
   status: (repoPath: string) => Promise<GitResult<GitRepositoryStatus>>
   // 提交管理
   log: (repoPath: string, options?: GitLogOptions) => Promise<GitResult<GitCommit[]>>
@@ -1238,7 +1356,11 @@ export interface GitAPI {
   getMode: () => Promise<{ mode: GitMode; useSystemGit: boolean }>
   // 提交详情
   getCommitFiles: (repoPath: string, commitHash: string) => Promise<GitResult<GitFileChange[]>>
-  getCommitFileDiff: (repoPath: string, commitHash: string, filepath: string) => Promise<GitResult<GitFileDiff>>
+  getCommitFileDiff: (
+    repoPath: string,
+    commitHash: string,
+    filepath: string
+  ) => Promise<GitResult<GitFileDiff>>
 }
 
 declare global {

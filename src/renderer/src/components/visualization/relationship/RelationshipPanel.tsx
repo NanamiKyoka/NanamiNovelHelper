@@ -39,9 +39,7 @@ function RelationshipPanel(): JSX.Element {
 
   return (
     <div className={styles.container}>
-      {viewMode === 'list' && (
-        <RelationshipGraphList onSelectGraph={handleSelectGraph} />
-      )}
+      {viewMode === 'list' && <RelationshipGraphList onSelectGraph={handleSelectGraph} />}
       {viewMode === 'preview' && currentGraphId && (
         <RelationshipGraphPreview
           graphId={currentGraphId}
@@ -50,10 +48,7 @@ function RelationshipPanel(): JSX.Element {
         />
       )}
       {viewMode === 'editor' && currentGraphId && (
-        <RelationshipGraphFullscreen
-          graphId={currentGraphId}
-          onBack={handleExitEditor}
-        />
+        <RelationshipGraphFullscreen graphId={currentGraphId} onBack={handleExitEditor} />
       )}
     </div>
   )

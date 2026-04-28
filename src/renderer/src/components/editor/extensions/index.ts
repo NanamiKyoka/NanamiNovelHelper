@@ -126,8 +126,5 @@ export const CustomKeymap = Extension.create({
  * 用于编辑器初始化
  */
 export function getBaseExtensions() {
-  return [
-    TabInsert,
-    CustomKeymap
-  ]
+  return [TabInsert, CustomKeymap]
 }

@@ -1,6 +1,6 @@
 /**
  * 错误处理工具
- * 
+ *
  * 统一的错误处理机制，确保错误信息一致性和可追踪性
  */
 
@@ -15,25 +15,25 @@ export enum AppErrorCode {
   PROJECT_CREATE_FAILED = 'PROJECT_CREATE_FAILED',
   PROJECT_OPEN_FAILED = 'PROJECT_OPEN_FAILED',
   PROJECT_SAVE_FAILED = 'PROJECT_SAVE_FAILED',
-  
+
   // 文件相关
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
   FILE_READ_FAILED = 'FILE_READ_FAILED',
   FILE_WRITE_FAILED = 'FILE_WRITE_FAILED',
-  
+
   // 词汇相关
   VOCABULARY_LOAD_FAILED = 'VOCABULARY_LOAD_FAILED',
   VOCABULARY_SAVE_FAILED = 'VOCABULARY_SAVE_FAILED',
-  
+
   // 可视化相关
   GRAPH_LOAD_FAILED = 'GRAPH_LOAD_FAILED',
   GRAPH_SAVE_FAILED = 'GRAPH_SAVE_FAILED',
-  
+
   // Git 相关
   GIT_OPERATION_FAILED = 'GIT_OPERATION_FAILED',
-  
+
   // 通用错误
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
 /**
@@ -104,14 +104,14 @@ const ERROR_RECOVERY_MAP: Partial<Record<AppErrorCode, ErrorRecovery>> = {
 export class AppError extends Error {
   code: AppErrorCode
   cause?: Error
-  
+
   constructor(code: AppErrorCode, message: string, cause?: Error) {
     super(message)
     this.code = code
     this.cause = cause
     this.name = 'AppError'
   }
-  
+
   /**
    * 获取恢复建议
    */
@@ -128,11 +128,11 @@ export function extractErrorMessage(error: unknown, fallback = '操作失败'): 
   if (error instanceof AppError) {
     return error.message
   }
-  
+
   if (error instanceof Error) {
     // 处理常见错误类型
     const message = error.message
-    
+
     // 文件系统错误
     if (message.includes('ENOENT')) {
       return '文件或目录不存在'
@@ -146,29 +146,29 @@ export function extractErrorMessage(error: unknown, fallback = '操作失败'): 
     if (message.includes('EISDIR')) {
       return '操作的目标是一个目录'
     }
-    
+
     // JSON 解析错误
     if (message.includes('JSON') || message.includes('parse')) {
       return '数据格式错误，无法解析'
     }
-    
+
     // 网络错误
     if (message.includes('network') || message.includes('Network')) {
       return '网络连接失败'
     }
-    
+
     return message || fallback
   }
-  
+
   if (typeof error === 'string') {
     return error || fallback
   }
-  
+
   // 处理 IPC 返回的错误对象
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message: unknown }).message) || fallback
   }
-  
+
   return fallback
 }
 
@@ -190,11 +190,11 @@ interface ErrorHandlerOptions {
 
 /**
  * 统一错误处理器
- * 
+ *
  * @param error 原始错误
  * @param options 处理选项
  * @returns 用户友好的错误信息
- * 
+ *
  * @example
  * try {
  *   await someAsyncOperation()
@@ -203,10 +203,7 @@ interface ErrorHandlerOptions {
  *   set({ error: message })
  * }
  */
-export function handleError(
-  error: unknown,
-  options: ErrorHandlerOptions = {}
-): string {
+export function handleError(error: unknown, options: ErrorHandlerOptions = {}): string {
   const {
     log = true,
     logPrefix = '[Error]',
@@ -224,7 +221,7 @@ export function handleError(
   // 显示通知
   if (showNotification) {
     const recovery = error instanceof AppError ? error.getRecovery() : null
-    
+
     notification.error({
       message: '操作失败',
       description: (
@@ -253,13 +250,13 @@ export function handleError(
 
 /**
  * 创建带默认前缀的错误处理器
- * 
+ *
  * @param prefix 日志前缀
  * @returns 预配置的错误处理函数
- * 
+ *
  * @example
  * const handleError = createErrorHandler('[ProjectStore]')
- * 
+ *
  * try {
  *   await openProject(path)
  * } catch (error) {
@@ -274,14 +271,14 @@ export function createErrorHandler(prefix: string) {
 
 /**
  * 显示带恢复建议的错误通知
- * 
+ *
  * @param error 错误对象
  * @param fallbackMessage 默认错误信息
  */
 export function showErrorWithRecovery(error: unknown, fallbackMessage = '操作失败'): void {
   const message = extractErrorMessage(error, fallbackMessage)
   const recovery = error instanceof AppError ? error.getRecovery() : null
-  
+
   notification.error({
     message: '操作失败',
     description: (
@@ -317,22 +314,22 @@ export function showErrorWithRecovery(error: unknown, fallbackMessage = '操作�
 /**
  * 异步操作包装器
  * 自动处理错误并返回标准化的结果
- * 
+ *
  * @param operation 异步操作
  * @param options 错误处理选项
  * @returns [数据, 错误信息]
- * 
+ *
  * @example
  * const [project, error] = await tryAsync(
  *   () => window.electron.project.open(path),
  *   { fallbackMessage: '打开项目失败' }
  * )
- * 
+ *
  * if (error) {
  *   set({ error })
  *   return
  * }
- * 
+ *
  * set({ project })
  */
 export async function tryAsync<T>(
@@ -372,5 +369,5 @@ export default {
   createErrorHandler,
   showErrorWithRecovery,
   tryAsync,
-  trySync,
+  trySync
 }

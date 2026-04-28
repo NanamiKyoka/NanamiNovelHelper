@@ -1,6 +1,6 @@
 /**
  * 悬浮卡片状态 Hook
- * 
+ *
  * 管理编辑器中词汇高亮悬浮卡片的状态
  */
 
@@ -53,20 +53,18 @@ export function useHoverCard(options: UseHoverCardOptions = {}): UseHoverCardRet
 
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const show = useCallback((
-    entryId: string,
-    event: MouseEvent,
-    isSensitive = false,
-    severity?: string
-  ) => {
-    setState({
-      visible: true,
-      entryId,
-      isSensitive,
-      severity,
-      position: { x: event.clientX, y: event.clientY }
-    })
-  }, [])
+  const show = useCallback(
+    (entryId: string, event: MouseEvent, isSensitive = false, severity?: string) => {
+      setState({
+        visible: true,
+        entryId,
+        isSensitive,
+        severity,
+        position: { x: event.clientX, y: event.clientY }
+      })
+    },
+    []
+  )
 
   const hide = useCallback(() => {
     setState(prev => ({ ...prev, visible: false }))
@@ -79,22 +77,25 @@ export function useHoverCard(options: UseHoverCardOptions = {}): UseHoverCardRet
     }
   }, [])
 
-  const handleHover = useCallback((entryId: string, event: MouseEvent) => {
-    // 清除之前的计时器
-    cancelHover()
+  const handleHover = useCallback(
+    (entryId: string, event: MouseEvent) => {
+      // 清除之前的计时器
+      cancelHover()
 
-    // 设置延迟显示
-    const delay = config?.delay || defaultDelay
-    hoverTimeoutRef.current = setTimeout(() => {
-      const target = event.target as HTMLElement
-      const highlightEl = target.closest('[data-entry-id]')
-      if (highlightEl) {
-        const isSensitive = highlightEl.getAttribute('data-sensitive') === 'true'
-        const severity = highlightEl.getAttribute('data-severity') || undefined
-        show(entryId, event, isSensitive, severity)
-      }
-    }, delay)
-  }, [config, defaultDelay, cancelHover, show])
+      // 设置延迟显示
+      const delay = config?.delay || defaultDelay
+      hoverTimeoutRef.current = setTimeout(() => {
+        const target = event.target as HTMLElement
+        const highlightEl = target.closest('[data-entry-id]')
+        if (highlightEl) {
+          const isSensitive = highlightEl.getAttribute('data-sensitive') === 'true'
+          const severity = highlightEl.getAttribute('data-severity') || undefined
+          show(entryId, event, isSensitive, severity)
+        }
+      }, delay)
+    },
+    [config, defaultDelay, cancelHover, show]
+  )
 
   return {
     state,

@@ -1,6 +1,6 @@
 /**
  * 项目状态管理
- * 
+ *
  * 注意：createProject、openProject、closeProject 方法仅管理项目自身的状态
  * 跨 Store 的协调操作（如初始化 settingsStore）应由 useProjectActions hook 处理
  * 组件应优先使用 useProjectActions hook

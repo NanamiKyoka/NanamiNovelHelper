@@ -15,11 +15,11 @@ function detectLinkType(href: string): LinkType {
   if (href.startsWith('#')) {
     return 'heading'
   }
-  
+
   if (href.startsWith('http://') || href.startsWith('https://')) {
     return 'external'
   }
-  
+
   return 'file'
 }
 
@@ -33,12 +33,12 @@ function slugify(text: string): string {
 
 function findHeadingPosition(editor: Editor, headingId: string): number | null {
   let foundPos: number | null = null
-  
+
   editor.state.doc.descendants((node, pos) => {
     if (node.type.name === 'heading') {
       const text = node.textContent
       const id = slugify(text)
-      
+
       if (id === headingId || text === headingId) {
         foundPos = pos
         return false
@@ -46,7 +46,7 @@ function findHeadingPosition(editor: Editor, headingId: string): number | null {
     }
     return true
   })
-  
+
   return foundPos
 }
 
@@ -66,50 +66,50 @@ export const SmartLink = TiptapLink.extend<LinkOptions>({
 
   addProseMirrorPlugins() {
     const plugins = this.parent?.() || []
-    
+
     const clickPlugin = new Plugin({
       key: new PluginKey('smartLinkClickHandler'),
       props: {
         handleClick: (view: EditorView, pos: number, event: MouseEvent) => {
           const attrs = this.editor.getAttributes('link')
-          
+
           if (!attrs.href) {
             return false
           }
-          
+
           const target = event.target as HTMLElement
           const linkElement = target.closest('a.editor-link')
-          
+
           if (!linkElement) {
             return false
           }
-          
+
           event.preventDefault()
-          
+
           const href = attrs.href as string
           const linkType = detectLinkType(href)
-          
+
           if (this.options.onLinkClick) {
             this.options.onLinkClick(href, this.editor)
             return true
           }
-          
+
           switch (linkType) {
             case 'external':
               window.electron.shell.openExternal(href)
               break
-              
+
             case 'heading': {
               const headingId = href.substring(1)
               const headingPos = findHeadingPosition(this.editor, headingId)
-              
+
               if (headingPos !== null) {
                 this.editor.chain().focus().setTextSelection(headingPos).run()
-                
+
                 requestAnimationFrame(() => {
                   const editorDom = this.editor.view.dom
                   const scrollContainer = editorDom.closest('.editorContainer') as HTMLElement
-                  
+
                   if (scrollContainer) {
                     const selection = window.getSelection()
                     if (selection && selection.rangeCount > 0) {
@@ -129,15 +129,15 @@ export const SmartLink = TiptapLink.extend<LinkOptions>({
               }
               break
             }
-            
+
             case 'file': {
               const editorWithFilePath = this.editor as Editor & { currentFilePath?: string }
               const currentFilePath = editorWithFilePath.currentFilePath
-              
+
               if (currentFilePath && href) {
                 window.dispatchEvent(
                   new CustomEvent('editor:openRelativeFile', {
-                    detail: { 
+                    detail: {
                       relativePath: href,
                       currentFilePath: currentFilePath
                     }
@@ -147,12 +147,12 @@ export const SmartLink = TiptapLink.extend<LinkOptions>({
               break
             }
           }
-          
+
           return true
         }
       }
     })
-    
+
     return [...plugins, clickPlugin]
   }
 })

@@ -13,7 +13,12 @@ import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
 import { useEditorExtensions, useHoverCard } from '@hooks'
-import { updateHighlightPatterns, updateHighlightStyleConfig, updateHighlightEnabled, clearHighlightCache } from './extensions/vocabularyHighlight'
+import {
+  updateHighlightPatterns,
+  updateHighlightStyleConfig,
+  updateHighlightEnabled,
+  clearHighlightCache
+} from './extensions/vocabularyHighlight'
 import { HighlightHoverCard } from './HighlightHoverCard'
 import { EditorToolbar } from './EditorToolbar'
 import { SearchReplacePanel } from './SearchReplacePanel'
@@ -32,28 +37,28 @@ interface NovelEditorProps {
 
 export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorProps) {
   // Store state
-  const settings = useEditorStore((state) => state.settings)
-  const updateSettings = useEditorStore((state) => state.updateSettings)
-  const updateContent = useEditorStore((state) => state.updateContent)
-  const getCurrentContent = useEditorStore((state) => state.getCurrentContent)
-  const saveEditorState = useEditorStore((state) => state.saveEditorState)
-  const getEditorState = useEditorStore((state) => state.getEditorState)
-  const activeTabId = useEditorStore((state) => state.activeTabId)
-  const tabs = useEditorStore((state) => state.tabs)
-  const updateCursorPosition = useEditorStore((state) => state.updateCursorPosition)
-  const setSelectedText = useUIStore((state) => state.setSelectedText)
-  const loadFileContent = useEditorStore((state) => state.loadFileContent)
-  const updateWordCount = useEditorStore((state) => state.updateWordCount)
-  
+  const settings = useEditorStore(state => state.settings)
+  const updateSettings = useEditorStore(state => state.updateSettings)
+  const updateContent = useEditorStore(state => state.updateContent)
+  const getCurrentContent = useEditorStore(state => state.getCurrentContent)
+  const saveEditorState = useEditorStore(state => state.saveEditorState)
+  const getEditorState = useEditorStore(state => state.getEditorState)
+  const activeTabId = useEditorStore(state => state.activeTabId)
+  const tabs = useEditorStore(state => state.tabs)
+  const updateCursorPosition = useEditorStore(state => state.updateCursorPosition)
+  const setSelectedText = useUIStore(state => state.setSelectedText)
+  const loadFileContent = useEditorStore(state => state.loadFileContent)
+  const updateWordCount = useEditorStore(state => state.updateWordCount)
+
   // Local state
   const [isComposing, setIsComposing] = useState(false)
   const [searchPanelVisible, setSearchPanelVisible] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wordCountTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   // 高亮服务
   const { config, patterns, buildPatterns, hoverCardConfig } = useHighlightService()
-  
+
   // 词汇和敏感词 store
   const { entries, types, isLoaded: vocabLoaded, entriesLoaded } = useVocabularyStore()
   const { words: sensitiveWords, isLoaded: sensitiveLoaded } = useSensitiveStore()
@@ -61,25 +66,28 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   // 获取当前活动标签页的文件路径
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const currentFilePath = activeTab?.path || ''
-  
+
   // 文件路径追踪 refs
   const currentFilePathRef = useRef<string>(currentFilePath)
   const prevFilePathRef = useRef<string | null>(null)
-  
+
   // 同步 ref
   useEffect(() => {
     currentFilePathRef.current = currentFilePath
   }, [currentFilePath])
 
   // 防抖字数统计
-  const debouncedUpdateWordCount = useCallback((textContent: string) => {
-    if (wordCountTimeoutRef.current) {
-      clearTimeout(wordCountTimeoutRef.current)
-    }
-    wordCountTimeoutRef.current = setTimeout(() => {
-      updateWordCount(textContent)
-    }, WORD_COUNT_DEBOUNCE_MS)
-  }, [updateWordCount])
+  const debouncedUpdateWordCount = useCallback(
+    (textContent: string) => {
+      if (wordCountTimeoutRef.current) {
+        clearTimeout(wordCountTimeoutRef.current)
+      }
+      wordCountTimeoutRef.current = setTimeout(() => {
+        updateWordCount(textContent)
+      }, WORD_COUNT_DEBOUNCE_MS)
+    },
+    [updateWordCount]
+  )
 
   // 检查当前文件是否应该被排除高亮
   const shouldHighlight = useMemo(() => {
@@ -98,7 +106,16 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     if (vocabLoaded && entriesLoaded && sensitiveLoaded && config) {
       buildPatterns(entries, types, sensitiveWords)
     }
-  }, [entries, types, sensitiveWords, config, vocabLoaded, entriesLoaded, sensitiveLoaded, buildPatterns])
+  }, [
+    entries,
+    types,
+    sensitiveWords,
+    config,
+    vocabLoaded,
+    entriesLoaded,
+    sensitiveLoaded,
+    buildPatterns
+  ])
 
   // 悬浮卡片 hook
   const hoverCard = useHoverCard({ config: hoverCardConfig })
@@ -108,7 +125,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     styleConfig: config?.style,
     highlightEnabled: config?.scope.enabled ?? true,
     hoverCardConfig,
-    onVocabularyClick: (entryId) => {
+    onVocabularyClick: entryId => {
       console.log('Clicked vocabulary:', entryId)
     },
     onVocabularyHover: (entryId, event) => {
@@ -182,7 +199,8 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
       // 更新光标位置
       const $from = editor.state.doc.resolve(from)
-      const line = $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
+      const line =
+        $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
       const lineStart = from - $from.textOffset
       const column = from - lineStart + 1
       updateCursorPosition({ line, column })
@@ -237,7 +255,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
-    
+
     // 切换前，保存当前编辑器状态
     if (prevPath && prevPath !== currentPath) {
       saveEditorState(prevPath, editor.view.state)
@@ -247,7 +265,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     // 获取当前文件内容
     const currentContent = getCurrentContent()
     const savedState = getEditorState(currentPath)
-    
+
     if (savedState) {
       // 恢复缓存的状态
       try {
@@ -264,9 +282,17 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     // 切换标签后更新字数统计
     const textContent = editor.getText()
     updateWordCount(textContent)
-    
+
     prevFilePathRef.current = currentPath
-  }, [editor, getCurrentContent, activeTabId, currentFilePath, getEditorState, saveEditorState, updateWordCount])
+  }, [
+    editor,
+    getCurrentContent,
+    activeTabId,
+    currentFilePath,
+    getEditorState,
+    saveEditorState,
+    updateWordCount
+  ])
 
   // 更新编辑器设置
   useEffect(() => {
@@ -277,7 +303,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     editorElement.style.fontSize = `${settings.fontSize}px`
     editorElement.style.lineHeight = String(settings.lineHeight)
     editorElement.style.letterSpacing = `${settings.letterSpacing}px`
-    
+
     const editorContainer = editorElement.closest(`.${styles.editorContainer}`) as HTMLElement
     if (editorContainer) {
       editorContainer.style.setProperty('--paragraph-spacing', `${settings.paragraphSpacing}em`)
@@ -291,7 +317,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       if (wordCountTimeoutRef.current) clearTimeout(wordCountTimeoutRef.current)
     }
   }, [])
-  
+
   // 鼠标离开编辑器时关闭悬浮卡片
   useEffect(() => {
     if (!editor) return
@@ -307,9 +333,9 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   }, [editor, hoverCard])
 
   // 处理跳转到指定行/列的请求
-  const goToPositionRequest = useEditorStore((state) => state.goToPositionRequest)
-  const clearGoToPositionRequest = useEditorStore((state) => state.clearGoToPositionRequest)
-  
+  const goToPositionRequest = useEditorStore(state => state.goToPositionRequest)
+  const clearGoToPositionRequest = useEditorStore(state => state.clearGoToPositionRequest)
+
   useEffect(() => {
     if (!editor || !goToPositionRequest) return
 
@@ -324,50 +350,48 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
     const doc = editor.state.doc
     const allMatches: Array<{ from: number; to: number }> = []
-    
+
     doc.descendants((node, pos) => {
       if (node.isText && node.text) {
         const text = node.text
         let searchPos = 0
-        
+
         while (searchPos < text.length) {
           const index = text.indexOf(matchText, searchPos)
-          
+
           if (index === -1) break
-          
+
           allMatches.push({
             from: pos + index,
             to: pos + index + matchText.length
           })
-          
+
           searchPos = index + 1
         }
       }
       return true
     })
-    
+
     if (allMatches.length > 0 && matchIndex >= 0 && matchIndex < allMatches.length) {
       const targetMatch = allMatches[matchIndex]
-      
-      editor.chain()
-        .focus()
-        .setTextSelection({ from: targetMatch.from, to: targetMatch.to })
-        .run()
-      
+
+      editor.chain().focus().setTextSelection({ from: targetMatch.from, to: targetMatch.to }).run()
+
       requestAnimationFrame(() => {
         const editorDom = editor.view.dom
         const scrollContainer = editorDom.closest(`.${styles.editorContainer}`) as HTMLElement
-        
+
         if (scrollContainer) {
           const selection = window.getSelection()
           if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0)
             const rangeRect = range.getBoundingClientRect()
             const containerRect = scrollContainer.getBoundingClientRect()
-            
+
             const offsetInContainer = rangeRect.top - containerRect.top
-            const targetScrollTop = scrollContainer.scrollTop + offsetInContainer - containerRect.height / 3
-            
+            const targetScrollTop =
+              scrollContainer.scrollTop + offsetInContainer - containerRect.height / 3
+
             scrollContainer.scrollTo({
               top: Math.max(0, targetScrollTop),
               behavior: 'smooth'
@@ -383,10 +407,10 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   }, [editor, goToPositionRequest, currentFilePath, clearGoToPositionRequest])
 
   // 处理外部刷新请求
-  const externalRefreshRequest = useEditorStore((state) => state.externalRefreshRequest)
-  const clearExternalRefreshRequest = useEditorStore((state) => state.clearExternalRefreshRequest)
-  const lastRefreshTime = useEditorStore((state) => state.lastRefreshTime)
-  
+  const externalRefreshRequest = useEditorStore(state => state.externalRefreshRequest)
+  const clearExternalRefreshRequest = useEditorStore(state => state.clearExternalRefreshRequest)
+  const lastRefreshTime = useEditorStore(state => state.lastRefreshTime)
+
   useEffect(() => {
     if (!editor || !externalRefreshRequest) return
 
@@ -398,7 +422,13 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       })
     }
     clearExternalRefreshRequest()
-  }, [editor, externalRefreshRequest, loadFileContent, clearExternalRefreshRequest, updateWordCount])
+  }, [
+    editor,
+    externalRefreshRequest,
+    loadFileContent,
+    clearExternalRefreshRequest,
+    updateWordCount
+  ])
 
   // 监听全局刷新时间戳变化（Git操作后触发）
   useEffect(() => {
@@ -472,22 +502,22 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
   return (
     <div className={styles.editorWrapper}>
-      <EditorToolbar 
+      <EditorToolbar
         editor={editor}
         settings={settings}
         onSettingsChange={(key, value) => updateSettings({ [key]: value })}
         onOpenSearch={() => setSearchPanelVisible(true)}
         fileType={activeTab?.type}
       />
-      
+
       <SearchReplacePanel
         editor={editor}
         visible={searchPanelVisible}
         onClose={() => setSearchPanelVisible(false)}
       />
-      
+
       <EditorContent editor={editor} className={styles.editorContainer} />
-      
+
       <HighlightHoverCard
         entryId={hoverCard.state.entryId}
         isSensitive={hoverCard.state.isSensitive}
@@ -510,12 +540,12 @@ function restoreEditorContent(editor: ReturnType<typeof useEditor>, content: str
     tempDiv.innerHTML = content
     const parser = DOMParser.fromSchema(editor.schema)
     const newDoc = parser.parse(tempDiv)
-    
+
     const newState = EditorState.create({
       doc: newDoc,
       plugins: editor.view.state.plugins
     })
-    
+
     editor.view.updateState(newState)
   } catch {
     editor.chain().clearContent(false).setContent(content, false).run()

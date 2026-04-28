@@ -155,7 +155,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
 
   useEffect(() => {
     if (!editor) return
-    
+
     const editorWithFilePath = editor as typeof editor & { currentFilePath?: string }
     editorWithFilePath.currentFilePath = currentFilePath
   }, [editor, currentFilePath])
@@ -344,9 +344,11 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
     }
     const handleSelectAll = () => editor.chain().focus().selectAll().run()
     const handleOpenSearch = () => setSearchPanelVisible(true)
-    const handleOpenRelativeFile = async (event: CustomEvent<{ relativePath: string; currentFilePath: string }>) => {
+    const handleOpenRelativeFile = async (
+      event: CustomEvent<{ relativePath: string; currentFilePath: string }>
+    ) => {
       const { relativePath, currentFilePath } = event.detail
-      
+
       try {
         const dirPath = await window.electron.path.dirname(currentFilePath)
         const targetPath = await window.electron.path.join([dirPath, relativePath])

@@ -47,24 +47,24 @@ export class AhoCorasick {
 
   addPattern(pattern: HighlightPattern): void {
     const texts = [pattern.name, ...pattern.aliases]
-    
+
     for (const text of texts) {
       const key = pattern.caseSensitive ? text : text.toLowerCase()
       const id = `${pattern.id}:${key}`
-      
+
       if (this.patterns.has(id)) {
         this.pendingRemoves.delete(id)
       }
-      
+
       this.patterns.set(id, {
         id: pattern.id,
         text: key,
         pattern
       })
-      
+
       this.pendingAdds.add(id)
     }
-    
+
     this.built = false
   }
 
@@ -76,7 +76,7 @@ export class AhoCorasick {
 
   removePattern(patternId: string): void {
     const keysToRemove: string[] = []
-    
+
     for (const [key, internal] of this.patterns) {
       if (internal.pattern.id === patternId) {
         keysToRemove.push(key)
@@ -84,11 +84,11 @@ export class AhoCorasick {
         this.pendingAdds.delete(key)
       }
     }
-    
+
     for (const key of keysToRemove) {
       this.patterns.delete(key)
     }
-    
+
     if (keysToRemove.length > 0) {
       this.built = false
     }
@@ -135,11 +135,11 @@ export class AhoCorasick {
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i]
-      
+
       if (!node.children.has(char)) {
         node.children.set(char, this.createNode())
       }
-      
+
       node = node.children.get(char)!
     }
 
@@ -216,9 +216,11 @@ export class AhoCorasick {
           const start = i - output.length + 1
           const end = i + 1
           const matchedText = text.slice(start, end)
-          
-          const internal = this.patterns.get(`${output.patternId}:${this.caseSensitive ? matchedText : matchedText.toLowerCase()}`)
-          
+
+          const internal = this.patterns.get(
+            `${output.patternId}:${this.caseSensitive ? matchedText : matchedText.toLowerCase()}`
+          )
+
           if (internal) {
             results.push({
               start,
@@ -235,10 +237,13 @@ export class AhoCorasick {
     return results
   }
 
-  searchHighlights(text: string, options?: {
-    wholeWord?: boolean
-    filterPatterns?: Set<string>
-  }): HighlightMatch[] {
+  searchHighlights(
+    text: string,
+    options?: {
+      wholeWord?: boolean
+      filterPatterns?: Set<string>
+    }
+  ): HighlightMatch[] {
     const rawResults = this.search(text)
     const matches: HighlightMatch[] = []
     const seen = new Set<string>()
@@ -251,8 +256,9 @@ export class AhoCorasick {
       if (options?.wholeWord && result.pattern.matchMode === 'wholeWord') {
         const beforeChar = result.start > 0 ? text[result.start - 1] : ' '
         const afterChar = result.end < text.length ? text[result.end] : ' '
-        const isWordBoundary = !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(beforeChar) && 
-                               !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(afterChar)
+        const isWordBoundary =
+          !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(beforeChar) &&
+          !/[\u4e00-\u9fa5a-zA-Z0-9]/.test(afterChar)
         if (!isWordBoundary) continue
       }
 
@@ -288,7 +294,10 @@ export class AhoCorasick {
   }
 }
 
-export function createAhoCorasick(patterns: HighlightPattern[], caseSensitive: boolean = false): AhoCorasick {
+export function createAhoCorasick(
+  patterns: HighlightPattern[],
+  caseSensitive: boolean = false
+): AhoCorasick {
   const ac = new AhoCorasick(caseSensitive)
   ac.addPatterns(patterns)
   ac.build()

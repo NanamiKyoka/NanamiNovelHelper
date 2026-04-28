@@ -37,7 +37,10 @@ const MAIN_BUTTONS = [
 const SETTINGS_BUTTON = { id: 'settings', icon: SettingOutlined, tooltip: '设置' }
 
 // 全屏功能入口配置
-const SIDEBAR_BADGE_CONFIG: Record<SidebarBadgeType, { icon: React.ComponentType; tooltip: string }> = {
+const SIDEBAR_BADGE_CONFIG: Record<
+  SidebarBadgeType,
+  { icon: React.ComponentType; tooltip: string }
+> = {
   vocabulary: { icon: TagOutlined, tooltip: '词汇查询' },
   sensitive: { icon: WarningOutlined, tooltip: '敏感词' },
   relationship: { icon: ApartmentOutlined, tooltip: '关系图' },
@@ -51,20 +54,24 @@ const SIDEBAR_BADGE_CONFIG: Record<SidebarBadgeType, { icon: React.ComponentType
 // 拖拽数据类型
 const DRAG_DATA_TYPE = 'application/sidebar-badge'
 
-function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBarProps): JSX.Element {
-  const globalSettings = useSettingsStore((state) => state.globalSettings)
-  const updateSidebarBadgeOrder = useSettingsStore((state) => state.updateSidebarBadgeOrder)
-  
+function ActivityBar({
+  activePanel,
+  sidebarCollapsed,
+  onPanelClick
+}: ActivityBarProps): JSX.Element {
+  const globalSettings = useSettingsStore(state => state.globalSettings)
+  const updateSidebarBadgeOrder = useSettingsStore(state => state.updateSidebarBadgeOrder)
+
   // 从 globalSettings.layout 读取可见性和顺序
   const visibility: SidebarBadgeVisibility = useMemo(() => {
     return globalSettings.layout?.sidebarBadgeVisibility || DEFAULT_SIDEBAR_BADGE_VISIBILITY
   }, [globalSettings.layout?.sidebarBadgeVisibility])
-  
+
   const order: SidebarBadgeType[] = useMemo(() => {
     const savedOrder = globalSettings.layout?.sidebarBadgeOrder
     if (savedOrder && Array.isArray(savedOrder) && savedOrder.length > 0) {
       // 过滤有效项并补充缺失项
-      const validOrder = savedOrder.filter((b): b is SidebarBadgeType => 
+      const validOrder = savedOrder.filter((b): b is SidebarBadgeType =>
         DEFAULT_SIDEBAR_BADGE_ORDER.includes(b as SidebarBadgeType)
       )
       const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter(b => !validOrder.includes(b))
@@ -72,12 +79,12 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
     }
     return [...DEFAULT_SIDEBAR_BADGE_ORDER]
   }, [globalSettings.layout?.sidebarBadgeOrder])
-  
+
   // 拖拽状态
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [dropPosition, setDropPosition] = useState<'top' | 'bottom' | null>(null)
-  
+
   // 容器引用
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -94,7 +101,7 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
 
   // 获取可见的徽章列表（按排序）
   const visibleBadges = useMemo(() => {
-    return order.filter((id) => visibility[id])
+    return order.filter(id => visibility[id])
   }, [order, visibility])
 
   // 拖拽开始
@@ -102,7 +109,7 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
     setDraggedIndex(index)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData(DRAG_DATA_TYPE, String(index))
-    
+
     // 添加拖拽样式
     const target = e.currentTarget as HTMLElement
     setTimeout(() => {
@@ -120,24 +127,27 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
   }, [])
 
   // 拖拽悬停
-  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    
-    if (draggedIndex === null || draggedIndex === index) {
-      setDragOverIndex(null)
-      setDropPosition(null)
-      return
-    }
-    
-    // 计算插入位置
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const midY = rect.top + rect.height / 2
-    const position = e.clientY < midY ? 'top' : 'bottom'
-    
-    setDragOverIndex(index)
-    setDropPosition(position)
-  }, [draggedIndex])
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, index: number) => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+
+      if (draggedIndex === null || draggedIndex === index) {
+        setDragOverIndex(null)
+        setDropPosition(null)
+        return
+      }
+
+      // 计算插入位置
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      const midY = rect.top + rect.height / 2
+      const position = e.clientY < midY ? 'top' : 'bottom'
+
+      setDragOverIndex(index)
+      setDropPosition(position)
+    },
+    [draggedIndex]
+  )
 
   // 拖拽离开
   const handleDragLeave = useCallback(() => {
@@ -146,50 +156,52 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
   }, [])
 
   // 放置
-  const handleDrop = useCallback((e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault()
-    
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      return
-    }
-    
-    // 计算新顺序
-    const newOrder = [...visibleBadges]
-    const [draggedItem] = newOrder.splice(draggedIndex, 1)
-    
-    // 根据放置位置计算插入点
-    let insertIndex = targetIndex
-    if (draggedIndex < targetIndex) {
-      insertIndex = dropPosition === 'top' ? targetIndex - 1 : targetIndex
-    } else {
-      insertIndex = dropPosition === 'top' ? targetIndex : targetIndex + 1
-    }
-    
-    // 确保插入点在有效范围内
-    insertIndex = Math.max(0, Math.min(insertIndex, newOrder.length))
-    
-    newOrder.splice(insertIndex, 0, draggedItem)
-    
-    // 更新顺序 - 需要合并原有的不可见徽章
-    const hiddenBadges = order.filter((id) => !visibility[id])
-    const finalOrder = [...newOrder, ...hiddenBadges]
-    updateSidebarBadgeOrder(finalOrder)
-    
-    // 重置状态
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-    setDropPosition(null)
-  }, [draggedIndex, dropPosition, visibleBadges, order, visibility, updateSidebarBadgeOrder])
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetIndex: number) => {
+      e.preventDefault()
 
-  
+      if (draggedIndex === null || draggedIndex === targetIndex) {
+        return
+      }
+
+      // 计算新顺序
+      const newOrder = [...visibleBadges]
+      const [draggedItem] = newOrder.splice(draggedIndex, 1)
+
+      // 根据放置位置计算插入点
+      let insertIndex = targetIndex
+      if (draggedIndex < targetIndex) {
+        insertIndex = dropPosition === 'top' ? targetIndex - 1 : targetIndex
+      } else {
+        insertIndex = dropPosition === 'top' ? targetIndex : targetIndex + 1
+      }
+
+      // 确保插入点在有效范围内
+      insertIndex = Math.max(0, Math.min(insertIndex, newOrder.length))
+
+      newOrder.splice(insertIndex, 0, draggedItem)
+
+      // 更新顺序 - 需要合并原有的不可见徽章
+      const hiddenBadges = order.filter(id => !visibility[id])
+      const finalOrder = [...newOrder, ...hiddenBadges]
+      updateSidebarBadgeOrder(finalOrder)
+
+      // 重置状态
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      setDropPosition(null)
+    },
+    [draggedIndex, dropPosition, visibleBadges, order, visibility, updateSidebarBadgeOrder]
+  )
+
   return (
     <div className={styles.container} ref={containerRef}>
       {/* 主要按钮区域（文件、搜索、Git） */}
       <div className={styles.mainButtons} role="navigation" aria-label="主导航">
-        {MAIN_BUTTONS.map((button) => {
+        {MAIN_BUTTONS.map(button => {
           const IconComponent = button.icon
           const isActive = !sidebarCollapsed && activePanel === button.id
-          
+
           return (
             <Tooltip key={button.id} title={button.tooltip} placement="right">
               <div
@@ -215,13 +227,13 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
         {visibleBadges.map((badgeId, index) => {
           const config = SIDEBAR_BADGE_CONFIG[badgeId]
           if (!config) return null
-          
+
           const IconComponent = config.icon
           const isActive = !sidebarCollapsed && activePanel === badgeId
           const isDragging = draggedIndex === index
           const showTopIndicator = dragOverIndex === index && dropPosition === 'top'
           const showBottomIndicator = dragOverIndex === index && dropPosition === 'bottom'
-          
+
           return (
             <Tooltip key={badgeId} title={config.tooltip} placement="right">
               <div
@@ -232,11 +244,11 @@ function ActivityBar({ activePanel, sidebarCollapsed, onPanelClick }: ActivityBa
                 aria-pressed={isActive}
                 tabIndex={0}
                 draggable
-                onDragStart={(e) => handleDragStart(e, index)}
+                onDragStart={e => handleDragStart(e, index)}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, index)}
+                onDragOver={e => handleDragOver(e, index)}
                 onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
+                onDrop={e => handleDrop(e, index)}
               >
                 <IconComponent className={styles.icon} />
               </div>

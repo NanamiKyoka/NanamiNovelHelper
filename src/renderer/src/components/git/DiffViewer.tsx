@@ -26,9 +26,9 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
 
   const handleCopy = () => {
     const content = diff.hunks
-      .map((hunk) => {
+      .map(hunk => {
         const lines = hunk.lines
-          .map((line) => {
+          .map(line => {
             const prefix = line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '
             return `${prefix}${line.content}`
           })
@@ -89,9 +89,7 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
       <div className={styles.diffHeader}>
         <span className={styles.diffFilePath} title={diff.path}>
           {diff.status === 'renamed' && diff.oldPath && (
-            <span style={{ color: 'var(--ant-color-text-secondary)' }}>
-              {diff.oldPath} →{' '}
-            </span>
+            <span style={{ color: 'var(--ant-color-text-secondary)' }}>{diff.oldPath} → </span>
           )}
           {diff.path}
         </span>
@@ -104,7 +102,7 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
           <Segmented
             size="small"
             value={viewMode}
-            onChange={(value) => setViewMode(value as DiffViewMode)}
+            onChange={value => setViewMode(value as DiffViewMode)}
             options={[
               {
                 value: 'unified',
@@ -148,16 +146,9 @@ function UnifiedDiffView({ hunks }: UnifiedDiffViewProps): JSX.Element {
         <div key={hunkIndex} className={styles.hunk}>
           <div className={styles.hunkHeader}>{hunk.header}</div>
           {hunk.lines.map((line, lineIndex) => (
-            <div
-              key={lineIndex}
-              className={`${styles.diffLine} ${styles[line.type]}`}
-            >
-              <span className={styles.lineNumber}>
-                {line.oldLineNumber ?? ''}
-              </span>
-              <span className={styles.lineNumber}>
-                {line.newLineNumber ?? ''}
-              </span>
+            <div key={lineIndex} className={`${styles.diffLine} ${styles[line.type]}`}>
+              <span className={styles.lineNumber}>{line.oldLineNumber ?? ''}</span>
+              <span className={styles.lineNumber}>{line.newLineNumber ?? ''}</span>
               <span className={styles.lineContent}>
                 <span className={styles.linePrefix}>
                   {line.type === 'add' ? '+' : line.type === 'delete' ? '-' : ' '}
@@ -185,8 +176,18 @@ function SplitDiffView({ hunks }: SplitDiffViewProps): JSX.Element {
       hunk.lines.forEach((line, lineIndex) => {
         const key = `${hunkIndex}-${lineIndex}`
         if (line.type === 'context') {
-          left.push({ key, lineNumber: line.oldLineNumber!, content: line.content, type: 'context' })
-          right.push({ key, lineNumber: line.newLineNumber!, content: line.content, type: 'context' })
+          left.push({
+            key,
+            lineNumber: line.oldLineNumber!,
+            content: line.content,
+            type: 'context'
+          })
+          right.push({
+            key,
+            lineNumber: line.newLineNumber!,
+            content: line.content,
+            type: 'context'
+          })
         } else if (line.type === 'delete') {
           left.push({ key, lineNumber: line.oldLineNumber!, content: line.content, type: 'delete' })
         } else if (line.type === 'add') {
@@ -196,10 +197,20 @@ function SplitDiffView({ hunks }: SplitDiffViewProps): JSX.Element {
 
       const maxLen = Math.max(left.length, right.length)
       while (left.length < maxLen) {
-        left.push({ key: `empty-left-${hunkIndex}-${left.length}`, lineNumber: null, content: '', type: 'empty' })
+        left.push({
+          key: `empty-left-${hunkIndex}-${left.length}`,
+          lineNumber: null,
+          content: '',
+          type: 'empty'
+        })
       }
       while (right.length < maxLen) {
-        right.push({ key: `empty-right-${hunkIndex}-${right.length}`, lineNumber: null, content: '', type: 'empty' })
+        right.push({
+          key: `empty-right-${hunkIndex}-${right.length}`,
+          lineNumber: null,
+          content: '',
+          type: 'empty'
+        })
       }
     })
 
@@ -211,11 +222,9 @@ function SplitDiffView({ hunks }: SplitDiffViewProps): JSX.Element {
       <div className={styles.splitDiffSide}>
         <div className={styles.splitDiffHeader}>原始文件</div>
         <div className={styles.splitDiffContent}>
-          {leftLines.map((line) => (
+          {leftLines.map(line => (
             <div key={line.key} className={`${styles.splitDiffLine} ${styles[line.type]}`}>
-              <span className={styles.splitLineNumber}>
-                {line.lineNumber ?? ''}
-              </span>
+              <span className={styles.splitLineNumber}>{line.lineNumber ?? ''}</span>
               <span className={styles.splitLineContent}>
                 {line.type === 'delete' && <span className={styles.linePrefix}>-</span>}
                 {line.content}
@@ -228,11 +237,9 @@ function SplitDiffView({ hunks }: SplitDiffViewProps): JSX.Element {
       <div className={styles.splitDiffSide}>
         <div className={styles.splitDiffHeader}>新文件</div>
         <div className={styles.splitDiffContent}>
-          {rightLines.map((line) => (
+          {rightLines.map(line => (
             <div key={line.key} className={`${styles.splitDiffLine} ${styles[line.type]}`}>
-              <span className={styles.splitLineNumber}>
-                {line.lineNumber ?? ''}
-              </span>
+              <span className={styles.splitLineNumber}>{line.lineNumber ?? ''}</span>
               <span className={styles.splitLineContent}>
                 {line.type === 'add' && <span className={styles.linePrefix}>+</span>}
                 {line.content}

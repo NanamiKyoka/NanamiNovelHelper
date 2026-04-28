@@ -12,7 +12,16 @@ import { THEME_COLORS, CHART_PALETTE } from './constants/colors'
 /**
  * 字段数据类型
  */
-export type FieldType = 'text' | 'textarea' | 'tags' | 'select' | 'number' | 'date' | 'color' | 'reference' | 'image'
+export type FieldType =
+  | 'text'
+  | 'textarea'
+  | 'tags'
+  | 'select'
+  | 'number'
+  | 'date'
+  | 'color'
+  | 'reference'
+  | 'image'
 
 /**
  * 图片字段配置
@@ -115,7 +124,13 @@ export interface VocabularyEntry {
  */
 export const CHARACTER_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '姓名', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '身份', type: 'select', options: ['主角', '配角', '反派', '路人', '其他'], order: 1 },
+  {
+    id: 'type',
+    name: '身份',
+    type: 'select',
+    options: ['主角', '配角', '反派', '路人', '其他'],
+    order: 1
+  },
   { id: 'gender', name: '性别', type: 'select', options: ['男', '女', '其他', '未知'], order: 2 },
   { id: 'age', name: '年龄', type: 'text', order: 3 },
   { id: 'appearance', name: '外貌特征', type: 'textarea', order: 4 },
@@ -125,7 +140,7 @@ export const CHARACTER_FIELDS: FieldDefinition[] = [
   { id: 'goals', name: '目标动机', type: 'textarea', order: 8 },
   { id: 'weaknesses', name: '弱点缺陷', type: 'textarea', order: 9 },
   { id: 'affiliation', name: '所属阵营', type: 'text', order: 10 },
-  { id: 'relationships', name: '人物关系', type: 'tags', order: 11 },
+  { id: 'relationships', name: '人物关系', type: 'tags', order: 11 }
 ]
 
 /**
@@ -133,12 +148,18 @@ export const CHARACTER_FIELDS: FieldDefinition[] = [
  */
 export const LOCATION_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '名称', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '类型', type: 'select', options: ['城市', '村庄', '建筑', '区域', '秘境', '其他'], order: 1 },
+  {
+    id: 'type',
+    name: '类型',
+    type: 'select',
+    options: ['城市', '村庄', '建筑', '区域', '秘境', '其他'],
+    order: 1
+  },
   { id: 'location', name: '地理位置', type: 'text', order: 2 },
   { id: 'description', name: '环境描述', type: 'textarea', order: 3 },
   { id: 'history', name: '历史背景', type: 'textarea', order: 4 },
   { id: 'inhabitants', name: '居民/势力', type: 'tags', order: 5 },
-  { id: 'features', name: '特色事物', type: 'tags', order: 6 },
+  { id: 'features', name: '特色事物', type: 'tags', order: 6 }
 ]
 
 /**
@@ -146,14 +167,20 @@ export const LOCATION_FIELDS: FieldDefinition[] = [
  */
 export const ORGANIZATION_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '名称', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '类型', type: 'select', options: ['门派', '商会', '家族', '朝廷', '帮会', '教派', '其他'], order: 1 },
+  {
+    id: 'type',
+    name: '类型',
+    type: 'select',
+    options: ['门派', '商会', '家族', '朝廷', '帮会', '教派', '其他'],
+    order: 1
+  },
   { id: 'leader', name: '领导者', type: 'text', order: 2 },
   { id: 'members', name: '主要成员', type: 'tags', order: 3 },
   { id: 'description', name: '组织介绍', type: 'textarea', order: 4 },
   { id: 'philosophy', name: '理念宗旨', type: 'textarea', order: 5 },
   { id: 'territory', name: '势力范围', type: 'text', order: 6 },
   { id: 'allies', name: '盟友', type: 'tags', order: 7 },
-  { id: 'enemies', name: '敌对', type: 'tags', order: 8 },
+  { id: 'enemies', name: '敌对', type: 'tags', order: 8 }
 ]
 
 /**
@@ -161,12 +188,24 @@ export const ORGANIZATION_FIELDS: FieldDefinition[] = [
  */
 export const ITEM_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '名称', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '类型', type: 'select', options: ['武器', '防具', '饰品', '消耗品', '材料', '神器', '其他'], order: 1 },
-  { id: 'rarity', name: '稀有度', type: 'select', options: ['普通', '稀有', '史诗', '传说', '神话'], order: 2 },
+  {
+    id: 'type',
+    name: '类型',
+    type: 'select',
+    options: ['武器', '防具', '饰品', '消耗品', '材料', '神器', '其他'],
+    order: 1
+  },
+  {
+    id: 'rarity',
+    name: '稀有度',
+    type: 'select',
+    options: ['普通', '稀有', '史诗', '传说', '神话'],
+    order: 2
+  },
   { id: 'description', name: '物品描述', type: 'textarea', order: 3 },
   { id: 'effects', name: '效果能力', type: 'tags', order: 4 },
   { id: 'origin', name: '来历', type: 'textarea', order: 5 },
-  { id: 'owner', name: '持有者', type: 'text', order: 6 },
+  { id: 'owner', name: '持有者', type: 'text', order: 6 }
 ]
 
 /**
@@ -174,12 +213,24 @@ export const ITEM_FIELDS: FieldDefinition[] = [
  */
 export const MAGIC_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '名称', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '类型', type: 'select', options: ['法术', '武技', '天赋', '禁术', '秘术', '其他'], order: 1 },
-  { id: 'element', name: '属性', type: 'select', options: ['火', '水', '风', '土', '光', '暗', '雷', '冰', '无', '混合'], order: 2 },
+  {
+    id: 'type',
+    name: '类型',
+    type: 'select',
+    options: ['法术', '武技', '天赋', '禁术', '秘术', '其他'],
+    order: 1
+  },
+  {
+    id: 'element',
+    name: '属性',
+    type: 'select',
+    options: ['火', '水', '风', '土', '光', '暗', '雷', '冰', '无', '混合'],
+    order: 2
+  },
   { id: 'description', name: '效果描述', type: 'textarea', order: 3 },
   { id: 'requirements', name: '修炼条件', type: 'textarea', order: 4 },
   { id: 'users', name: '使用者', type: 'tags', order: 5 },
-  { id: 'weakness', name: '弱点限制', type: 'textarea', order: 6 },
+  { id: 'weakness', name: '弱点限制', type: 'textarea', order: 6 }
 ]
 
 /**
@@ -187,24 +238,30 @@ export const MAGIC_FIELDS: FieldDefinition[] = [
  */
 export const EVENT_FIELDS: FieldDefinition[] = [
   { id: 'name', name: '事件名称', type: 'text', required: true, order: 0 },
-  { id: 'type', name: '类型', type: 'select', options: ['历史事件', '剧情事件', '背景事件', '其他'], order: 1 },
+  {
+    id: 'type',
+    name: '类型',
+    type: 'select',
+    options: ['历史事件', '剧情事件', '背景事件', '其他'],
+    order: 1
+  },
   { id: 'date', name: '发生时间', type: 'text', order: 2 },
   { id: 'location', name: '发生地点', type: 'text', order: 3 },
   { id: 'participants', name: '参与人物', type: 'tags', order: 4 },
   { id: 'description', name: '事件经过', type: 'textarea', order: 5 },
-  { id: 'consequences', name: '后续影响', type: 'textarea', order: 6 },
+  { id: 'consequences', name: '后续影响', type: 'textarea', order: 6 }
 ]
 
 /**
  * 类型图标映射
  */
 export const TYPE_ICONS: Record<string, string> = {
-  'character': 'TeamOutlined',
-  'location': 'EnvironmentOutlined',
-  'organization': 'TeamOutlined',
-  'item': 'GiftOutlined',
-  'magic': 'ThunderboltOutlined',
-  'event': 'CalendarOutlined'
+  character: 'TeamOutlined',
+  location: 'EnvironmentOutlined',
+  organization: 'TeamOutlined',
+  item: 'GiftOutlined',
+  magic: 'ThunderboltOutlined',
+  event: 'CalendarOutlined'
 }
 
 /**
@@ -284,7 +341,7 @@ export function getBuiltInVocabularyTypes(): VocabularyType[] {
       order: 5,
       createdAt: now,
       updatedAt: now
-    },
+    }
   ]
 }
 

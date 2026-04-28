@@ -6,7 +6,18 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip, App } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined, TeamOutlined, HolderOutlined, CheckOutlined, UnorderedListOutlined, AppstoreOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import {
+  ZoomInOutlined,
+  ZoomOutOutlined,
+  EditOutlined,
+  ExpandOutlined,
+  TeamOutlined,
+  HolderOutlined,
+  CheckOutlined,
+  UnorderedListOutlined,
+  AppstoreOutlined,
+  ArrowLeftOutlined
+} from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import {
   DndContext,
@@ -17,13 +28,13 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverlay,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useOrganizationStore } from '@stores/organizationStore'
@@ -50,29 +61,30 @@ interface SortableTreeNodeProps {
   allNodes: OrganizationNode[]
 }
 
-function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: SortableTreeNodeProps): JSX.Element {
+function SortableTreeNode({
+  node,
+  depth,
+  isEditMode,
+  children,
+  allNodes
+}: SortableTreeNodeProps): JSX.Element {
   const { token } = theme.useToken()
   const [expanded, setExpanded] = useState(true)
   const hasChildren = children.length > 0
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: node.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: node.id
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1
   }
 
   // 缩进样式
   const indentStyle = {
-    paddingLeft: depth * 24,
+    paddingLeft: depth * 24
   }
 
   return (
@@ -81,7 +93,7 @@ function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: Sorta
         className={styles.treeNodeRow}
         style={{
           ...indentStyle,
-          backgroundColor: isDragging ? token.colorBgTextHover : 'transparent',
+          backgroundColor: isDragging ? token.colorBgTextHover : 'transparent'
         }}
       >
         {/* 展开/折叠按钮 */}
@@ -99,11 +111,7 @@ function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: Sorta
 
         {/* 拖拽手柄 */}
         {isEditMode && (
-          <div
-            className={styles.dragHandle}
-            {...attributes}
-            {...listeners}
-          >
+          <div className={styles.dragHandle} {...attributes} {...listeners}>
             <HolderOutlined style={{ color: 'var(--text-tertiary)', cursor: 'grab' }} />
           </div>
         )}
@@ -115,9 +123,7 @@ function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: Sorta
         />
 
         {/* 节点名称 */}
-        <span className={styles.nodeName}>
-          {node.name}
-        </span>
+        <span className={styles.nodeName}>{node.name}</span>
 
         {/* 节点描述 */}
         {node.description && (
@@ -132,7 +138,7 @@ function SortableTreeNode({ node, depth, isEditMode, children, allNodes }: Sorta
         <div className={styles.treeNodeChildren}>
           {children
             .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-            .map((child) => {
+            .map(child => {
               const grandChildren = allNodes.filter(n => n.parentId === child.id)
               return (
                 <SortableTreeNode
@@ -204,7 +210,10 @@ function calculateTreePositions(
     if (children.length === 0) {
       return nodeWidth
     }
-    const childrenWidth = children.reduce((sum, child) => sum + getSubtreeWidth(child.id) + hGap, -hGap)
+    const childrenWidth = children.reduce(
+      (sum, child) => sum + getSubtreeWidth(child.id) + hGap,
+      -hGap
+    )
     return Math.max(nodeWidth, childrenWidth)
   }
 
@@ -251,17 +260,12 @@ function calculateTreePositions(
 function OrganizationGraphPreview({
   graphId,
   onClose,
-  onEnterEditMode,
+  onEnterEditMode
 }: OrganizationGraphPreviewProps): JSX.Element {
   const { token } = theme.useToken()
   const { message } = App.useApp()
 
-  const {
-    currentGraph,
-    isLoading,
-    loadGraph,
-    updateNode,
-  } = useOrganizationStore()
+  const { currentGraph, isLoading, loadGraph, updateNode } = useOrganizationStore()
 
   const graphRef = useRef<Graph | null>(null)
   const [zoom, setZoom] = useState(1)
@@ -280,11 +284,11 @@ function OrganizationGraphPreview({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-      },
+        distance: 5
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -296,102 +300,103 @@ function OrganizationGraphPreview({
   // 获取所有节点和根节点
   const allNodes = currentGraph?.nodes || []
   const rootNodes = useMemo(() => {
-    return allNodes
-      .filter(n => !n.parentId)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    return allNodes.filter(n => !n.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [allNodes])
 
   // 当前拖拽的节点
   const activeNode = activeId ? allNodes.find(n => n.id === activeId) : null
 
   // 使用 callback ref 来初始化图
-  const containerRef = useCallback((container: HTMLDivElement | null) => {
-    if (!container) return
-    if (graphRef.current) return
+  const containerRef = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container) return
+      if (graphRef.current) return
 
-    const tryInit = (retries: number) => {
-      const width = container.clientWidth
-      const height = container.clientHeight
+      const tryInit = (retries: number) => {
+        const width = container.clientWidth
+        const height = container.clientHeight
 
-      if (width === 0 || height === 0) {
-        if (retries > 0) {
-          requestAnimationFrame(() => tryInit(retries - 1))
+        if (width === 0 || height === 0) {
+          if (retries > 0) {
+            requestAnimationFrame(() => tryInit(retries - 1))
+          }
+          return
         }
-        return
+
+        const nodeSize = nodeStyle === 'card' ? [180, 70] : [120, 40]
+        const nodeRadius = nodeStyle === 'card' ? 8 : 4
+
+        const graph = new Graph({
+          container,
+          width,
+          height,
+          autoFit: 'view',
+          padding: 20,
+          data: { nodes: [], edges: [] },
+
+          node: {
+            type: 'rect',
+            style: {
+              size: nodeSize,
+              fill: (d: any) => d.style?.fill || token.colorPrimary,
+              stroke: (d: any) => d.style?.stroke || token.colorPrimary,
+              lineWidth: 2,
+              radius: nodeRadius,
+              cursor: 'default',
+              labelText: (d: any) => {
+                if (nodeStyle === 'card' && d.data?.description) {
+                  return `${d.data.label}\n${d.data.description}`
+                }
+                return d.data?.label || ''
+              },
+              labelFill: '#ffffff',
+              labelFontSize: nodeStyle === 'card' ? 13 : 13,
+              labelFontWeight: nodeStyle === 'card' ? '600' : '500',
+              labelPlacement: 'center',
+              labelMaxWidth: nodeStyle === 'card' ? 160 : 100,
+              labelLineHeight: nodeStyle === 'card' ? 18 : 16,
+              labelWordWrap: true
+            },
+            state: {
+              hover: {
+                lineWidth: 3
+              }
+            }
+          },
+
+          edge: {
+            type: 'polyline',
+            style: {
+              stroke: '#999999',
+              lineWidth: 2,
+              endArrow: false
+            },
+            state: {
+              hover: { lineWidth: 3 }
+            }
+          },
+
+          behaviors: ['drag-canvas', 'zoom-canvas']
+        })
+
+        graphRef.current = graph
+
+        graph
+          .render()
+          .then(() => {
+            setGraphReady(true)
+          })
+          .catch(error => {
+            console.error('Failed to render organization graph preview:', error)
+            // 预览模式下不显示错误提示，避免频繁打扰
+          })
       }
 
-      const nodeSize = nodeStyle === 'card' ? [180, 70] : [120, 40]
-      const nodeRadius = nodeStyle === 'card' ? 8 : 4
-
-      const graph = new Graph({
-        container,
-        width,
-        height,
-        autoFit: 'view',
-        padding: 20,
-        data: { nodes: [], edges: [] },
-
-        node: {
-          type: 'rect',
-          style: {
-            size: nodeSize,
-            fill: (d: any) => d.style?.fill || token.colorPrimary,
-            stroke: (d: any) => d.style?.stroke || token.colorPrimary,
-            lineWidth: 2,
-            radius: nodeRadius,
-            cursor: 'default',
-            labelText: (d: any) => {
-              if (nodeStyle === 'card' && d.data?.description) {
-                return `${d.data.label}\n${d.data.description}`
-              }
-              return d.data?.label || ''
-            },
-            labelFill: '#ffffff',
-            labelFontSize: nodeStyle === 'card' ? 13 : 13,
-            labelFontWeight: nodeStyle === 'card' ? '600' : '500',
-            labelPlacement: 'center',
-            labelMaxWidth: nodeStyle === 'card' ? 160 : 100,
-            labelLineHeight: nodeStyle === 'card' ? 18 : 16,
-            labelWordWrap: true,
-          },
-          state: {
-            hover: {
-              lineWidth: 3,
-            },
-          },
-        },
-
-        edge: {
-          type: 'polyline',
-          style: {
-            stroke: '#999999',
-            lineWidth: 2,
-            endArrow: false,
-          },
-          state: {
-            hover: { lineWidth: 3 },
-          },
-        },
-
-        behaviors: [
-          'drag-canvas',
-          'zoom-canvas',
-        ],
-      })
-
-      graphRef.current = graph
-
-      graph.render().then(() => {
-        setGraphReady(true)
-      }).catch((error) => {
-        console.error('Failed to render organization graph preview:', error)
-        // 预览模式下不显示错误提示，避免频繁打扰
-      })
-    }
-
-    // 开始初始化尝试，最多重试 20 次（约 330ms）
-    tryInit(20)
-  }, [token.colorPrimary, nodeStyle])
+      // 开始初始化尝试，最多重试 20 次（约 330ms）
+      tryInit(20)
+    },
+    [token.colorPrimary, nodeStyle]
+  )
 
   // 清理
   useEffect(() => {
@@ -416,42 +421,45 @@ function OrganizationGraphPreview({
     const positions = calculateTreePositions(currentGraph.nodes, nodeW, nodeH, 30, vGap)
 
     // 转换节点数据
-    const nodes = currentGraph.nodes.map((node) => {
+    const nodes = currentGraph.nodes.map(node => {
       const pos = positions.get(node.id) || { x: 100, y: 100 }
       return {
         id: node.id,
         data: {
           label: node.name,
-          description: node.description,
+          description: node.description
         },
         style: {
           fill: node.color || token.colorPrimary,
           stroke: node.color || token.colorPrimary,
           x: pos.x,
-          y: pos.y,
-        },
+          y: pos.y
+        }
       }
     })
 
     // 转换边数据
     const edges = currentGraph.nodes
       .filter(n => n.parentId)
-      .map((node) => ({
+      .map(node => ({
         id: `edge-${node.id}`,
         source: node.parentId!,
-        target: node.id,
+        target: node.id
       }))
 
     graph.setData({ nodes, edges })
-    graph.render().then(() => {
-      if (!graph.destroyed && nodes.length > 0) {
-        graph.fitView(40)
-        setZoom(graph.getZoom())
-      }
-    }).catch((error) => {
-      console.error('Failed to update organization graph preview data:', error)
-      // 预览模式下不显示错误提示
-    })
+    graph
+      .render()
+      .then(() => {
+        if (!graph.destroyed && nodes.length > 0) {
+          graph.fitView(40)
+          setZoom(graph.getZoom())
+        }
+      })
+      .catch(error => {
+        console.error('Failed to update organization graph preview data:', error)
+        // 预览模式下不显示错误提示
+      })
   }, [currentGraph, graphReady, nodeStyle, token.colorPrimary])
 
   // 缩放控制
@@ -486,49 +494,50 @@ function OrganizationGraphPreview({
   }, [])
 
   // 拖拽结束 - 同级节点排序
-  const handleDragEnd = useCallback(async (event: DragEndEvent): Promise<void> => {
-    const { active, over } = event
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent): Promise<void> => {
+      const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const activeNode = allNodes.find(n => n.id === active.id)
-      const overNode = allNodes.find(n => n.id === over.id)
+      if (over && active.id !== over.id) {
+        const activeNode = allNodes.find(n => n.id === active.id)
+        const overNode = allNodes.find(n => n.id === over.id)
 
-      // 只允许同级节点排序
-      if (activeNode && overNode && activeNode.parentId === overNode.parentId) {
-        const parentId = activeNode.parentId
-        const siblings = allNodes
-          .filter(n => n.parentId === parentId)
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        // 只允许同级节点排序
+        if (activeNode && overNode && activeNode.parentId === overNode.parentId) {
+          const parentId = activeNode.parentId
+          const siblings = allNodes
+            .filter(n => n.parentId === parentId)
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
-        const oldIndex = siblings.findIndex(s => s.id === active.id)
-        const newIndex = siblings.findIndex(s => s.id === over.id)
+          const oldIndex = siblings.findIndex(s => s.id === active.id)
+          const newIndex = siblings.findIndex(s => s.id === over.id)
 
-        if (oldIndex !== -1 && newIndex !== -1) {
-          // 重新排列同级节点
-          const newSiblings = [...siblings]
-          const [movedItem] = newSiblings.splice(oldIndex, 1)
-          newSiblings.splice(newIndex, 0, movedItem)
+          if (oldIndex !== -1 && newIndex !== -1) {
+            // 重新排列同级节点
+            const newSiblings = [...siblings]
+            const [movedItem] = newSiblings.splice(oldIndex, 1)
+            newSiblings.splice(newIndex, 0, movedItem)
 
-          // 批量更新 order
-          try {
-            await Promise.all(
-              newSiblings.map((sibling, index) =>
-                updateNode(sibling.id, { order: index })
+            // 批量更新 order
+            try {
+              await Promise.all(
+                newSiblings.map((sibling, index) => updateNode(sibling.id, { order: index }))
               )
-            )
-            message.success('排序已保存')
-          } catch (error) {
-            console.error('Failed to reorder nodes:', error)
-            message.error('排序保存失败')
+              message.success('排序已保存')
+            } catch (error) {
+              console.error('Failed to reorder nodes:', error)
+              message.error('排序保存失败')
+            }
           }
+        } else {
+          message.warning('只能在同级节点之间排序')
         }
-      } else {
-        message.warning('只能在同级节点之间排序')
       }
-    }
 
-    setActiveId(null)
-  }, [allNodes, updateNode, message])
+      setActiveId(null)
+    },
+    [allNodes, updateNode, message]
+  )
 
   // 切换视图模式时退出编辑模式
   const handleViewModeChange = (mode: ViewMode) => {
@@ -564,8 +573,12 @@ function OrganizationGraphPreview({
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>返回</Button>
-          <Title level={5} className={styles.title}>{currentGraph.name}</Title>
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>
+            返回
+          </Button>
+          <Title level={5} className={styles.title}>
+            {currentGraph.name}
+          </Title>
         </div>
         <div className={styles.toolbarCenter}>
           <div className={styles.viewModeSwitch}>
@@ -630,17 +643,14 @@ function OrganizationGraphPreview({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={allNodes.map(n => n.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={allNodes.map(n => n.id)} strategy={verticalListSortingStrategy}>
               <div className={styles.treeList}>
                 {rootNodes.length === 0 ? (
                   <div className={styles.emptyList}>
                     <Empty description="暂无节点" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
                 ) : (
-                  rootNodes.map((node) => {
+                  rootNodes.map(node => {
                     const children = allNodes.filter(n => n.parentId === node.id)
                     return (
                       <SortableTreeNode
@@ -657,16 +667,12 @@ function OrganizationGraphPreview({
               </div>
             </SortableContext>
 
-            <DragOverlay>
-              {activeNode ? <DragOverlayNode node={activeNode} /> : null}
-            </DragOverlay>
+            <DragOverlay>{activeNode ? <DragOverlayNode node={activeNode} /> : null}</DragOverlay>
           </DndContext>
 
           {isEditMode && (
             <div className={styles.editHint}>
-              <Text type="secondary">
-                拖拽节点可调整同级顺序，跨级拖拽无效
-              </Text>
+              <Text type="secondary">拖拽节点可调整同级顺序，跨级拖拽无效</Text>
             </div>
           )}
         </div>
@@ -674,7 +680,9 @@ function OrganizationGraphPreview({
 
       {/* 底部统计 */}
       <div className={styles.statsBar}>
-        <span><TeamOutlined /> 节点: {currentGraph.nodeCount}</span>
+        <span>
+          <TeamOutlined /> 节点: {currentGraph.nodeCount}
+        </span>
         {viewMode === 'list' && isEditMode && (
           <span style={{ color: token.colorPrimary }}>排序模式</span>
         )}

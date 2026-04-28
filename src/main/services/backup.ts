@@ -85,50 +85,53 @@ class BackupService {
       return null
     }
 
-    return handleErrorAsync(async () => {
-      this.ensureBackupDir()
+    return handleErrorAsync(
+      async () => {
+        this.ensureBackupDir()
 
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
-      const filename = `${timestamp}.nhbak`
-      const backupPath = path.join(this.backupDir!, filename)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+        const filename = `${timestamp}.nhbak`
+        const backupPath = path.join(this.backupDir!, filename)
 
-      const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
-      const configData: Record<string, string> = {}
+        const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
+        const configData: Record<string, string> = {}
 
-      const collectFiles = (dir: string, basePath: string = ''): void => {
-        const items = fs.readdirSync(dir, { withFileTypes: true })
-        for (const item of items) {
-          if (item.name === BACKUP_DIR) continue
-          
-          const fullPath = path.join(dir, item.name)
-          const relativePath = basePath ? `${basePath}/${item.name}` : item.name
+        const collectFiles = (dir: string, basePath: string = ''): void => {
+          const items = fs.readdirSync(dir, { withFileTypes: true })
+          for (const item of items) {
+            if (item.name === BACKUP_DIR) continue
 
-          if (item.isDirectory()) {
-            collectFiles(fullPath, relativePath)
-          } else if (item.isFile()) {
-            const content = handleError(() => fs.readFileSync(fullPath, 'utf-8'), {
-              module: 'BackupService',
-              operation: `readFile:${relativePath}`,
-              log: false,
-            })
-            if (content) {
-              configData[relativePath] = content
+            const fullPath = path.join(dir, item.name)
+            const relativePath = basePath ? `${basePath}/${item.name}` : item.name
+
+            if (item.isDirectory()) {
+              collectFiles(fullPath, relativePath)
+            } else if (item.isFile()) {
+              const content = handleError(() => fs.readFileSync(fullPath, 'utf-8'), {
+                module: 'BackupService',
+                operation: `readFile:${relativePath}`,
+                log: false
+              })
+              if (content) {
+                configData[relativePath] = content
+              }
             }
           }
         }
-      }
 
-      collectFiles(configDir)
+        collectFiles(configDir)
 
-      const jsonStr = JSON.stringify(configData)
-      const compressed = await gzip(Buffer.from(jsonStr, 'utf-8'))
-      
-      fs.writeFileSync(backupPath, compressed)
+        const jsonStr = JSON.stringify(configData)
+        const compressed = await gzip(Buffer.from(jsonStr, 'utf-8'))
 
-      this.cleanupOldBackups()
+        fs.writeFileSync(backupPath, compressed)
 
-      return filename
-    }, { module: 'BackupService', operation: 'createBackup' })
+        this.cleanupOldBackups()
+
+        return filename
+      },
+      { module: 'BackupService', operation: 'createBackup' }
+    )
   }
 
   /**
@@ -144,26 +147,31 @@ class BackupService {
       return false
     }
 
-    return handleErrorAsync(async () => {
-      const compressed = fs.readFileSync(backupPath)
-      const decompressed = await gunzip(compressed)
-      const configData = JSON.parse(decompressed.toString('utf-8'))
+    return (
+      handleErrorAsync(
+        async () => {
+          const compressed = fs.readFileSync(backupPath)
+          const decompressed = await gunzip(compressed)
+          const configData = JSON.parse(decompressed.toString('utf-8'))
 
-      const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
-      
-      for (const [relativePath, content] of Object.entries(configData)) {
-        const fullPath = path.join(configDir, relativePath)
-        const dir = path.dirname(fullPath)
-        
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true })
-        }
-        
-        fs.writeFileSync(fullPath, content as string, 'utf-8')
-      }
+          const configDir = path.join(this.projectPath!, PROJECT_META_DIR)
 
-      return true
-    }, { module: 'BackupService', operation: 'restoreBackup', defaultValue: false }) ?? false
+          for (const [relativePath, content] of Object.entries(configData)) {
+            const fullPath = path.join(configDir, relativePath)
+            const dir = path.dirname(fullPath)
+
+            if (!fs.existsSync(dir)) {
+              fs.mkdirSync(dir, { recursive: true })
+            }
+
+            fs.writeFileSync(fullPath, content as string, 'utf-8')
+          }
+
+          return true
+        },
+        { module: 'BackupService', operation: 'restoreBackup', defaultValue: false }
+      ) ?? false
+    )
   }
 
   /**
@@ -175,7 +183,7 @@ class BackupService {
     }
 
     const files = fs.readdirSync(this.backupDir, { withFileTypes: true })
-    
+
     return files
       .filter(f => f.isFile() && f.name.endsWith('.nhbak'))
       .map(f => {
@@ -198,10 +206,15 @@ class BackupService {
     const backupPath = path.join(this.backupDir, filename)
     if (!fs.existsSync(backupPath)) return false
 
-    return handleError(() => {
-      fs.unlinkSync(backupPath)
-      return true
-    }, { module: 'BackupService', operation: 'deleteBackup', defaultValue: false }) ?? false
+    return (
+      handleError(
+        () => {
+          fs.unlinkSync(backupPath)
+          return true
+        },
+        { module: 'BackupService', operation: 'deleteBackup', defaultValue: false }
+      ) ?? false
+    )
   }
 
   /**
@@ -229,10 +242,15 @@ class BackupService {
     const backupPath = path.join(this.backupDir, filename)
     if (!fs.existsSync(backupPath)) return false
 
-    return handleError(() => {
-      fs.copyFileSync(backupPath, exportPath)
-      return true
-    }, { module: 'BackupService', operation: 'exportBackup', defaultValue: false }) ?? false
+    return (
+      handleError(
+        () => {
+          fs.copyFileSync(backupPath, exportPath)
+          return true
+        },
+        { module: 'BackupService', operation: 'exportBackup', defaultValue: false }
+      ) ?? false
+    )
   }
 
   async importBackup(importPath: string): Promise<string | null> {
@@ -244,11 +262,14 @@ class BackupService {
     const filename = `${timestamp}.nhbak`
     const backupPath = path.join(this.backupDir, filename)
 
-    return handleError(() => {
-      fs.copyFileSync(importPath, backupPath)
-      this.cleanupOldBackups()
-      return filename
-    }, { module: 'BackupService', operation: 'importBackup' })
+    return handleError(
+      () => {
+        fs.copyFileSync(importPath, backupPath)
+        this.cleanupOldBackups()
+        return filename
+      },
+      { module: 'BackupService', operation: 'importBackup' }
+    )
   }
 }
 

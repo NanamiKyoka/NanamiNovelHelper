@@ -4,21 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import {
-  Typography,
-  Button,
-  Space,
-  Descriptions,
-  Tag,
-  Spin,
-  App,
-} from 'antd'
-import {
-  ArrowLeftOutlined,
-  EditOutlined,
-  ExportOutlined,
-  DeleteOutlined,
-} from '@ant-design/icons'
+import { Typography, Button, Space, Descriptions, Tag, Spin, App } from 'antd'
+import { ArrowLeftOutlined, EditOutlined, ExportOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import styles from './MapPreview.module.css'
@@ -77,7 +64,7 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
         } else {
           message.error('删除失败')
         }
-      },
+      }
     })
   }, [currentMap, mapId, deleteMap, modal, message, onClose])
 
@@ -103,35 +90,22 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
       {/* 工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={onClose}
-          >
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>
             返回
           </Button>
-          <Title level={4} style={{ margin: 0 }}>{currentMap.name}</Title>
+          <Title level={4} style={{ margin: 0 }}>
+            {currentMap.name}
+          </Title>
         </div>
         <div className={styles.toolbarRight}>
           <Space>
-            <Button
-              icon={<ExportOutlined />}
-              onClick={handleExport}
-              loading={isExporting}
-            >
+            <Button icon={<ExportOutlined />} onClick={handleExport} loading={isExporting}>
               导出
             </Button>
-            <Button
-              icon={<DeleteOutlined />}
-              danger
-              onClick={handleDelete}
-            >
+            <Button icon={<DeleteOutlined />} danger onClick={handleDelete}>
               删除
             </Button>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={onEnterEditMode}
-            >
+            <Button type="primary" icon={<EditOutlined />} onClick={onEnterEditMode}>
               编辑
             </Button>
           </Space>
@@ -149,7 +123,7 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
                   width={currentMap.data.canvasWidth || 800}
                   height={currentMap.data.canvasHeight || 600}
                   style={{
-                    backgroundColor: currentMap.data.backgroundColor || '#ffffff',
+                    backgroundColor: currentMap.data.backgroundColor || '#ffffff'
                   }}
                 />
                 {/* TODO: 渲染地图元素 */}
@@ -165,9 +139,7 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
           <div className={styles.infoPanel}>
             <Descriptions column={1} bordered size="small">
               <Descriptions.Item label="名称">{currentMap.name}</Descriptions.Item>
-              <Descriptions.Item label="描述">
-                {currentMap.description || '-'}
-              </Descriptions.Item>
+              <Descriptions.Item label="描述">{currentMap.description || '-'}</Descriptions.Item>
               <Descriptions.Item label="画布尺寸">
                 {currentMap.data?.canvasWidth || 800} x {currentMap.data?.canvasHeight || 600}
               </Descriptions.Item>
@@ -178,7 +150,9 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
                 {getLinkedVocabularyNames().length > 0 ? (
                   <Space wrap>
                     {getLinkedVocabularyNames().map(name => (
-                      <Tag key={name} color="blue">{name}</Tag>
+                      <Tag key={name} color="blue">
+                        {name}
+                      </Tag>
                     ))}
                   </Space>
                 ) : (

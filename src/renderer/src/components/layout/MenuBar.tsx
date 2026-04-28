@@ -25,26 +25,22 @@ function MenuBar(): JSX.Element {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const menuBarRef = useRef<HTMLDivElement>(null)
 
-  const {
-    currentProject,
-    recentProjects,
-    loadRecentProjects
-  } = useProjectStore()
+  const { currentProject, recentProjects, loadRecentProjects } = useProjectStore()
 
   const { openProject, closeProject } = useProjectActions()
 
-  const openCreateProjectModal = useUIStore((state) => state.openCreateProjectModal)
-  const openOpenProjectModal = useUIStore((state) => state.openOpenProjectModal)
-  const fullscreenMode = useUIStore((state) => state.fullscreenMode)
-  const openAboutModal = useUIStore((state) => state.openAboutModal)
-  const setSearchReplaceVisible = useUIStore((state) => state.setSearchReplaceVisible)
+  const openCreateProjectModal = useUIStore(state => state.openCreateProjectModal)
+  const openOpenProjectModal = useUIStore(state => state.openOpenProjectModal)
+  const fullscreenMode = useUIStore(state => state.fullscreenMode)
+  const openAboutModal = useUIStore(state => state.openAboutModal)
+  const setSearchReplaceVisible = useUIStore(state => state.setSearchReplaceVisible)
 
   useEffect(() => {
     loadRecentProjects()
   }, [loadRecentProjects])
 
   const handleMenuClick = useCallback((menuId: string) => {
-    setActiveMenu(prev => prev === menuId ? null : menuId)
+    setActiveMenu(prev => (prev === menuId ? null : menuId))
   }, [])
 
   const handleCheckUpdate = useCallback(async () => {
@@ -61,72 +57,83 @@ function MenuBar(): JSX.Element {
     }
   }, [])
 
-  const handleMenuItemClick = useCallback(async (_menuId: string, itemId: string, _label?: string) => {
-    switch (itemId) {
-      case 'newProject':
-        openCreateProjectModal()
-        break
-      case 'openProject':
-        openOpenProjectModal()
-        break
-      case 'closeProject':
-        try {
-          await closeProject()
-        } catch (error) {
-          console.error('关闭项目失败:', error)
-        }
-        break
-      case 'projectSettings':
-        window.dispatchEvent(new CustomEvent('menu:openSettings'))
-        break
-      
-      case 'undo':
-        window.dispatchEvent(new CustomEvent('editor:undo'))
-        break
-      case 'redo':
-        window.dispatchEvent(new CustomEvent('editor:redo'))
-        break
-      case 'cut':
-        window.dispatchEvent(new CustomEvent('editor:cut'))
-        break
-      case 'copy':
-        window.dispatchEvent(new CustomEvent('editor:copy'))
-        break
-      case 'paste':
-        window.dispatchEvent(new CustomEvent('editor:paste'))
-        break
-      case 'selectAll':
-        window.dispatchEvent(new CustomEvent('editor:selectAll'))
-        break
-      case 'findReplace':
-        setSearchReplaceVisible(true)
-        window.dispatchEvent(new CustomEvent('editor:openSearch'))
-        break
-      
-      case 'toggleSidebar':
-        window.dispatchEvent(new CustomEvent('menu:toggleSidebar'))
-        break
-      
-      case 'about':
-        openAboutModal()
-        break
-      case 'checkUpdate':
-        handleCheckUpdate()
-        break
-      
-      default:
-        if (itemId.startsWith('recent-')) {
-          const projectPath = itemId.replace('recent-', '')
+  const handleMenuItemClick = useCallback(
+    async (_menuId: string, itemId: string, _label?: string) => {
+      switch (itemId) {
+        case 'newProject':
+          openCreateProjectModal()
+          break
+        case 'openProject':
+          openOpenProjectModal()
+          break
+        case 'closeProject':
           try {
-            await openProject(projectPath)
+            await closeProject()
           } catch (error) {
-            console.error('打开最近项目失败:', error)
+            console.error('关闭项目失败:', error)
           }
-        }
-    }
-    
-    setActiveMenu(null)
-  }, [openCreateProjectModal, openOpenProjectModal, openProject, closeProject, openAboutModal, setSearchReplaceVisible, handleCheckUpdate])
+          break
+        case 'projectSettings':
+          window.dispatchEvent(new CustomEvent('menu:openSettings'))
+          break
+
+        case 'undo':
+          window.dispatchEvent(new CustomEvent('editor:undo'))
+          break
+        case 'redo':
+          window.dispatchEvent(new CustomEvent('editor:redo'))
+          break
+        case 'cut':
+          window.dispatchEvent(new CustomEvent('editor:cut'))
+          break
+        case 'copy':
+          window.dispatchEvent(new CustomEvent('editor:copy'))
+          break
+        case 'paste':
+          window.dispatchEvent(new CustomEvent('editor:paste'))
+          break
+        case 'selectAll':
+          window.dispatchEvent(new CustomEvent('editor:selectAll'))
+          break
+        case 'findReplace':
+          setSearchReplaceVisible(true)
+          window.dispatchEvent(new CustomEvent('editor:openSearch'))
+          break
+
+        case 'toggleSidebar':
+          window.dispatchEvent(new CustomEvent('menu:toggleSidebar'))
+          break
+
+        case 'about':
+          openAboutModal()
+          break
+        case 'checkUpdate':
+          handleCheckUpdate()
+          break
+
+        default:
+          if (itemId.startsWith('recent-')) {
+            const projectPath = itemId.replace('recent-', '')
+            try {
+              await openProject(projectPath)
+            } catch (error) {
+              console.error('打开最近项目失败:', error)
+            }
+          }
+      }
+
+      setActiveMenu(null)
+    },
+    [
+      openCreateProjectModal,
+      openOpenProjectModal,
+      openProject,
+      closeProject,
+      openAboutModal,
+      setSearchReplaceVisible,
+      handleCheckUpdate
+    ]
+  )
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -173,12 +180,13 @@ function MenuBar(): JSX.Element {
         {
           id: 'openRecent',
           label: '打开最近',
-          children: recentProjects.length > 0
-            ? recentProjects.slice(0, 5).map(p => ({
-                id: `recent-${p.path}`,
-                label: p.name
-              }))
-            : [{ id: 'noRecent', label: '无最近项目', disabled: true }]
+          children:
+            recentProjects.length > 0
+              ? recentProjects.slice(0, 5).map(p => ({
+                  id: `recent-${p.path}`,
+                  label: p.name
+                }))
+              : [{ id: 'noRecent', label: '无最近项目', disabled: true }]
         },
         { id: 'separator1', label: '', separator: true },
         { id: 'closeProject', label: '关闭项目', disabled: !currentProject },
@@ -204,9 +212,7 @@ function MenuBar(): JSX.Element {
     {
       id: 'view',
       label: '视图',
-      items: [
-        { id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' }
-      ]
+      items: [{ id: 'toggleSidebar', label: '切换侧边栏', shortcut: 'Ctrl+B' }]
     },
     {
       id: 'help',
@@ -227,7 +233,7 @@ function MenuBar(): JSX.Element {
           <button
             key={item.id}
             className={`${styles.subMenuItem} ${item.disabled ? styles.disabled : ''}`}
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               if (!item.disabled && !item.separator) {
                 handleMenuItemClick(parentMenuId, item.id, item.label)
@@ -263,12 +269,8 @@ function MenuBar(): JSX.Element {
                   )}
                   {item.label}
                 </span>
-                {item.shortcut && (
-                  <span className={styles.shortcut}>{item.shortcut}</span>
-                )}
-                {item.children && (
-                  <span className={styles.subMenuArrow}>▶</span>
-                )}
+                {item.shortcut && <span className={styles.shortcut}>{item.shortcut}</span>}
+                {item.children && <span className={styles.subMenuArrow}>▶</span>}
               </button>
               {item.children && renderSubMenu(item.children, menu.id)}
             </div>

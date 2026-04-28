@@ -17,24 +17,24 @@ interface EditModalProps {
 export function EditModal({ type, item, onClose }: EditModalProps) {
   const { message } = App.useApp()
   const [form] = Form.useForm()
-  
+
   const updateChunk = useMapStore(state => state.updateChunk)
   const updateElement = useMapStore(state => state.updateElement)
-  
+
   const [selectedIcon, setSelectedIcon] = useState<string>('')
   const [selectedColor, setSelectedColor] = useState<string>('')
-  
+
   const isChunk = type === 'chunk'
   const config = isChunk ? CHUNK_TYPE_CONFIG : ELEMENT_TYPE_CONFIG
-  
+
   useEffect(() => {
     if (item) {
       form.setFieldsValue({
         name: item.name,
         description: item.description,
-        typeName: isChunk 
-          ? (item as Chunk).chunkType === 'custom' 
-            ? (item as Chunk).customTypeName || '' 
+        typeName: isChunk
+          ? (item as Chunk).chunkType === 'custom'
+            ? (item as Chunk).customTypeName || ''
             : ''
           : (item as MapElement).elementType === 'custom'
             ? (item as MapElement).customTypeName || ''
@@ -44,27 +44,31 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
       setSelectedColor(item.color || '')
     }
   }, [item, form, isChunk])
-  
+
   const currentType = useMemo(() => {
     if (!item) return null
     return isChunk ? (item as Chunk).chunkType : (item as MapElement).elementType
   }, [item, isChunk])
-  
+
   const isCustomType = currentType === 'custom'
-  
+
   const IconComponent = useMemo(() => {
-    const iconName = selectedIcon || (currentType ? config[currentType as keyof typeof config]?.icon : '')
-    return (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] || Icons.QuestionCircleOutlined
+    const iconName =
+      selectedIcon || (currentType ? config[currentType as keyof typeof config]?.icon : '')
+    return (
+      (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] ||
+      Icons.QuestionCircleOutlined
+    )
   }, [selectedIcon, currentType, config])
-  
+
   const handleColorChange = (color: Color) => {
     setSelectedColor(color.toHexString())
   }
-  
+
   const handleSave = async () => {
     try {
       const values = await form.validateFields()
-      
+
       if (isChunk) {
         updateChunk((item as Chunk).id, {
           name: values.name,
@@ -82,16 +86,16 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
           customTypeName: isCustomType ? values.typeName : undefined
         })
       }
-      
+
       message.success('已保存')
       onClose()
     } catch (error) {
       console.error('Validation failed:', error)
     }
   }
-  
+
   if (!item) return null
-  
+
   return (
     <Modal
       title={isChunk ? '编辑板块' : '编辑元素'}
@@ -103,29 +107,15 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
       width={500}
       className={styles.editModal}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        className={styles.form}
-      >
-        <Form.Item
-          name="name"
-          label="名称"
-          rules={[{ required: true, message: '请输入名称' }]}
-        >
+      <Form form={form} layout="vertical" className={styles.form}>
+        <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
           <Input placeholder="输入名称" />
         </Form.Item>
-        
-        <Form.Item
-          name="description"
-          label="描述"
-        >
-          <Input.TextArea 
-            placeholder="输入描述（可选）" 
-            rows={3}
-          />
+
+        <Form.Item name="description" label="描述">
+          <Input.TextArea placeholder="输入描述（可选）" rows={3} />
         </Form.Item>
-        
+
         {isCustomType && (
           <Form.Item
             name="typeName"
@@ -135,26 +125,15 @@ export function EditModal({ type, item, onClose }: EditModalProps) {
             <Input placeholder="输入自定义类型名称" />
           </Form.Item>
         )}
-        
+
         <Form.Item label="图标">
-          <IconPicker 
-            value={selectedIcon} 
-            onChange={setSelectedIcon} 
-          />
+          <IconPicker value={selectedIcon} onChange={setSelectedIcon} />
         </Form.Item>
-        
+
         <Form.Item label="颜色">
           <div className={styles.colorPickerRow}>
-            <ColorPicker
-              value={selectedColor}
-              onChange={handleColorChange}
-              showText
-              format="hex"
-            />
-            <div 
-              className={styles.colorPreview}
-              style={{ backgroundColor: selectedColor }}
-            >
+            <ColorPicker value={selectedColor} onChange={handleColorChange} showText format="hex" />
+            <div className={styles.colorPreview} style={{ backgroundColor: selectedColor }}>
               <IconComponent style={{ fontSize: 20, color: getContrastColor(selectedColor) }} />
             </div>
           </div>

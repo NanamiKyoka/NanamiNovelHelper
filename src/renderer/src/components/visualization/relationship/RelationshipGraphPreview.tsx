@@ -5,7 +5,13 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip } from 'antd'
-import { ZoomInOutlined, ZoomOutOutlined, EditOutlined, ExpandOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import {
+  ZoomInOutlined,
+  ZoomOutOutlined,
+  EditOutlined,
+  ExpandOutlined,
+  ArrowLeftOutlined
+} from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { BUILTIN_RELATION_TYPES, type RelationType } from '@types/relationship'
@@ -22,18 +28,15 @@ interface RelationshipGraphPreviewProps {
 function RelationshipGraphPreview({
   graphId,
   onClose,
-  onEnterEditMode,
+  onEnterEditMode
 }: RelationshipGraphPreviewProps): JSX.Element {
   const { token } = theme.useToken()
-  const isDarkMode = token.colorBgContainer === '#141414' ||
-                     token.colorBgContainer === '#1f1f1f' ||
-                     token.colorTextBase === '#fff'
+  const isDarkMode =
+    token.colorBgContainer === '#141414' ||
+    token.colorBgContainer === '#1f1f1f' ||
+    token.colorTextBase === '#fff'
 
-  const {
-    currentGraph,
-    isLoading,
-    loadGraph,
-  } = useRelationshipStore()
+  const { currentGraph, isLoading, loadGraph } = useRelationshipStore()
 
   const graphRef = useRef<Graph | null>(null)
   const [zoom, setZoom] = useState(1)
@@ -50,114 +53,117 @@ function RelationshipGraphPreview({
   }, [graphId, loadGraph])
 
   // 使用 callback ref 来初始化图
-  const containerRef = useCallback((container: HTMLDivElement | null) => {
-    if (!container) return
+  const containerRef = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container) return
 
-    // 如果已经有图实例，不重复创建
-    if (graphRef.current) return
+      // 如果已经有图实例，不重复创建
+      if (graphRef.current) return
 
-    const tryInit = (retries: number) => {
-      const width = container.clientWidth
-      const height = container.clientHeight
+      const tryInit = (retries: number) => {
+        const width = container.clientWidth
+        const height = container.clientHeight
 
-      if (width === 0 || height === 0) {
-        if (retries > 0) {
-          requestAnimationFrame(() => tryInit(retries - 1))
+        if (width === 0 || height === 0) {
+          if (retries > 0) {
+            requestAnimationFrame(() => tryInit(retries - 1))
+          }
+          return
         }
-        return
+
+        // 主题相关颜色
+        const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
+        const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff'
+
+        // 创建图实例 - 不使用力导向布局，使用固定位置
+        const graph = new Graph({
+          container,
+          width,
+          height,
+          autoFit: 'view',
+          padding: 20,
+          data: { nodes: [], edges: [] },
+
+          // 节点配置
+          node: {
+            type: 'circle',
+            style: {
+              size: 50,
+              fill: (d: any) => d.style?.fill || '#1890ff',
+              stroke: (d: any) => d.style?.stroke || '#1890ff',
+              lineWidth: 2,
+              cursor: 'pointer',
+              labelText: (d: any) => d.data?.label || '',
+              labelFill: '#ffffff',
+              labelFontSize: 11,
+              labelFontWeight: '500',
+              labelPlacement: 'center',
+              labelMaxWidth: 40,
+              labelWordWrap: true
+            },
+            state: {
+              selected: {
+                lineWidth: 3,
+                shadowColor: '#1890ff',
+                shadowBlur: 10
+              },
+              hover: {
+                lineWidth: 3
+              }
+            }
+          },
+
+          // 边配置
+          edge: {
+            type: 'quadratic',
+            style: {
+              stroke: (d: any) => d.style?.stroke || '#999999',
+              lineWidth: (d: any) => d.style?.lineWidth || 2,
+              endArrow: true,
+              endArrowSize: 8,
+              endArrowFill: (d: any) => d.style?.stroke || '#999999',
+              endArrowStroke: (d: any) => d.style?.stroke || '#999999',
+              cursor: 'pointer',
+              labelText: (d: any) => d.data?.label || '',
+              labelFill: edgeLabelColor,
+              labelFontSize: 10,
+              labelBackground: true,
+              labelBackgroundFill: labelBgColor,
+              labelBackgroundOpacity: 0.9,
+              labelBackgroundPadding: [2, 4, 2, 4]
+            },
+            state: {
+              selected: {
+                lineWidth: 3
+              },
+              hover: {
+                lineWidth: 3
+              }
+            }
+          },
+
+          // 交互行为
+          behaviors: ['drag-canvas', 'zoom-canvas']
+        })
+
+        graphRef.current = graph
+
+        // 渲染
+        graph
+          .render()
+          .then(() => {
+            setGraphReady(true)
+          })
+          .catch(() => {
+            // 忽略错误
+          })
       }
 
-      // 主题相关颜色
-      const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
-      const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff'
-
-      // 创建图实例 - 不使用力导向布局，使用固定位置
-      const graph = new Graph({
-        container,
-        width,
-        height,
-        autoFit: 'view',
-        padding: 20,
-        data: { nodes: [], edges: [] },
-
-        // 节点配置
-        node: {
-          type: 'circle',
-          style: {
-            size: 50,
-            fill: (d: any) => d.style?.fill || '#1890ff',
-            stroke: (d: any) => d.style?.stroke || '#1890ff',
-            lineWidth: 2,
-            cursor: 'pointer',
-            labelText: (d: any) => d.data?.label || '',
-            labelFill: '#ffffff',
-            labelFontSize: 11,
-            labelFontWeight: '500',
-            labelPlacement: 'center',
-            labelMaxWidth: 40,
-            labelWordWrap: true,
-          },
-          state: {
-            selected: {
-              lineWidth: 3,
-              shadowColor: '#1890ff',
-              shadowBlur: 10,
-            },
-            hover: {
-              lineWidth: 3,
-            },
-          },
-        },
-
-        // 边配置
-        edge: {
-          type: 'quadratic',
-          style: {
-            stroke: (d: any) => d.style?.stroke || '#999999',
-            lineWidth: (d: any) => d.style?.lineWidth || 2,
-            endArrow: true,
-            endArrowSize: 8,
-            endArrowFill: (d: any) => d.style?.stroke || '#999999',
-            endArrowStroke: (d: any) => d.style?.stroke || '#999999',
-            cursor: 'pointer',
-            labelText: (d: any) => d.data?.label || '',
-            labelFill: edgeLabelColor,
-            labelFontSize: 10,
-            labelBackground: true,
-            labelBackgroundFill: labelBgColor,
-            labelBackgroundOpacity: 0.9,
-            labelBackgroundPadding: [2, 4, 2, 4],
-          },
-          state: {
-            selected: {
-              lineWidth: 3,
-            },
-            hover: {
-              lineWidth: 3,
-            },
-          },
-        },
-
-        // 交互行为
-        behaviors: [
-          'drag-canvas',
-          'zoom-canvas',
-        ],
-      })
-
-      graphRef.current = graph
-
-      // 渲染
-      graph.render().then(() => {
-        setGraphReady(true)
-      }).catch(() => {
-        // 忽略错误
-      })
-    }
-
-    // 开始初始化尝试，最多重试 20 次
-    tryInit(20)
-  }, [isDarkMode])
+      // 开始初始化尝试，最多重试 20 次
+      tryInit(20)
+    },
+    [isDarkMode]
+  )
 
   // 清理
   useEffect(() => {
@@ -186,9 +192,9 @@ function RelationshipGraphPreview({
     const nodes = currentGraph.nodes.map((node, index) => {
       const styleData: any = {
         fill: node.color || '#1890ff',
-        stroke: node.color || '#1890ff',
+        stroke: node.color || '#1890ff'
       }
-      
+
       // 如果有位置数据，使用固定位置；否则使用网格布局
       if (node.x !== undefined && node.y !== undefined) {
         styleData.x = node.x
@@ -205,39 +211,42 @@ function RelationshipGraphPreview({
       return {
         id: node.id,
         data: {
-          label: node.name,
+          label: node.name
         },
-        style: styleData,
+        style: styleData
       }
     })
 
     // 转换边数据
-    const edges = (currentGraph.edges || []).map((edge) => {
+    const edges = (currentGraph.edges || []).map(edge => {
       const relationType = relationTypes.find(t => t.id === edge.relationTypeId)
       return {
         id: edge.id,
         source: edge.source,
         target: edge.target,
         data: {
-          label: relationType?.name || edge.label || '',
+          label: relationType?.name || edge.label || ''
         },
         style: {
           stroke: relationType?.color || '#999999',
-          lineWidth: relationType?.lineWidth || 2,
-        },
+          lineWidth: relationType?.lineWidth || 2
+        }
       }
     })
 
     // 设置数据并渲染
     graph.setData({ nodes, edges })
-    graph.render().then(() => {
-      if (!graph.destroyed && nodes.length > 0) {
-        graph.fitView(40)
-        setZoom(graph.getZoom())
-      }
-    }).catch(() => {
-      // 忽略错误
-    })
+    graph
+      .render()
+      .then(() => {
+        if (!graph.destroyed && nodes.length > 0) {
+          graph.fitView(40)
+          setZoom(graph.getZoom())
+        }
+      })
+      .catch(() => {
+        // 忽略错误
+      })
   }, [currentGraph, relationTypes, graphReady])
 
   // 缩放控制
@@ -292,8 +301,12 @@ function RelationshipGraphPreview({
       {/* 顶部工具栏 */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarLeft}>
-          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>返回</Button>
-          <Title level={5} className={styles.title}>{currentGraph.name}</Title>
+          <Button icon={<ArrowLeftOutlined />} onClick={onClose}>
+            返回
+          </Button>
+          <Title level={5} className={styles.title}>
+            {currentGraph.name}
+          </Title>
         </div>
         <div className={styles.toolbarRight}>
           <div className={styles.zoomControls}>

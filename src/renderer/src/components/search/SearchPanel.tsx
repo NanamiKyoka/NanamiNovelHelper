@@ -5,11 +5,7 @@
 
 import { useState, useCallback } from 'react'
 import { Input, Button, Typography, Empty, Tag, Space, Tooltip, Spin, message } from 'antd'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  FileOutlined
-} from '@ant-design/icons'
+import { SearchOutlined, ReloadOutlined, FileOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './SearchPanel.module.css'
 
@@ -55,9 +51,9 @@ function SearchPanel(): JSX.Element {
   const [filesSearched, setFilesSearched] = useState(0)
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set())
 
-  const openFile = useEditorStore((state) => state.openFile)
-  const requestGoToPosition = useEditorStore((state) => state.requestGoToPosition)
-  const requestExternalRefresh = useEditorStore((state) => state.requestExternalRefresh)
+  const openFile = useEditorStore(state => state.openFile)
+  const requestGoToPosition = useEditorStore(state => state.requestGoToPosition)
+  const requestExternalRefresh = useEditorStore(state => state.requestExternalRefresh)
 
   // 执行搜索
   const handleSearch = useCallback(async () => {
@@ -79,7 +75,7 @@ function SearchPanel(): JSX.Element {
         useRegex,
         filesToInclude,
         filesToExclude,
-        maxResults: 2000,
+        maxResults: 2000
       })
 
       if (result.success) {
@@ -99,25 +95,31 @@ function SearchPanel(): JSX.Element {
   }, [searchText, caseSensitive, wholeWord, useRegex, filesToInclude, filesToExclude])
 
   // 处理键盘事件
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch()
-    }
-  }, [handleSearch])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleSearch()
+      }
+    },
+    [handleSearch]
+  )
 
   // 点击搜索结果跳转到编辑器
-  const handleMatchClick = useCallback(async (filePath: string, matchText: string, matchIndex: number) => {
-    try {
-      const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath
-      await openFile(filePath, fileName)
-      setTimeout(() => {
-        requestGoToPosition(filePath, matchText, matchIndex)
-      }, 50)
-    } catch (error) {
-      console.error('[SearchPanel] 打开文件失败:', error)
-      message.error('打开文件失败')
-    }
-  }, [openFile, requestGoToPosition])
+  const handleMatchClick = useCallback(
+    async (filePath: string, matchText: string, matchIndex: number) => {
+      try {
+        const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || filePath
+        await openFile(filePath, fileName)
+        setTimeout(() => {
+          requestGoToPosition(filePath, matchText, matchIndex)
+        }, 50)
+      } catch (error) {
+        console.error('[SearchPanel] 打开文件失败:', error)
+        message.error('打开文件失败')
+      }
+    },
+    [openFile, requestGoToPosition]
+  )
 
   // 切换文件展开/折叠
   const toggleFileExpand = (filePath: string) => {
@@ -149,7 +151,7 @@ function SearchPanel(): JSX.Element {
             caseSensitive,
             wholeWord,
             useRegex,
-            replaceAll: true,
+            replaceAll: true
           }
         )
         if (result.success && result.replacements) {
@@ -170,7 +172,16 @@ function SearchPanel(): JSX.Element {
     } catch (error) {
       message.error(error instanceof Error ? error.message : '替换失败')
     }
-  }, [searchText, replaceText, results, caseSensitive, wholeWord, useRegex, handleSearch, requestExternalRefresh])
+  }, [
+    searchText,
+    replaceText,
+    results,
+    caseSensitive,
+    wholeWord,
+    useRegex,
+    handleSearch,
+    requestExternalRefresh
+  ])
 
   return (
     <div className={styles.container}>
@@ -180,7 +191,7 @@ function SearchPanel(): JSX.Element {
           <Input
             placeholder="搜索"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={e => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
             prefix={<SearchOutlined className={styles.inputIcon} />}
             suffix={
@@ -246,7 +257,7 @@ function SearchPanel(): JSX.Element {
             <Input
               placeholder="替换为..."
               value={replaceText}
-              onChange={(e) => setReplaceText(e.target.value)}
+              onChange={e => setReplaceText(e.target.value)}
               className={styles.searchInput}
             />
             <Tooltip title="替换全部">
@@ -267,13 +278,13 @@ function SearchPanel(): JSX.Element {
             <Input
               placeholder="要包含的文件 (例如: *.md, src/**)"
               value={filesToInclude}
-              onChange={(e) => setFilesToInclude(e.target.value)}
+              onChange={e => setFilesToInclude(e.target.value)}
               className={styles.filterInput}
             />
             <Input
               placeholder="要排除的文件 (例如: node_modules/**)"
               value={filesToExclude}
-              onChange={(e) => setFilesToExclude(e.target.value)}
+              onChange={e => setFilesToExclude(e.target.value)}
               className={styles.filterInput}
             />
           </div>
@@ -285,7 +296,9 @@ function SearchPanel(): JSX.Element {
         {isSearching ? (
           <div className={styles.loading}>
             <Spin size="small" />
-            <Text type="secondary" style={{ marginLeft: 8 }}>搜索中...</Text>
+            <Text type="secondary" style={{ marginLeft: 8 }}>
+              搜索中...
+            </Text>
           </div>
         ) : results.length > 0 ? (
           <>
@@ -295,7 +308,7 @@ function SearchPanel(): JSX.Element {
               </Text>
             </div>
             <div className={styles.resultsList}>
-              {results.map((file) => (
+              {results.map(file => (
                 <div key={file.filePath} className={styles.fileGroup}>
                   <div
                     className={styles.fileHeader}
@@ -344,9 +357,7 @@ function SearchPanel(): JSX.Element {
           />
         ) : (
           <div className={styles.placeholder}>
-            <Text type="secondary">
-              输入搜索内容后按 Enter 开始搜索
-            </Text>
+            <Text type="secondary">输入搜索内容后按 Enter 开始搜索</Text>
           </div>
         )}
       </div>

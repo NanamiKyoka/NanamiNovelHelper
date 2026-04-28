@@ -42,11 +42,12 @@ const formatSize = (bytes: number): string => {
 }
 
 export function BackupSettings(): JSX.Element {
-  const currentProject = useProjectStore((state) => state.currentProject)
-  const projectSettings = useSettingsStore((state) => state.projectSettings)
-  const updateBackupSettings = useSettingsStore((state) => state.updateBackupSettings)
-  const { createBackup, listBackups, restoreBackup, deleteBackup, exportBackup, importBackup } = useSettingsStore()
-  
+  const currentProject = useProjectStore(state => state.currentProject)
+  const projectSettings = useSettingsStore(state => state.projectSettings)
+  const updateBackupSettings = useSettingsStore(state => state.updateBackupSettings)
+  const { createBackup, listBackups, restoreBackup, deleteBackup, exportBackup, importBackup } =
+    useSettingsStore()
+
   const [backups, setBackups] = useState<BackupInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -221,50 +222,52 @@ export function BackupSettings(): JSX.Element {
   return (
     <div className={baseStyles.container}>
       <Card title="自动备份" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          配置自动备份策略，保护您的项目数据安全。
-        </p>
+        <p className={baseStyles.hint}>配置自动备份策略，保护您的项目数据安全。</p>
 
         <Form layout="vertical" size="small">
-          <Form.Item label={
-            <Space>
-              启用自动备份
-              <Tooltip title="开启后，应用会自动创建项目备份">
-                <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
-              </Tooltip>
-            </Space>
-          }>
+          <Form.Item
+            label={
+              <Space>
+                启用自动备份
+                <Tooltip title="开启后，应用会自动创建项目备份">
+                  <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
+                </Tooltip>
+              </Space>
+            }
+          >
             <Switch
               checked={projectSettings?.backup?.enabled ?? true}
-              onChange={(checked) => handleSettingChange('enabled', checked)}
+              onChange={checked => handleSettingChange('enabled', checked)}
             />
           </Form.Item>
-          
-          <Form.Item label={
-            <Space>
-              最大备份数量
-              <Tooltip title="超过此数量的旧备份将被自动删除">
-                <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
-              </Tooltip>
-            </Space>
-          }>
+
+          <Form.Item
+            label={
+              <Space>
+                最大备份数量
+                <Tooltip title="超过此数量的旧备份将被自动删除">
+                  <InfoCircleOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
+                </Tooltip>
+              </Space>
+            }
+          >
             <InputNumber
               min={1}
               max={50}
               value={projectSettings?.backup?.maxCount ?? 10}
-              onChange={(value) => handleSettingChange('maxCount', value ?? 10)}
+              onChange={value => handleSettingChange('maxCount', value ?? 10)}
               style={{ width: 120 }}
               disabled={!projectSettings?.backup?.enabled}
             />
-            <Text type="secondary" style={{ marginLeft: 8 }}>个</Text>
+            <Text type="secondary" style={{ marginLeft: 8 }}>
+              个
+            </Text>
           </Form.Item>
         </Form>
       </Card>
 
       <Card title="手动备份" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          手动创建或导入备份文件。
-        </p>
+        <p className={baseStyles.hint}>手动创建或导入备份文件。</p>
 
         <Space wrap>
           <Button
@@ -275,16 +278,13 @@ export function BackupSettings(): JSX.Element {
           >
             创建备份
           </Button>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={handleImport}
-          >
+          <Button icon={<UploadOutlined />} onClick={handleImport}>
             导入备份
           </Button>
         </Space>
       </Card>
 
-      <Card 
+      <Card
         title={
           <Space>
             <span>备份列表</span>
@@ -301,9 +301,7 @@ export function BackupSettings(): JSX.Element {
         }
         className={baseStyles.card}
       >
-        <p className={baseStyles.hint}>
-          查看和管理所有备份文件。
-        </p>
+        <p className={baseStyles.hint}>查看和管理所有备份文件。</p>
 
         {backups.length === 0 ? (
           <Empty description="暂无备份" image={Empty.PRESENTED_IMAGE_SIMPLE} />

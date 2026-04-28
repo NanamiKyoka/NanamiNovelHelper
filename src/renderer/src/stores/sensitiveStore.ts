@@ -6,16 +6,18 @@ interface SensitiveState {
   words: SensitiveWord[]
   isLoading: boolean
   isLoaded: boolean
-  error: string | null  // 错误信息
-  
+  error: string | null // 错误信息
+
   // 操作
   loadWords: () => Promise<void>
   saveWords: (words: SensitiveWord[]) => Promise<void>
   addWord: (word: Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SensitiveWord>
   updateWord: (id: string, updates: Partial<SensitiveWord>) => Promise<void>
   deleteWord: (id: string) => Promise<void>
-  importWords: (words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<number>
-  
+  importWords: (
+    words: Array<Omit<SensitiveWord, 'id' | 'createdAt' | 'updatedAt'>>
+  ) => Promise<number>
+
   // 辅助方法
   getWordById: (id: string) => SensitiveWord | undefined
   findWord: (id: string) => SensitiveWord | null
@@ -33,7 +35,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
   isLoading: false,
   isLoaded: false,
   error: null,
-  
+
   // 操作
   loadWords: async () => {
     set({ isLoading: true, error: null })
@@ -46,7 +48,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       set({ isLoading: false, isLoaded: false, error: errorMessage })
     }
   },
-  
+
   saveWords: async (words: SensitiveWord[]) => {
     try {
       await window.electron.sensitive.saveWords(words)
@@ -56,8 +58,8 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       throw error
     }
   },
-  
-  addWord: async (word) => {
+
+  addWord: async word => {
     try {
       const newWord = await window.electron.sensitive.addWord(word)
       set(state => ({ words: [...state.words, newWord] }))
@@ -67,13 +69,13 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       throw error
     }
   },
-  
+
   updateWord: async (id, updates) => {
     try {
       const updated = await window.electron.sensitive.updateWord(id, updates)
       if (updated) {
         set(state => ({
-          words: state.words.map(w => w.id === id ? updated : w)
+          words: state.words.map(w => (w.id === id ? updated : w))
         }))
       }
     } catch (error) {
@@ -81,8 +83,8 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       throw error
     }
   },
-  
-  deleteWord: async (id) => {
+
+  deleteWord: async id => {
     try {
       const success = await window.electron.sensitive.deleteWord(id)
       if (success) {
@@ -95,8 +97,8 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       throw error
     }
   },
-  
-  importWords: async (words) => {
+
+  importWords: async words => {
     try {
       const imported = await window.electron.sensitive.importWords(words)
       // 重新加载所有敏感词
@@ -107,20 +109,20 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
       throw error
     }
   },
-  
+
   // 辅助方法
   getWordById: (id: string) => {
     return get().words.find(w => w.id === id)
   },
-  
+
   findWord: (id: string) => {
     return get().words.find(w => w.id === id) || null
   },
-  
+
   checkText: (text: string) => {
     const results: Array<{ word: SensitiveWord; position: number }> = []
     const { words } = get()
-    
+
     for (const word of words) {
       // 检查主词
       let pos = text.indexOf(word.name)
@@ -128,7 +130,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
         results.push({ word, position: pos })
         continue
       }
-      
+
       // 检查别名
       for (const alias of word.aliases) {
         pos = text.indexOf(alias)
@@ -138,10 +140,10 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
         }
       }
     }
-    
+
     return results
   },
-  
+
   clearData: () => {
     set({
       words: [],

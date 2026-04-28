@@ -5,7 +5,7 @@
 import { create } from 'zustand'
 
 /** 全屏编辑模式类型 */
-export type FullscreenMode = 
+export type FullscreenMode =
   | 'vocabulary'
   | 'sensitive'
   | 'relationship'
@@ -45,7 +45,7 @@ interface UIState {
   setSearchReplaceVisible: (visible: boolean) => void
 }
 
-export const useUIStore = create<UIState>((set) => ({
+export const useUIStore = create<UIState>(set => ({
   createProjectModalOpen: false,
   openProjectModalOpen: false,
   selectedText: '',
@@ -65,12 +65,12 @@ export const useUIStore = create<UIState>((set) => ({
   exitFullscreen: () => set({ fullscreenMode: null }),
   openAboutModal: () => set({ aboutModalOpen: true }),
   closeAboutModal: () => set({ aboutModalOpen: false }),
-  toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
+  toggleFocusMode: () => set(state => ({ focusMode: !state.focusMode })),
   setFocusMode: (enabled: boolean) => set({ focusMode: enabled }),
-  toggleOutline: () => set((state) => ({ outlineVisible: !state.outlineVisible })),
+  toggleOutline: () => set(state => ({ outlineVisible: !state.outlineVisible })),
   setOutlineVisible: (visible: boolean) => set({ outlineVisible: visible }),
-  toggleCharCount: () => set((state) => ({ charCountVisible: !state.charCountVisible })),
+  toggleCharCount: () => set(state => ({ charCountVisible: !state.charCountVisible })),
   setCharCountVisible: (visible: boolean) => set({ charCountVisible: visible }),
-  toggleSearchReplace: () => set((state) => ({ searchReplaceVisible: !state.searchReplaceVisible })),
+  toggleSearchReplace: () => set(state => ({ searchReplaceVisible: !state.searchReplaceVisible })),
   setSearchReplaceVisible: (visible: boolean) => set({ searchReplaceVisible: visible })
 }))

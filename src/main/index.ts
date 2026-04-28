@@ -35,9 +35,9 @@ if (!schemesRegistered && !app.isReady()) {
         secure: true,
         standard: true,
         supportFetchAPI: true,
-        corsEnabled: true,
-      },
-    },
+        corsEnabled: true
+      }
+    }
   ])
 }
 
@@ -87,7 +87,7 @@ function createWindow(): void {
     mainWindow?.webContents.send('window-fullscreen-change', false)
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  mainWindow.webContents.setWindowOpenHandler(details => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
@@ -104,12 +104,9 @@ function createWindow(): void {
 // 创建终端独立窗口
 
 function createTerminalWindow(): BrowserWindow {
-
   // 确保清理旧的终端进程
 
   terminalService.destroyAll()
-
-  
 
   terminalWindow = new BrowserWindow({
     width: 900,
@@ -151,8 +148,8 @@ function createTerminalWindow(): BrowserWindow {
   // 加载终端页面
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     const rendererUrl = process.env['ELECTRON_RENDERER_URL']
-    const terminalUrl = rendererUrl.endsWith('/') 
-      ? `${rendererUrl}terminal.html` 
+    const terminalUrl = rendererUrl.endsWith('/')
+      ? `${rendererUrl}terminal.html`
       : `${rendererUrl}/terminal.html`
     terminalWindow.loadURL(terminalUrl)
   } else {
@@ -254,13 +251,12 @@ function registerMainWindowHandlers(): void {
     return false
   })
 
-  ipcMain.on('updater:quit-and-install', () => {
-  })
+  ipcMain.on('updater:quit-and-install', () => {})
 }
 
 app.whenReady().then(() => {
   // 注册 local:// 协议用于加载本地图片
-  protocol.handle('local', (request) => {
+  protocol.handle('local', request => {
     // URL 格式：local://file/E%3A/path/to/file.png
     // 其中 E%3A 是 URL 编码后的盘符（避免浏览器把盘符当作主机名）
     const url = request.url
@@ -271,10 +267,16 @@ app.whenReady().then(() => {
     try {
       const data = fs.readFileSync(filePath)
       const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
-      const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' :
-                       ext === 'gif' ? 'image/gif' :
-                       ext === 'webp' ? 'image/webp' :
-                       ext === 'svg' ? 'image/svg+xml' : 'image/png'
+      const mimeType =
+        ext === 'jpg' || ext === 'jpeg'
+          ? 'image/jpeg'
+          : ext === 'gif'
+            ? 'image/gif'
+            : ext === 'webp'
+              ? 'image/webp'
+              : ext === 'svg'
+                ? 'image/svg+xml'
+                : 'image/png'
       return new Response(data, {
         headers: { 'content-type': mimeType }
       })

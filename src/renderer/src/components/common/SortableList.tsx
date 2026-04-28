@@ -13,7 +13,7 @@ import {
   useSensors,
   DragEndEvent,
   DragStartEvent,
-  DragOverlay,
+  DragOverlay
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -21,7 +21,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   horizontalListSortingStrategy,
-  rectSortingStrategy,
+  rectSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
@@ -46,14 +46,10 @@ interface SortableItemProps {
  * 单个可排序项
  */
 function SortableItem({ id, children, disabled, dragHandle }: SortableItemProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id, disabled })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -68,7 +64,11 @@ function SortableItem({ id, children, disabled, dragHandle }: SortableItemProps)
           <HolderOutlined />
         </div>
       )}
-      <div className={styles.itemContent} {...(!dragHandle ? attributes : {})} {...(!dragHandle ? listeners : {})}>
+      <div
+        className={styles.itemContent}
+        {...(!dragHandle ? attributes : {})}
+        {...(!dragHandle ? listeners : {})}
+      >
         {children}
       </div>
     </div>
@@ -83,11 +83,7 @@ interface SortableOverlayItemProps {
  * 拖拽覆盖层
  */
 function SortableOverlayItem({ children }: SortableOverlayItemProps): JSX.Element {
-  return (
-    <div className={styles.overlayItem}>
-      {children}
-    </div>
-  )
+  return <div className={styles.overlayItem}>{children}</div>
 }
 
 interface SortableListProps<T extends SortableItem> {
@@ -108,7 +104,7 @@ function SortableList<T extends SortableItem>({
   items,
   onReorder,
   renderItem,
-  keyExtractor = (item) => item.id,
+  keyExtractor = item => item.id,
   strategy = 'vertical',
   disabled = false,
   dragHandle = false,
@@ -148,8 +144,8 @@ function SortableList<T extends SortableItem>({
     const { active, over } = event
 
     if (over && active.id !== over.id) {
-      const oldIndex = items.findIndex((item) => keyExtractor(item) === active.id)
-      const newIndex = items.findIndex((item) => keyExtractor(item) === over.id)
+      const oldIndex = items.findIndex(item => keyExtractor(item) === active.id)
+      const newIndex = items.findIndex(item => keyExtractor(item) === over.id)
 
       const newItems = arrayMove(items, oldIndex, newIndex)
       onReorder(newItems)
@@ -158,7 +154,7 @@ function SortableList<T extends SortableItem>({
     setActiveId(null)
   }
 
-  const activeItem = activeId ? items.find((item) => keyExtractor(item) === activeId) : null
+  const activeItem = activeId ? items.find(item => keyExtractor(item) === activeId) : null
 
   return (
     <DndContext

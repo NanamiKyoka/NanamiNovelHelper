@@ -1,6 +1,6 @@
 /**
  * 项目相关类型定义（渲染进程专用）
- * 
+ *
  * 基础类型从 @shared 导入，此文件仅包含渲染进程专用的扩展类型
  */
 
@@ -24,5 +24,5 @@ export {
   BACKUP_DIR,
   IMAGES_DIR,
   ENCRYPTED_KEYS_FILE,
-  PRESET_VOCABULARY_TYPES,
+  PRESET_VOCABULARY_TYPES
 } from '@shared/project'

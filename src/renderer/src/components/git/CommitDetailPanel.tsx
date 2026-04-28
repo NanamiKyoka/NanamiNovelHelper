@@ -25,13 +25,8 @@ interface CommitDetailPanelProps {
 }
 
 function CommitDetailPanel({ commit, onClose }: CommitDetailPanelProps): JSX.Element {
-  const {
-    commitDetail,
-    currentDiff,
-    getCommitDetail,
-    getCommitFileDiff,
-    clearCommitDetail
-  } = useGitStore()
+  const { commitDetail, currentDiff, getCommitDetail, getCommitFileDiff, clearCommitDetail } =
+    useGitStore()
 
   useEffect(() => {
     getCommitDetail(commit)
@@ -116,16 +111,15 @@ function CommitDetailPanel({ commit, onClose }: CommitDetailPanelProps): JSX.Ele
           <div className={styles.commitDetailMessage}>{commit.message}</div>
         )}
         <div className={styles.commitDetailMeta}>
-          <span>作者: {commit.authorName} &lt;{commit.authorEmail}&gt;</span>
+          <span>
+            作者: {commit.authorName} &lt;{commit.authorEmail}&gt;
+          </span>
           <span>时间: {formatDate(commit.timestamp)}</span>
         </div>
         {commit.refs.length > 0 && (
           <div className={styles.commitDetailRefs}>
             {commit.refs.map((ref, i) => (
-              <Tag
-                key={i}
-                color={ref.startsWith('tag:') ? 'blue' : 'green'}
-              >
+              <Tag key={i} color={ref.startsWith('tag:') ? 'blue' : 'green'}>
                 {ref.startsWith('tag:') ? ref.replace('tag:', '') : ref}
               </Tag>
             ))}

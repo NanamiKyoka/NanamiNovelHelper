@@ -41,7 +41,7 @@ export function TerminalWindowApp() {
   // 窗口大小变化时调整终端
   useEffect(() => {
     const observer = new ResizeObserver(() => {
-      terminals.forEach((t) => {
+      terminals.forEach(t => {
         const container = terminalContainerRefs.current.get(t.id)
         if (container && (container as any).fitTerminal) {
           ;(container as any).fitTerminal()
@@ -68,10 +68,13 @@ export function TerminalWindowApp() {
   }
 
   // 创建新终端
-  const handleCreateTerminal = useCallback((shellPath?: string) => {
-    const cwd = currentProject?.path
-    createTerminal({ cwd, shellPath })
-  }, [createTerminal, currentProject])
+  const handleCreateTerminal = useCallback(
+    (shellPath?: string) => {
+      const cwd = currentProject?.path
+      createTerminal({ cwd, shellPath })
+    },
+    [createTerminal, currentProject]
+  )
 
   // 关闭终端
   const handleCloseTerminal = (id: string, e?: React.MouseEvent) => {
@@ -80,7 +83,7 @@ export function TerminalWindowApp() {
   }
 
   // Shell 选择菜单
-  const shellMenuItems: MenuProps['items'] = availableShells.map((shell) => ({
+  const shellMenuItems: MenuProps['items'] = availableShells.map(shell => ({
     key: shell.path,
     label: (
       <span>
@@ -115,7 +118,7 @@ export function TerminalWindowApp() {
   }
 
   // 当前活动终端
-  const activeTerminal = terminals.find((t) => t.id === activeTerminalId)
+  const activeTerminal = terminals.find(t => t.id === activeTerminalId)
 
   return (
     <div className={styles.app}>
@@ -124,11 +127,9 @@ export function TerminalWindowApp() {
         <div className={styles.titleBarLeft}>
           <CodeOutlined className={styles.titleIcon} />
           <span className={styles.title}>终端</span>
-          {currentProject && (
-            <span className={styles.projectName}> - {currentProject.name}</span>
-          )}
+          {currentProject && <span className={styles.projectName}> - {currentProject.name}</span>}
         </div>
-        
+
         {/* 终端选择器 */}
         {terminals.length > 0 && (
           <div className={styles.terminalSelector}>
@@ -139,7 +140,7 @@ export function TerminalWindowApp() {
                 size="small"
                 className={styles.select}
                 popupClassName={styles.selectDropdown}
-                options={terminals.map((t) => ({
+                options={terminals.map(t => ({
                   value: t.id,
                   label: (
                     <div className={styles.selectOption}>
@@ -149,7 +150,7 @@ export function TerminalWindowApp() {
                         size="small"
                         icon={<CloseOutlined />}
                         className={styles.selectCloseBtn}
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation()
                           handleCloseTerminal(t.id)
                         }}
@@ -159,31 +160,57 @@ export function TerminalWindowApp() {
                 }))}
               />
             ) : (
-              <span className={styles.singleTerminalName}>{activeTerminal?.name || 'Terminal'}</span>
+              <span className={styles.singleTerminalName}>
+                {activeTerminal?.name || 'Terminal'}
+              </span>
             )}
           </div>
         )}
-        
+
         {/* 操作按钮 */}
         <div className={styles.titleBarRight}>
           <Dropdown menu={{ items: createMenuItems }} trigger={['click']}>
-            <Button type="text" size="small" icon={<PlusOutlined />} className={styles.titleBtn} title="新建终端" />
+            <Button
+              type="text"
+              size="small"
+              icon={<PlusOutlined />}
+              className={styles.titleBtn}
+              title="新建终端"
+            />
           </Dropdown>
           {activeTerminal && (
             <Tooltip title="关闭当前终端">
-              <Button 
-                type="text" 
-                size="small" 
-                icon={<CloseOutlined />} 
+              <Button
+                type="text"
+                size="small"
+                icon={<CloseOutlined />}
                 className={styles.titleBtn}
                 onClick={() => handleCloseTerminal(activeTerminal.id)}
               />
             </Tooltip>
           )}
           <div className={styles.windowControls}>
-            <Button type="text" size="small" icon={<MinusOutlined />} className={styles.controlBtn} onClick={handleMinimize} />
-            <Button type="text" size="small" icon={<BorderOutlined />} className={styles.controlBtn} onClick={handleMaximize} />
-            <Button type="text" size="small" icon={<CloseOutlined />} className={`${styles.controlBtn} ${styles.closeBtn}`} onClick={handleClose} />
+            <Button
+              type="text"
+              size="small"
+              icon={<MinusOutlined />}
+              className={styles.controlBtn}
+              onClick={handleMinimize}
+            />
+            <Button
+              type="text"
+              size="small"
+              icon={<BorderOutlined />}
+              className={styles.controlBtn}
+              onClick={handleMaximize}
+            />
+            <Button
+              type="text"
+              size="small"
+              icon={<CloseOutlined />}
+              className={`${styles.controlBtn} ${styles.closeBtn}`}
+              onClick={handleClose}
+            />
           </div>
         </div>
       </div>
@@ -201,7 +228,7 @@ export function TerminalWindowApp() {
         ) : activeTerminal ? (
           <div
             key={activeTerminal.id}
-            ref={(el) => {
+            ref={el => {
               if (el) terminalContainerRefs.current.set(activeTerminal.id, el)
             }}
             className={styles.terminalWrapper}

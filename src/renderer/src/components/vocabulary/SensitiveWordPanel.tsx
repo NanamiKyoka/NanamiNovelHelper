@@ -53,14 +53,9 @@ interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 }
 
 function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id
+  })
 
   const style: React.CSSProperties = {
     ...props.style,
@@ -70,20 +65,17 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
   }
 
   return (
-    <tr
-      {...props}
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-    >
-      {React.Children.map(props.children, (child) => {
-        if (React.isValidElement(child) && (child as React.ReactElement<{ className?: string }>).props?.className?.includes('drag-handle-cell')) {
+    <tr {...props} ref={setNodeRef} style={style} {...attributes}>
+      {React.Children.map(props.children, child => {
+        if (
+          React.isValidElement(child) &&
+          (child as React.ReactElement<{ className?: string }>).props?.className?.includes(
+            'drag-handle-cell'
+          )
+        ) {
           return React.cloneElement(child as React.ReactElement<object>, {
             children: (
-              <div
-                className={styles.dragHandle}
-                {...listeners}
-              >
+              <div className={styles.dragHandle} {...listeners}>
                 <HolderOutlined />
               </div>
             )
@@ -96,16 +88,9 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
 }
 
 function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.Element {
-  const {
-    words,
-    loadWords,
-    addWord,
-    updateWord,
-    deleteWord,
-    reorderWords,
-    isLoaded
-  } = useSensitiveStore()
-  
+  const { words, loadWords, addWord, updateWord, deleteWord, reorderWords, isLoaded } =
+    useSensitiveStore()
+
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingWord, setEditingWord] = useState<SensitiveWord | null>(null)
   const [form] = Form.useForm()
@@ -173,7 +158,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
         await addWord(values)
         message.success('创建成功')
       }
-      
+
       setDrawerOpen(false)
     } catch (error) {
       console.error('保存失败:', error)
@@ -192,16 +177,16 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
   // 拖拽结束
   const handleDragEnd = (event: DragEndEvent): void => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
       const oldIndex = sortedWords.findIndex(w => w.id === active.id)
       const newIndex = sortedWords.findIndex(w => w.id === over.id)
-      
+
       const newWords = arrayMove(sortedWords, oldIndex, newIndex)
       const newWordIds = newWords.map(w => w.id)
-      
+
       // 调用 reorderWords 更新顺序
-      reorderWords(newWordIds).catch((error) => {
+      reorderWords(newWordIds).catch(error => {
         console.error('Failed to reorder words:', error)
         message.error('排序失败')
       })
@@ -211,11 +196,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
   // 获取严重程度标签
   const getSeverityTag = (severity: string): JSX.Element => {
     const level = SEVERITY_LEVELS.find(l => l.value === severity)
-    return (
-      <Tag color={level?.color || '#999'}>
-        {level?.label || severity}
-      </Tag>
-    )
+    return <Tag color={level?.color || '#999'}>{level?.label || severity}</Tag>
   }
 
   // 表格列定义
@@ -260,34 +241,33 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
       ellipsis: true,
       render: (suggestion: string) => suggestion || '-'
     },
-    ...(readOnly ? [] : [{
-      title: '操作',
-      key: 'action',
-      width: 100,
-      render: (_: unknown, record: SensitiveWord) => (
-        <Space>
-          <Button
-            type="text"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="确定删除此敏感词？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="删除"
-            cancelText="取消"
-          >
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-            />
-          </Popconfirm>
-        </Space>
-      )
-    }])
+    ...(readOnly
+      ? []
+      : [
+          {
+            title: '操作',
+            key: 'action',
+            width: 100,
+            render: (_: unknown, record: SensitiveWord) => (
+              <Space>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
+                />
+                <Popconfirm
+                  title="确定删除此敏感词？"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="删除"
+                  cancelText="取消"
+                >
+                  <Button type="text" size="small" icon={<DeleteOutlined />} danger />
+                </Popconfirm>
+              </Space>
+            )
+          }
+        ])
   ]
 
   if (!words.length && readOnly) {
@@ -327,11 +307,7 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
 
       {/* 表格 */}
       <div className={styles.tableContainer}>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={sortedWords.map(w => w.id)}
             strategy={verticalListSortingStrategy}
@@ -342,7 +318,9 @@ function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.
               rowKey="id"
               size="small"
               pagination={{ pageSize: 20 }}
-              locale={{ emptyText: <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+              locale={{
+                emptyText: <Empty description="暂无敏感词" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              }}
               components={{
                 body: {
                   row: SortableRow

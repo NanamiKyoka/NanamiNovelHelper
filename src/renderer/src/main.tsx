@@ -9,19 +9,19 @@ import './styles/global.css'
 
 // 主题提供者组件
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
-  const config = useThemeStore((state) => state.config)
-  const resolvedMode = useThemeStore((state) => state.resolvedMode)
+  const config = useThemeStore(state => state.config)
+  const resolvedMode = useThemeStore(state => state.resolvedMode)
 
   // 更新 CSS 变量和 body 类
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--font-size', `${config.fontSize}px`)
     root.style.setProperty('--font-family', config.fontFamily)
-    
+
     // 更新 body 类
     document.body.classList.remove('light', 'dark')
     document.body.classList.add(resolvedMode)
-    
+
     // 更新 data 属性（用于 CSS 选择器）
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, resolvedMode])
@@ -46,26 +46,20 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
   }
 
   return (
-    <ConfigProvider 
-      locale={zhCN} 
-      theme={antdTheme}
-      getPopupContainer={() => document.body}
-    >
-      <AntApp>
-        {children}
-      </AntApp>
+    <ConfigProvider locale={zhCN} theme={antdTheme} getPopupContainer={() => document.body}>
+      <AntApp>{children}</AntApp>
     </ConfigProvider>
   )
 }
 
 // 全局设置初始化组件
 function GlobalSettingsInitializer({ children }: { children: React.ReactNode }): JSX.Element {
-  const initGlobalSettings = useSettingsStore((state) => state.initGlobalSettings)
-  const isInitialized = useSettingsStore((state) => state.isInitialized)
+  const initGlobalSettings = useSettingsStore(state => state.initGlobalSettings)
+  const isInitialized = useSettingsStore(state => state.isInitialized)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    initGlobalSettings().catch((err) => {
+    initGlobalSettings().catch(err => {
       console.error('Failed to initialize global settings:', err)
       setError(err.message)
     })
@@ -79,12 +73,14 @@ function GlobalSettingsInitializer({ children }: { children: React.ReactNode }):
   // 等待初始化完成
   if (!isInitialized) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh'
+        }}
+      >
         <Spin size="large" />
       </div>
     )

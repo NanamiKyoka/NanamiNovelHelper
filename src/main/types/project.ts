@@ -1,6 +1,6 @@
 /**
  * 项目相关类型定义（主进程专用）
- * 
+ *
  * 基础类型从 @shared 导入，此文件仅包含主进程专用的扩展类型
  */
 
@@ -27,7 +27,7 @@ export {
   IMAGES_DIR,
   ENCRYPTED_KEYS_FILE,
   PRESET_VOCABULARY_TYPES,
-  DEFAULT_PRESET_VOCABULARY,
+  DEFAULT_PRESET_VOCABULARY
 } from '@shared/project'
 
 // ============================================

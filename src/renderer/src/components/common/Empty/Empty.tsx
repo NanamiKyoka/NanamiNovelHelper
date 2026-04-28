@@ -1,6 +1,6 @@
 /**
  * 统一空状态组件
- * 
+ *
  * 提供一致的空数据展示体验
  */
 
@@ -33,7 +33,7 @@ const PRESET_ICONS: Record<string, React.ReactNode> = {
   list: <FileTextOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
   folder: <FolderOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
   search: <SearchOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
-  user: <UserOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />,
+  user: <UserOutlined style={{ fontSize: 48, color: 'var(--text-quaternary)' }} />
 }
 
 /**
@@ -44,7 +44,7 @@ const PRESET_DESCRIPTIONS: Record<string, string> = {
   list: '列表为空',
   folder: '文件夹为空',
   search: '未找到匹配结果',
-  user: '暂无用户数据',
+  user: '暂无用户数据'
 }
 
 /**
@@ -57,7 +57,7 @@ export function Empty({
   onAction,
   actionProps,
   icon,
-  centered = true,
+  centered = true
 }: EmptyProps) {
   const displayIcon = icon ?? PRESET_ICONS[type]
   const displayDescription = description ?? PRESET_DESCRIPTIONS[type]
@@ -81,10 +81,10 @@ export function Empty({
 /**
  * 列表空状态
  */
-export function ListEmpty({ 
-  actionText = '添加', 
+export function ListEmpty({
+  actionText = '添加',
   onAction,
-  description = '列表为空，点击按钮添加新项目',
+  description = '列表为空，点击按钮添加新项目'
 }: {
   actionText?: string
   onAction?: () => void
@@ -115,7 +115,10 @@ export function SearchEmpty({ keyword }: { keyword?: string }) {
 /**
  * 文件夹空状态
  */
-export function FolderEmpty({ actionText = '新建文件', onAction }: {
+export function FolderEmpty({
+  actionText = '新建文件',
+  onAction
+}: {
   actionText?: string
   onAction?: () => void
 }) {

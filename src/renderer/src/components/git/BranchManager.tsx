@@ -3,18 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import {
-  Button,
-  Empty,
-  Modal,
-  Input,
-  Space,
-  Tag,
-  Tooltip,
-  Dropdown,
-  message,
-  Spin
-} from 'antd'
+import { Button, Empty, Modal, Input, Space, Tag, Tooltip, Dropdown, message, Spin } from 'antd'
 import {
   PlusOutlined,
   BranchesOutlined,
@@ -226,11 +215,7 @@ function BranchManager(): JSX.Element {
     <div className={styles.changesSection}>
       {/* 工具栏 */}
       <div className={styles.toolbar}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setShowCreateModal(true)}
-        >
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowCreateModal(true)}>
           新建分支
         </Button>
         <Tooltip title="刷新">
@@ -251,7 +236,7 @@ function BranchManager(): JSX.Element {
             <span className={styles.sectionCount}>{localBranches.length}</span>
           </div>
           <ul className={styles.branchList}>
-            {localBranches.map((branch) => (
+            {localBranches.map(branch => (
               <Dropdown
                 key={branch.name}
                 menu={{ items: getBranchMenuItems(branch) }}
@@ -265,22 +250,21 @@ function BranchManager(): JSX.Element {
                     <CheckOutlined style={{ marginRight: 8, color: 'var(--ant-color-primary)' }} />
                   )}
                   <span className={styles.branchName}>{branch.name}</span>
-                  {branch.ahead !== undefined && branch.behind !== undefined && (branch.ahead > 0 || branch.behind > 0) && (
-                    <span className={styles.branchStatus}>
-                      {branch.ahead > 0 && <Tag color="blue">领先 {branch.ahead}</Tag>}
-                      {branch.behind > 0 && <Tag color="orange">落后 {branch.behind}</Tag>}
-                    </span>
-                  )}
-                  <Dropdown
-                    menu={{ items: getBranchMenuItems(branch) }}
-                    trigger={['click']}
-                  >
+                  {branch.ahead !== undefined &&
+                    branch.behind !== undefined &&
+                    (branch.ahead > 0 || branch.behind > 0) && (
+                      <span className={styles.branchStatus}>
+                        {branch.ahead > 0 && <Tag color="blue">领先 {branch.ahead}</Tag>}
+                        {branch.behind > 0 && <Tag color="orange">落后 {branch.behind}</Tag>}
+                      </span>
+                    )}
+                  <Dropdown menu={{ items: getBranchMenuItems(branch) }} trigger={['click']}>
                     <Button
                       size="small"
                       type="text"
                       icon={<MoreOutlined />}
                       loading={loadingAction === branch.name}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
                     />
                   </Dropdown>
                 </li>
@@ -299,9 +283,12 @@ function BranchManager(): JSX.Element {
             <span className={styles.sectionCount}>{remoteBranches.length}</span>
           </div>
           <ul className={styles.branchList}>
-            {remoteBranches.map((branch) => (
+            {remoteBranches.map(branch => (
               <li key={branch.name} className={styles.branchItem}>
-                <span className={styles.branchName} style={{ color: 'var(--ant-color-text-secondary)' }}>
+                <span
+                  className={styles.branchName}
+                  style={{ color: 'var(--ant-color-text-secondary)' }}
+                >
                   {branch.name}
                 </span>
               </li>
@@ -338,7 +325,7 @@ function BranchManager(): JSX.Element {
           <Input
             placeholder="输入新分支名称"
             value={newBranchName}
-            onChange={(e) => setNewBranchName(e.target.value)}
+            onChange={e => setNewBranchName(e.target.value)}
             onPressEnter={handleCreateBranch}
             autoFocus
           />

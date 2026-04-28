@@ -11,7 +11,7 @@ interface ThemeState {
   config: ThemeConfig
   // 实际使用的模式（解析 system 后的实际值）
   resolvedMode: 'light' | 'dark'
-  
+
   // Actions
   setMode: (mode: ThemeMode) => void
   setPrimaryColor: (color: string) => void
@@ -42,26 +42,26 @@ export const useThemeStore = create<ThemeState>()(
       config: DEFAULT_THEME,
       resolvedMode: resolveMode(DEFAULT_THEME.mode),
 
-      setMode: (mode) => {
+      setMode: mode => {
         set({
           config: { ...get().config, mode },
           resolvedMode: resolveMode(mode)
         })
       },
 
-      setPrimaryColor: (primaryColor) => {
+      setPrimaryColor: primaryColor => {
         set({
           config: { ...get().config, primaryColor }
         })
       },
 
-      setFontSize: (fontSize) => {
+      setFontSize: fontSize => {
         set({
           config: { ...get().config, fontSize }
         })
       },
 
-      setFontFamily: (fontFamily) => {
+      setFontFamily: fontFamily => {
         set({
           config: { ...get().config, fontFamily }
         })
@@ -76,8 +76,8 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'nanami-theme',
-      partialize: (state) => ({ config: state.config }),
-      onRehydrateStorage: () => (state) => {
+      partialize: state => ({ config: state.config }),
+      onRehydrateStorage: () => state => {
         if (state) {
           // 重新计算 resolvedMode
           state.resolvedMode = resolveMode(state.config.mode)
@@ -90,7 +90,7 @@ export const useThemeStore = create<ThemeState>()(
 // 监听系统主题变化
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  mediaQuery.addEventListener('change', (e) => {
+  mediaQuery.addEventListener('change', e => {
     const state = useThemeStore.getState()
     if (state.config.mode === 'system') {
       useThemeStore.setState({ resolvedMode: e.matches ? 'dark' : 'light' })

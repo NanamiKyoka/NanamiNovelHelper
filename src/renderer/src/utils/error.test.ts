@@ -10,7 +10,7 @@ import {
   handleError,
   createErrorHandler,
   tryAsync,
-  trySync,
+  trySync
 } from '@utils/error'
 
 describe('error utils', () => {
@@ -92,10 +92,7 @@ describe('error utils', () => {
       const error = new Error('测试错误')
       const message = handler(error)
       expect(message).toBe('测试错误')
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[CustomPrefix] 测试错误',
-        error
-      )
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[CustomPrefix] 测试错误', error)
     })
 
     it('should respect log option', () => {
@@ -125,19 +122,16 @@ describe('error utils', () => {
     })
 
     it('should return error on failure', async () => {
-      const [data, error] = await tryAsync(
-        () => Promise.reject(new Error('失败')),
-        { log: false }
-      )
+      const [data, error] = await tryAsync(() => Promise.reject(new Error('失败')), { log: false })
       expect(data).toBeNull()
       expect(error).toBe('失败')
     })
 
     it('should use fallback message', async () => {
-      const [data, error] = await tryAsync(
-        () => Promise.reject(null),
-        { fallbackMessage: '默认错误', log: false }
-      )
+      const [data, error] = await tryAsync(() => Promise.reject(null), {
+        fallbackMessage: '默认错误',
+        log: false
+      })
       expect(data).toBeNull()
       expect(error).toBe('默认错误')
     })
@@ -162,7 +156,9 @@ describe('error utils', () => {
 
     it('should return error on failure', () => {
       const [data, error] = trySync(
-        () => { throw new Error('失败') },
+        () => {
+          throw new Error('失败')
+        },
         { log: false }
       )
       expect(data).toBeNull()

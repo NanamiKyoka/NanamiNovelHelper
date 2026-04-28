@@ -290,6 +290,7 @@ export const GIT_CHANNELS = {
   // 文件操作
   ADD: 'git:add',
   RESTORE: 'git:restore',
+  RESTORE_STAGED: 'git:restore:staged',
   DIFF: 'git:diff',
 
   // 分支管理

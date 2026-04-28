@@ -30,7 +30,7 @@ interface MapFullscreenProps {
 
 export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const { message } = App.useApp()
-  
+
   const currentMap = useMapStore(state => state.currentMap)
   const viewStack = useMapStore(state => state.viewStack)
   const tool = useMapStore(state => state.tool)
@@ -62,16 +62,20 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const isConnecting = useMapStore(state => state.isConnecting)
   const connectingFrom = useMapStore(state => state.connectingFrom)
   const cancelConnecting = useMapStore(state => state.cancelConnecting)
-  
+
   const toolInfo = useMemo(() => {
     switch (tool) {
-      case 'select': return { name: '选择', hint: '点击选择，拖拽移动，Delete 删除' }
-      case 'draw': return { name: '绘制', hint: '点击空白区域创建新板块' }
-      case 'connect': return { name: '连接', hint: '点击两个板块创建连接' }
-      default: return { name: '未知', hint: '' }
+      case 'select':
+        return { name: '选择', hint: '点击选择，拖拽移动，Delete 删除' }
+      case 'draw':
+        return { name: '绘制', hint: '点击空白区域创建新板块' }
+      case 'connect':
+        return { name: '连接', hint: '点击两个板块创建连接' }
+      default:
+        return { name: '未知', hint: '' }
     }
   }, [tool])
-  
+
   const operationHint = useMemo(() => {
     if (isConnecting && connectingFrom) {
       const chunk = getChunkById(connectingFrom.chunkId)
@@ -79,11 +83,13 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
     return null
   }, [isConnecting, connectingFrom, getChunkById])
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<{type: 'chunk' | 'element', id: string} | null>(null)
-  
+  const [editingItem, setEditingItem] = useState<{ type: 'chunk' | 'element'; id: string } | null>(
+    null
+  )
+
   useEffect(() => {
     const loadMapData = async () => {
       setIsLoading(true)
@@ -92,57 +98,66 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
     loadMapData()
   }, [mapId, loadMap])
-  
+
   const isWorldView = viewStack.length === 1
   const currentLevel = viewStack[viewStack.length - 1]
-  
+
   const handleSave = useCallback(async () => {
     await saveCurrentMap()
     message.success('地图已保存')
   }, [saveCurrentMap, message])
-  
-  const handleChunkDoubleClick = useCallback((chunkId: string) => {
-    enterChunk(chunkId)
-  }, [enterChunk])
-  
-  const handleElementDoubleClick = useCallback((elementId: string, elementName: string) => {
-    enterElement(elementId, elementName)
-  }, [enterElement])
-  
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const chunkType = e.dataTransfer.getData('chunkType') as ChunkType
-    if (!chunkType) return
-    
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left - panX) / zoom
-    const y = (e.clientY - rect.top - panY) / zoom
-    
-    const hexPosition = pixelToHex({ x, y })
-    
-    if (isHexOccupied(hexPosition)) {
-      const nearestEmpty = findNearestEmptyHex(hexPosition)
-      if (nearestEmpty) {
+
+  const handleChunkDoubleClick = useCallback(
+    (chunkId: string) => {
+      enterChunk(chunkId)
+    },
+    [enterChunk]
+  )
+
+  const handleElementDoubleClick = useCallback(
+    (elementId: string, elementName: string) => {
+      enterElement(elementId, elementName)
+    },
+    [enterElement]
+  )
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const chunkType = e.dataTransfer.getData('chunkType') as ChunkType
+      if (!chunkType) return
+
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = (e.clientX - rect.left - panX) / zoom
+      const y = (e.clientY - rect.top - panY) / zoom
+
+      const hexPosition = pixelToHex({ x, y })
+
+      if (isHexOccupied(hexPosition)) {
+        const nearestEmpty = findNearestEmptyHex(hexPosition)
+        if (nearestEmpty) {
+          addChunk({
+            chunkType,
+            hexPosition: nearestEmpty
+          })
+        } else {
+          message.warning('没有可用的空位')
+        }
+      } else {
         addChunk({
           chunkType,
-          hexPosition: nearestEmpty
+          hexPosition
         })
-      } else {
-        message.warning('没有可用的空位')
       }
-    } else {
-      addChunk({
-        chunkType,
-        hexPosition
-      })
-    }
-  }, [addChunk, isHexOccupied, findNearestEmptyHex, panX, panY, zoom, message])
-  
+    },
+    [addChunk, isHexOccupied, findNearestEmptyHex, panX, panY, zoom, message]
+  )
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
   }, [])
-  
+
   const handleDelete = useCallback(() => {
     if (selectedChunkId) {
       Modal.confirm({
@@ -172,12 +187,23 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       deleteConnection(selectedConnectionId)
       message.success('连接已删除')
     }
-  }, [selectedChunkId, selectedElementId, selectedConnectionId, deleteChunk, deleteElement, deleteConnection, message])
-  
+  }, [
+    selectedChunkId,
+    selectedElementId,
+    selectedConnectionId,
+    deleteChunk,
+    deleteElement,
+    deleteConnection,
+    message
+  ])
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+        if (
+          document.activeElement?.tagName === 'INPUT' ||
+          document.activeElement?.tagName === 'TEXTAREA'
+        ) {
           return
         }
         if (selectedChunkId || selectedElementId || selectedConnectionId) {
@@ -185,50 +211,62 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
           handleDelete()
         }
       }
-      
+
       if (e.key === 'v' || e.key === 'V') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (
+          document.activeElement?.tagName !== 'INPUT' &&
+          document.activeElement?.tagName !== 'TEXTAREA'
+        ) {
           setTool('select')
         }
       }
       if (e.key === 'd' || e.key === 'D') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (
+          document.activeElement?.tagName !== 'INPUT' &&
+          document.activeElement?.tagName !== 'TEXTAREA'
+        ) {
           setTool('draw')
         }
       }
       if (e.key === 'c' || e.key === 'C') {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (
+          document.activeElement?.tagName !== 'INPUT' &&
+          document.activeElement?.tagName !== 'TEXTAREA'
+        ) {
           setTool('connect')
         }
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [selectedChunkId, selectedElementId, selectedConnectionId, handleDelete, setTool])
-  
-  const handleEdit = useCallback((id?: string) => {
-    const targetId = id || selectedChunkId || selectedElementId
-    if (!targetId) return
-    
-    if (selectedChunkId || id) {
-      const chunk = getChunkById(targetId)
-      if (chunk) {
-        setEditingItem({ type: 'chunk', id: targetId })
-        setEditModalOpen(true)
-        return
+
+  const handleEdit = useCallback(
+    (id?: string) => {
+      const targetId = id || selectedChunkId || selectedElementId
+      if (!targetId) return
+
+      if (selectedChunkId || id) {
+        const chunk = getChunkById(targetId)
+        if (chunk) {
+          setEditingItem({ type: 'chunk', id: targetId })
+          setEditModalOpen(true)
+          return
+        }
       }
-    }
-    
-    if (selectedElementId || id) {
-      const element = getElementById(targetId)
-      if (element) {
-        setEditingItem({ type: 'element', id: targetId })
-        setEditModalOpen(true)
+
+      if (selectedElementId || id) {
+        const element = getElementById(targetId)
+        if (element) {
+          setEditingItem({ type: 'element', id: targetId })
+          setEditModalOpen(true)
+        }
       }
-    }
-  }, [selectedChunkId, selectedElementId, getChunkById, getElementById])
-  
+    },
+    [selectedChunkId, selectedElementId, getChunkById, getElementById]
+  )
+
   const handleExport = useCallback(async () => {
     if (!currentMap) return
     const filePath = await exportMap(currentMap.id)
@@ -236,17 +274,17 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       message.success(`已导出到: ${filePath}`)
     }
   }, [currentMap, exportMap, message])
-  
+
   const handleImport = useCallback(async () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
-    input.onchange = async (e) => {
+    input.onchange = async e => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
-      
+
       const reader = new FileReader()
-      reader.onload = async (event) => {
+      reader.onload = async event => {
         const content = event.target?.result as string
         const map = await importMap(content)
         if (map) {
@@ -257,7 +295,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     }
     input.click()
   }, [importMap, message])
-  
+
   if (isLoading || !currentMap) {
     return (
       <div className={styles.mapFullscreen}>
@@ -265,25 +303,17 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       </div>
     )
   }
-  
+
   return (
-    <div 
-      className={styles.mapFullscreen}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
+    <div className={styles.mapFullscreen} onDrop={handleDrop} onDragOver={handleDragOver}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <Button
-            className={styles.backButton}
-            icon={<ArrowLeftOutlined />}
-            onClick={onBack}
-          >
+          <Button className={styles.backButton} icon={<ArrowLeftOutlined />} onClick={onBack}>
             返回
           </Button>
           <span className={styles.mapName}>{currentMap.name}</span>
         </div>
-        
+
         <div className={styles.headerRight}>
           <div className={styles.toolGroup}>
             <Tooltip title="选择工具 (V)">
@@ -311,26 +341,18 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
               </button>
             </Tooltip>
           </div>
-          
+
           <div className={styles.divider} />
-          
+
           <Tooltip title="撤销">
-            <Button
-              icon={<UndoOutlined />}
-              disabled={!canUndo}
-              onClick={undo}
-            />
+            <Button icon={<UndoOutlined />} disabled={!canUndo} onClick={undo} />
           </Tooltip>
           <Tooltip title="重做">
-            <Button
-              icon={<RedoOutlined />}
-              disabled={!canRedo}
-              onClick={redo}
-            />
+            <Button icon={<RedoOutlined />} disabled={!canRedo} onClick={redo} />
           </Tooltip>
-          
+
           <div className={styles.divider} />
-          
+
           <Tooltip title="编辑选中">
             <Button
               icon={<EditOutlined />}
@@ -340,20 +362,14 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
               编辑
             </Button>
           </Tooltip>
-          
+
           <Tooltip title="导入">
-            <Button
-              icon={<ImportOutlined />}
-              onClick={handleImport}
-            />
+            <Button icon={<ImportOutlined />} onClick={handleImport} />
           </Tooltip>
           <Tooltip title="导出">
-            <Button
-              icon={<ExportOutlined />}
-              onClick={handleExport}
-            />
+            <Button icon={<ExportOutlined />} onClick={handleExport} />
           </Tooltip>
-          
+
           <Tooltip title="删除选中">
             <Button
               icon={<DeleteOutlined />}
@@ -362,76 +378,58 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
               onClick={handleDelete}
             />
           </Tooltip>
-          
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleSave}
-          >
+
+          <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
             保存
           </Button>
         </div>
       </div>
-      
+
       <Breadcrumb />
-      
+
       <div className={styles.mainArea}>
         <div className={styles.canvasArea}>
           {isWorldView ? (
-            <WorldCanvas 
-              onChunkDoubleClick={handleChunkDoubleClick} 
-              onChunkEdit={handleEdit}
-            />
+            <WorldCanvas onChunkDoubleClick={handleChunkDoubleClick} onChunkEdit={handleEdit} />
           ) : (
-            <InnerCanvas 
+            <InnerCanvas
               onElementDoubleClick={handleElementDoubleClick}
               onElementEdit={handleEdit}
             />
           )}
         </div>
-        
-        {isWorldView ? (
-          <ChunkGallery onChunkDrop={() => {}} />
-        ) : (
-          <ElementGallery />
-        )}
+
+        {isWorldView ? <ChunkGallery onChunkDrop={() => {}} /> : <ElementGallery />}
       </div>
-      
+
       <div className={styles.statusBar}>
         <div className={styles.statusLeft}>
-          <span className={styles.statusItem}>
-            工具: {toolInfo.name}
-          </span>
-          <span className={styles.statusItem}>
-            视图: {currentLevel.name}
-          </span>
-          <span className={styles.statusItem}>
-            板块: {currentMap.data.chunks.length || 0}
-          </span>
-          <span className={styles.statusItem}>
-            连接: {currentMap.data.connections.length || 0}
-          </span>
+          <span className={styles.statusItem}>工具: {toolInfo.name}</span>
+          <span className={styles.statusItem}>视图: {currentLevel.name}</span>
+          <span className={styles.statusItem}>板块: {currentMap.data.chunks.length || 0}</span>
+          <span className={styles.statusItem}>连接: {currentMap.data.connections.length || 0}</span>
         </div>
         <div className={styles.statusRight}>
           {operationHint ? (
             <span className={styles.statusHint}>
               {operationHint}
-              <Button size="small" type="link" onClick={cancelConnecting}>取消</Button>
+              <Button size="small" type="link" onClick={cancelConnecting}>
+                取消
+              </Button>
             </span>
           ) : (
-            <span className={styles.statusItem}>
-              {toolInfo.hint}
-            </span>
+            <span className={styles.statusItem}>{toolInfo.hint}</span>
           )}
         </div>
       </div>
-      
+
       {editModalOpen && editingItem && (
         <EditModal
           type={editingItem.type}
-          item={editingItem.type === 'chunk' 
-            ? getChunkById(editingItem.id) 
-            : getElementById(editingItem.id)
+          item={
+            editingItem.type === 'chunk'
+              ? getChunkById(editingItem.id)
+              : getElementById(editingItem.id)
           }
           onClose={() => {
             setEditModalOpen(false)

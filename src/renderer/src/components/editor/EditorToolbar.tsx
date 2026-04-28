@@ -342,7 +342,7 @@ export function EditorToolbar({
         maxHeight: 4096,
         quality: 100
       })
-      
+
       if (result) {
         const base64 = await window.electron.image.readAsBase64(result.path)
         editor.chain().focus().setImage({ src: base64, alt: result.originalName }).run()
@@ -672,7 +672,13 @@ export function EditorToolbar({
               />
             </Tooltip>
             <Tooltip title="图片">
-              <Button type="text" size="small" icon={<PictureOutlined />} onClick={insertImage} loading={imageLoading} />
+              <Button
+                type="text"
+                size="small"
+                icon={<PictureOutlined />}
+                onClick={insertImage}
+                loading={imageLoading}
+              />
             </Tooltip>
             <Tooltip title="代码块">
               <Button

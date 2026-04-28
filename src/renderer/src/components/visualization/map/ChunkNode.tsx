@@ -32,58 +32,62 @@ export function ChunkNode({
   isConnectingFrom
 }: ChunkNodeProps) {
   const config = CHUNK_TYPE_CONFIG[chunk.chunkType]
-  
+
   const IconComponent = useMemo(() => {
     const iconName = chunk.icon || config.icon
-    return (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] || Icons.QuestionCircleOutlined
+    return (
+      (Icons as Record<string, React.ComponentType<{ style?: React.CSSProperties }>>)[iconName] ||
+      Icons.QuestionCircleOutlined
+    )
   }, [chunk.icon, config.icon])
-  
+
   const centerPosition = useMemo(() => {
     return hexToPixel(chunk.hexPosition)
   }, [chunk.hexPosition])
-  
+
   const hexCorners = useMemo(() => {
     return getHexCorners(centerPosition, HEX_SIZE)
   }, [centerPosition])
-  
+
   const hexPath = useMemo(() => {
-    return hexCorners
-      .map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`)
-      .join(' ') + ' Z'
+    return (
+      hexCorners.map((corner, i) => `${i === 0 ? 'M' : 'L'} ${corner.x} ${corner.y}`).join(' ') +
+      ' Z'
+    )
   }, [hexCorners])
-  
+
   const handleMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     if (isConnectingMode && isConnectingFrom) {
       return
     }
-    
+
     if (isConnectingMode && onStartConnecting) {
       onStartConnecting()
       return
     }
-    
+
     onDragStart(e)
   }
-  
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    
+
     if (isConnectingMode && isConnectingFrom) {
       return
     }
-    
+
     if (isConnectingMode && onStartConnecting) {
       onStartConnecting()
     }
   }
-  
+
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
   }
-  
+
   const contextMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
@@ -112,19 +116,18 @@ export function ChunkNode({
       onClick: onDelete
     }
   ]
-  
+
   const nodeClassName = [
     styles.chunkNode,
     isSelected ? styles.chunkNodeSelected : '',
     isConnectingFrom ? styles.chunkNodeConnecting : '',
     isConnectingMode && !isConnectingFrom ? styles.chunkNodeConnectTarget : ''
-  ].filter(Boolean).join(' ')
-  
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <Dropdown
-      menu={{ items: contextMenuItems }}
-      trigger={['contextMenu']}
-    >
+    <Dropdown menu={{ items: contextMenuItems }} trigger={['contextMenu']}>
       <div
         className={nodeClassName}
         style={{
@@ -157,11 +160,8 @@ export function ChunkNode({
             strokeWidth={isConnectingFrom ? 4 : isSelected ? 3 : 1}
           />
         </svg>
-        
-        <div 
-          className={styles.chunkContent}
-          style={{ color: getContrastColor(chunk.color) }}
-        >
+
+        <div className={styles.chunkContent} style={{ color: getContrastColor(chunk.color) }}>
           <div className={styles.chunkIcon}>
             <IconComponent style={{ fontSize: 24 }} />
           </div>

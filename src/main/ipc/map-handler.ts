@@ -1,18 +1,13 @@
 /**
  * 地图相关 IPC 处理器
- * 
+ *
  * 新版：支持多边形板块、连接、标注
  */
 
 import { ipcMain, dialog } from 'electron'
 import { mapService } from '../services/map'
 import { validateParams } from '../utils/validation'
-import type {
-  Map,
-  MapMeta,
-  CreateMapOptions,
-  UpdateMapOptions
-} from '../types/map'
+import type { Map, MapMeta, CreateMapOptions, UpdateMapOptions } from '../types/map'
 
 export function registerMapHandlers(): void {
   // ============================================
@@ -24,9 +19,7 @@ export function registerMapHandlers(): void {
   })
 
   ipcMain.handle('map:get', (_, mapId: string): Map | null => {
-    validateParams('map:get')
-      .nonEmptyString(mapId, 'mapId')
-      .validate()
+    validateParams('map:get').nonEmptyString(mapId, 'mapId').validate()
     return mapService.get(mapId)
   })
 
@@ -47,9 +40,7 @@ export function registerMapHandlers(): void {
   })
 
   ipcMain.handle('map:delete', (_, mapId: string): boolean => {
-    validateParams('map:delete')
-      .nonEmptyString(mapId, 'mapId')
-      .validate()
+    validateParams('map:delete').nonEmptyString(mapId, 'mapId').validate()
     return mapService.delete(mapId)
   })
 
@@ -66,9 +57,7 @@ export function registerMapHandlers(): void {
   })
 
   ipcMain.handle('map:getThumbnailPath', (_, mapId: string): string | null => {
-    validateParams('map:getThumbnailPath')
-      .nonEmptyString(mapId, 'mapId')
-      .validate()
+    validateParams('map:getThumbnailPath').nonEmptyString(mapId, 'mapId').validate()
     return mapService.getThumbnailFullPath(mapId)
   })
 
@@ -77,23 +66,17 @@ export function registerMapHandlers(): void {
   // ============================================
 
   ipcMain.handle('map:export', (_, mapId: string): string | null => {
-    validateParams('map:export')
-      .nonEmptyString(mapId, 'mapId')
-      .validate()
+    validateParams('map:export').nonEmptyString(mapId, 'mapId').validate()
     return mapService.exportItem(mapId)
   })
 
   ipcMain.handle('map:import', (_, jsonContent: string): Map | null => {
-    validateParams('map:import')
-      .nonEmptyString(jsonContent, 'jsonContent')
-      .validate()
+    validateParams('map:import').nonEmptyString(jsonContent, 'jsonContent').validate()
     return mapService.importItem(jsonContent)
   })
 
   ipcMain.handle('map:showExportDialog', async (_, mapName: string): Promise<string | null> => {
-    validateParams('map:showExportDialog')
-      .nonEmptyString(mapName, 'mapName')
-      .validate()
+    validateParams('map:showExportDialog').nonEmptyString(mapName, 'mapName').validate()
     const result = await dialog.showSaveDialog({
       title: '导出地图',
       defaultPath: `${mapName}.json5`,
@@ -120,9 +103,7 @@ export function registerMapHandlers(): void {
   })
 
   ipcMain.handle('map:reorderMaps', (_, mapIds: string[]): boolean => {
-    validateParams('map:reorderMaps')
-      .stringArray(mapIds, 'mapIds')
-      .validate()
+    validateParams('map:reorderMaps').stringArray(mapIds, 'mapIds').validate()
     return mapService.reorderMaps(mapIds)
   })
 }

@@ -36,10 +36,7 @@ function MapPanel(): JSX.Element {
   return (
     <div className={styles.container}>
       {viewMode === 'list' && (
-        <MapList 
-          onSelectMap={handleSelectMap}
-          onCreateAndEdit={handleCreateAndEdit}
-        />
+        <MapList onSelectMap={handleSelectMap} onCreateAndEdit={handleCreateAndEdit} />
       )}
       {viewMode === 'preview' && currentMapId && (
         <MapPreview
@@ -49,10 +46,7 @@ function MapPanel(): JSX.Element {
         />
       )}
       {viewMode === 'editor' && currentMapId && (
-        <MapFullscreen
-          mapId={currentMapId}
-          onBack={handleExitEditor}
-        />
+        <MapFullscreen mapId={currentMapId} onBack={handleExitEditor} />
       )}
     </div>
   )

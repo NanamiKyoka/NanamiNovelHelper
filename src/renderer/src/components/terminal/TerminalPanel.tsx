@@ -5,12 +5,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Button, Dropdown, Tooltip, Select } from 'antd'
-import {
-  PlusOutlined,
-  CloseOutlined,
-  CodeOutlined,
-  ExpandOutlined
-} from '@ant-design/icons'
+import { PlusOutlined, CloseOutlined, CodeOutlined, ExpandOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useTerminalStore } from '@stores/terminalStore'
 import { useProjectStore } from '@stores/projectStore'
@@ -40,7 +35,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
 
   // 检查终端窗口状态
   useEffect(() => {
-    window.electron.terminalWindow.isOpen().then((isOpen) => {
+    window.electron.terminalWindow.isOpen().then(isOpen => {
       setIsTerminalWindowOpen(isOpen)
     })
 
@@ -75,10 +70,13 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
   }
 
   // 创建新终端
-  const handleCreateTerminal = useCallback((shellPath?: string) => {
-    const cwd = currentProject?.path
-    createTerminal({ cwd, shellPath })
-  }, [createTerminal, currentProject])
+  const handleCreateTerminal = useCallback(
+    (shellPath?: string) => {
+      const cwd = currentProject?.path
+      createTerminal({ cwd, shellPath })
+    },
+    [createTerminal, currentProject]
+  )
 
   // 关闭终端
   const handleCloseTerminal = (id: string, e?: React.MouseEvent) => {
@@ -93,7 +91,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
   }, [onClose])
 
   // Shell 选择菜单
-  const shellMenuItems: MenuProps['items'] = availableShells.map((shell) => ({
+  const shellMenuItems: MenuProps['items'] = availableShells.map(shell => ({
     key: shell.path,
     label: (
       <span>
@@ -117,7 +115,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
   // 当面板高度变化时调整终端
   useEffect(() => {
     const observer = new ResizeObserver(() => {
-      terminals.forEach((t) => {
+      terminals.forEach(t => {
         const container = terminalContainerRefs.current.get(t.id)
         if (container && (container as any).fitTerminal) {
           ;(container as any).fitTerminal()
@@ -133,7 +131,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
   }, [terminals])
 
   // 当前活动终端
-  const activeTerminal = terminals.find((t) => t.id === activeTerminalId)
+  const activeTerminal = terminals.find(t => t.id === activeTerminalId)
 
   return (
     <div className={styles.panel}>
@@ -142,36 +140,46 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
         <div className={styles.headerLeft}>
           <CodeOutlined className={styles.icon} />
           <span className={styles.title}>终端</span>
-          {terminals.length > 1 && (
-            <span className={styles.count}>{terminals.length}</span>
-          )}
+          {terminals.length > 1 && <span className={styles.count}>{terminals.length}</span>}
         </div>
         <div className={styles.headerRight}>
           <Dropdown menu={{ items: createMenuItems }} trigger={['click']}>
-            <Button type="text" size="small" icon={<PlusOutlined />} className={styles.headerBtn} title="新建终端" />
+            <Button
+              type="text"
+              size="small"
+              icon={<PlusOutlined />}
+              className={styles.headerBtn}
+              title="新建终端"
+            />
           </Dropdown>
           {activeTerminal && (
             <Tooltip title="关闭当前终端">
-              <Button 
-                type="text" 
-                size="small" 
-                icon={<CloseOutlined />} 
+              <Button
+                type="text"
+                size="small"
+                icon={<CloseOutlined />}
                 className={styles.headerBtn}
                 onClick={() => handleCloseTerminal(activeTerminal.id)}
               />
             </Tooltip>
           )}
           <Tooltip title="弹出窗口">
-            <Button 
-              type="text" 
-              size="small" 
-              icon={<ExpandOutlined />} 
-              className={styles.headerBtn} 
+            <Button
+              type="text"
+              size="small"
+              icon={<ExpandOutlined />}
+              className={styles.headerBtn}
               onClick={handlePopOut}
             />
           </Tooltip>
           {onClose && (
-            <Button type="text" size="small" icon={<CloseOutlined />} className={styles.headerBtn} onClick={onClose} />
+            <Button
+              type="text"
+              size="small"
+              icon={<CloseOutlined />}
+              className={styles.headerBtn}
+              onClick={onClose}
+            />
           )}
         </div>
       </div>
@@ -186,7 +194,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
               size="small"
               className={styles.select}
               popupClassName={styles.selectDropdown}
-              options={terminals.map((t) => ({
+              options={terminals.map(t => ({
                 value: t.id,
                 label: (
                   <div className={styles.selectOption}>
@@ -196,7 +204,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
                       size="small"
                       icon={<CloseOutlined />}
                       className={styles.selectCloseBtn}
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation()
                         handleCloseTerminal(t.id)
                       }}
@@ -224,7 +232,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
         ) : activeTerminal ? (
           <div
             key={activeTerminal.id}
-            ref={(el) => {
+            ref={el => {
               if (el) terminalContainerRefs.current.set(activeTerminal.id, el)
             }}
             className={styles.terminalWrapper}

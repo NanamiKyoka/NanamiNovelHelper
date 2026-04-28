@@ -29,7 +29,7 @@ function stripHtmlTags(html: string): string {
     .replace(/&nbsp;/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/^\s+|\s+$/g, '')
-  
+
   return text
 }
 
@@ -140,39 +140,42 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
   }, [])
 
   // 导出为 TXT
-  const handleExportTxt = useCallback(async (tab: EditorTab) => {
-    try {
-      const content = getCurrentContent()
-      if (!content) {
-        message.warning('文件内容为空')
-        return
-      }
+  const handleExportTxt = useCallback(
+    async (tab: EditorTab) => {
+      try {
+        const content = getCurrentContent()
+        if (!content) {
+          message.warning('文件内容为空')
+          return
+        }
 
-      const baseName = tab.name.replace(/\.[^.]+$/, '')
-      const filePath = await window.electron.file.showSaveDialog({
-        title: '导出为纯文本',
-        defaultPath: `${baseName}.txt`,
-        filters: [
-          { name: '文本文件', extensions: ['txt'] },
-          { name: '所有文件', extensions: ['*'] }
-        ]
-      })
+        const baseName = tab.name.replace(/\.[^.]+$/, '')
+        const filePath = await window.electron.file.showSaveDialog({
+          title: '导出为纯文本',
+          defaultPath: `${baseName}.txt`,
+          filters: [
+            { name: '文本文件', extensions: ['txt'] },
+            { name: '所有文件', extensions: ['*'] }
+          ]
+        })
 
-      if (!filePath) return
+        if (!filePath) return
 
-      const plainText = stripHtmlTags(content)
-      const success = await window.electron.file.exportTxt(filePath, plainText)
-      
-      if (success) {
-        message.success('导出成功')
-      } else {
+        const plainText = stripHtmlTags(content)
+        const success = await window.electron.file.exportTxt(filePath, plainText)
+
+        if (success) {
+          message.success('导出成功')
+        } else {
+          message.error('导出失败')
+        }
+      } catch (error) {
+        console.error('Export failed:', error)
         message.error('导出失败')
       }
-    } catch (error) {
-      console.error('Export failed:', error)
-      message.error('导出失败')
-    }
-  }, [getCurrentContent])
+    },
+    [getCurrentContent]
+  )
 
   // 右键菜单项
   const getContextMenuItems = useCallback(

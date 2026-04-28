@@ -35,12 +35,12 @@
     gap: 8px;
     padding: 8px 12px;
   }
-  
+
   .toolbar :global(.ant-input-search) {
     width: 100% !important;
     min-width: 120px;
   }
-  
+
   .toolbar :global(.ant-btn) {
     padding: 4px 8px;
     font-size: 13px;
@@ -52,12 +52,12 @@
     gap: 6px;
     padding: 6px 8px;
   }
-  
+
   .toolbar :global(.ant-btn) {
     padding: 4px 6px;
     font-size: 12px;
   }
-  
+
   .toolbar :global(.ant-space) {
     gap: 6px !important;
   }
@@ -145,12 +145,17 @@
   pointer-events: none;
   opacity: 0.95;
   transform: scale(1.02);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 /* 拖拽中的行样式 */
 .tableContainer :global(.ant-table-tbody > tr) {
-  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 /* 拖拽时被拖拽行的原始位置样式 */

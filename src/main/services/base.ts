@@ -14,7 +14,10 @@ export interface BaseEntity {
   updatedAt: string
 }
 
-export abstract class BaseService<T extends BaseEntity, M = Omit<T, 'nodes' | 'edges' | 'events' | 'data'>> extends ServiceCore {
+export abstract class BaseService<
+  T extends BaseEntity,
+  M = Omit<T, 'nodes' | 'edges' | 'events' | 'data'>
+> extends ServiceCore {
   protected config: Required<BaseServiceConfig>
 
   constructor(config: BaseServiceConfig) {

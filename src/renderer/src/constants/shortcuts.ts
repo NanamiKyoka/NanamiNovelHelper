@@ -1,6 +1,6 @@
 /**
  * 应用全局快捷键定义
- * 
+ *
  * 统一定义应用级别的快捷键，与 ShortcutsSettings 组件配合使用
  */
 
@@ -59,7 +59,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+W',
     category: SHORTCUT_CATEGORIES.FILE
   },
-  
+
   // 编辑操作
   {
     id: 'edit.undo',
@@ -117,7 +117,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+A',
     category: SHORTCUT_CATEGORIES.EDIT
   },
-  
+
   // 视图操作
   {
     id: 'view.sidebar',
@@ -161,7 +161,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+0',
     category: SHORTCUT_CATEGORIES.VIEW
   },
-  
+
   // 项目操作
   {
     id: 'project.new',
@@ -184,7 +184,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+Shift+W',
     category: SHORTCUT_CATEGORIES.PROJECT
   },
-  
+
   // 格式操作
   {
     id: 'format.bold',
@@ -242,7 +242,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+K',
     category: SHORTCUT_CATEGORIES.FORMAT
   },
-  
+
   // 工具面板
   {
     id: 'tools.vocabulary',
@@ -279,7 +279,7 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+`',
     category: SHORTCUT_CATEGORIES.TOOLS
   },
-  
+
   // 帮助
   {
     id: 'help.shortcuts',
@@ -331,7 +331,7 @@ export function getShortcutsWithCustom(): Array<{
   category: string
 }> {
   const customKeys = loadCustomShortcuts()
-  
+
   return DEFAULT_SHORTCUTS.map(s => ({
     ...s,
     currentKey: customKeys[s.id] || s.defaultKey

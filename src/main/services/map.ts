@@ -1,7 +1,7 @@
 /**
  * 地图服务
  * 负责地图的 CRUD 操作和缩略图生成
- * 
+ *
  * 新版：支持板块(Chunk)、内部元素(MapElement)、连接(Connection)
  */
 
@@ -63,9 +63,7 @@ class MapService extends BaseService<Map, MapMeta> {
   }
 
   protected sortItems(items: MapMeta[]): MapMeta[] {
-    return items.sort((a, b) =>
-      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    )
+    return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }
 
   // ============================================
@@ -80,7 +78,7 @@ class MapService extends BaseService<Map, MapMeta> {
     const mapId = this.generateId()
 
     const mapData = createDefaultMapData()
-    
+
     if (options.canvasWidth) mapData.canvasWidth = options.canvasWidth
     if (options.canvasHeight) mapData.canvasHeight = options.canvasHeight
     if (options.backgroundColor) mapData.backgroundColor = options.backgroundColor
@@ -182,7 +180,7 @@ class MapService extends BaseService<Map, MapMeta> {
    */
   reorderMaps(mapIds: string[]): boolean {
     try {
-      mapIds.forEach((mapId) => {
+      mapIds.forEach(mapId => {
         const map = this.get(mapId)
         if (map) {
           map.updatedAt = this.getTimestamp()

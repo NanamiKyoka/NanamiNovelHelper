@@ -12,9 +12,9 @@ import baseStyles from './SettingsBase.module.css'
 import styles from './LayoutSettings.module.css'
 
 function FileDisplaySettings(): JSX.Element {
-  const currentProject = useProjectStore((state) => state.currentProject)
-  const refreshTree = useFileTreeStore((state) => state.refreshTree)
-  
+  const currentProject = useProjectStore(state => state.currentProject)
+  const refreshTree = useFileTreeStore(state => state.refreshTree)
+
   const [hiddenItems, setHiddenItems] = useState<string[]>([])
   const [newHiddenItem, setNewHiddenItem] = useState('')
 
@@ -27,7 +27,7 @@ function FileDisplaySettings(): JSX.Element {
   const handleAddHiddenItem = async () => {
     const item = newHiddenItem.trim()
     if (!item) return
-    
+
     if (hiddenItems.includes(item)) {
       message.warning('该项已存在于隐藏列表中')
       return
@@ -70,10 +70,8 @@ function FileDisplaySettings(): JSX.Element {
   return (
     <div className={baseStyles.container}>
       <Card title="隐藏指定项目" className={baseStyles.card}>
-        <p className={baseStyles.hint}>
-          自定义隐藏指定的文件或文件夹。这些设置仅对当前项目生效。
-        </p>
-        
+        <p className={baseStyles.hint}>自定义隐藏指定的文件或文件夹。这些设置仅对当前项目生效。</p>
+
         <div style={{ marginTop: 16 }}>
           <div className={styles.badgeItem} style={{ alignItems: 'flex-start' }}>
             <div className={styles.badgeItemLeft}>
@@ -86,41 +84,43 @@ function FileDisplaySettings(): JSX.Element {
               </div>
             </div>
           </div>
-          
+
           <div style={{ marginLeft: 44, marginTop: 8 }}>
             <Space.Compact style={{ width: '100%' }}>
               <Input
                 placeholder="例如: node_modules、dist、temp"
                 value={newHiddenItem}
-                onChange={(e) => setNewHiddenItem(e.target.value)}
+                onChange={e => setNewHiddenItem(e.target.value)}
                 onPressEnter={handleAddHiddenItem}
               />
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={handleAddHiddenItem}
-              >
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAddHiddenItem}>
                 添加
               </Button>
             </Space.Compact>
-            
+
             {hiddenItems.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ marginBottom: 8, color: 'var(--ant-color-text-secondary)', fontSize: 12 }}>
+                <div
+                  style={{
+                    marginBottom: 8,
+                    color: 'var(--ant-color-text-secondary)',
+                    fontSize: 12
+                  }}
+                >
                   已隐藏的项目：
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {hiddenItems.map((item) => (
+                  {hiddenItems.map(item => (
                     <Tag
                       key={item}
                       closable
-                      onClose={(e) => {
+                      onClose={e => {
                         e.preventDefault()
                         handleRemoveHiddenItem(item)
                       }}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 4,
                         padding: '4px 8px'
                       }}

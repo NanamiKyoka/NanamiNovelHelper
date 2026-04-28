@@ -17,11 +17,11 @@
     padding: 4px 6px;
     gap: 2px;
   }
-  
+
   .group {
     gap: 1px;
   }
-  
+
   .divider {
     margin: 0 2px;
   }
@@ -32,17 +32,17 @@
     padding: 3px 4px;
     gap: 1px;
   }
-  
+
   .group {
     gap: 0;
   }
-  
+
   .divider {
     margin: 0 1px;
     width: 1px;
     height: 14px;
   }
-  
+
   .arrow {
     display: none;
   }
@@ -94,7 +94,7 @@
   flex: 1;
 }
 
-.taskContent[data-checked="true"] {
+.taskContent[data-checked='true'] {
   text-decoration: line-through;
   color: var(--ant-color-text-secondary);
 }

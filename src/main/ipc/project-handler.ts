@@ -14,7 +14,10 @@ import { sequenceChartService } from '../services/sequence-chart'
 import { organizationService } from '../services/organization'
 import { mapService } from '../services/map'
 import { aiAssistantService } from '../services/aiAssistant'
-import { initProject as initDynamicSkill, clearProject as clearDynamicSkill } from '../services/dynamicSkill'
+import {
+  initProject as initDynamicSkill,
+  clearProject as clearDynamicSkill
+} from '../services/dynamicSkill'
 import { searchService } from '../services/search'
 import { fileWatcherService } from '../services/fileWatcher'
 import { CreateProjectOptions, Project, RecentProject } from '../types/project'
@@ -29,10 +32,13 @@ export function registerProjectHandlers(): void {
     try {
       validateParams('project:create')
         .object(options, 'options')
-        .nonEmptyString((options as Record<string, unknown>).parentPath as string, 'options.parentPath')
+        .nonEmptyString(
+          (options as Record<string, unknown>).parentPath as string,
+          'options.parentPath'
+        )
         .nonEmptyString((options as Record<string, unknown>).name as string, 'options.name')
         .validate()
-      
+
       const project = await projectService.createProject(options)
       // 初始化文件服务
       fileService.init(project.path)
@@ -72,7 +78,7 @@ export function registerProjectHandlers(): void {
     try {
       // 参数验证
       validateParams('project:open ').nonEmptyString(path, 'path').validate()
-      
+
       const project = await projectService.openProject(path)
       // 初始化文件服务
       fileService.init(project.path)

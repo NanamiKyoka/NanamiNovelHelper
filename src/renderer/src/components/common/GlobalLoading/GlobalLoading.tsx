@@ -25,9 +25,20 @@ const MODULE_NAMES: Record<string, string> = {
 }
 
 const ALL_MODULES = [
-  'project', 'vocabulary', 'sensitive', 'relationship',
-  'timeline', 'sequenceChart', 'organization', 'map',
-  'fileTree', 'highlight', 'settings', 'git', 'ai', 'terminal'
+  'project',
+  'vocabulary',
+  'sensitive',
+  'relationship',
+  'timeline',
+  'sequenceChart',
+  'organization',
+  'map',
+  'fileTree',
+  'highlight',
+  'settings',
+  'git',
+  'ai',
+  'terminal'
 ] as const
 
 interface GlobalLoadingProps {
@@ -48,16 +59,16 @@ const GlobalLoadingInner = memo(function GlobalLoadingInner({
   const message = useMemo(() => {
     if (customMessage) return customMessage
     if (latestMessage) return latestMessage
-    
+
     if (loadingModules.length === 1) {
       const moduleName = MODULE_NAMES[loadingModules[0]] || loadingModules[0]
       return `加载${moduleName}中...`
     }
-    
+
     if (loadingModules.length > 1) {
       return `加载中... (${loadingModules.length} 个任务)`
     }
-    
+
     return '加载中...'
   }, [customMessage, latestMessage, loadingModules])
 
@@ -77,14 +88,14 @@ const GlobalLoadingInner = memo(function GlobalLoadingInner({
         <div className={styles.spinner}>
           <Spin size="large" />
         </div>
-        
+
         <div className={styles.message}>{message}</div>
-        
+
         {showProgress && progressPercent !== undefined && (
           <div className={styles.progress}>
-            <Progress 
-              percent={progressPercent} 
-              size="small" 
+            <Progress
+              percent={progressPercent}
+              size="small"
               showInfo={false}
               strokeColor={{
                 '0%': '#108ee9',
@@ -93,22 +104,18 @@ const GlobalLoadingInner = memo(function GlobalLoadingInner({
             />
           </div>
         )}
-        
+
         {showModules && loadingModules.length > 0 && (
           <div className={styles.modules}>
-            {loadingModules.map((module) => (
+            {loadingModules.map(module => (
               <span key={module} className={styles.moduleTag}>
                 {MODULE_NAMES[module] || module}
               </span>
             ))}
           </div>
         )}
-        
-        {taskCount > 1 && (
-          <div className={styles.taskCount}>
-            {taskCount} 个任务并行处理
-          </div>
-        )}
+
+        {taskCount > 1 && <div className={styles.taskCount}>{taskCount} 个任务并行处理</div>}
       </div>
     </div>
   )
@@ -131,17 +138,19 @@ export function AppInitLoading({ message = '正在初始化应用...' }: { messa
   )
 }
 
-export const ModuleLoadingIndicator = memo(function ModuleLoadingIndicator({ module }: { module: string }) {
+export const ModuleLoadingIndicator = memo(function ModuleLoadingIndicator({
+  module
+}: {
+  module: string
+}) {
   const summary = useLoadingSummary()
-  
+
   if (!summary.isLoading) return null
-  
+
   return (
     <div className={styles.inlineIndicator}>
       <Spin size="small" />
-      <span className={styles.inlineText}>
-        加载{MODULE_NAMES[module] || module}中...
-      </span>
+      <span className={styles.inlineText}>加载{MODULE_NAMES[module] || module}中...</span>
     </div>
   )
 })

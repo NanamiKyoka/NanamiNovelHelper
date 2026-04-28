@@ -10,7 +10,13 @@
 /**
  * 预设词汇类型
  */
-export type PresetVocabularyType = 'character' | 'location' | 'organization' | 'item' | 'magic' | 'event'
+export type PresetVocabularyType =
+  | 'character'
+  | 'location'
+  | 'organization'
+  | 'item'
+  | 'magic'
+  | 'event'
 
 /**
  * 预设词汇类型配置

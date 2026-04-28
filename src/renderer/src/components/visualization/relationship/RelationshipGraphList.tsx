@@ -4,16 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  Typography,
-  Button,
-  Card,
-  Modal,
-  App,
-  Input,
-  Select,
-  Spin,
-} from 'antd'
+import { Typography, Button, Card, Modal, App, Input, Select, Spin } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -23,7 +14,7 @@ import {
   TeamOutlined,
   UserOutlined,
   HeartOutlined,
-  HolderOutlined,
+  HolderOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -32,14 +23,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  DragEndEvent
 } from '@dnd-kit/core'
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  rectSortingStrategy,
+  rectSortingStrategy
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useRelationshipStore } from '@stores/relationshipStore'
@@ -76,33 +67,24 @@ function SortableCard({
   getLocalUrl,
   onContextMenu,
   onClick,
-  onDoubleClick,
+  onDoubleClick
 }: SortableCardProps): JSX.Element {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: graph.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: graph.id
+  })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : 0,
+    zIndex: isDragging ? 1 : 0
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={styles.sortableCardWrapper}
-    >
+    <div ref={setNodeRef} style={style} className={styles.sortableCardWrapper}>
       <Card
         className={styles.graphCard}
-        onContextMenu={(e) => onContextMenu(e, graph)}
+        onContextMenu={e => onContextMenu(e, graph)}
         onClick={() => onClick(graph.id)}
         onDoubleClick={() => onDoubleClick(graph.id)}
         styles={{ body: { padding: 0 } }}
@@ -118,19 +100,13 @@ function SortableCard({
             <TeamOutlined className={styles.thumbnailPlaceholder} />
           )}
           {/* 拖拽手柄 */}
-          <div
-            className={styles.dragHandle}
-            {...attributes}
-            {...listeners}
-          >
+          <div className={styles.dragHandle} {...attributes} {...listeners}>
             <HolderOutlined />
           </div>
         </div>
         <div className={styles.cardBody}>
           <div className={styles.graphName}>{graph.name}</div>
-          {graph.description && (
-            <div className={styles.graphDescription}>{graph.description}</div>
-          )}
+          {graph.description && <div className={styles.graphDescription}>{graph.description}</div>}
           <div className={styles.graphStats}>
             <span className={styles.stat}>
               <UserOutlined />
@@ -158,7 +134,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
     deleteGraph,
     exportGraph,
     importGraph,
-    reorderGraphs,
+    reorderGraphs
   } = useRelationshipStore()
 
   const { types: vocabularyTypes, loadTypes } = useVocabularyStore()
@@ -174,11 +150,11 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 需要移动 5px 才开始拖拽，避免误触
-      },
+        distance: 5 // 需要移动 5px 才开始拖拽，避免误触
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   )
 
@@ -187,7 +163,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
     visible: false,
     x: 0,
     y: 0,
-    graph: null,
+    graph: null
   })
 
   const contextMenuRef = useRef<HTMLDivElement>(null)
@@ -212,7 +188,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu((prev) => ({ ...prev, visible: false }))
+        setContextMenu(prev => ({ ...prev, visible: false }))
       }
     }
 
@@ -229,7 +205,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      graph,
+      graph
     })
   }, [])
 
@@ -245,7 +221,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
       const graph = await createGraph({
         name: newGraphName.trim(),
         description: newGraphDescription.trim() || undefined,
-        linkedVocabularyTypes: newGraphVocabularyTypes,
+        linkedVocabularyTypes: newGraphVocabularyTypes
       })
       if (graph) {
         message.success('创建成功')
@@ -262,7 +238,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
 
   // 删除关系图
   const handleDelete = (graph: RelationshipGraphMeta) => {
-    setContextMenu((prev) => ({ ...prev, visible: false }))
+    setContextMenu(prev => ({ ...prev, visible: false }))
     modal.confirm({
       title: '确定要删除这个关系图吗？',
       content: `将删除「${graph.name}」，删除后无法恢复。`,
@@ -276,7 +252,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
         } catch {
           message.error('删除失败')
         }
-      },
+      }
     })
   }
 
@@ -294,7 +270,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
     } catch {
       message.error('导出失败')
     }
-    setContextMenu((prev) => ({ ...prev, visible: false }))
+    setContextMenu(prev => ({ ...prev, visible: false }))
   }
 
   // 导入关系图
@@ -329,13 +305,13 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
       const { active, over } = event
 
       if (over && active.id !== over.id) {
-        const oldIndex = graphs.findIndex((g) => g.id === active.id)
-        const newIndex = graphs.findIndex((g) => g.id === over.id)
+        const oldIndex = graphs.findIndex(g => g.id === active.id)
+        const newIndex = graphs.findIndex(g => g.id === over.id)
 
         if (oldIndex !== -1 && newIndex !== -1) {
           // 乐观更新：先本地排序
           const newGraphs = arrayMove(graphs, oldIndex, newIndex)
-          const graphIds = newGraphs.map((g) => g.id)
+          const graphIds = newGraphs.map(g => g.id)
 
           // 保存到后端
           const success = await reorderGraphs(graphIds)
@@ -362,7 +338,11 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
           <Button icon={<ImportOutlined />} onClick={handleImport}>
             导入
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalVisible(true)}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalVisible(true)}
+          >
             新建
           </Button>
         </div>
@@ -385,12 +365,9 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={graphs.map((g) => g.id)}
-              strategy={rectSortingStrategy}
-            >
+            <SortableContext items={graphs.map(g => g.id)} strategy={rectSortingStrategy}>
               <div className={styles.grid}>
-                {graphs.map((graph) => (
+                {graphs.map(graph => (
                   <SortableCard
                     key={graph.id}
                     graph={graph}
@@ -417,16 +394,13 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
             className={styles.contextMenuItem}
             onClick={() => {
               onSelectGraph(contextMenu.graph!.id)
-              setContextMenu((prev) => ({ ...prev, visible: false }))
+              setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >
             <EditOutlined />
             <span>编辑</span>
           </div>
-          <div
-            className={styles.contextMenuItem}
-            onClick={() => handleExport(contextMenu.graph!)}
-          >
+          <div className={styles.contextMenuItem} onClick={() => handleExport(contextMenu.graph!)}>
             <ExportOutlined />
             <span>导出</span>
           </div>
@@ -457,7 +431,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
             <Input
               placeholder="输入关系图名称"
               value={newGraphName}
-              onChange={(e) => setNewGraphName(e.target.value)}
+              onChange={e => setNewGraphName(e.target.value)}
               maxLength={50}
             />
           </div>
@@ -467,7 +441,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
             <TextArea
               placeholder="输入关系图描述（可选）"
               value={newGraphDescription}
-              onChange={(e) => setNewGraphDescription(e.target.value)}
+              onChange={e => setNewGraphDescription(e.target.value)}
               rows={3}
               maxLength={200}
             />
@@ -475,18 +449,16 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
 
           <div className={styles.formItem}>
             <label className={styles.formLabel}>关联词汇类型</label>
-            <span className={styles.formHint}>
-              关联后可从词汇库快速添加人物节点
-            </span>
+            <span className={styles.formHint}>关联后可从词汇库快速添加人物节点</span>
             <Select
               mode="multiple"
               placeholder="选择要关联的词汇类型"
               value={newGraphVocabularyTypes}
               onChange={setNewGraphVocabularyTypes}
               className={styles.vocabularyTypeSelect}
-              options={vocabularyTypes.map((t) => ({
+              options={vocabularyTypes.map(t => ({
                 label: t.name,
-                value: t.id,
+                value: t.id
               }))}
             />
           </div>

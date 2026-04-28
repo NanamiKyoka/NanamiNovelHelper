@@ -1,6 +1,6 @@
 /**
  * 统一图标映射表
- * 
+ *
  * 确保项目中图标使用一致，避免视觉混淆
  */
 
@@ -16,7 +16,7 @@ import {
   SaveOutlined,
   DownloadOutlined,
   UploadOutlined,
-  
+
   // 编辑操作
   CopyOutlined,
   ScissorOutlined,
@@ -25,7 +25,7 @@ import {
   RedoOutlined,
   SearchOutlined,
   ReplaceOutlined,
-  
+
   // 视图操作
   EyeOutlined,
   EyeInvisibleOutlined,
@@ -34,7 +34,7 @@ import {
   SettingOutlined,
   MenuOutlined,
   AppstoreOutlined,
-  
+
   // 功能模块
   TagOutlined,
   TeamOutlined,
@@ -46,7 +46,7 @@ import {
   TableOutlined,
   CodeOutlined,
   WarningOutlined,
-  
+
   // 状态
   CheckOutlined,
   CloseOutlined,
@@ -54,7 +54,7 @@ import {
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   QuestionCircleOutlined,
-  
+
   // 操作
   PlusOutlined,
   MinusOutlined,
@@ -66,7 +66,7 @@ import {
   ArrowDownOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  
+
   // 类型图标（词汇类型）
   BookOutlined,
   GiftOutlined,
@@ -74,12 +74,12 @@ import {
   BulbOutlined,
   HeartOutlined,
   StarOutlined,
-  
+
   // 工具
   ToolOutlined,
   BulbTwoTone,
-  RocketOutlined,
-  
+  RocketOutlined
+
   // 类型定义
 } from '@ant-design/icons'
 
@@ -102,7 +102,7 @@ export const ICON_MAP = {
   save: SaveOutlined,
   download: DownloadOutlined,
   upload: UploadOutlined,
-  
+
   // 编辑操作
   copy: CopyOutlined,
   cut: ScissorOutlined,
@@ -111,7 +111,7 @@ export const ICON_MAP = {
   redo: RedoOutlined,
   search: SearchOutlined,
   replace: ReplaceOutlined,
-  
+
   // 视图操作
   visible: EyeOutlined,
   hidden: EyeInvisibleOutlined,
@@ -120,7 +120,7 @@ export const ICON_MAP = {
   settings: SettingOutlined,
   menu: MenuOutlined,
   grid: AppstoreOutlined,
-  
+
   // 功能模块
   vocabulary: TagOutlined,
   organization: TeamOutlined,
@@ -132,7 +132,7 @@ export const ICON_MAP = {
   sequenceChart: TableOutlined,
   terminal: CodeOutlined,
   sensitive: WarningOutlined,
-  
+
   // 状态
   check: CheckOutlined,
   close: CloseOutlined,
@@ -140,7 +140,7 @@ export const ICON_MAP = {
   warning: ExclamationCircleOutlined,
   info: InfoCircleOutlined,
   help: QuestionCircleOutlined,
-  
+
   // 操作
   plus: PlusOutlined,
   minus: MinusOutlined,
@@ -152,7 +152,7 @@ export const ICON_MAP = {
   arrowDown: ArrowDownOutlined,
   arrowLeft: ArrowLeftOutlined,
   arrowRight: ArrowRightOutlined,
-  
+
   // 词汇类型图标
   character: TeamOutlined,
   location: EnvironmentOutlined,
@@ -160,11 +160,11 @@ export const ICON_MAP = {
   item: GiftOutlined,
   magic: ThunderboltOutlined,
   event: CalendarOutlined,
-  
+
   // 工具
   tool: ToolOutlined,
   idea: BulbOutlined,
-  rocket: RocketOutlined,
+  rocket: RocketOutlined
 } as const
 
 /**
@@ -176,7 +176,7 @@ export const VOCABULARY_TYPE_ICONS: Record<string, typeof TeamOutlined> = {
   organization: ApartmentOutlined,
   item: GiftOutlined,
   magic: ThunderboltOutlined,
-  event: CalendarOutlined,
+  event: CalendarOutlined
 }
 
 /**
@@ -188,7 +188,7 @@ export const VOCABULARY_TYPE_ICON_NAMES: Record<string, string> = {
   organization: 'ApartmentOutlined',
   item: 'GiftOutlined',
   magic: 'ThunderboltOutlined',
-  event: 'CalendarOutlined',
+  event: 'CalendarOutlined'
 }
 
 /**
@@ -206,7 +206,7 @@ export const MODULE_ICONS = {
   organization: TeamOutlined,
   map: EnvironmentOutlined,
   terminal: CodeOutlined,
-  settings: SettingOutlined,
+  settings: SettingOutlined
 } as const
 
 /**
@@ -249,7 +249,7 @@ export {
   SaveOutlined,
   DownloadOutlined,
   UploadOutlined,
-  
+
   // 编辑操作
   CopyOutlined,
   ScissorOutlined,
@@ -258,7 +258,7 @@ export {
   RedoOutlined,
   SearchOutlined,
   ReplaceOutlined,
-  
+
   // 视图操作
   EyeOutlined,
   EyeInvisibleOutlined,
@@ -267,7 +267,7 @@ export {
   SettingOutlined,
   MenuOutlined,
   AppstoreOutlined,
-  
+
   // 功能模块
   TagOutlined,
   TeamOutlined,
@@ -279,7 +279,7 @@ export {
   TableOutlined,
   CodeOutlined,
   WarningOutlined,
-  
+
   // 状态
   CheckOutlined,
   CloseOutlined,
@@ -287,7 +287,7 @@ export {
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   QuestionCircleOutlined,
-  
+
   // 操作
   PlusOutlined,
   MinusOutlined,
@@ -299,7 +299,7 @@ export {
   ArrowDownOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
-  
+
   // 类型图标
   BookOutlined,
   GiftOutlined,
@@ -307,8 +307,8 @@ export {
   BulbOutlined,
   HeartOutlined,
   StarOutlined,
-  
+
   // 工具
   ToolOutlined,
-  RocketOutlined,
+  RocketOutlined
 }

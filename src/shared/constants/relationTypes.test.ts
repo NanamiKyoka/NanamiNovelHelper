@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest'
 import {
   BUILTIN_RELATION_TYPES,
   getBuiltinRelationTypes,
-  getRelationTypeById,
+  getRelationTypeById
 } from './relationTypes'
 
 describe('relationTypes constants', () => {
@@ -79,8 +79,18 @@ describe('relationTypes constants', () => {
     })
 
     it('should return correct type for all built-in ids', () => {
-      const ids = ['family', 'friendship', 'love', 'enemy', 'master', 
-                   'superior', 'ally', 'rival', 'colleague', 'neighbor']
+      const ids = [
+        'family',
+        'friendship',
+        'love',
+        'enemy',
+        'master',
+        'superior',
+        'ally',
+        'rival',
+        'colleague',
+        'neighbor'
+      ]
       ids.forEach(id => {
         const type = getRelationTypeById(id)
         expect(type).toBeDefined()

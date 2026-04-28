@@ -1,6 +1,25 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Popover, Button, Radio, Input, Select, message, Tooltip, Tabs, Typography, Switch, Divider } from 'antd'
-import { ReloadOutlined, CopyOutlined, UserOutlined, EnvironmentOutlined, ToolOutlined, RobotOutlined } from '@ant-design/icons'
+import {
+  Popover,
+  Button,
+  Radio,
+  Input,
+  Select,
+  message,
+  Tooltip,
+  Tabs,
+  Typography,
+  Switch,
+  Divider
+} from 'antd'
+import {
+  ReloadOutlined,
+  CopyOutlined,
+  UserOutlined,
+  EnvironmentOutlined,
+  ToolOutlined,
+  RobotOutlined
+} from '@ant-design/icons'
 import { generateNames, getRandomSurname, copyToClipboard } from '@utils/randomName'
 import { NAME_TYPES, type NameType } from '@constants/names'
 import styles from './RandomNamePanel.module.css'
@@ -76,7 +95,7 @@ Return only the names, one per line, without numbers or explanations.`,
 - 类型：{{style}}
 - 用途：小说中的武器、宝物
 
-请直接返回名字列表，每行一个，不要添加序号或其他说明。`,
+请直接返回名字列表，每行一个，不要添加序号或其他说明。`
 }
 
 function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.Element {
@@ -89,7 +108,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   const [suffix, setSuffix] = useState<string>('')
   const [names, setNames] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  
+
   // AI 相关状态
   const [useAi, setUseAi] = useState(false)
   const [aiStyle, setAiStyle] = useState<string>('古风')
@@ -107,28 +126,35 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   // AI 生成名字
   const generateNamesWithAi = useCallback(async () => {
     const promptTemplate = AI_NAME_PROMPTS[selectedType] || AI_NAME_PROMPTS.cn
-    
+
     // 构建提示词
     let prompt = promptTemplate
       .replace('{{count}}', '24')
-      .replace('{{gender}}', gender === 'random' ? '不限' : (gender === 'male' ? '男' : '女'))
+      .replace('{{gender}}', gender === 'random' ? '不限' : gender === 'male' ? '男' : '女')
       .replace('{{style}}', aiStyle)
-    
+
     if (surname) {
       prompt = prompt.replace('{{surname}}', surname)
     } else {
-      prompt = prompt.replace('{{#surname}}', '').replace('{{/surname}}', '').replace('{{surname}}', '')
+      prompt = prompt
+        .replace('{{#surname}}', '')
+        .replace('{{/surname}}', '')
+        .replace('{{surname}}', '')
     }
-    
+
     if (charCount !== 'random') {
       prompt = prompt.replace('{{charCount}}', String(charCount))
     } else {
-      prompt = prompt.replace('{{#charCount}}', '').replace('{{/charCount}}', '').replace('{{charCount}}', '')
+      prompt = prompt
+        .replace('{{#charCount}}', '')
+        .replace('{{/charCount}}', '')
+        .replace('{{charCount}}', '')
     }
 
     try {
       const result = await window.electron.aiAssistant.callApi(prompt, {
-        systemPrompt: '你是一个专业的起名助手。请按照用户的要求生成名字。重要：只输出名字列表，每行一个，不要添加任何解释或序号。',
+        systemPrompt:
+          '你是一个专业的起名助手。请按照用户的要求生成名字。重要：只输出名字列表，每行一个，不要添加任何解释或序号。',
         temperature: 0.8,
         maxTokens: 1000
       })
@@ -140,12 +166,12 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
           .map(line => line.trim())
           .filter(line => line && !line.startsWith('#') && !line.startsWith('【'))
           .slice(0, 24)
-        
+
         if (nameList.length > 0) {
           return nameList
         }
       }
-      
+
       // AI 失败，回退到本地生成
       return null
     } catch {
@@ -156,7 +182,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   // 生成名字
   const handleGenerate = useCallback(async () => {
     setLoading(true)
-    
+
     // 如果启用 AI，尝试 AI 生成
     if (useAi) {
       try {
@@ -172,19 +198,19 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
         message.warning('AI 服务暂时不可用，已切换到本地生成')
       }
     }
-    
+
     // 本地生成
     setTimeout(() => {
       const options = {
         type: selectedType,
         count: 24,
         surname: surname || undefined,
-        gender: gender === 'random' ? undefined : gender as 'male' | 'female',
+        gender: gender === 'random' ? undefined : (gender as 'male' | 'female'),
         charCount: charCount === 'random' ? undefined : charCount,
         middleChar: middleChar || undefined,
         suffix: suffix || undefined
       }
-      
+
       const result = generateNames(options)
       setNames(result)
       setLoading(false)
@@ -193,30 +219,36 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
 
   // 随机姓氏
   const handleRandomSurname = useCallback(() => {
-    const type = selectedType === 'jp' ? 'jp' : (selectedType === 'en' ? 'en' : 'cn')
+    const type = selectedType === 'jp' ? 'jp' : selectedType === 'en' ? 'en' : 'cn'
     const isCompound = selectedType === 'cn' && Math.random() < 0.2
     const newSurname = getRandomSurname(type, isCompound)
     setSurname(newSurname)
   }, [selectedType])
 
   // 复制名字
-  const handleCopyName = useCallback(async (name: string) => {
-    const success = await copyToClipboard(name)
-    if (success) {
-      message.success(`已复制: ${name}`)
-      onNameSelect?.(name)
-    } else {
-      message.error('复制失败')
-    }
-  }, [onNameSelect])
+  const handleCopyName = useCallback(
+    async (name: string) => {
+      const success = await copyToClipboard(name)
+      if (success) {
+        message.success(`已复制: ${name}`)
+        onNameSelect?.(name)
+      } else {
+        message.error('复制失败')
+      }
+    },
+    [onNameSelect]
+  )
 
   // 初始化生成
-  const handleOpenChange = useCallback((newOpen: boolean) => {
-    setOpen(newOpen)
-    if (newOpen && names.length === 0) {
-      setTimeout(handleGenerate, 100)
-    }
-  }, [names.length, handleGenerate])
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen)
+      if (newOpen && names.length === 0) {
+        setTimeout(handleGenerate, 100)
+      }
+    },
+    [names.length, handleGenerate]
+  )
 
   // 类型选项按分类分组
   const typeOptions = useMemo(() => {
@@ -225,11 +257,11 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
       entity: [],
       item: []
     }
-    
+
     NAME_TYPES.forEach(type => {
       groups[type.category].push(type)
     })
-    
+
     return groups
   }, [])
 
@@ -276,7 +308,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
               <Input
                 placeholder="留空随机"
                 value={surname}
-                onChange={(e) => setSurname(e.target.value)}
+                onChange={e => setSurname(e.target.value)}
                 allowClear
               />
               {selectedType === 'cn' && (
@@ -291,7 +323,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
             <div className={styles.sectionLabel}>性别</div>
             <Radio.Group
               value={gender}
-              onChange={(e) => setGender(e.target.value)}
+              onChange={e => setGender(e.target.value)}
               optionType="button"
               buttonStyle="solid"
               size="small"
@@ -308,7 +340,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
                 <div className={styles.sectionLabel}>名字字数</div>
                 <Radio.Group
                   value={charCount}
-                  onChange={(e) => setCharCount(e.target.value)}
+                  onChange={e => setCharCount(e.target.value)}
                   optionType="button"
                   buttonStyle="solid"
                   size="small"
@@ -325,7 +357,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
                   <Input
                     placeholder="留空随机"
                     value={middleChar}
-                    onChange={(e) => setMiddleChar(e.target.value.slice(0, 1))}
+                    onChange={e => setMiddleChar(e.target.value.slice(0, 1))}
                     maxLength={1}
                     allowClear
                   />
@@ -343,7 +375,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
           <Input
             placeholder="留空随机"
             value={suffix}
-            onChange={(e) => setSuffix(e.target.value)}
+            onChange={e => setSuffix(e.target.value)}
             allowClear
           />
         </div>
@@ -357,25 +389,23 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
           AI 生成
         </div>
         <div className={styles.aiSwitchRow}>
-          <Switch
-            size="small"
-            checked={useAi}
-            onChange={setUseAi}
-          />
+          <Switch size="small" checked={useAi} onChange={setUseAi} />
           <Text type="secondary" style={{ fontSize: 12 }}>
             {useAi ? '使用 AI 生成更有创意的名字' : '使用本地词库生成'}
           </Text>
         </div>
-        
+
         {useAi && (
           <div className={styles.aiStyleSection}>
-            <div className={styles.sectionLabel} style={{ fontSize: 12 }}>风格</div>
+            <div className={styles.sectionLabel} style={{ fontSize: 12 }}>
+              风格
+            </div>
             <Select
               size="small"
               value={aiStyle}
               onChange={setAiStyle}
               style={{ width: '100%' }}
-              getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
+              getPopupContainer={triggerNode => triggerNode.parentElement || document.body}
               options={
                 isPersonType
                   ? [
@@ -383,13 +413,13 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
                       { value: '现代', label: '现代' },
                       { value: '文艺', label: '文艺' },
                       { value: '可爱', label: '可爱' },
-                      { value: '霸气', label: '霸气' },
+                      { value: '霸气', label: '霸气' }
                     ]
                   : [
                       { value: '古风', label: '古风' },
                       { value: '玄幻', label: '玄幻' },
                       { value: '科幻', label: '科幻' },
-                      { value: '神秘', label: '神秘' },
+                      { value: '神秘', label: '神秘' }
                     ]
               }
             />
@@ -421,10 +451,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
         <div className={styles.namesGrid}>
           {names.map((name, index) => (
             <Tooltip key={index} title="点击复制">
-              <div
-                className={styles.nameItem}
-                onClick={() => handleCopyName(name)}
-              >
+              <div className={styles.nameItem} onClick={() => handleCopyName(name)}>
                 <Text>{name}</Text>
                 <CopyOutlined className={styles.copyIcon} />
               </div>
@@ -438,9 +465,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   // Popover 内容
   const popoverContent = (
     <div className={styles.panel}>
-      <div className={styles.configColumn}>
-        {configContent}
-      </div>
+      <div className={styles.configColumn}>{configContent}</div>
       <div className={styles.namesColumn}>
         <div className={styles.namesHeader}>
           <span>生成结果</span>

@@ -59,7 +59,9 @@ interface SequenceChartState {
 
   // 事件类型管理
   getEventTypes: () => SequenceEventType[]
-  addEventType: (type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>) => Promise<SequenceEventType | null>
+  addEventType: (
+    type: Omit<SequenceEventType, 'id' | 'isBuiltIn' | 'order'>
+  ) => Promise<SequenceEventType | null>
   updateEventType: (typeId: string, updates: Partial<SequenceEventType>) => Promise<void>
   deleteEventType: (typeId: string) => Promise<void>
 
@@ -72,7 +74,12 @@ interface SequenceChartState {
   toggleLeftPanel: () => void
 
   // 拖拽控制
-  startDrag: (dragType: DragState['dragType'], eventId: string, startX: number, startY: number) => void
+  startDrag: (
+    dragType: DragState['dragType'],
+    eventId: string,
+    startX: number,
+    startY: number
+  ) => void
   updateDrag: (currentX: number, currentY: number) => void
   endDrag: () => void
   cancelDrag: () => void
@@ -178,7 +185,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const chart = await window.electron.sequenceChart.create(options)
-      set((state) => ({
+      set(state => ({
         charts: [
           {
             id: chart.id,
@@ -190,12 +197,12 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
             eventCount: chart.eventCount,
             tags: chart.tags,
             createdAt: chart.createdAt,
-            updatedAt: chart.updatedAt,
+            updatedAt: chart.updatedAt
           },
-          ...state.charts,
+          ...state.charts
         ],
         currentChart: chart,
-        isLoading: false,
+        isLoading: false
       }))
       return chart
     } catch (error) {
@@ -210,8 +217,8 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const updatedChart = await window.electron.sequenceChart.update(chartId, updates)
       if (updatedChart) {
-        set((state) => ({
-          charts: state.charts.map((c) =>
+        set(state => ({
+          charts: state.charts.map(c =>
             c.id === chartId
               ? {
                   ...c,
@@ -222,12 +229,11 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
                   customEventTypes: updatedChart.customEventTypes,
                   eventCount: updatedChart.eventCount,
                   tags: updatedChart.tags,
-                  updatedAt: updatedChart.updatedAt,
+                  updatedAt: updatedChart.updatedAt
                 }
               : c
           ),
-          currentChart:
-            state.currentChart?.id === chartId ? updatedChart : state.currentChart,
+          currentChart: state.currentChart?.id === chartId ? updatedChart : state.currentChart
         }))
       }
     } catch (error) {
@@ -241,10 +247,9 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const success = await window.electron.sequenceChart.delete(chartId)
       if (success) {
-        set((state) => ({
-          charts: state.charts.filter((c) => c.id !== chartId),
-          currentChart:
-            state.currentChart?.id === chartId ? null : state.currentChart,
+        set(state => ({
+          charts: state.charts.filter(c => c.id !== chartId),
+          currentChart: state.currentChart?.id === chartId ? null : state.currentChart
         }))
       }
     } catch (error) {
@@ -267,24 +272,25 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
       get()._pushHistory()
       const newEvent = await window.electron.sequenceChart.addEvent(currentChart.id, event)
       if (newEvent) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
                 events: [...state.currentChart.events, newEvent],
                 eventCount: state.currentChart.eventCount + 1,
-                axisConfig: newEvent.timeInfo.cellEnd && 
+                axisConfig:
+                  newEvent.timeInfo.cellEnd &&
                   newEvent.timeInfo.cellEnd >= state.currentChart.axisConfig.initialCellCount - 10
-                  ? {
-                      ...state.currentChart.axisConfig,
-                      initialCellCount: Math.min(
-                        newEvent.timeInfo.cellEnd + 50,
-                        state.currentChart.axisConfig.maxCellCount
-                      )
-                    }
-                  : state.currentChart.axisConfig
+                    ? {
+                        ...state.currentChart.axisConfig,
+                        initialCellCount: Math.min(
+                          newEvent.timeInfo.cellEnd + 50,
+                          state.currentChart.axisConfig.maxCellCount
+                        )
+                      }
+                    : state.currentChart.axisConfig
               }
-            : null,
+            : null
         }))
       }
       return newEvent
@@ -308,15 +314,13 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         updates
       )
       if (updatedEvent) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.map((e) =>
-                  e.id === eventId ? updatedEvent : e
-                ),
+                events: state.currentChart.events.map(e => (e.id === eventId ? updatedEvent : e))
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -334,15 +338,15 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
       get()._pushHistory()
       const success = await window.electron.sequenceChart.deleteEvent(currentChart.id, eventId)
       if (success) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.filter((e) => e.id !== eventId),
-                eventCount: state.currentChart.eventCount - 1,
+                events: state.currentChart.events.filter(e => e.id !== eventId),
+                eventCount: state.currentChart.eventCount - 1
               }
             : null,
-          selectedEventIds: state.selectedEventIds.filter((id) => id !== eventId),
+          selectedEventIds: state.selectedEventIds.filter(id => id !== eventId)
         }))
       }
     } catch (error) {
@@ -363,15 +367,15 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         eventIds
       )
       if (deletedCount > 0) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.filter((e) => !eventIds.includes(e.id)),
-                eventCount: state.currentChart.eventCount - deletedCount,
+                events: state.currentChart.events.filter(e => !eventIds.includes(e.id)),
+                eventCount: state.currentChart.eventCount - deletedCount
               }
             : null,
-          selectedEventIds: [],
+          selectedEventIds: []
         }))
       }
       return deletedCount
@@ -394,13 +398,13 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         newOrder
       )
       if (updatedEvents) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: updatedEvents,
+                events: updatedEvents
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -422,25 +426,24 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         cellEnd
       )
       if (updatedEvent) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.map((e) =>
-                  e.id === eventId ? updatedEvent : e
-                ),
+                events: state.currentChart.events.map(e => (e.id === eventId ? updatedEvent : e)),
                 // 自动扩展时间轴
-                axisConfig: cellEnd >= state.currentChart.axisConfig.initialCellCount - 10
-                  ? {
-                      ...state.currentChart.axisConfig,
-                      initialCellCount: Math.min(
-                        cellEnd + 50,
-                        state.currentChart.axisConfig.maxCellCount
-                      )
-                    }
-                  : state.currentChart.axisConfig
+                axisConfig:
+                  cellEnd >= state.currentChart.axisConfig.initialCellCount - 10
+                    ? {
+                        ...state.currentChart.axisConfig,
+                        initialCellCount: Math.min(
+                          cellEnd + 50,
+                          state.currentChart.axisConfig.maxCellCount
+                        )
+                      }
+                    : state.currentChart.axisConfig
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -455,10 +458,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedChart = await window.electron.sequenceChart.updateEvents(
-        currentChart.id,
-        events
-      )
+      const updatedChart = await window.electron.sequenceChart.updateEvents(currentChart.id, events)
       if (updatedChart) {
         set({ currentChart: updatedChart })
       }
@@ -498,13 +498,13 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const newType = await window.electron.sequenceChart.addEventType(currentChart.id, type)
       if (newType) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                customEventTypes: [...(state.currentChart.customEventTypes || []), newType],
+                customEventTypes: [...(state.currentChart.customEventTypes || []), newType]
               }
-            : null,
+            : null
         }))
       }
       return newType
@@ -527,15 +527,15 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         updates
       )
       if (updatedType) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                customEventTypes: state.currentChart.customEventTypes.map((t) =>
+                customEventTypes: state.currentChart.customEventTypes.map(t =>
                   t.id === typeId ? updatedType : t
-                ),
+                )
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -552,13 +552,13 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const success = await window.electron.sequenceChart.deleteEventType(currentChart.id, typeId)
       if (success) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                customEventTypes: state.currentChart.customEventTypes.filter((t) => t.id !== typeId),
+                customEventTypes: state.currentChart.customEventTypes.filter(t => t.id !== typeId)
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -580,7 +580,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   zoomIn: () => {
     const { zoomScale } = get()
-    const nextLevel = ZOOM_LEVELS.find((l) => l.scale > zoomScale)
+    const nextLevel = ZOOM_LEVELS.find(l => l.scale > zoomScale)
     if (nextLevel) {
       set({ zoomScale: nextLevel.scale })
     }
@@ -588,7 +588,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   zoomOut: () => {
     const { zoomScale } = get()
-    const prevLevel = [...ZOOM_LEVELS].reverse().find((l) => l.scale < zoomScale)
+    const prevLevel = [...ZOOM_LEVELS].reverse().find(l => l.scale < zoomScale)
     if (prevLevel) {
       set({ zoomScale: prevLevel.scale })
     }
@@ -599,7 +599,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   },
 
   toggleLeftPanel: () => {
-    set((state) => ({ leftPanelCollapsed: !state.leftPanelCollapsed }))
+    set(state => ({ leftPanelCollapsed: !state.leftPanelCollapsed }))
   },
 
   // 拖拽控制
@@ -653,10 +653,10 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 选择管理
   selectEvent: (eventId: string, multi = false) => {
     if (multi) {
-      set((state) => ({
+      set(state => ({
         selectedEventIds: state.selectedEventIds.includes(eventId)
-          ? state.selectedEventIds.filter((id) => id !== eventId)
-          : [...state.selectedEventIds, eventId],
+          ? state.selectedEventIds.filter(id => id !== eventId)
+          : [...state.selectedEventIds, eventId]
       }))
     } else {
       set({ selectedEventIds: [eventId] })
@@ -664,15 +664,15 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   },
 
   deselectEvent: (eventId: string) => {
-    set((state) => ({
-      selectedEventIds: state.selectedEventIds.filter((id) => id !== eventId),
+    set(state => ({
+      selectedEventIds: state.selectedEventIds.filter(id => id !== eventId)
     }))
   },
 
   selectAllEvents: () => {
     const { currentChart } = get()
     if (!currentChart) return
-    set({ selectedEventIds: currentChart.events.map((e) => e.id) })
+    set({ selectedEventIds: currentChart.events.map(e => e.id) })
   },
 
   clearSelection: () => {
@@ -699,13 +699,13 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         dataUrl
       )
       if (thumbnailPath) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? { ...state.currentChart, thumbnail: thumbnailPath }
             : null,
-          charts: state.charts.map((c) =>
+          charts: state.charts.map(c =>
             c.id === currentChart.id ? { ...c, thumbnail: thumbnailPath } : c
-          ),
+          )
         }))
       }
     } catch (error) {
@@ -740,7 +740,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const chart = await window.electron.sequenceChart.import(jsonContent)
       if (chart) {
-        set((state) => ({
+        set(state => ({
           charts: [
             {
               id: chart.id,
@@ -752,10 +752,10 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
               eventCount: chart.eventCount,
               tags: chart.tags,
               createdAt: chart.createdAt,
-              updatedAt: chart.updatedAt,
+              updatedAt: chart.updatedAt
             },
-            ...state.charts,
-          ],
+            ...state.charts
+          ]
         }))
       }
       return chart
@@ -777,7 +777,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         axisConfig: config
       })
       if (updatedChart) {
-        set((state) => ({
+        set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
@@ -786,7 +786,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
                   ...config
                 }
               }
-            : null,
+            : null
         }))
       }
     } catch (error) {
@@ -809,14 +809,14 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 辅助方法
   getEventById: (eventId: string) => {
     const { currentChart } = get()
-    return currentChart?.events.find((e) => e.id === eventId)
+    return currentChart?.events.find(e => e.id === eventId)
   },
 
   getEventsByCellRange: (cellStart: number, cellEnd: number) => {
     const { currentChart } = get()
     if (!currentChart) return []
 
-    return currentChart.events.filter((event) => {
+    return currentChart.events.filter(event => {
       const start = event.timeInfo.cellStart || 0
       const end = event.timeInfo.cellEnd || 0
       return start <= cellEnd && end >= cellStart
@@ -846,7 +846,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
       },
       selectedEventIds: [],
       hoveredEventId: null,
-      editingEventId: null,
+      editingEventId: null
     })
   },
 
@@ -860,12 +860,14 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     try {
       const success = await window.electron.sequenceChart.reorderCharts(chartIds)
       if (success) {
-        set((state) => {
-          const reorderedCharts = chartIds.map((id, index) => {
-            const chart = state.charts.find((c) => c.id === id)
-            return chart ? { ...chart, order: index } : null
-          }).filter((c): c is SequenceChartMeta => c !== null)
-          
+        set(state => {
+          const reorderedCharts = chartIds
+            .map((id, index) => {
+              const chart = state.charts.find(c => c.id === id)
+              return chart ? { ...chart, order: index } : null
+            })
+            .filter((c): c is SequenceChartMeta => c !== null)
+
           return { charts: reorderedCharts }
         })
       }
@@ -894,9 +896,9 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     const { _history, _historyIndex, currentChart } = get()
     if (_historyIndex < 0 || !currentChart) return
     const snapshot = _history[_historyIndex]
-    set((state) => ({
+    set(state => ({
       currentChart: state.currentChart ? { ...state.currentChart, events: snapshot.events } : null,
-      _historyIndex: _historyIndex - 1,
+      _historyIndex: _historyIndex - 1
     }))
   },
 
@@ -904,9 +906,9 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     const { _history, _historyIndex, currentChart } = get()
     if (_historyIndex >= _history.length - 1 || !currentChart) return
     const snapshot = _history[_historyIndex + 1]
-    set((state) => ({
+    set(state => ({
       currentChart: state.currentChart ? { ...state.currentChart, events: snapshot.events } : null,
-      _historyIndex: _historyIndex + 1,
+      _historyIndex: _historyIndex + 1
     }))
   },
 
@@ -918,5 +920,5 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   canRedo: () => {
     const { _history, _historyIndex } = get()
     return _historyIndex < _history.length - 1
-  },
+  }
 }))

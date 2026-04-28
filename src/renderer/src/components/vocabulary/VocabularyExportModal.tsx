@@ -33,7 +33,9 @@ const VocabularyExportModal: React.FC<VocabularyExportModalProps> = ({
     >
       <div style={{ marginBottom: 16 }}>
         <span style={{ marginRight: 8 }}>导出范围：</span>
-        <strong>{exportScope === 'selected' ? `选中的 ${selectedCount} 条` : `全部 ${totalCount} 条`}</strong>
+        <strong>
+          {exportScope === 'selected' ? `选中的 ${selectedCount} 条` : `全部 ${totalCount} 条`}
+        </strong>
       </div>
       <Radio.Group value={exportFormat} onChange={e => onFormatChange(e.target.value)}>
         <Radio.Button value="json">JSON</Radio.Button>

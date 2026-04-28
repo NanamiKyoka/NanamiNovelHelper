@@ -177,25 +177,20 @@ describe('validators', () => {
 
 describe('ParamValidator', () => {
   it('should chain validations', () => {
-    const validator = validateParams('test:')
-      .nonEmptyString('hello', 'name')
-      .number(42, 'age')
-    
+    const validator = validateParams('test:').nonEmptyString('hello', 'name').number(42, 'age')
+
     expect(() => validator.validate()).not.toThrow()
   })
 
   it('should throw on first failed validation', () => {
-    const validator = validateParams('test:')
-      .nonEmptyString('', 'name')
-      .number(42, 'age')
-    
+    const validator = validateParams('test:').nonEmptyString('', 'name').number(42, 'age')
+
     expect(() => validator.validate()).toThrow(ValidationError)
   })
 
   it('should include prefix in error field name', () => {
-    const validator = validateParams('myHandler:')
-      .nonEmptyString('', 'param')
-    
+    const validator = validateParams('myHandler:').nonEmptyString('', 'param')
+
     try {
       validator.validate()
       expect.fail('Should have thrown')
@@ -206,39 +201,32 @@ describe('ParamValidator', () => {
   })
 
   it('isValid should return true for valid params', () => {
-    const result = validateParams()
-      .nonEmptyString('test', 'field')
-      .isValid()
+    const result = validateParams().nonEmptyString('test', 'field').isValid()
     expect(result).toBe(true)
   })
 
   it('isValid should return false for invalid params', () => {
-    const result = validateParams()
-      .nonEmptyString('', 'field')
-      .isValid()
+    const result = validateParams().nonEmptyString('', 'field').isValid()
     expect(result).toBe(false)
   })
 
   it('should support custom validation', () => {
-    const validator = validateParams()
-      .custom(() => {
-        if (5 > 3) throw new Error('Custom check failed')
-      })
-    
+    const validator = validateParams().custom(() => {
+      if (5 > 3) throw new Error('Custom check failed')
+    })
+
     expect(() => validator.validate()).toThrow('Custom check failed')
   })
 
   it('should support enum validation', () => {
-    const validator = validateParams()
-      .enum(['a', 'b', 'c'] as const, 'a', 'choice')
-    
+    const validator = validateParams().enum(['a', 'b', 'c'] as const, 'a', 'choice')
+
     expect(() => validator.validate()).not.toThrow()
   })
 
   it('should support optional validation', () => {
-    const validator = validateParams()
-      .optional(validators.string, undefined, 'maybe')
-    
+    const validator = validateParams().optional(validators.string, undefined, 'maybe')
+
     expect(() => validator.validate()).not.toThrow()
   })
 })
@@ -293,28 +281,28 @@ describe('validateId', () => {
 describe('withValidation', () => {
   it('should call handler when validation passes', async () => {
     const handler = (name: string) => `Hello, ${name}!`
-    const wrapped = withValidation(handler, (name) => {
+    const wrapped = withValidation(handler, name => {
       validators.nonEmptyString(name, 'name')
     })
-    
+
     expect(wrapped('World')).toBe('Hello, World!')
   })
 
   it('should throw before calling handler when validation fails', () => {
     const handler = (name: string) => `Hello, ${name}!`
-    const wrapped = withValidation(handler, (name) => {
+    const wrapped = withValidation(handler, name => {
       validators.nonEmptyString(name, 'name')
     })
-    
+
     expect(() => wrapped('')).toThrow(ValidationError)
   })
 
   it('should work with async handlers', async () => {
     const handler = async (id: string) => ({ id })
-    const wrapped = withValidation(handler, (id) => {
+    const wrapped = withValidation(handler, id => {
       validators.nonEmptyString(id, 'id')
     })
-    
+
     const result = await wrapped('test-id')
     expect(result).toEqual({ id: 'test-id' })
   })

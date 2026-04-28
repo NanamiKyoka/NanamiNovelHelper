@@ -11,7 +11,6 @@ interface MainContentProps {
 }
 
 function MainContent({ activePanel }: MainContentProps): JSX.Element {
-
   // 如果是设置面板，显示设置页面
   if (activePanel === 'settings') {
     return <SettingsPage />

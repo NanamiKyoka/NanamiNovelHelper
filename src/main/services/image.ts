@@ -8,10 +8,7 @@ import { existsSync, mkdirSync, unlinkSync, readFileSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
 import { dialog } from 'electron'
-import {
-  PROJECT_META_DIR,
-  IMAGES_DIR
-} from '../types/project'
+import { PROJECT_META_DIR, IMAGES_DIR } from '../types/project'
 import { ImageFieldConfig } from '../types/vocabulary'
 
 /**
@@ -98,7 +95,9 @@ class ImageService {
 
     // 检查格式
     if (!finalConfig.allowedFormats.includes(format)) {
-      throw new Error(`不支持的图片格式: ${format}。允许的格式: ${finalConfig.allowedFormats.join(', ')}`)
+      throw new Error(
+        `不支持的图片格式: ${format}。允许的格式: ${finalConfig.allowedFormats.join(', ')}`
+      )
     }
 
     // 解码 Base64
@@ -106,7 +105,9 @@ class ImageService {
 
     // 检查大小
     if (buffer.length > finalConfig.maxSize) {
-      throw new Error(`图片大小超出限制: ${(buffer.length / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`)
+      throw new Error(
+        `图片大小超出限制: ${(buffer.length / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`
+      )
     }
 
     // 处理图片（压缩、调整尺寸）
@@ -132,7 +133,9 @@ class ImageService {
 
     // 检查格式
     if (!finalConfig.allowedFormats.includes(format) && !finalConfig.allowedFormats.includes(ext)) {
-      throw new Error(`不支持的图片格式: ${ext}。允许的格式: ${finalConfig.allowedFormats.join(', ')}`)
+      throw new Error(
+        `不支持的图片格式: ${ext}。允许的格式: ${finalConfig.allowedFormats.join(', ')}`
+      )
     }
 
     // 读取文件
@@ -140,7 +143,9 @@ class ImageService {
 
     // 检查大小
     if (buffer.length > finalConfig.maxSize) {
-      throw new Error(`图片大小超出限制: ${(buffer.length / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`)
+      throw new Error(
+        `图片大小超出限制: ${(buffer.length / 1024 / 1024).toFixed(2)}MB > ${(finalConfig.maxSize / 1024 / 1024).toFixed(2)}MB`
+      )
     }
 
     return await this.processAndSave(projectPath, buffer, format, finalConfig, filePath)
@@ -181,7 +186,7 @@ class ImageService {
     }
 
     // 根据格式设置质量
-    const outputFormat = format === 'gif' ? 'png' : format as 'jpeg' | 'png' | 'webp'
+    const outputFormat = format === 'gif' ? 'png' : (format as 'jpeg' | 'png' | 'webp')
     const outputExt = format === 'gif' ? 'png' : format
 
     if (outputFormat === 'jpeg') {
@@ -258,9 +263,7 @@ class ImageService {
     const result = await dialog.showOpenDialog({
       title: '选择图片',
       properties: ['openFile'],
-      filters: [
-        { name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }
-      ]
+      filters: [{ name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }]
     })
 
     if (result.canceled || result.filePaths.length === 0) {

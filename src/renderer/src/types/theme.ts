@@ -29,5 +29,6 @@ export const DEFAULT_THEME: ThemeConfig = {
   mode: 'light',
   primaryColor: DEFAULT_COLORS.primary,
   fontSize: 14,
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 }

@@ -14,7 +14,14 @@ import { globalSettingsService } from '../services/globalSettings'
 import { projectSettingsService } from '../services/projectSettings'
 import { backupService } from '../services/backup'
 import { validateParams } from '../utils/validation'
-import type { GlobalSettings, ProjectSettings, BadgeVisibility, BadgeType, SidebarBadgeVisibility, GlobalLayoutSettings } from '../types/settings'
+import type {
+  GlobalSettings,
+  ProjectSettings,
+  BadgeVisibility,
+  BadgeType,
+  SidebarBadgeVisibility,
+  GlobalLayoutSettings
+} from '../types/settings'
 
 /**
  * 注册设置相关 IPC 处理器
@@ -29,10 +36,13 @@ export function registerSettingsHandlers(): void {
     return globalSettingsService.getAll()
   })
 
-  ipcMain.handle('settings:global:update', (_, settings: Partial<GlobalSettings>): GlobalSettings => {
-    validateParams('settings:global:update').object(settings, 'settings').validate()
-    return globalSettingsService.update(settings)
-  })
+  ipcMain.handle(
+    'settings:global:update',
+    (_, settings: Partial<GlobalSettings>): GlobalSettings => {
+      validateParams('settings:global:update').object(settings, 'settings').validate()
+      return globalSettingsService.update(settings)
+    }
+  )
 
   ipcMain.handle('settings:global:reset', (): GlobalSettings => {
     return globalSettingsService.reset()
@@ -82,19 +92,27 @@ export function registerSettingsHandlers(): void {
     return globalSettingsService.getLayout()
   })
 
-  ipcMain.handle('settings:global:updateLayout', (_, layout: Partial<GlobalLayoutSettings>): GlobalLayoutSettings => {
-    validateParams('settings:global:updateLayout').object(layout, 'layout').validate()
-    return globalSettingsService.updateLayout(layout)
-  })
+  ipcMain.handle(
+    'settings:global:updateLayout',
+    (_, layout: Partial<GlobalLayoutSettings>): GlobalLayoutSettings => {
+      validateParams('settings:global:updateLayout').object(layout, 'layout').validate()
+      return globalSettingsService.updateLayout(layout)
+    }
+  )
 
   ipcMain.handle('settings:global:getBadgeVisibility', (): BadgeVisibility => {
     return globalSettingsService.getBadgeVisibility()
   })
 
-  ipcMain.handle('settings:global:updateBadgeVisibility', (_, settings: Partial<BadgeVisibility>): BadgeVisibility => {
-    validateParams('settings:global:updateBadgeVisibility').object(settings, 'settings').validate()
-    return globalSettingsService.updateBadgeVisibility(settings)
-  })
+  ipcMain.handle(
+    'settings:global:updateBadgeVisibility',
+    (_, settings: Partial<BadgeVisibility>): BadgeVisibility => {
+      validateParams('settings:global:updateBadgeVisibility')
+        .object(settings, 'settings')
+        .validate()
+      return globalSettingsService.updateBadgeVisibility(settings)
+    }
+  )
 
   ipcMain.handle('settings:global:getBadgeOrder', (): BadgeType[] => {
     return globalSettingsService.getBadgeOrder()
@@ -109,10 +127,15 @@ export function registerSettingsHandlers(): void {
     return globalSettingsService.getSidebarBadgeVisibility()
   })
 
-  ipcMain.handle('settings:global:updateSidebarBadgeVisibility', (_, settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility => {
-    validateParams('settings:global:updateSidebarBadgeVisibility').object(settings, 'settings').validate()
-    return globalSettingsService.updateSidebarBadgeVisibility(settings)
-  })
+  ipcMain.handle(
+    'settings:global:updateSidebarBadgeVisibility',
+    (_, settings: Partial<SidebarBadgeVisibility>): SidebarBadgeVisibility => {
+      validateParams('settings:global:updateSidebarBadgeVisibility')
+        .object(settings, 'settings')
+        .validate()
+      return globalSettingsService.updateSidebarBadgeVisibility(settings)
+    }
+  )
 
   ipcMain.handle('settings:global:getSidebarBadgeOrder', (): string[] => {
     return globalSettingsService.getSidebarBadgeOrder()
@@ -142,7 +165,10 @@ export function registerSettingsHandlers(): void {
   })
 
   ipcMain.handle('settings:global:setApiKey', (_, keyName: string, value: string) => {
-    validateParams('settings:global:setApiKey').nonEmptyString(keyName, 'keyName').string(value, 'value').validate()
+    validateParams('settings:global:setApiKey')
+      .nonEmptyString(keyName, 'keyName')
+      .string(value, 'value')
+      .validate()
     globalSettingsService.setApiKey(keyName, value)
   })
 
@@ -168,10 +194,13 @@ export function registerSettingsHandlers(): void {
     return projectSettingsService.getAll()
   })
 
-  ipcMain.handle('settings:project:update', (_, settings: Partial<ProjectSettings>): ProjectSettings => {
-    validateParams('settings:project:update').object(settings, 'settings').validate()
-    return projectSettingsService.update(settings)
-  })
+  ipcMain.handle(
+    'settings:project:update',
+    (_, settings: Partial<ProjectSettings>): ProjectSettings => {
+      validateParams('settings:project:update').object(settings, 'settings').validate()
+      return projectSettingsService.update(settings)
+    }
+  )
 
   ipcMain.handle('settings:project:saveNow', () => {
     projectSettingsService.saveNow()

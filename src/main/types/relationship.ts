@@ -14,7 +14,7 @@ export {
   RelationshipGraphMeta,
   RelationshipGraph,
   CreateRelationshipGraphOptions,
-  UpdateRelationshipGraphOptions,
+  UpdateRelationshipGraphOptions
 } from '../../shared/relationship'
 
 // 从 shared 目录重新导出内置关系类型

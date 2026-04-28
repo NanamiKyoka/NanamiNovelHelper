@@ -33,7 +33,9 @@
 
 /* 拖拽中的行样式 */
 .tableWrapper :global(.ant-table-tbody > tr) {
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 /* 空表格背景修复 */

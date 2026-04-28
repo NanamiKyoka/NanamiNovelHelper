@@ -15,7 +15,7 @@ import {
   WorkflowListItem,
   WorkflowExecution,
   getBuiltInTemplates,
-  getBuiltInWorkflows,
+  getBuiltInWorkflows
 } from '@shared/ai-assistant'
 import { createLogger } from '../utils/logger'
 
@@ -202,7 +202,7 @@ class AiAssistantService {
       variableCount: t.variables.length,
       isBuiltIn: t.isBuiltIn,
       source: t.source,
-      updatedAt: t.updatedAt,
+      updatedAt: t.updatedAt
     }))
   }
 
@@ -229,17 +229,19 @@ class AiAssistantService {
   /**
    * 保存模板
    */
-  saveTemplate(template: Omit<PromptTemplate, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): PromptTemplate {
+  saveTemplate(
+    template: Omit<PromptTemplate, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): PromptTemplate {
     const now = new Date().toISOString()
     const isNew = !template.id
 
     const fullTemplate: PromptTemplate = {
       ...template,
       id: template.id || uuidv4(),
-      createdAt: isNew ? now : (this.getTemplate(template.id!)?.createdAt || now),
+      createdAt: isNew ? now : this.getTemplate(template.id!)?.createdAt || now,
       updatedAt: now,
       source: 'project',
-      isBuiltIn: false,
+      isBuiltIn: false
     }
 
     this.saveTemplateFile(fullTemplate)
@@ -286,7 +288,7 @@ class AiAssistantService {
         source: 'project',
         isBuiltIn: false,
         createdAt: now,
-        updatedAt: now,
+        updatedAt: now
       }
       this.saveTemplateFile(copiedTemplate)
       return copiedTemplate
@@ -343,7 +345,7 @@ class AiAssistantService {
       stepCount: w.steps.length,
       isBuiltIn: w.isBuiltIn,
       source: w.source,
-      updatedAt: w.updatedAt,
+      updatedAt: w.updatedAt
     }))
   }
 
@@ -370,17 +372,19 @@ class AiAssistantService {
   /**
    * 保存工作流
    */
-  saveWorkflow(workflow: Omit<PromptWorkflow, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }): PromptWorkflow {
+  saveWorkflow(
+    workflow: Omit<PromptWorkflow, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+  ): PromptWorkflow {
     const now = new Date().toISOString()
     const isNew = !workflow.id
 
     const fullWorkflow: PromptWorkflow = {
       ...workflow,
       id: workflow.id || uuidv4(),
-      createdAt: isNew ? now : (this.getWorkflow(workflow.id!)?.createdAt || now),
+      createdAt: isNew ? now : this.getWorkflow(workflow.id!)?.createdAt || now,
       updatedAt: now,
       source: 'project',
-      isBuiltIn: false,
+      isBuiltIn: false
     }
 
     this.saveWorkflowFile(fullWorkflow)
@@ -430,7 +434,7 @@ class AiAssistantService {
       stepOutputs: {},
       variables: {},
       apiCallHistory: [],
-      startedAt: now,
+      startedAt: now
     }
 
     this.saveExecution(execution)
@@ -547,7 +551,7 @@ class AiAssistantService {
         isBuiltIn: false,
         source: 'project',
         createdAt: now,
-        updatedAt: now,
+        updatedAt: now
       }
 
       this.saveTemplateFile(importedTemplate)
@@ -584,7 +588,7 @@ class AiAssistantService {
         isBuiltIn: false,
         source: 'project',
         createdAt: now,
-        updatedAt: now,
+        updatedAt: now
       }
 
       this.saveWorkflowFile(importedWorkflow)

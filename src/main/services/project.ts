@@ -65,12 +65,16 @@ class ProjectService {
     const { name, parentPath, description, author, tags, presetVocabulary } = options
 
     if (!name || name.trim().length === 0) {
-      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称不能为空', { module: 'ProjectService' })
+      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称不能为空', {
+        module: 'ProjectService'
+      })
     }
 
     const invalidChars = /[<>:"/\\|?*]/
     if (invalidChars.test(name)) {
-      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称包含非法字符', { module: 'ProjectService' })
+      throw new ServiceError(ErrorCode.INVALID_ARGUMENT, '项目名称包含非法字符', {
+        module: 'ProjectService'
+      })
     }
 
     const projectPath = join(parentPath, name)
@@ -124,20 +128,24 @@ class ProjectService {
     mkdirSync(join(projectPath, PROJECT_META_DIR, VOCABULARY_DIR), { recursive: true })
 
     // 预设词汇类型目录
-    mkdirSync(join(projectPath, PROJECT_META_DIR, VOCABULARY_DIR, VOCABULARY_DEFAULT_DIR), { recursive: true })
+    mkdirSync(join(projectPath, PROJECT_META_DIR, VOCABULARY_DIR, VOCABULARY_DEFAULT_DIR), {
+      recursive: true
+    })
 
     // 备份目录
     mkdirSync(join(projectPath, PROJECT_META_DIR, BACKUP_DIR), { recursive: true })
 
     // SKILL 目录: .novelhelper/data/ai-assistant/skills
-    mkdirSync(join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills'), { recursive: true })
+    mkdirSync(join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills'), {
+      recursive: true
+    })
   }
 
   /**
    * 创建默认设定文件
    */
   private async createDefaultSettingsFiles(
-    projectPath: string, 
+    projectPath: string,
     presetVocabulary: PresetVocabularyType[] = []
   ): Promise<void> {
     // 项目设置文件
@@ -184,13 +192,20 @@ class ProjectService {
     }
 
     // 词汇类型文件
-    const vocabularyTypesPath = join(projectPath, PROJECT_META_DIR, VOCABULARY_DIR, VOCABULARY_TYPES_FILE)
+    const vocabularyTypesPath = join(
+      projectPath,
+      PROJECT_META_DIR,
+      VOCABULARY_DIR,
+      VOCABULARY_TYPES_FILE
+    )
     if (!existsSync(vocabularyTypesPath)) {
       // 根据用户选择的预设类型创建类型文件
       const { getBuiltInVocabularyTypes } = await import('../types/vocabulary')
       const builtInTypes = getBuiltInVocabularyTypes()
-      const selectedTypes = builtInTypes.filter(t => presetVocabulary.includes(t.id as PresetVocabularyType))
-      
+      const selectedTypes = builtInTypes.filter(t =>
+        presetVocabulary.includes(t.id as PresetVocabularyType)
+      )
+
       // 保存用户选择的类型（可以是空数组）
       writeFileSync(vocabularyTypesPath, JSON5.stringify(selectedTypes, null, 2), 'utf-8')
     }
@@ -229,7 +244,7 @@ backup/
       updatedAt: project.updatedAt
     }
 
-    const yamlContent = yaml.dump(frontmatter, { 
+    const yamlContent = yaml.dump(frontmatter, {
       sortKeys: true,
       quotingType: '"',
       forceQuotes: false
@@ -280,7 +295,9 @@ backup/
 
     const match = content.match(/^---\n([\s\S]*?)\n---/)
     if (!match) {
-      throw new ServiceError(ErrorCode.DATA_INVALID, '项目配置文件格式错误', { module: 'ProjectService' })
+      throw new ServiceError(ErrorCode.DATA_INVALID, '项目配置文件格式错误', {
+        module: 'ProjectService'
+      })
     }
 
     try {
@@ -300,7 +317,10 @@ backup/
 
       return project
     } catch (error) {
-      throw new ServiceError(ErrorCode.FILE_PARSE_ERROR, `解析项目配置失败: ${error}`, { module: 'ProjectService', cause: error })
+      throw new ServiceError(ErrorCode.FILE_PARSE_ERROR, `解析项目配置失败: ${error}`, {
+        module: 'ProjectService',
+        cause: error
+      })
     }
   }
 
@@ -351,7 +371,7 @@ backup/
    */
   getRecentProjects(): RecentProject[] {
     const recent = recentProjectsStore.get('recent') || []
-    
+
     // 过滤掉不存在的项目
     return recent.filter(item => existsSync(item.path))
   }
@@ -460,17 +480,17 @@ backup/
 
     const scanDir = (dir: string): void => {
       const items = readdirSync(dir, { withFileTypes: true })
-      
+
       for (const item of items) {
         const fullPath = join(dir, item.name)
-        
+
         if (item.isDirectory()) {
           // 跳过隐藏目录
           if (item.name.startsWith('.')) continue
           scanDir(fullPath)
         } else if (item.isFile() && item.name.endsWith('.novel')) {
           stats.totalFiles++
-          
+
           // 读取文件统计字数
           try {
             const content = readFileSync(fullPath, 'utf-8')
@@ -499,16 +519,19 @@ backup/
   private countWords(text: string): number {
     // 移除空白字符
     const cleanText = text.replace(/\s/g, '')
-    
+
     // 统计 CJK 字符
     const cjkChars = cleanText.match(/[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g)
     const cjkCount = cjkChars ? cjkChars.length : 0
-    
+
     // 统计非 CJK 字符（按单词计算）
-    const nonCjkText = cleanText.replace(/[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g, ' ')
+    const nonCjkText = cleanText.replace(
+      /[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g,
+      ' '
+    )
     const words = nonCjkText.match(/[a-zA-Z0-9]+/g)
     const wordCount = words ? words.length : 0
-    
+
     return cjkCount + wordCount
   }
 
@@ -548,7 +571,11 @@ backup/
     const showHiddenFiles = globalSettingsService.getShowHiddenFiles()
     const hiddenItems = projectSettingsService.getHiddenItems()
     const expandedFolders = projectSettingsService.getExpandedFolders()
-    const tree = fileService.getFileTree(showHiddenFiles, { field: 'name', order: 'asc' }, hiddenItems)
+    const tree = fileService.getFileTree(
+      showHiddenFiles,
+      { field: 'name', order: 'asc' },
+      hiddenItems
+    )
 
     return {
       project: this.currentProject,
@@ -576,24 +603,24 @@ backup/
    */
   private async createBuiltinSkills(projectPath: string): Promise<void> {
     const skillsDir = join(projectPath, PROJECT_META_DIR, 'data', 'ai-assistant', 'skills')
-    
+
     // 内置 SKILL 源目录（编译后位于 out/main/builtin-skills/）
     const builtinSkillsSourceDir = join(__dirname, 'builtin-skills')
-    
+
     if (!existsSync(builtinSkillsSourceDir)) {
       this.logger.warn(`Builtin skills directory not found: ${builtinSkillsSourceDir}`)
       return
     }
-    
+
     // 递归复制所有内置 SKILL
     const copyDir = (src: string, dest: string): void => {
       mkdirSync(dest, { recursive: true })
       const entries = readdirSync(src, { withFileTypes: true })
-      
+
       for (const entry of entries) {
         const srcPath = join(src, entry.name)
         const destPath = join(dest, entry.name)
-        
+
         if (entry.isDirectory()) {
           copyDir(srcPath, destPath)
         } else {
@@ -603,17 +630,17 @@ backup/
         }
       }
     }
-    
+
     // 遍历 builtin-skills 目录下的每个子目录（每个子目录是一个 SKILL）
     const skillDirs = readdirSync(builtinSkillsSourceDir, { withFileTypes: true })
-    
+
     for (const dirent of skillDirs) {
       if (!dirent.isDirectory()) continue
-      
+
       const skillId = dirent.name
       const srcPath = join(builtinSkillsSourceDir, skillId)
       const destPath = join(skillsDir, skillId)
-      
+
       // 复制整个 SKILL 目录
       copyDir(srcPath, destPath)
       this.logger.info(`Copied builtin skill: ${skillId}`)
