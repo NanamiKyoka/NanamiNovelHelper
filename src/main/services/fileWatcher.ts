@@ -13,6 +13,11 @@ export interface BatchFileChangeEvent {
   timestamp: number
 }
 
+export interface BulkOperationEndEvent {
+  type: 'bulk-operation-end'
+  timestamp: number
+}
+
 interface WatchOptions {
   ignored?: string[]
   batchDebounceMs?: number
@@ -123,6 +128,7 @@ class FileWatcherService extends ServiceCore {
       this.paused = false
       this.pendingEvents.clear()
       this.flushBatch()
+      this.notifyBulkOperationEnd()
     }
   }
 
@@ -209,6 +215,15 @@ class FileWatcherService extends ServiceCore {
     if (this.paused) return
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send('file-change', event)
+    }
+  }
+
+  private notifyBulkOperationEnd(): void {
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('file-change', {
+        type: 'bulk-operation-end',
+        timestamp: Date.now()
+      } as BulkOperationEndEvent)
     }
   }
 }

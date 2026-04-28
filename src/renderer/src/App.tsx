@@ -134,26 +134,37 @@ function App(): JSX.Element {
   useEffect(() => {
     if (!currentProject) return
 
-    const handleFileChange = (event: {
-      changes: { type: 'add' | 'change' | 'unlink'; path: string }[]
-      timestamp: number
-    }) => {
-      const changedPaths: string[] = []
-      const deletedPaths: string[] = []
+    const handleFileChange = (
+      event:
+        | {
+            changes: { type: 'add' | 'change' | 'unlink'; path: string }[]
+            timestamp: number
+          }
+        | { type: 'bulk-operation-end'; timestamp: number }
+    ) => {
+      if ('type' in event && event.type === 'bulk-operation-end') {
+        useEditorStore.getState().handleBulkOperationEnd()
+        return
+      }
 
-      for (const change of event.changes) {
-        if (change.type === 'change' || change.type === 'add') {
-          changedPaths.push(change.path)
-        } else if (change.type === 'unlink') {
-          deletedPaths.push(change.path)
+      if ('changes' in event) {
+        const changedPaths: string[] = []
+        const deletedPaths: string[] = []
+
+        for (const change of event.changes) {
+          if (change.type === 'change' || change.type === 'add') {
+            changedPaths.push(change.path)
+          } else if (change.type === 'unlink') {
+            deletedPaths.push(change.path)
+          }
         }
-      }
 
-      if (changedPaths.length > 0) {
-        useEditorStore.getState().handleExternalFileChanges(changedPaths)
-      }
-      if (deletedPaths.length > 0) {
-        useEditorStore.getState().handleExternalFileDeletions(deletedPaths)
+        if (changedPaths.length > 0) {
+          useEditorStore.getState().handleExternalFileChanges(changedPaths)
+        }
+        if (deletedPaths.length > 0) {
+          useEditorStore.getState().handleExternalFileDeletions(deletedPaths)
+        }
       }
     }
 

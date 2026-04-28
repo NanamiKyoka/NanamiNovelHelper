@@ -196,6 +196,7 @@ interface EditorState {
   triggerEditorRefresh: () => void
   handleExternalFileChanges: (paths: string[]) => void
   handleExternalFileDeletions: (paths: string[]) => void
+  handleBulkOperationEnd: () => void
 
   getActiveTab: () => EditorTab | null
   hasUnsavedChanges: () => boolean
@@ -574,8 +575,13 @@ export const useEditorStore = create<EditorState>()(
               )
             )
 
+            const tabsToRemove: EditorTab[] = []
             let hasUpdates = false
-            for (const result of results) {
+
+            for (let i = 0; i < results.length; i++) {
+              const result = results[i]
+              const tab = tabsToRefresh[i]
+
               if (result.status === 'fulfilled') {
                 const existing = state.fileContents.get(result.value.path)
                 if (!existing || existing.content !== result.value.content) {
@@ -586,22 +592,43 @@ export const useEditorStore = create<EditorState>()(
                   })
                   hasUpdates = true
                 }
+              } else {
+                tabsToRemove.push(tab)
               }
             }
 
-            if (hasUpdates) {
-              set({ fileContents: state.fileContents })
+            if (tabsToRemove.length > 0) {
+              const removeIds = new Set(tabsToRemove.map(t => t.id))
+              const newTabs = state.tabs.filter(t => !removeIds.has(t.id))
 
-              if (state.activeTabId) {
-                const activeTab = state.tabs.find(t => t.id === state.activeTabId)
-                if (activeTab && !dirtyPaths.has(activeTab.path)) {
-                  const fileContent = state.fileContents.get(activeTab.path)
-                  if (fileContent) {
-                    get().updateWordCount(fileContent.content)
-                  }
-                }
+              let newActiveTabId = state.activeTabId
+              if (newActiveTabId && removeIds.has(newActiveTabId)) {
+                const idx = state.tabs.findIndex(t => t.id === newActiveTabId)
+                const rightTab = newTabs[idx]
+                const leftTab = newTabs[idx - 1]
+                newActiveTabId = rightTab?.id || leftTab?.id || null
               }
 
+              let newPreviewTabId = state.previewTabId
+              if (newPreviewTabId && removeIds.has(newPreviewTabId)) {
+                newPreviewTabId = null
+              }
+
+              for (const tab of tabsToRemove) {
+                state.fileContents.delete(tab.path)
+              }
+
+              set({
+                tabs: newTabs,
+                activeTabId: newActiveTabId,
+                previewTabId: newPreviewTabId,
+                fileContents: state.fileContents
+              })
+            } else if (hasUpdates) {
+              set({ fileContents: state.fileContents })
+            }
+
+            if (hasUpdates || tabsToRemove.length > 0) {
               get().triggerEditorRefresh()
             }
           })
@@ -626,8 +653,13 @@ export const useEditorStore = create<EditorState>()(
               )
             )
 
+            const tabsToRemove: EditorTab[] = []
             let hasUpdates = false
-            for (const result of results) {
+
+            for (let i = 0; i < results.length; i++) {
+              const result = results[i]
+              const filePath = pathsToRefresh[i]
+
               if (result.status === 'fulfilled') {
                 const existing = state.fileContents.get(result.value.path)
                 if (!existing || existing.content !== result.value.content) {
@@ -638,22 +670,46 @@ export const useEditorStore = create<EditorState>()(
                   })
                   hasUpdates = true
                 }
+              } else {
+                const tab = state.tabs.find(t => t.path === filePath && !t.isDirty)
+                if (tab) {
+                  tabsToRemove.push(tab)
+                }
               }
             }
 
-            if (hasUpdates) {
-              set({ fileContents: state.fileContents })
+            if (tabsToRemove.length > 0) {
+              const removeIds = new Set(tabsToRemove.map(t => t.id))
+              const newTabs = state.tabs.filter(t => !removeIds.has(t.id))
 
-              if (state.activeTabId) {
-                const activeTab = state.tabs.find(t => t.id === state.activeTabId)
-                if (activeTab && !dirtyPaths.has(activeTab.path)) {
-                  const fileContent = state.fileContents.get(activeTab.path)
-                  if (fileContent) {
-                    get().updateWordCount(fileContent.content)
-                  }
-                }
+              let newActiveTabId = state.activeTabId
+              if (newActiveTabId && removeIds.has(newActiveTabId)) {
+                const idx = state.tabs.findIndex(t => t.id === newActiveTabId)
+                const rightTab = newTabs[idx]
+                const leftTab = newTabs[idx - 1]
+                newActiveTabId = rightTab?.id || leftTab?.id || null
               }
 
+              let newPreviewTabId = state.previewTabId
+              if (newPreviewTabId && removeIds.has(newPreviewTabId)) {
+                newPreviewTabId = null
+              }
+
+              for (const tab of tabsToRemove) {
+                state.fileContents.delete(tab.path)
+              }
+
+              set({
+                tabs: newTabs,
+                activeTabId: newActiveTabId,
+                previewTabId: newPreviewTabId,
+                fileContents: state.fileContents
+              })
+            } else if (hasUpdates) {
+              set({ fileContents: state.fileContents })
+            }
+
+            if (hasUpdates || tabsToRemove.length > 0) {
               get().triggerEditorRefresh()
             }
           })
@@ -709,6 +765,68 @@ export const useEditorStore = create<EditorState>()(
               fileContents: state.fileContents
             })
           }
+        },
+
+        handleBulkOperationEnd: () => {
+          const state = get()
+          if (state.tabs.length === 0) return
+
+          const checkPromises = state.tabs.map(async tab => {
+            const exists = await window.electron.file.exists(tab.path)
+            return { tab, exists }
+          })
+
+          Promise.allSettled(checkPromises).then(results => {
+            const tabsToRemove: EditorTab[] = []
+            const pathsToRefresh: string[] = []
+
+            for (const result of results) {
+              if (result.status === 'fulfilled') {
+                if (!result.value.exists) {
+                  if (!result.value.tab.isDirty) {
+                    tabsToRemove.push(result.value.tab)
+                  }
+                } else {
+                  pathsToRefresh.push(result.value.tab.path)
+                }
+              }
+            }
+
+            let newTabs = state.tabs
+            let newActiveTabId = state.activeTabId
+            let newPreviewTabId = state.previewTabId
+
+            if (tabsToRemove.length > 0) {
+              const removeIds = new Set(tabsToRemove.map(t => t.id))
+              newTabs = state.tabs.filter(t => !removeIds.has(t.id))
+
+              if (newActiveTabId && removeIds.has(newActiveTabId)) {
+                const idx = state.tabs.findIndex(t => t.id === newActiveTabId)
+                const rightTab = newTabs[idx]
+                const leftTab = newTabs[idx - 1]
+                newActiveTabId = rightTab?.id || leftTab?.id || null
+              }
+
+              if (newPreviewTabId && removeIds.has(newPreviewTabId)) {
+                newPreviewTabId = null
+              }
+
+              for (const tab of tabsToRemove) {
+                state.fileContents.delete(tab.path)
+              }
+            }
+
+            set({
+              tabs: newTabs,
+              activeTabId: newActiveTabId,
+              previewTabId: newPreviewTabId,
+              fileContents: state.fileContents
+            })
+
+            if (pathsToRefresh.length > 0) {
+              get().refreshFiles(pathsToRefresh)
+            }
+          })
         }
       }
     },
