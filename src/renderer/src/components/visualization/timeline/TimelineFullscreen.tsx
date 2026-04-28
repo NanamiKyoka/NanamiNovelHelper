@@ -9,7 +9,6 @@ import {
   Button,
   Input,
   Select,
-  Modal,
   App,
   Spin,
   Tag,
@@ -47,7 +46,6 @@ import {
   DragOverlay
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,

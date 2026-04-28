@@ -235,7 +235,6 @@ function App(): JSX.Element {
         description: '终端面板',
         category: '工具'
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     ],
     []
   )

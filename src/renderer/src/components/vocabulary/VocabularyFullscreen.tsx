@@ -443,7 +443,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       setIsTypeModalOpen(false)
       setCreateMode(null)
       setSelectedTemplate(null)
-    } catch (error) {
+    } catch (_error) {
       message.error('保存失败')
     } finally {
       setLoading(false)
@@ -472,7 +472,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         setSelectedTypeId(types[0]?.id || null)
       }
       message.success('删除成功')
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败')
     }
   }
@@ -506,7 +506,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
           } else {
             reject(new Error('不支持的文件格式，请使用 JSON 或 CSV 文件'))
           }
-        } catch (error) {
+        } catch (_error) {
           reject(new Error('文件解析失败，请检查文件格式'))
         }
       }

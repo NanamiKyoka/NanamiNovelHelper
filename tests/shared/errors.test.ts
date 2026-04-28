@@ -8,7 +8,7 @@ import {
   handleErrorAsync,
   isServiceError,
   ensureProjectOpen,
-  ensureInitialized,
+  ensureInitialized
 } from '@shared/errors'
 
 describe('ErrorCode', () => {
@@ -66,19 +66,23 @@ describe('ServiceError', () => {
 
   describe('toJSON/fromJSON', () => {
     it('应该正确序列化为JSON', () => {
-      const error = new ServiceError(ErrorCode.FILE_NOT_FOUND, '文件未找到', { module: 'FileService' })
+      const error = new ServiceError(ErrorCode.FILE_NOT_FOUND, '文件未找到', {
+        module: 'FileService'
+      })
       const json = error.toJSON()
 
       expect(json).toEqual({
         code: ErrorCode.FILE_NOT_FOUND,
         message: '文件未找到',
         module: 'FileService',
-        name: 'ServiceError',
+        name: 'ServiceError'
       })
     })
 
     it('应该从JSON恢复错误', () => {
-      const original = new ServiceError(ErrorCode.FILE_NOT_FOUND, '文件未找到', { module: 'FileService' })
+      const original = new ServiceError(ErrorCode.FILE_NOT_FOUND, '文件未找到', {
+        module: 'FileService'
+      })
       const json = original.toJSON()
       const restored = ServiceError.fromJSON(json)
 
@@ -89,7 +93,9 @@ describe('ServiceError', () => {
     })
 
     it('序列化和反序列化应该保持一致性', () => {
-      const error = new ServiceError(ErrorCode.PROJECT_NOT_OPEN, undefined, { module: 'ProjectService' })
+      const error = new ServiceError(ErrorCode.PROJECT_NOT_OPEN, undefined, {
+        module: 'ProjectService'
+      })
       const restored = ServiceError.fromJSON(error.toJSON())
 
       expect(restored.toJSON()).toEqual(error.toJSON())
@@ -195,18 +201,24 @@ describe('handleError', () => {
   })
 
   it('函数抛出错误时默认返回null', () => {
-    const result = handleError(() => {
-      throw new Error('test error')
-    }, { module: 'Test', operation: 'testOp' })
+    const result = handleError(
+      () => {
+        throw new Error('test error')
+      },
+      { module: 'Test', operation: 'testOp' }
+    )
 
     expect(result).toBeNull()
   })
 
   it('throw选项为true时应该重新抛出错误', () => {
     expect(() => {
-      handleError(() => {
-        throw new Error('test error')
-      }, { module: 'Test', operation: 'testOp', throw: true })
+      handleError(
+        () => {
+          throw new Error('test error')
+        },
+        { module: 'Test', operation: 'testOp', throw: true }
+      )
     }).toThrow()
   })
 
@@ -214,17 +226,23 @@ describe('handleError', () => {
     const serviceError = new ServiceError(ErrorCode.NOT_FOUND, '未找到')
 
     expect(() => {
-      handleError(() => {
-        throw serviceError
-      }, { module: 'Test', operation: 'testOp', throw: true })
+      handleError(
+        () => {
+          throw serviceError
+        },
+        { module: 'Test', operation: 'testOp', throw: true }
+      )
     }).toThrow(serviceError)
   })
 
   it('throw选项为true时非ServiceError应包装为ServiceError', () => {
     try {
-      handleError(() => {
-        throw new Error('普通错误')
-      }, { module: 'Test', operation: 'testOp', throw: true })
+      handleError(
+        () => {
+          throw new Error('普通错误')
+        },
+        { module: 'Test', operation: 'testOp', throw: true }
+      )
     } catch (error) {
       expect(error).toBeInstanceOf(ServiceError)
       expect((error as ServiceError).code).toBe(ErrorCode.SERVICE_ERROR)
@@ -233,17 +251,23 @@ describe('handleError', () => {
 
   it('log选项为false时不应记录日志', () => {
     const loggerSpy = vi.spyOn(console, 'error')
-    handleError(() => {
-      throw new Error('test')
-    }, { module: 'Test', operation: 'testOp', log: false })
+    handleError(
+      () => {
+        throw new Error('test')
+      },
+      { module: 'Test', operation: 'testOp', log: false }
+    )
 
     expect(loggerSpy).not.toHaveBeenCalled()
   })
 
   it('应该支持自定义defaultValue', () => {
-    const result = handleError(() => {
-      throw new Error('test')
-    }, { module: 'Test', operation: 'testOp', defaultValue: [] })
+    const result = handleError(
+      () => {
+        throw new Error('test')
+      },
+      { module: 'Test', operation: 'testOp', defaultValue: [] }
+    )
 
     expect(result).toEqual([])
   })
@@ -264,18 +288,24 @@ describe('handleErrorAsync', () => {
   })
 
   it('异步函数抛出错误时默认返回null', async () => {
-    const result = await handleErrorAsync(async () => {
-      throw new Error('test')
-    }, { module: 'Test', operation: 'testOp' })
+    const result = await handleErrorAsync(
+      async () => {
+        throw new Error('test')
+      },
+      { module: 'Test', operation: 'testOp' }
+    )
 
     expect(result).toBeNull()
   })
 
   it('throw选项为true时应该重新抛出错误', async () => {
     await expect(
-      handleErrorAsync(async () => {
-        throw new Error('test')
-      }, { module: 'Test', operation: 'testOp', throw: true })
+      handleErrorAsync(
+        async () => {
+          throw new Error('test')
+        },
+        { module: 'Test', operation: 'testOp', throw: true }
+      )
     ).rejects.toThrow()
   })
 
@@ -283,9 +313,12 @@ describe('handleErrorAsync', () => {
     const serviceError = new ServiceError(ErrorCode.FILE_READ_ERROR)
 
     await expect(
-      handleErrorAsync(async () => {
-        throw serviceError
-      }, { module: 'Test', operation: 'testOp', throw: true })
+      handleErrorAsync(
+        async () => {
+          throw serviceError
+        },
+        { module: 'Test', operation: 'testOp', throw: true }
+      )
     ).rejects.toBe(serviceError)
   })
 })

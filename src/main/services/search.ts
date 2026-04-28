@@ -405,8 +405,7 @@ class SearchService {
         fileName: path.basename(relativePath),
         matches
       }
-    } catch (error) {
-      // 文件读取失败，忽略
+    } catch (_error) {
       return null
     }
   }

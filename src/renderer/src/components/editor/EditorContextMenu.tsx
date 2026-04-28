@@ -121,12 +121,13 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
         case 'codeBlock':
           chain.toggleCodeBlock().run()
           break
-        case 'link':
+        case 'link': {
           const url = window.prompt('输入链接地址:')
           if (url) {
             chain.setLink({ href: url }).run()
           }
           break
+        }
         case 'removeLink':
           chain.unsetLink().run()
           break

@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { Loading, PageLoading, ContentLoading, InlineLoading } from '@renderer/components/common/Loading/Loading'
+import { render } from '@testing-library/react'
+import {
+  Loading,
+  PageLoading,
+  ContentLoading,
+  InlineLoading
+} from '@renderer/components/common/Loading/Loading'
 
 describe('Loading', () => {
   it('应该渲染加载组件', () => {

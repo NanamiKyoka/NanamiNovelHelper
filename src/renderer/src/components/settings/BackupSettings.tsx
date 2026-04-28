@@ -63,8 +63,8 @@ export function BackupSettings(): JSX.Element {
     try {
       const list = await listBackups()
       setBackups(list)
-    } catch (error) {
-      console.error('Failed to load backups:', error)
+    } catch (_error) {
+      console.error('Failed to load backups:', _error)
     } finally {
       setLoading(false)
     }
@@ -80,7 +80,7 @@ export function BackupSettings(): JSX.Element {
       } else {
         message.error('备份创建失败')
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('备份创建失败')
     } finally {
       setCreating(false)
@@ -95,7 +95,7 @@ export function BackupSettings(): JSX.Element {
       } else {
         message.error('备份恢复失败')
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('备份恢复失败')
     }
   }
@@ -109,7 +109,7 @@ export function BackupSettings(): JSX.Element {
       } else {
         message.error('删除失败')
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败')
     }
   }
@@ -122,7 +122,7 @@ export function BackupSettings(): JSX.Element {
       } else {
         message.error('导出失败')
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('导出失败')
     }
   }
@@ -134,7 +134,7 @@ export function BackupSettings(): JSX.Element {
         message.success('备份导入成功')
         loadBackups()
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('导入失败')
     }
   }
@@ -143,7 +143,7 @@ export function BackupSettings(): JSX.Element {
     try {
       await updateBackupSettings({ [key]: value })
       message.success('设置已保存')
-    } catch (error) {
+    } catch (_error) {
       message.error('保存失败')
     }
   }

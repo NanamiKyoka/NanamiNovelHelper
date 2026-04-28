@@ -142,7 +142,7 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
       if (appRef.current) {
         try {
           appRef.current.destroy(true, { children: true })
-        } catch (e) {
+        } catch {
           // 忽略销毁时的错误
         }
         appRef.current = null

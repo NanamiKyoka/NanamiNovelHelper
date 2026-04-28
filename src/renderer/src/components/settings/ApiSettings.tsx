@@ -95,7 +95,7 @@ export function ApiSettings(): JSX.Element {
       })
 
       message.success('保存成功')
-    } catch (error) {
+    } catch (_error) {
       message.error('保存失败')
     } finally {
       setLoading(prev => ({ ...prev, [id]: false }))
@@ -108,7 +108,7 @@ export function ApiSettings(): JSX.Element {
       await deleteApiKey(`${id}_baseUrl`)
       setConfigs(prev => prev.filter(c => c.id !== id))
       message.success('已删除')
-    } catch (error) {
+    } catch (_error) {
       message.error('删除失败')
     }
   }

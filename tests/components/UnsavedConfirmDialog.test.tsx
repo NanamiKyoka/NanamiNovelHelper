@@ -5,7 +5,7 @@ import React from 'react'
 
 let capturedProps: any = null
 
-vi.mock('antd', async (importOriginal) => {
+vi.mock('antd', async importOriginal => {
   const actual = await importOriginal<typeof import('antd')>()
   return {
     ...actual,
@@ -41,7 +41,7 @@ vi.mock('antd', async (importOriginal) => {
           </div>
         </div>
       )
-    },
+    }
   }
 })
 
@@ -69,7 +69,9 @@ describe('UnsavedConfirmDialog', () => {
   it('应该渲染未保存提示文案', () => {
     render(<UnsavedConfirmDialog />)
 
-    expect(screen.getByTestId('modal-content').textContent).toContain('当前有未保存的更改，是否保存？')
+    expect(screen.getByTestId('modal-content').textContent).toContain(
+      '当前有未保存的更改，是否保存？'
+    )
   })
 
   it('应该渲染标题中的未保存更改文本', () => {

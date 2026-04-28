@@ -170,8 +170,8 @@ class ImageService {
 
     // 计算是否需要缩放
     let needsResize = false
-    let width = metadata.width || 0
-    let height = metadata.height || 0
+    const width = metadata.width || 0
+    const height = metadata.height || 0
 
     if (width > config.maxWidth || height > config.maxHeight) {
       needsResize = true

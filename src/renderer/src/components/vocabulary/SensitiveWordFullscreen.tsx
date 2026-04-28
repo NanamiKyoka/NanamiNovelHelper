@@ -214,7 +214,7 @@ function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.
       }
 
       setDrawerOpen(false)
-    } catch (error) {
+    } catch (_error) {
       message.error('保存失败')
     } finally {
       setLoading(false)

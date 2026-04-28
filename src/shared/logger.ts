@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * 统一日志工具
  *
@@ -17,9 +18,9 @@ export type EnvironmentDetector = () => boolean
  */
 const defaultIsDev: EnvironmentDetector = () => {
   // 渲染进程：检查 import.meta.env
-  // @ts-ignore - import.meta 在主进程中不存在
+  // @ts-expect-error - import.meta 在主进程中不存在
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    // @ts-ignore
+    // @ts-expect-error - import.meta.env 在主进程中不存在
     return import.meta.env.DEV ?? false
   }
   // 主进程：检查 process.env
@@ -142,7 +143,7 @@ export function createRendererLogger(
 ): Logger {
   return createLogger(module, {
     ...options,
-    // @ts-ignore - import.meta 在编译时会被处理
+    // @ts-expect-error - import.meta 在编译时会被处理
     isDev: () => import.meta.env?.DEV ?? process.env.NODE_ENV === 'development'
   })
 }

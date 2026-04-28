@@ -238,7 +238,7 @@ function AiAssistantPanel(): JSX.Element {
         }
       }
       input.click()
-    } catch (error) {
+    } catch (_error) {
       message.error('导入失败')
     }
   }

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ErrorBoundary, ModuleErrorBoundary } from '@renderer/components/common/ErrorBoundary/ErrorBoundary'
+import {
+  ErrorBoundary,
+  ModuleErrorBoundary
+} from '@renderer/components/common/ErrorBoundary/ErrorBoundary'
 
 function ThrowingComponent({ shouldThrow }: { shouldThrow: boolean }) {
   if (shouldThrow) {
@@ -85,9 +88,9 @@ describe('ErrorBoundary', () => {
     )
 
     const buttons = screen.getAllByRole('button')
-    const buttonTexts = buttons.map((b) => b.textContent)
-    expect(buttonTexts.some((t) => t?.includes('重试') || t?.includes('重 试'))).toBe(true)
-    expect(buttonTexts.some((t) => t?.includes('刷新页面'))).toBe(true)
+    const buttonTexts = buttons.map(b => b.textContent)
+    expect(buttonTexts.some(t => t?.includes('重试') || t?.includes('重 试'))).toBe(true)
+    expect(buttonTexts.some(t => t?.includes('刷新页面'))).toBe(true)
   })
 
   it('点击重试按钮应该重置错误状态', async () => {
@@ -113,7 +116,7 @@ describe('ErrorBoundary', () => {
 
     const retryButton = screen
       .getAllByRole('button')
-      .find((b) => b.textContent?.includes('重试') || b.textContent?.includes('重 试'))
+      .find(b => b.textContent?.includes('重试') || b.textContent?.includes('重 试'))
     expect(retryButton).toBeDefined()
     await user.click(retryButton!)
 
@@ -128,8 +131,8 @@ describe('ErrorBoundary', () => {
     )
 
     const buttons = screen.getAllByRole('button')
-    const buttonTexts = buttons.map((b) => b.textContent)
-    expect(buttonTexts.some((t) => t?.includes('重新加载'))).toBe(true)
+    const buttonTexts = buttons.map(b => b.textContent)
+    expect(buttonTexts.some(t => t?.includes('重新加载'))).toBe(true)
   })
 
   it('嵌套ErrorBoundary应该由最近的边界捕获', () => {
@@ -188,7 +191,7 @@ describe('ModuleErrorBoundary', () => {
 
     expect(screen.getByText('页面出错了')).toBeInTheDocument()
     const buttons = screen.getAllByRole('button')
-    const buttonTexts = buttons.map((b) => b.textContent)
-    expect(buttonTexts.some((t) => t?.includes('重新加载模块'))).toBe(true)
+    const buttonTexts = buttons.map(b => b.textContent)
+    expect(buttonTexts.some(t => t?.includes('重新加载模块'))).toBe(true)
   })
 })

@@ -282,7 +282,7 @@ function WorkflowExecutor({
           />
         )
 
-      case 'vocabulary':
+      case 'vocabulary': {
         const filteredEntries = variable.vocabularyTypeId
           ? vocabularyEntries.filter(e => e.typeId === variable.vocabularyTypeId)
           : vocabularyEntries
@@ -305,6 +305,7 @@ function WorkflowExecutor({
             options={filteredEntries.map(e => ({ value: e.id, label: e.name }))}
           />
         )
+      }
 
       case 'chapter': {
         const activeTab = getActiveTab()

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { useOrganizationStore } from '@renderer/stores/organizationStore'
 import type { OrganizationNode, OrganizationGraph } from '@renderer/types/organization'
 
@@ -12,7 +12,7 @@ function createNode(overrides: Partial<OrganizationNode> & { id: string }): Orga
     order: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -24,7 +24,7 @@ function setupTreeStore() {
     createNode({ id: 'child1-2', name: '子节点1-2', parentId: 'root1', order: 1 }),
     createNode({ id: 'child2-1', name: '子节点2-1', parentId: 'root2', order: 0 }),
     createNode({ id: 'grandchild1-1-1', name: '孙节点1-1-1', parentId: 'child1-1', order: 0 }),
-    createNode({ id: 'grandchild1-1-2', name: '孙节点1-1-2', parentId: 'child1-1', order: 1 }),
+    createNode({ id: 'grandchild1-1-2', name: '孙节点1-1-2', parentId: 'child1-1', order: 1 })
   ]
 
   const graph: OrganizationGraph = {
@@ -34,7 +34,7 @@ function setupTreeStore() {
     nodes,
     nodeCount: nodes.length,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   }
 
   useOrganizationStore.setState({
@@ -49,11 +49,11 @@ function setupTreeStore() {
         nodeStyle: undefined,
         nodeCount: nodes.length,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
+        updatedAt: new Date().toISOString()
+      }
     ],
     isLoading: false,
-    error: null,
+    error: null
   })
 }
 
@@ -63,7 +63,7 @@ describe('OrganizationStore - 树遍历辅助方法', () => {
       graphs: [],
       currentGraph: null,
       isLoading: false,
-      error: null,
+      error: null
     })
   })
 
@@ -119,8 +119,8 @@ describe('OrganizationStore - 树遍历辅助方法', () => {
       const store = useOrganizationStore.getState()
       const children = store.getChildren('root1')
       expect(children.length).toBe(2)
-      expect(children.map((c) => c.id)).toContain('child1-1')
-      expect(children.map((c) => c.id)).toContain('child1-2')
+      expect(children.map(c => c.id)).toContain('child1-1')
+      expect(children.map(c => c.id)).toContain('child1-2')
     })
 
     it('子节点应该按order排序', () => {
@@ -151,7 +151,7 @@ describe('OrganizationStore - 树遍历辅助方法', () => {
       const store = useOrganizationStore.getState()
       const descendants = store.getDescendants('root1')
       expect(descendants.length).toBe(4)
-      const ids = descendants.map((d) => d.id)
+      const ids = descendants.map(d => d.id)
       expect(ids).toContain('child1-1')
       expect(ids).toContain('child1-2')
       expect(ids).toContain('grandchild1-1-1')
@@ -239,8 +239,8 @@ describe('OrganizationStore - 树遍历辅助方法', () => {
           nodeStyle: undefined,
           nodeCount: 0,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+          updatedAt: new Date().toISOString()
+        }
       ]
       store.setGraphs(graphs)
 

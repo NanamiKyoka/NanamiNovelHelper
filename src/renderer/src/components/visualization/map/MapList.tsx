@@ -214,7 +214,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
         // 进入编辑模式
         onCreateAndEdit(newMap.id)
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('创建失败')
     } finally {
       setIsCreating(false)
@@ -305,7 +305,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
           message.success('导入成功')
         }
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('导入失败')
     }
   }, [importMap, message])

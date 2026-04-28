@@ -111,7 +111,7 @@ function GlobalLayoutSettings(): JSX.Element {
   const handleBadgeToggle = async (key: keyof BadgeVisibility, checked: boolean) => {
     try {
       await updateBadgeVisibility({ [key]: checked })
-    } catch (error) {
+    } catch (_error) {
       message.error('保存设置失败')
     }
   }
@@ -119,7 +119,7 @@ function GlobalLayoutSettings(): JSX.Element {
   const handleSidebarBadgeToggle = async (key: keyof SidebarBadgeVisibility, checked: boolean) => {
     try {
       await updateSidebarBadgeVisibility({ [key]: checked })
-    } catch (error) {
+    } catch (_error) {
       message.error('保存设置失败')
     }
   }
@@ -127,7 +127,7 @@ function GlobalLayoutSettings(): JSX.Element {
   const handleToggleHiddenFiles = async (checked: boolean) => {
     try {
       await setShowHiddenFiles(checked)
-    } catch (error) {
+    } catch (_error) {
       message.error('保存设置失败')
     }
   }

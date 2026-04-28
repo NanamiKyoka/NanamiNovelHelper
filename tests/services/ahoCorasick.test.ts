@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { AhoCorasick, createAhoCorasick } from '@renderer/services/ahoCorasick'
 import type { HighlightPattern } from '@shared/highlight'
 
-function createPattern(overrides: Partial<HighlightPattern> & { id: string; name: string }): HighlightPattern {
+function createPattern(
+  overrides: Partial<HighlightPattern> & { id: string; name: string }
+): HighlightPattern {
   return {
     aliases: [],
     color: '#1890ff',
@@ -11,7 +13,7 @@ function createPattern(overrides: Partial<HighlightPattern> & { id: string; name
     caseSensitive: false,
     isSensitive: false,
     priority: 10,
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -37,8 +39,8 @@ describe('AhoCorasick', () => {
 
       const results = ac.search('张三去了北京')
       expect(results.length).toBe(2)
-      expect(results.map((r) => r.patternId)).toContain('1')
-      expect(results.map((r) => r.patternId)).toContain('2')
+      expect(results.map(r => r.patternId)).toContain('1')
+      expect(results.map(r => r.patternId)).toContain('2')
     })
 
     it('应该匹配同一模式的多次出现', () => {
@@ -98,15 +100,15 @@ describe('AhoCorasick', () => {
         createPattern({
           id: '1',
           name: '张三',
-          aliases: ['小三', '三哥'],
+          aliases: ['小三', '三哥']
         })
       )
       ac.build()
 
       const results = ac.search('小三和三哥在一起')
       expect(results.length).toBe(2)
-      expect(results.map((r) => r.matchedText)).toContain('小三')
-      expect(results.map((r) => r.matchedText)).toContain('三哥')
+      expect(results.map(r => r.matchedText)).toContain('小三')
+      expect(results.map(r => r.matchedText)).toContain('三哥')
     })
   })
 
@@ -115,7 +117,7 @@ describe('AhoCorasick', () => {
       const ac = new AhoCorasick()
       ac.addPatterns([
         createPattern({ id: '1', name: '张三' }),
-        createPattern({ id: '2', name: '李四' }),
+        createPattern({ id: '2', name: '李四' })
       ])
       ac.build()
 
@@ -208,7 +210,7 @@ describe('AhoCorasick', () => {
           id: '1',
           name: '张三',
           color: '#ff0000',
-          typeId: 'character',
+          typeId: 'character'
         })
       )
       ac.build()
@@ -223,7 +225,7 @@ describe('AhoCorasick', () => {
         entryName: '张三',
         typeId: 'character',
         color: '#ff0000',
-        isSensitive: false,
+        isSensitive: false
       })
     })
 
@@ -245,7 +247,7 @@ describe('AhoCorasick', () => {
       ac.build()
 
       const matches = ac.searchHighlights('张三去了北京', {
-        filterPatterns: new Set(['2']),
+        filterPatterns: new Set(['2'])
       })
       expect(matches.length).toBe(1)
       expect(matches[0].entryId).toBe('2')
@@ -258,7 +260,7 @@ describe('AhoCorasick', () => {
       ac.build()
 
       const matches = ac.searchHighlights('张三去了北京')
-      const positions = matches.map((m) => `${m.from}-${m.to}`)
+      const positions = matches.map(m => `${m.from}-${m.to}`)
       const uniquePositions = new Set(positions)
       expect(positions.length).toBe(uniquePositions.size)
     })
@@ -271,13 +273,13 @@ describe('AhoCorasick', () => {
         createPattern({
           id: '1',
           name: '天',
-          matchMode: 'wholeWord',
+          matchMode: 'wholeWord'
         })
       )
       ac.build()
 
       const matches = ac.searchHighlights('天地之间', {
-        wholeWord: true,
+        wholeWord: true
       })
 
       expect(matches.length).toBe(0)
@@ -289,13 +291,13 @@ describe('AhoCorasick', () => {
         createPattern({
           id: '1',
           name: '张三',
-          matchMode: 'wholeWord',
+          matchMode: 'wholeWord'
         })
       )
       ac.build()
 
       const matches = ac.searchHighlights('张三，你好', {
-        wholeWord: true,
+        wholeWord: true
       })
 
       expect(matches.length).toBe(1)
@@ -307,13 +309,13 @@ describe('AhoCorasick', () => {
         createPattern({
           id: '1',
           name: '张三',
-          matchMode: 'wholeWord',
+          matchMode: 'wholeWord'
         })
       )
       ac.build()
 
       const matches = ac.searchHighlights('张三去了北京', {
-        wholeWord: true,
+        wholeWord: true
       })
 
       expect(matches.length).toBe(0)
@@ -324,7 +326,7 @@ describe('AhoCorasick', () => {
     it('应该创建并构建好自动机', () => {
       const ac = createAhoCorasick([
         createPattern({ id: '1', name: '张三' }),
-        createPattern({ id: '2', name: '李四' }),
+        createPattern({ id: '2', name: '李四' })
       ])
 
       expect(ac.isBuilt()).toBe(true)
@@ -353,8 +355,8 @@ describe('AhoCorasick', () => {
 
       const results = ac.search('张三来了')
       expect(results.length).toBe(2)
-      expect(results.map((r) => r.matchedText)).toContain('张')
-      expect(results.map((r) => r.matchedText)).toContain('张三')
+      expect(results.map(r => r.matchedText)).toContain('张')
+      expect(results.map(r => r.matchedText)).toContain('张三')
     })
 
     it('应该处理空模式列表', () => {

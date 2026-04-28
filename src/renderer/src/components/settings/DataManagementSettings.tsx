@@ -37,7 +37,7 @@ export function DataManagementSettings(): JSX.Element {
       URL.revokeObjectURL(url)
 
       message.success('设置已导出')
-    } catch (error) {
+    } catch (_error) {
       message.error('导出失败')
     } finally {
       setExporting(false)
@@ -80,12 +80,12 @@ export function DataManagementSettings(): JSX.Element {
             try {
               await window.electron.settings.global.update(data.settings)
               message.success('设置已导入，部分设置需要重启应用生效')
-            } catch (error) {
+            } catch (_error) {
               message.error('导入失败')
             }
           }
         })
-      } catch (error) {
+      } catch (_error) {
         message.error('无效的设置文件')
       } finally {
         setImporting(false)
@@ -99,7 +99,7 @@ export function DataManagementSettings(): JSX.Element {
     try {
       await resetGlobalSettings()
       message.success('设置已重置为默认值')
-    } catch (error) {
+    } catch (_error) {
       message.error('重置失败')
     }
   }
@@ -115,7 +115,7 @@ export function DataManagementSettings(): JSX.Element {
           localStorage.clear()
           sessionStorage.clear()
           message.success('缓存已清除，建议重启应用')
-        } catch (error) {
+        } catch (_error) {
           message.error('清除缓存失败')
         }
       }

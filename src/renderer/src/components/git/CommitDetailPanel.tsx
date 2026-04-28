@@ -3,7 +3,7 @@
  */
 
 import { useEffect } from 'react'
-import { Button, Spin, Empty, Tag, Tooltip, Drawer } from 'antd'
+import { Spin, Empty, Tag, Drawer } from 'antd'
 import {
   CloseOutlined,
   FileOutlined,

@@ -54,7 +54,7 @@ function WelcomePage(): JSX.Element {
     async (path: string) => {
       try {
         await openProject(path)
-      } catch (error) {
+      } catch (_error) {
         // 错误已在 store 中处理
       }
     },
@@ -67,7 +67,7 @@ function WelcomePage(): JSX.Element {
       e.stopPropagation()
       try {
         await removeRecentProject(path)
-      } catch (error) {
+      } catch (_error) {
         // 忽略错误
       }
     },

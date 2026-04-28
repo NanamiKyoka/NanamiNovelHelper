@@ -271,7 +271,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
   },
 
   addProseMirrorPlugins() {
-    const extensionThis = this
+    const { onClick, onHover } = this.options
 
     return [
       new Plugin({
@@ -326,10 +326,10 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
           handleClick(_view, _pos, event) {
             const target = event.target as HTMLElement
             const highlightEl = target.closest('[data-entry-id]')
-            if (highlightEl && extensionThis.options.onClick) {
+            if (highlightEl && onClick) {
               const entryId = highlightEl.getAttribute('data-entry-id')
               if (entryId) {
-                extensionThis.options.onClick(entryId, event)
+                onClick(entryId, event)
                 return true
               }
             }
@@ -341,10 +341,10 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
 
               const target = event.target as HTMLElement
               const highlightEl = target.closest('[data-entry-id]')
-              if (highlightEl && extensionThis.options.onHover) {
+              if (highlightEl && onHover) {
                 const entryId = highlightEl.getAttribute('data-entry-id')
                 if (entryId) {
-                  extensionThis.options.onHover(entryId, event)
+                  onHover(entryId, event)
                   return true
                 }
               }

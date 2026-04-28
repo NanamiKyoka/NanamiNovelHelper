@@ -1,12 +1,15 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { ConfirmDialog, DeleteConfirmDialog } from '@renderer/components/common/ConfirmDialog/ConfirmDialog'
+import {
+  ConfirmDialog,
+  DeleteConfirmDialog
+} from '@renderer/components/common/ConfirmDialog/ConfirmDialog'
 
 function findButtonByText(text: string): HTMLElement | undefined {
   return screen
     .getAllByRole('button')
-    .find((b) => b.textContent?.replace(/\s+/g, '').includes(text.replace(/\s+/g, '')))
+    .find(b => b.textContent?.replace(/\s+/g, '').includes(text.replace(/\s+/g, '')))
 }
 
 describe('ConfirmDialog', () => {
@@ -113,22 +116,14 @@ describe('ConfirmDialog', () => {
 
 describe('DeleteConfirmDialog', () => {
   it('应该渲染默认的删除确认文案', () => {
-    render(
-      <DeleteConfirmDialog open>
-        此操作不可撤销，确定要删除吗？
-      </DeleteConfirmDialog>
-    )
+    render(<DeleteConfirmDialog open>此操作不可撤销，确定要删除吗？</DeleteConfirmDialog>)
 
     expect(screen.getByText('确认删除')).toBeInTheDocument()
     expect(screen.getByText('此操作不可撤销，确定要删除吗？')).toBeInTheDocument()
   })
 
   it('应该显示删除按钮', () => {
-    render(
-      <DeleteConfirmDialog open>
-        内容
-      </DeleteConfirmDialog>
-    )
+    render(<DeleteConfirmDialog open>内容</DeleteConfirmDialog>)
 
     expect(findButtonByText('删除')).toBeInTheDocument()
   })

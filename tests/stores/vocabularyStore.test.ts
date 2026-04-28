@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useVocabularyStore } from '@renderer/stores/vocabularyStore'
 import type { VocabularyType, VocabularyEntry } from '@shared/vocabulary'
 
-function createType(overrides: Partial<VocabularyType> & { id: string; name: string }): VocabularyType {
+function createType(
+  overrides: Partial<VocabularyType> & { id: string; name: string }
+): VocabularyType {
   return {
     icon: undefined,
     color: '#1890ff',
@@ -12,11 +14,13 @@ function createType(overrides: Partial<VocabularyType> & { id: string; name: str
     order: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...overrides,
+    ...overrides
   }
 }
 
-function createEntry(overrides: Partial<VocabularyEntry> & { id: string; name: string; typeId: string }): VocabularyEntry {
+function createEntry(
+  overrides: Partial<VocabularyEntry> & { id: string; name: string; typeId: string }
+): VocabularyEntry {
   return {
     aliases: [],
     color: '#1890ff',
@@ -26,21 +30,21 @@ function createEntry(overrides: Partial<VocabularyEntry> & { id: string; name: s
     order: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...overrides,
+    ...overrides
   }
 }
 
 const sampleTypes: VocabularyType[] = [
   createType({ id: 'character', name: '角色', isBuiltIn: true, order: 0 }),
   createType({ id: 'location', name: '地点', isBuiltIn: true, order: 1 }),
-  createType({ id: 'item', name: '道具', isBuiltIn: false, order: 2 }),
+  createType({ id: 'item', name: '道具', isBuiltIn: false, order: 2 })
 ]
 
 const sampleEntries: VocabularyEntry[] = [
   createEntry({ id: 'e1', name: '张三', typeId: 'character', typeName: '角色', order: 0 }),
   createEntry({ id: 'e2', name: '李四', typeId: 'character', typeName: '角色', order: 1 }),
   createEntry({ id: 'e3', name: '北京', typeId: 'location', typeName: '地点', order: 0 }),
-  createEntry({ id: 'e4', name: '魔剑', typeId: 'item', typeName: '道具', order: 0 }),
+  createEntry({ id: 'e4', name: '魔剑', typeId: 'item', typeName: '道具', order: 0 })
 ]
 
 describe('VocabularyStore - 辅助查询方法', () => {
@@ -52,7 +56,7 @@ describe('VocabularyStore - 辅助查询方法', () => {
       isLoading: false,
       isLoaded: false,
       entriesLoaded: false,
-      error: null,
+      error: null
     })
   })
 
@@ -61,7 +65,7 @@ describe('VocabularyStore - 辅助查询方法', () => {
       types: sampleTypes,
       entries: sampleEntries,
       isLoaded: true,
-      entriesLoaded: true,
+      entriesLoaded: true
     })
   }
 
@@ -87,8 +91,8 @@ describe('VocabularyStore - 辅助查询方法', () => {
       const store = useVocabularyStore.getState()
       const characterEntries = store.getEntriesByType('character')
       expect(characterEntries.length).toBe(2)
-      expect(characterEntries.map((e) => e.id)).toContain('e1')
-      expect(characterEntries.map((e) => e.id)).toContain('e2')
+      expect(characterEntries.map(e => e.id)).toContain('e1')
+      expect(characterEntries.map(e => e.id)).toContain('e2')
     })
 
     it('没有条目的类型应返回空数组', () => {

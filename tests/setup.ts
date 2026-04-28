@@ -15,7 +15,7 @@ global.matchMedia =
       removeListener: vi.fn(),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
+      dispatchEvent: vi.fn()
     }
   }
 
@@ -38,7 +38,7 @@ Object.defineProperty(window, 'getComputedStyle', {
     return {
       getPropertyValue: function () {
         return ''
-      },
+      }
     }
-  },
+  }
 })

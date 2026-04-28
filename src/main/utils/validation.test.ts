@@ -212,6 +212,7 @@ describe('ParamValidator', () => {
 
   it('should support custom validation', () => {
     const validator = validateParams().custom(() => {
+      // eslint-disable-next-line no-constant-condition
       if (5 > 3) throw new Error('Custom check failed')
     })
 

@@ -67,7 +67,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
         await openProject(path)
         message.success('项目已打开')
         onSuccess?.()
-      } catch (error) {
+      } catch (_error) {
         // 错误已在 hook 中处理，这里仅显示提示
       } finally {
         setLoading(false)
@@ -84,7 +84,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
       try {
         await removeRecentProject(path)
         message.success('已从列表中移除')
-      } catch (error) {
+      } catch (_error) {
         message.error('移除失败')
       }
     },

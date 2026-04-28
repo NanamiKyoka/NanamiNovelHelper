@@ -233,7 +233,7 @@ function TimelinePreview({
       try {
         await openFile(path, title)
         exitFullscreen()
-      } catch (error) {
+      } catch (_error) {
         message.error('无法打开章节文件')
       }
     },

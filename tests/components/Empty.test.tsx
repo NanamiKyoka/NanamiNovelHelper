@@ -6,7 +6,7 @@ import { Empty, ListEmpty, SearchEmpty, FolderEmpty } from '@renderer/components
 function findButtonByText(text: string): HTMLElement | undefined {
   return screen
     .getAllByRole('button')
-    .find((b) => b.textContent?.replace(/\s+/g, '').includes(text.replace(/\s+/g, '')))
+    .find(b => b.textContent?.replace(/\s+/g, '').includes(text.replace(/\s+/g, '')))
 }
 
 describe('Empty', () => {

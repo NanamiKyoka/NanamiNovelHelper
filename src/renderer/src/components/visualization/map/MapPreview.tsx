@@ -39,7 +39,7 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
       if (filePath) {
         message.success(`已导出到: ${filePath}`)
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('导出失败')
     } finally {
       setIsExporting(false)

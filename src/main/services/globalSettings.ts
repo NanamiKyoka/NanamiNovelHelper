@@ -16,7 +16,6 @@ import {
   BadgeVisibility,
   BadgeType,
   SidebarBadgeVisibility,
-  DEFAULT_GLOBAL_LAYOUT_SETTINGS,
   DEFAULT_BADGE_ORDER,
   DEFAULT_SIDEBAR_BADGE_ORDER
 } from '../types/settings'

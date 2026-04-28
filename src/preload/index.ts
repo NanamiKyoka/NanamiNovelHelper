@@ -1710,7 +1710,7 @@ if (process.contextIsolated) {
     console.error('Failed to expose electron API:', error)
   }
 } else {
-  // @ts-ignore (define in dts)
+  // @ts-expect-error (define in dts)
   window.electron = {
     ...electronAPI,
     ...api

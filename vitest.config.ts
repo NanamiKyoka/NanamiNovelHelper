@@ -7,7 +7,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+    ],
     exclude: ['node_modules', 'out', 'reference'],
     setupFiles: ['./tests/setup.ts'],
     coverage: {
@@ -26,22 +29,16 @@ export default defineConfig({
         'src/shared/errors.ts',
         'src/shared/logger.ts',
         'src/main/utils/validation.ts',
-        'src/shared/constants/relationTypes.ts',
+        'src/shared/constants/relationTypes.ts'
       ],
-      exclude: [
-        'node_modules/',
-        'out/',
-        'reference/',
-        '**/*.d.ts',
-        '**/*.config.*',
-      ],
+      exclude: ['node_modules/', 'out/', 'reference/', '**/*.d.ts', '**/*.config.*'],
       thresholds: {
         lines: 50,
         functions: 50,
         branches: 40,
-        statements: 50,
-      },
-    },
+        statements: 50
+      }
+    }
   },
   resolve: {
     alias: {
@@ -53,7 +50,7 @@ export default defineConfig({
       '@utils': resolve('src/renderer/src/utils'),
       '@types': resolve('src/renderer/src/types'),
       '@shared': resolve('src/shared'),
-      '@constants': resolve('src/renderer/src/constants'),
-    },
-  },
+      '@constants': resolve('src/renderer/src/constants')
+    }
+  }
 })

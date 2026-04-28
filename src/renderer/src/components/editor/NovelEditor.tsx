@@ -126,7 +126,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     highlightEnabled: config?.scope.enabled ?? true,
     hoverCardConfig,
     onVocabularyClick: entryId => {
-      console.log('Clicked vocabulary:', entryId)
+      console.warn('Clicked vocabulary:', entryId)
     },
     onVocabularyHover: (entryId, event) => {
       hoverCard.handleHover(entryId, event)

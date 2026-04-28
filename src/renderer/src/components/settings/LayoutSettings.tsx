@@ -40,7 +40,7 @@ function FileDisplaySettings(): JSX.Element {
       setNewHiddenItem('')
       refreshTree()
       message.success('已添加到隐藏列表')
-    } catch (error) {
+    } catch (_error) {
       message.error('保存设置失败')
     }
   }
@@ -51,7 +51,7 @@ function FileDisplaySettings(): JSX.Element {
       await window.electron.settings.project.setHiddenItems(newItems)
       setHiddenItems(newItems)
       refreshTree()
-    } catch (error) {
+    } catch (_error) {
       message.error('保存设置失败')
     }
   }

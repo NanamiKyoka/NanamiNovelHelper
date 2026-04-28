@@ -350,10 +350,6 @@ class GitService {
         if (stage === 2) {
           staged = true
         }
-      } else if (head === 1 && workdir === 0 && stage === 2) {
-        status = 'deleted'
-        short = 'D'
-        staged = true
       }
 
       if (status !== 'unmodified') {
@@ -840,7 +836,7 @@ class GitService {
       const parentOid = commit.commit.parent[0]
 
       if (parentOid) {
-        const diffs = await git.walk({
+        await git.walk({
           fs,
           dir: repoPath,
           trees: [git.TREE({ ref: parentOid }), git.TREE({ ref: commitHash })],

@@ -49,7 +49,7 @@ export function hexRound(hex: HexPoint): HexPoint {
   const s = -hex.q - hex.r
   let rq = Math.round(hex.q)
   let rr = Math.round(hex.r)
-  let rs = Math.round(s)
+  const rs = Math.round(s)
 
   const qDiff = Math.abs(rq - hex.q)
   const rDiff = Math.abs(rr - hex.r)
