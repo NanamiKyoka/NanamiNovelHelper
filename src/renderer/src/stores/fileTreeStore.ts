@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { Sequencer, Throttler } from '@shared/async'
 import type {
   FileNodeData,
   FlattenedNode,
@@ -239,8 +238,8 @@ function debouncedSaveExpandedFolders(expandedKeys: Set<string>) {
 }
 
 export const useFileTreeStore = create<FileTreeState>((set, get) => {
-  const refreshSequencer = new Sequencer()
-  const refreshThrottler = new Throttler()
+  let treeRefreshing = false
+  let needsTreeRefresh = false
 
   return {
     roots: [],
@@ -290,30 +289,31 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
     },
 
     refreshTree: async () => {
-      await refreshThrottler.queue(async () => {
-        await refreshSequencer.queue(async () => {
+      if (treeRefreshing) {
+        needsTreeRefresh = true
+        return
+      }
+      treeRefreshing = true
+      try {
+        do {
+          needsTreeRefresh = false
           const { sortOptions } = get()
-          try {
-            const showHiddenFiles = await window.electron.settings.global.getShowHiddenFiles()
-            const hiddenItems = await window.electron.settings.project.getHiddenItems()
-            const tree = await window.electron.file.getTree(
-              showHiddenFiles,
-              sortOptions,
-              hiddenItems
-            )
-
-            set(state => ({
-              roots: tree,
-              loading: false,
-              error: null,
-              expandedKeys: state.expandedKeys
-            }))
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : '刷新文件树失败'
-            set({ loading: false, error: errorMessage })
-          }
-        })
-      })
+          const showHiddenFiles = await window.electron.settings.global.getShowHiddenFiles()
+          const hiddenItems = await window.electron.settings.project.getHiddenItems()
+          const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+          set(state => ({
+            roots: tree,
+            loading: false,
+            error: null,
+            expandedKeys: state.expandedKeys
+          }))
+        } while (needsTreeRefresh)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '刷新文件树失败'
+        set({ loading: false, error: errorMessage })
+      } finally {
+        treeRefreshing = false
+      }
     },
 
     toggleExpand: key => {

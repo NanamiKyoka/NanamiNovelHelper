@@ -85,7 +85,11 @@ export class Sequencer {
 
   queue<T>(task: () => Promise<T>): Promise<T> {
     const run = async (): Promise<T> => {
-      await this._current
+      try {
+        await this._current
+      } catch {
+        // swallow errors from previous tasks to prevent cascading failures
+      }
       return task()
     }
     this._current = run()
@@ -94,36 +98,41 @@ export class Sequencer {
 }
 
 export class Throttler {
-  private _current: Promise<unknown> | null = null
-  private _next: Promise<unknown> | null = null
+  private _activePromise: Promise<unknown> | null = null
+  private _queuedPromise: Promise<unknown> | null = null
+  private _queuedFactory: (() => Promise<unknown>) | null = null
 
   queue<T>(task: () => Promise<T>): Promise<T> {
-    if (this._current) {
-      const runNext = async (): Promise<T> => {
-        await this._current
-        return task()
-      }
-      if (!this._next) {
-        this._next = runNext()
-      }
-      return this._next as Promise<T>
-    }
+    if (this._activePromise) {
+      this._queuedFactory = task as () => Promise<unknown>
 
-    const runCurrent = async (): Promise<T> => {
-      try {
-        return await task()
-      } finally {
-        this._current = null
-        if (this._next) {
-          const next = this._next
-          this._next = null
-          this._current = next
+      if (!this._queuedPromise) {
+        const onComplete = async () => {
+          this._queuedPromise = null
+          const factory = this._queuedFactory
+          this._queuedFactory = null
+          if (factory) {
+            return this.queue(factory) as Promise<unknown>
+          }
+          return undefined
         }
+
+        this._queuedPromise = new Promise<unknown>(resolve => {
+          this._activePromise!.then(
+            () => onComplete().then(resolve),
+            () => onComplete().then(resolve)
+          )
+        })
       }
+
+      return this._queuedPromise as Promise<T>
     }
 
-    this._current = runCurrent()
-    return this._current as Promise<T>
+    this._activePromise = task()
+
+    return (this._activePromise as Promise<T>).finally(() => {
+      this._activePromise = null
+    })
   }
 }
 
