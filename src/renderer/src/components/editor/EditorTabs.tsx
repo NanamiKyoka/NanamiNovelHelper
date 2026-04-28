@@ -6,11 +6,36 @@ import { useRef, useCallback, useState } from 'react'
 import { Dropdown, MenuProps, message } from 'antd'
 import { CloseOutlined, CloseCircleFilled, ExportOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
+import { useFileTreeStore } from '@stores/fileTreeStore'
 import type { EditorTab } from '@types/editor'
 import styles from './EditorTabs.module.css'
 
+function getGitTabColor(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  const isStaged = status.startsWith('S')
+  const code = isStaged ? status.slice(1) : status
+  switch (code) {
+    case 'M':
+      return isStaged ? 'var(--git-color-stageModified)' : 'var(--git-color-modified)'
+    case 'A':
+      return 'var(--git-color-added)'
+    case 'D':
+      return isStaged ? 'var(--git-color-stageDeleted)' : 'var(--git-color-deleted)'
+    case 'R':
+      return 'var(--git-color-renamed)'
+    case 'C':
+      return 'var(--git-color-added)'
+    case '?':
+      return 'var(--git-color-untracked)'
+    case '!':
+      return 'var(--git-color-ignored)'
+    default:
+      return undefined
+  }
+}
+
 function stripHtmlTags(html: string): string {
-  let text = html
+  const text = html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/div>/gi, '\n')
@@ -49,6 +74,8 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
     moveTab,
     getCurrentContent
   } = useEditorStore()
+
+  const gitStatus = useFileTreeStore(state => state.gitStatus)
 
   const dragIndexRef = useRef<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
@@ -245,7 +272,12 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
               </span>
 
               {/* 文件名 */}
-              <span className={styles.tabName}>{tab.name}</span>
+              <span
+                className={styles.tabName}
+                style={{ color: getGitTabColor(gitStatus.get(tab.path)) }}
+              >
+                {tab.name}
+              </span>
 
               {/* 修改指示器 */}
               {tab.isDirty && <span className={styles.dirtyIndicator}>●</span>}

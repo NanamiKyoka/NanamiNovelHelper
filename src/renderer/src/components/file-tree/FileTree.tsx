@@ -27,6 +27,7 @@ import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
 import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
+import { useGitStore } from '@stores/gitStore'
 import type { SortMode } from '@types/fileTree'
 import styles from './FileTree.module.css'
 
@@ -36,7 +37,7 @@ import { Typography } from 'antd'
 const SEARCH_DEBOUNCE_MS = 200
 
 function stripHtmlTags(html: string): string {
-  let text = html
+  const text = html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
     .replace(/<\/div>/gi, '\n')
@@ -94,6 +95,7 @@ interface TreeNodeProps {
   isSelected: boolean
   isEditing: boolean
   editingName: string
+  gitStatus: string | undefined
   onToggleExpand: () => void
   onSelect: (e: React.MouseEvent) => void
   onDoubleClick: () => void
@@ -104,6 +106,30 @@ interface TreeNodeProps {
   getContextMenu: () => MenuProps['items']
 }
 
+function getGitStatusColor(status: string | undefined): string | undefined {
+  if (!status) return undefined
+  const isStaged = status.startsWith('S')
+  const code = isStaged ? status.slice(1) : status
+  switch (code) {
+    case 'M':
+      return isStaged ? 'var(--git-color-stageModified)' : 'var(--git-color-modified)'
+    case 'A':
+      return 'var(--git-color-added)'
+    case 'D':
+      return isStaged ? 'var(--git-color-stageDeleted)' : 'var(--git-color-deleted)'
+    case 'R':
+      return 'var(--git-color-renamed)'
+    case 'C':
+      return 'var(--git-color-added)'
+    case '?':
+      return 'var(--git-color-untracked)'
+    case '!':
+      return 'var(--git-color-ignored)'
+    default:
+      return undefined
+  }
+}
+
 const TreeNode = memo(function TreeNode({
   node,
   depth,
@@ -111,6 +137,7 @@ const TreeNode = memo(function TreeNode({
   isSelected,
   isEditing,
   editingName,
+  gitStatus,
   onToggleExpand,
   onSelect,
   onDoubleClick,
@@ -126,11 +153,15 @@ const TreeNode = memo(function TreeNode({
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
-      inputRef.current.select()
-      // 开始新的编辑时重置取消标志
+      const dotIndex = node.name.lastIndexOf('.')
+      if (dotIndex > 0 && !node.isDirectory) {
+        inputRef.current.setSelectionRange(0, dotIndex)
+      } else {
+        inputRef.current.select()
+      }
       isCanceling.current = false
     }
-  }, [isEditing])
+  }, [isEditing, node.name, node.isDirectory])
 
   return (
     <Dropdown menu={{ items: getContextMenu() }} trigger={['contextMenu']}>
@@ -166,31 +197,30 @@ const TreeNode = memo(function TreeNode({
             value={editingName}
             onChange={e => onRenameChange(e.target.value)}
             onBlur={() => {
-              // 如果是 Escape 取消触发的 blur，不执行 finish
               if (isCanceling.current) {
                 return
               }
               onRenameFinish()
             }}
             onKeyDown={e => {
-              // Ctrl+Space 用于切换输入法，不阻止事件传播
               if (e.key === ' ' && (e.ctrlKey || e.metaKey)) {
-                return // 让事件正常冒泡，输入法可以捕获
+                return
               }
 
-              // 只对需要处理的按键阻止冒泡
               if (e.key === 'Enter') {
                 e.stopPropagation()
                 onRenameFinish()
               } else if (e.key === 'Escape') {
                 e.stopPropagation()
-                isCanceling.current = true // 标记正在取消，防止 blur 触发 finish
+                isCanceling.current = true
                 onRenameCancel()
               }
             }}
           />
         ) : (
-          <span className={styles.name}>{node.name}</span>
+          <span className={styles.name} style={{ color: getGitStatusColor(gitStatus) }}>
+            {node.name}
+          </span>
         )}
       </div>
     </Dropdown>
@@ -221,9 +251,18 @@ const NewItem = memo(function NewItem({
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
-      inputRef.current.select()
+      if (type === 'file') {
+        const dotIndex = name.lastIndexOf('.')
+        if (dotIndex > 0) {
+          inputRef.current.setSelectionRange(0, dotIndex)
+        } else {
+          inputRef.current.select()
+        }
+      } else {
+        inputRef.current.select()
+      }
     }
-  }, [])
+  }, [type, name])
 
   return (
     <div className={styles.treeNode} style={{ paddingLeft: depth * 16 + 8 }}>
@@ -296,6 +335,7 @@ function FileTree(): JSX.Element {
     filteredKeys,
     sortMode,
     sortOptions,
+    gitStatus,
     loadTree,
     refreshTree,
     toggleExpand,
@@ -666,6 +706,31 @@ function FileTree(): JSX.Element {
         )
       }
 
+      // 检查是否有 git 变更，添加打开差异选项
+      const nodeGitStatus = gitStatus.get(node.path)
+      if (!node.isDirectory && nodeGitStatus) {
+        const code = nodeGitStatus.startsWith('S') ? nodeGitStatus.slice(1) : nodeGitStatus
+        if (code !== '!' && code !== '?') {
+          items.push(
+            { type: 'divider' },
+            {
+              key: 'openDiff',
+              icon: <span>📊</span>,
+              label: '打开差异',
+              onClick: async () => {
+                const isStaged = nodeGitStatus.startsWith('S')
+                const diff = await useGitStore.getState().getDiff(node.path, isStaged)
+                if (diff) {
+                  useEditorStore.getState().openDiff(node.path, node.name, diff)
+                } else {
+                  message.warning('无法获取差异')
+                }
+              }
+            }
+          )
+        }
+      }
+
       items.push(
         { type: 'divider' },
         {
@@ -688,7 +753,8 @@ function FileTree(): JSX.Element {
       handlePaste,
       confirmDelete,
       message,
-      handleExportNovel
+      handleExportNovel,
+      gitStatus
     ]
   )
 
@@ -952,6 +1018,7 @@ function FileTree(): JSX.Element {
                       isSelected={isSelected}
                       isEditing={isEditing}
                       editingName={editingName}
+                      gitStatus={gitStatus.get(node.path)}
                       onToggleExpand={() => toggleExpand(node.key)}
                       onSelect={e => {
                         e.stopPropagation()

@@ -291,6 +291,17 @@ export const useGitStore = create<GitState>((set, get) => {
     await Promise.allSettled(tasks)
   }
 
+  const syncGitStatusToFileTree = (repository: GitRepositoryStatus) => {
+    const changes: { path: string; statusShort: string; staged: boolean }[] = []
+    for (const change of repository.changes) {
+      changes.push({ path: change.path, statusShort: change.statusShort, staged: change.staged })
+    }
+    for (const change of repository.stagedChanges) {
+      changes.push({ path: change.path, statusShort: change.statusShort, staged: change.staged })
+    }
+    useFileTreeStore.getState().updateGitStatus(changes)
+  }
+
   return {
     initialized: false,
     isRepo: false,
@@ -320,6 +331,7 @@ export const useGitStore = create<GitState>((set, get) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) {
         set({ initialized: true, isRepo: false, repository: null })
+        useFileTreeStore.getState().updateGitStatus([])
         return
       }
 
@@ -335,6 +347,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
         if (!isRepo) {
           set({ initialized: true, isRepo: false, repository: null, loading: false })
+          useFileTreeStore.getState().updateGitStatus([])
           return
         }
 
@@ -347,6 +360,7 @@ export const useGitStore = create<GitState>((set, get) => {
             currentBranch: statusResult.data.branch,
             loading: false
           })
+          syncGitStatusToFileTree(statusResult.data)
         } else {
           set({
             initialized: true,
@@ -375,6 +389,7 @@ export const useGitStore = create<GitState>((set, get) => {
               currentBranch: statusResult.data.branch,
               loading: false
             })
+            syncGitStatusToFileTree(statusResult.data)
           } else {
             set({ error: statusResult.error || '刷新状态失败', loading: false })
           }

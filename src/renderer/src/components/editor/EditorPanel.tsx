@@ -8,6 +8,7 @@ import { Empty, message, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
 import { NovelEditor } from './NovelEditor'
 import { MarkdownEditor } from './MarkdownEditor'
+import DiffViewer from '@components/git/DiffViewer'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './EditorPanel.module.css'
 
@@ -54,6 +55,7 @@ export function EditorPanel() {
   }
 
   const isMarkdown = activeTab?.type === 'markdown'
+  const isDiff = activeTab?.type === 'diff'
 
   return (
     <div className={styles.panel}>
@@ -66,7 +68,16 @@ export function EditorPanel() {
           </div>
         ) : (
           <div className={styles.editorWrapper}>
-            {isMarkdown ? (
+            {isDiff && activeTab?.diffData ? (
+              <DiffViewer
+                diff={activeTab.diffData}
+                onClose={() => {
+                  if (activeTabId) {
+                    useEditorStore.getState().closeTab(activeTabId)
+                  }
+                }}
+              />
+            ) : isMarkdown ? (
               <MarkdownEditor onChange={handleChange} onSave={handleSave} readonly={false} />
             ) : (
               <NovelEditor onChange={handleChange} onSave={handleSave} readonly={false} />

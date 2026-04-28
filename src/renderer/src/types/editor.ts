@@ -13,11 +13,13 @@ export interface EditorTab {
   /** 文件名 */
   name: string
   /** 文件类型 */
-  type: 'novel' | 'text' | 'markdown' | 'other'
+  type: 'novel' | 'text' | 'markdown' | 'other' | 'diff'
   /** 是否已修改 */
   isDirty: boolean
   /** 最后激活时间 */
   lastActiveAt: number
+  /** Diff 数据（仅 type='diff' 时存在） */
+  diffData?: import('@shared/git').GitFileDiff
 }
 
 /**

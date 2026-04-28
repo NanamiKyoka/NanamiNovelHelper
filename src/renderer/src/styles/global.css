@@ -143,6 +143,17 @@ body.light {
   --color-info: #1890ff;
   --color-info-bg: #e6f7ff;
 
+  /* ========== Git 状态色 ========== */
+  --git-color-added: #587c0c;
+  --git-color-modified: #895503;
+  --git-color-deleted: #ad0707;
+  --git-color-renamed: #007100;
+  --git-color-untracked: #007100;
+  --git-color-ignored: #8e8e90;
+  --git-color-stageModified: #895503;
+  --git-color-stageDeleted: #ad0707;
+  --git-color-conflict: #ad0707;
+
   /* ========== 主题特定色 ========== */
   --activitybar-bg: #f3f3f3;
   --activitybar-border: #e5e5e5;
@@ -246,6 +257,17 @@ body.dark {
   --color-error-bg: #2c1618;
   --color-info: #177ddc;
   --color-info-bg: #111d2c;
+
+  /* ========== Git 状态色 ========== */
+  --git-color-added: #81b88b;
+  --git-color-modified: #e2c08d;
+  --git-color-deleted: #c74e39;
+  --git-color-renamed: #73c991;
+  --git-color-untracked: #73c991;
+  --git-color-ignored: #8c8c8c;
+  --git-color-stageModified: #e2c08d;
+  --git-color-stageDeleted: #c74e39;
+  --git-color-conflict: #e4676b;
 
   /* ========== 主题特定色 ========== */
   --activitybar-bg: #333333;

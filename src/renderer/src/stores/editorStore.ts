@@ -202,6 +202,7 @@ interface EditorState {
   hasUnsavedChanges: () => boolean
   getTabByPath: (path: string) => EditorTab | null
   isPreviewTab: (tabId: string) => boolean
+  openDiff: (path: string, name: string, diffData: import('@shared/git').GitFileDiff) => void
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -537,6 +538,31 @@ export const useEditorStore = create<EditorState>()(
         isPreviewTab: (tabId: string) => {
           const state = get()
           return state.previewTabId === tabId
+        },
+
+        openDiff: (path: string, name: string, diffData) => {
+          const state = get()
+          const diffTabId = `diff:${path}`
+          const existingTab = state.tabs.find(tab => tab.id === diffTabId)
+          if (existingTab) {
+            set({ activeTabId: existingTab.id })
+            return
+          }
+
+          const newTab: EditorTab = {
+            id: diffTabId,
+            path,
+            name: `${name} (Diff)`,
+            type: 'diff',
+            isDirty: false,
+            lastActiveAt: Date.now(),
+            diffData
+          }
+
+          set(state => ({
+            tabs: [...state.tabs, newTab],
+            activeTabId: newTab.id
+          }))
         },
 
         requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => {
