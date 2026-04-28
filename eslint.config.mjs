@@ -42,7 +42,7 @@ export default tseslint.config(
     }
   },
   {
-    ignores: ['out/', 'dist/', 'node_modules/', '*.js', '*.mjs']
+    ignores: ['out/', 'dist/', 'node_modules/', 'reference/', '*.js', '*.mjs']
   },
   eslintConfigPrettier
 )
