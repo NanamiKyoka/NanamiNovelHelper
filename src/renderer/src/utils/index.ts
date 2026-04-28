@@ -1,5 +1,5 @@
-// 工具函数统一导出
 export * from './error'
+export * from './html'
 export * from './logger'
 export * from './randomName'
 export * from './theme'

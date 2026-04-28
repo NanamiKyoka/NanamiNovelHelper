@@ -1,6 +1,7 @@
 /**
  * 差异查看器组件
  * 支持 unified（统一）和 split（左右对比）两种视图模式
+ * 支持对 .novel 等 HTML 内容文件自动剥离标签显示纯文本
  */
 
 import { useState, useMemo } from 'react'
@@ -9,9 +10,12 @@ import {
   CloseOutlined,
   CopyOutlined,
   SplitCellsOutlined,
-  AlignLeftOutlined
+  AlignLeftOutlined,
+  FileTextOutlined,
+  CodeOutlined
 } from '@ant-design/icons'
-import type { GitFileDiff, GitDiffLine, GitDiffHunk } from '@shared/git'
+import type { GitFileDiff, GitDiffHunk } from '@shared/git'
+import { stripHtmlTagsInline, isHtmlContent, isNovelFile } from '@utils/html'
 import styles from './GitPanel.module.css'
 
 interface DiffViewerProps {
@@ -24,8 +28,25 @@ type DiffViewMode = 'unified' | 'split'
 function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
   const [viewMode, setViewMode] = useState<DiffViewMode>('unified')
 
+  const shouldDetectHtml =
+    isNovelFile(diff.path) ||
+    diff.hunks.some(hunk => hunk.lines.some(line => isHtmlContent(line.content)))
+  const [plainText, setPlainText] = useState(shouldDetectHtml)
+
+  const processedHunks = useMemo(() => {
+    if (!plainText) return diff.hunks
+    return diff.hunks.map(hunk => ({
+      ...hunk,
+      lines: hunk.lines.map(line => ({
+        ...line,
+        content: stripHtmlTagsInline(line.content)
+      }))
+    }))
+  }, [diff.hunks, plainText])
+
   const handleCopy = () => {
-    const content = diff.hunks
+    const hunksToCopy = plainText ? processedHunks : diff.hunks
+    const content = hunksToCopy
       .map(hunk => {
         const lines = hunk.lines
           .map(line => {
@@ -99,6 +120,16 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
             {' / '}
             <span style={{ color: 'var(--color-error)' }}>-{diff.deletions}</span>
           </span>
+          {shouldDetectHtml && (
+            <Tooltip title={plainText ? '显示原始内容' : '显示纯文本'}>
+              <Button
+                size="small"
+                type={plainText ? 'primary' : 'text'}
+                icon={plainText ? <FileTextOutlined /> : <CodeOutlined />}
+                onClick={() => setPlainText(!plainText)}
+              />
+            </Tooltip>
+          )}
           <Segmented
             size="small"
             value={viewMode}
@@ -126,9 +157,9 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
       </div>
       <div className={styles.diffContent}>
         {viewMode === 'unified' ? (
-          <UnifiedDiffView hunks={diff.hunks} />
+          <UnifiedDiffView hunks={processedHunks} />
         ) : (
-          <SplitDiffView hunks={diff.hunks} />
+          <SplitDiffView hunks={processedHunks} />
         )}
       </div>
     </div>

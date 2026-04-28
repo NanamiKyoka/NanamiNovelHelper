@@ -7,6 +7,7 @@ import { Dropdown, MenuProps, message } from 'antd'
 import { CloseOutlined, CloseCircleFilled, ExportOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
+import { stripHtmlTags } from '@utils/html'
 import type { EditorTab } from '@types/editor'
 import styles from './EditorTabs.module.css'
 
@@ -32,30 +33,6 @@ function getGitTabColor(status: string | undefined): string | undefined {
     default:
       return undefined
   }
-}
-
-function stripHtmlTags(html: string): string {
-  const text = html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/li>/gi, '\n')
-    .replace(/<li[^>]*>/gi, '• ')
-    .replace(/<h[1-6][^>]*>/gi, '\n')
-    .replace(/<\/h[1-6]>/gi, '\n')
-    .replace(/<blockquote[^>]*>/gi, '\n')
-    .replace(/<\/blockquote>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/^\s+|\s+$/g, '')
-
-  return text
 }
 
 interface EditorTabsProps {
