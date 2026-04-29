@@ -15,6 +15,10 @@ import type { MenuProps } from 'antd'
 import { useTerminalStore } from '@stores/terminalStore'
 import { useProjectStore } from '@stores/projectStore'
 import { TerminalInstance } from '@components/terminal/TerminalInstance'
+
+interface TerminalContainerElement extends HTMLDivElement {
+  fitTerminal?: () => void
+}
 import styles from './TerminalWindowApp.module.css'
 
 export function TerminalWindowApp() {
@@ -43,8 +47,8 @@ export function TerminalWindowApp() {
     const observer = new ResizeObserver(() => {
       terminals.forEach(t => {
         const container = terminalContainerRefs.current.get(t.id)
-        if (container && (container as any).fitTerminal) {
-          ;(container as any).fitTerminal()
+        if (container && (container as TerminalContainerElement).fitTerminal) {
+          ;(container as TerminalContainerElement).fitTerminal()
         }
       })
     })
@@ -61,8 +65,8 @@ export function TerminalWindowApp() {
     setActiveTerminal(id)
     setTimeout(() => {
       const container = terminalContainerRefs.current.get(id)
-      if (container && (container as any).fitTerminal) {
-        ;(container as any).fitTerminal()
+      if (container && (container as TerminalContainerElement).fitTerminal) {
+        ;(container as TerminalContainerElement).fitTerminal()
       }
     }, 100)
   }

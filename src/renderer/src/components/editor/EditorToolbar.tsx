@@ -226,6 +226,20 @@ export function EditorToolbar({
     [editor, aiPreviewContent]
   )
 
+  // 一键排版
+  const formatDocument = useCallback(() => {
+    if (!editor) return
+
+    const content = editor.getHTML()
+    let formatted = content
+
+    formatted = formatted.replace(/(<p><\/p>\s*){3,}/g, '<p></p><p></p>')
+    formatted = formatted.replace(/<p>\s+<\/p>/g, '<p></p>')
+    formatted = formatted.replace(/<p>(&nbsp;|\s)+/g, '<p>')
+
+    editor.commands.setContent(formatted, false)
+  }, [editor])
+
   // 执行编辑器命令
   const execCommand = useCallback(
     (command: string, ...args: unknown[]) => {
@@ -311,22 +325,8 @@ export function EditorToolbar({
           break
       }
     },
-    [editor]
+    [editor, formatDocument]
   )
-
-  // 一键排版
-  const formatDocument = useCallback(() => {
-    if (!editor) return
-
-    const content = editor.getHTML()
-    let formatted = content
-
-    formatted = formatted.replace(/(<p><\/p>\s*){3,}/g, '<p></p><p></p>')
-    formatted = formatted.replace(/<p>\s+<\/p>/g, '<p></p>')
-    formatted = formatted.replace(/<p>(&nbsp;|\s)+/g, '<p>')
-
-    editor.commands.setContent(formatted, false)
-  }, [editor])
 
   const [imageLoading, setImageLoading] = useState(false)
 

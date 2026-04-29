@@ -4,6 +4,7 @@
  */
 
 import { Mark, mergeAttributes } from '@tiptap/core'
+import type { Editor } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
@@ -47,7 +48,7 @@ interface CacheEntry {
   docSize: number
 }
 
-const decorationCache = new WeakMap<any, CacheEntry>()
+const decorationCache = new WeakMap<Editor, CacheEntry>()
 
 /**
  * 分词器实例（使用 Intl.Segmenter 进行中文分词）

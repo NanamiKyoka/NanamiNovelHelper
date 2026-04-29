@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Modal, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
@@ -58,35 +58,10 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const [draggingChunkId, setDraggingChunkId] = useState<string | null>(null)
   const [dragStartHex, setDragStartHex] = useState<HexPoint | null>(null)
 
-  const chunks = currentMap?.data.chunks || []
-  const connections = currentMap?.data.connections || []
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (draggingChunkId) {
-        handleChunkDrag(e)
-      }
-    },
-    [draggingChunkId]
-  )
-
-  const handleMouseUp = useCallback(() => {
-    setDraggingChunkId(null)
-    setDragStartHex(null)
-  }, [])
-
-  const handleChunkDragStart = useCallback(
-    (chunkId: string, _e: React.MouseEvent) => {
-      if (tool !== 'select' || isPanning) return
-
-      const chunk = chunks.find(c => c.id === chunkId)
-      if (!chunk) return
-
-      setDraggingChunkId(chunkId)
-      setDragStartHex(chunk.hexPosition)
-      selectChunk(chunkId)
-    },
-    [tool, chunks, selectChunk, isPanning]
+  const chunks = useMemo(() => currentMap?.data.chunks || [], [currentMap?.data.chunks])
+  const connections = useMemo(
+    () => currentMap?.data.connections || [],
+    [currentMap?.data.connections]
   )
 
   const handleChunkDrag = useCallback(
@@ -108,7 +83,35 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
         moveChunkToHex(draggingChunkId, hexPosition)
       }
     },
-    [draggingChunkId, dragStartHex, panX, panY, zoom, moveChunkToHex, isHexOccupied]
+    [draggingChunkId, dragStartHex, panX, panY, zoom, moveChunkToHex, isHexOccupied, containerRef]
+  )
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (draggingChunkId) {
+        handleChunkDrag(e)
+      }
+    },
+    [draggingChunkId, handleChunkDrag]
+  )
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingChunkId(null)
+    setDragStartHex(null)
+  }, [])
+
+  const handleChunkDragStart = useCallback(
+    (chunkId: string, _e: React.MouseEvent) => {
+      if (tool !== 'select' || isPanning) return
+
+      const chunk = chunks.find(c => c.id === chunkId)
+      if (!chunk) return
+
+      setDraggingChunkId(chunkId)
+      setDragStartHex(chunk.hexPosition)
+      selectChunk(chunkId)
+    },
+    [tool, chunks, selectChunk, isPanning]
   )
 
   const handleConnectionClick = useCallback(

@@ -2,7 +2,7 @@
  * 备份与恢复设置组件
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Form,
   Switch,
@@ -52,13 +52,7 @@ export function BackupSettings(): JSX.Element {
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
 
-  useEffect(() => {
-    if (currentProject) {
-      loadBackups()
-    }
-  }, [currentProject])
-
-  const loadBackups = async () => {
+  const loadBackups = useCallback(async () => {
     setLoading(true)
     try {
       const list = await listBackups()
@@ -68,7 +62,13 @@ export function BackupSettings(): JSX.Element {
     } finally {
       setLoading(false)
     }
-  }
+  }, [listBackups])
+
+  useEffect(() => {
+    if (currentProject) {
+      loadBackups()
+    }
+  }, [currentProject, loadBackups])
 
   const handleCreateBackup = async () => {
     setCreating(true)

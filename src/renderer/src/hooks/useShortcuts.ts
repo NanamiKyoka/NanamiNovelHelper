@@ -161,6 +161,7 @@ export function useShortcuts(shortcuts: ShortcutConfig[], deps: React.Dependency
     return () => {
       unsubscribers.forEach(unsub => unsub())
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 }
 

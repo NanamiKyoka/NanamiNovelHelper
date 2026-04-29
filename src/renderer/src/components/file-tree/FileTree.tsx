@@ -29,8 +29,13 @@ import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
 import { useGitStore } from '@stores/gitStore'
 import { stripHtmlTags } from '@utils/html'
-import type { SortMode } from '@types/fileTree'
+import type { SortMode, FileNodeData } from '@types/fileTree'
 import styles from './FileTree.module.css'
+
+interface NewItemNode extends FileNodeData {
+  isNewItem: true
+  newItemType: 'file' | 'folder'
+}
 
 const { Text } = Typography
 import { Typography } from 'antd'
@@ -296,7 +301,7 @@ function FileTree(): JSX.Element {
 
   // 文件树 Store
   const {
-    roots,
+    roots: _roots,
     loading,
     error,
     expandedKeys,
@@ -305,11 +310,11 @@ function FileTree(): JSX.Element {
     editingKey,
     editingName,
     newItemParent,
-    newItemType,
+    newItemType: _newItemType,
     newItemName,
     clipboard,
     searchPattern,
-    filteredKeys,
+    filteredKeys: _filteredKeys,
     sortMode,
     sortOptions,
     gitStatus,
@@ -351,10 +356,7 @@ function FileTree(): JSX.Element {
   )
 
   // 扁平化的节点列表（用于虚拟滚动）
-  const flattenedNodes = useMemo(
-    () => getFlattenedNodes(),
-    [roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName]
-  )
+  const flattenedNodes = useMemo(() => getFlattenedNodes(), [getFlattenedNodes])
 
   // 虚拟滚动
   const virtualizer = useVirtualizer({
@@ -376,7 +378,7 @@ function FileTree(): JSX.Element {
     if (currentProject) {
       refreshTree()
     }
-  }, [sortMode])
+  }, [sortMode, currentProject, refreshTree])
 
   // 清理搜索定时器
   useEffect(() => {
@@ -531,7 +533,25 @@ function FileTree(): JSX.Element {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedKeys, focusedKey, editingKey, newItemParent, clipboard, flattenedNodes, expandedKeys])
+  }, [
+    selectedKeys,
+    focusedKey,
+    editingKey,
+    newItemParent,
+    clipboard,
+    flattenedNodes,
+    expandedKeys,
+    confirmDelete,
+    copyItems,
+    cutItems,
+    findNode,
+    handlePaste,
+    message,
+    select,
+    startNewItem,
+    startRename,
+    toggleExpand
+  ])
 
   // 确认删除
   const confirmDelete = useCallback(
@@ -935,7 +955,7 @@ function FileTree(): JSX.Element {
                 const { node, depth } = flattenedNodes[virtualItem.index]
 
                 // 检查是否是新建项节点
-                if ((node as any).isNewItem) {
+                if ((node as NewItemNode).isNewItem) {
                   return (
                     <div
                       key={virtualItem.key}
@@ -949,7 +969,7 @@ function FileTree(): JSX.Element {
                       }}
                     >
                       <NewItem
-                        type={(node as any).newItemType}
+                        type={(node as NewItemNode).newItemType}
                         depth={depth}
                         name={newItemName}
                         onChange={name => useFileTreeStore.setState({ newItemName: name })}

@@ -70,12 +70,14 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
 
   // 获取主题对应的背景色
   const getThemeBackgroundColor = useCallback(() => {
-    // 根据主题返回不同的背景色
     if (resolvedMode === 'light') {
       return '#f5f5f5'
     }
     return '#1e1e2e'
   }, [resolvedMode])
+
+  const getThemeBgRef = useRef(getThemeBackgroundColor)
+  getThemeBgRef.current = getThemeBackgroundColor
 
   // 初始化 PixiJS Application
   useEffect(() => {
@@ -86,7 +88,7 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
         const app = new Application()
 
         await app.init({
-          background: getThemeBackgroundColor(),
+          background: getThemeBgRef.current(),
           resizeTo: canvasRef.current!,
           antialias: true,
           resolution: window.devicePixelRatio || 1,
@@ -339,7 +341,6 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
       selectRegion,
       startConnecting,
       finishConnecting,
-      deleteRegion,
       moveRegion,
       renderRegion
     ]

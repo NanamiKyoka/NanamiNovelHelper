@@ -33,6 +33,7 @@ import {
   TeamOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
+import type { NodeData, IElementEvent } from '@antv/g6'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
@@ -236,17 +237,17 @@ function OrganizationGraphFullscreen({
             type: 'rect',
             style: {
               size: nodeSize,
-              fill: (d: any) => d.style?.fill || token.colorPrimary,
-              stroke: (d: any) => d.style?.stroke || token.colorPrimary,
+              fill: (d: NodeData) => d.style?.fill || token.colorPrimary,
+              stroke: (d: NodeData) => d.style?.stroke || token.colorPrimary,
               lineWidth: 2,
               radius: nodeRadius,
               cursor: 'pointer',
               // 卡片样式：显示名称和描述（换行）
-              labelText: (d: any) => {
+              labelText: (d: NodeData) => {
                 if (nodeStyle === 'card' && d.data?.description) {
-                  return `${d.data.label}\n${d.data.description}`
+                  return `${d.data.label as string}\n${d.data.description as string}`
                 }
-                return d.data?.label || ''
+                return (d.data?.label as string) || ''
               },
               labelFill: '#ffffff',
               labelFontSize: nodeStyle === 'card' ? 13 : 13,
@@ -287,7 +288,7 @@ function OrganizationGraphFullscreen({
         graphRef.current = graph
 
         // 事件绑定
-        graph.on('node:click', (evt: any) => {
+        graph.on('node:click', (evt: IElementEvent) => {
           setSelectedNodeId(evt.target.id)
         })
 
@@ -297,7 +298,7 @@ function OrganizationGraphFullscreen({
         })
 
         // 右键菜单事件 - 使用 G6 v5 原生事件
-        graph.on('node:contextmenu', (evt: any) => {
+        graph.on('node:contextmenu', (evt: IElementEvent) => {
           evt.preventDefault?.()
           const nodeId = evt.target.id
           setSelectedNodeId(nodeId)
@@ -312,7 +313,7 @@ function OrganizationGraphFullscreen({
           })
         })
 
-        graph.on('canvas:contextmenu', (evt: any) => {
+        graph.on('canvas:contextmenu', (evt: IElementEvent) => {
           evt.preventDefault?.()
           setSelectedNodeId(null)
           const clientX = evt.client?.x ?? evt.canvasX
@@ -338,7 +339,7 @@ function OrganizationGraphFullscreen({
           })
       }, 100)
     },
-    [nodeStyle, token.colorPrimary]
+    [nodeStyle, token.colorPrimary, message]
   )
 
   // 清理 - 完全参考关系图实现

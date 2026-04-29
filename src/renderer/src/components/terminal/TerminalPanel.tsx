@@ -12,6 +12,10 @@ import { useProjectStore } from '@stores/projectStore'
 import { TerminalInstance } from './TerminalInstance'
 import styles from './TerminalPanel.module.css'
 
+interface TerminalContainerElement extends HTMLDivElement {
+  fitTerminal?: () => void
+}
+
 interface TerminalPanelProps {
   onClose?: () => void
 }
@@ -63,8 +67,8 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
     setActiveTerminal(id)
     setTimeout(() => {
       const container = terminalContainerRefs.current.get(id)
-      if (container && (container as any).fitTerminal) {
-        ;(container as any).fitTerminal()
+      if (container && (container as TerminalContainerElement).fitTerminal) {
+        ;(container as TerminalContainerElement).fitTerminal!()
       }
     }, 100)
   }
@@ -117,8 +121,8 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
     const observer = new ResizeObserver(() => {
       terminals.forEach(t => {
         const container = terminalContainerRefs.current.get(t.id)
-        if (container && (container as any).fitTerminal) {
-          ;(container as any).fitTerminal()
+        if (container && (container as TerminalContainerElement).fitTerminal) {
+          ;(container as TerminalContainerElement).fitTerminal!()
         }
       })
     })

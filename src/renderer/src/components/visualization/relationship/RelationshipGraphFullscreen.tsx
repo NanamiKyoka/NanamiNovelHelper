@@ -34,6 +34,7 @@ import {
   ExpandOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
+import type { NodeData, EdgeData, IElementEvent } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
@@ -223,11 +224,11 @@ function RelationshipGraphFullscreen({
             type: 'circle',
             style: {
               size: 70,
-              fill: (d: any) => d.style?.fill || '#1890ff',
-              stroke: (d: any) => d.style?.stroke || '#1890ff',
+              fill: (d: NodeData) => d.style?.fill || '#1890ff',
+              stroke: (d: NodeData) => d.style?.stroke || '#1890ff',
               lineWidth: 3,
               cursor: 'pointer',
-              labelText: (d: any) => d.data?.label || '',
+              labelText: (d: NodeData) => (d.data?.label as string) || '',
               labelFill: '#ffffff',
               labelFontSize: 14,
               labelFontWeight: '500',
@@ -250,14 +251,14 @@ function RelationshipGraphFullscreen({
           edge: {
             type: 'quadratic',
             style: {
-              stroke: (d: any) => d.style?.stroke || '#999999',
-              lineWidth: (d: any) => d.style?.lineWidth || 2,
+              stroke: (d: EdgeData) => d.style?.stroke || '#999999',
+              lineWidth: (d: EdgeData) => d.style?.lineWidth || 2,
               endArrow: true,
               endArrowSize: 8,
-              endArrowFill: (d: any) => d.style?.stroke || '#999999',
-              endArrowStroke: (d: any) => d.style?.stroke || '#999999',
+              endArrowFill: (d: EdgeData) => d.style?.stroke || '#999999',
+              endArrowStroke: (d: EdgeData) => d.style?.stroke || '#999999',
               cursor: 'pointer',
-              labelText: (d: any) => d.data?.label || '',
+              labelText: (d: EdgeData) => (d.data?.label as string) || '',
               labelFill: edgeLabelColor,
               labelFontSize: 12,
               labelBackground: true,
@@ -276,12 +277,12 @@ function RelationshipGraphFullscreen({
 
         graphRef.current = graph
 
-        graph.on('node:click', (evt: any) => {
+        graph.on('node:click', (evt: IElementEvent) => {
           setSelectedNodeId(evt.target.id)
           setSelectedEdgeId(null)
         })
 
-        graph.on('edge:click', (evt: any) => {
+        graph.on('edge:click', (evt: IElementEvent) => {
           setSelectedEdgeId(evt.target.id)
           setSelectedNodeId(null)
         })
@@ -292,7 +293,7 @@ function RelationshipGraphFullscreen({
           setContextMenu(prev => ({ ...prev, visible: false }))
         })
 
-        graph.on('node:contextmenu', (evt: any) => {
+        graph.on('node:contextmenu', (evt: IElementEvent) => {
           evt.preventDefault?.()
           const nodeId = evt.target.id
           setSelectedNodeId(nodeId)
@@ -308,7 +309,7 @@ function RelationshipGraphFullscreen({
           })
         })
 
-        graph.on('edge:contextmenu', (evt: any) => {
+        graph.on('edge:contextmenu', (evt: IElementEvent) => {
           evt.preventDefault?.()
           const edgeId = evt.target.id
           setSelectedEdgeId(edgeId)
@@ -324,7 +325,7 @@ function RelationshipGraphFullscreen({
           })
         })
 
-        graph.on('canvas:contextmenu', (evt: any) => {
+        graph.on('canvas:contextmenu', (evt: IElementEvent) => {
           evt.preventDefault?.()
           setSelectedNodeId(null)
           setSelectedEdgeId(null)
@@ -341,7 +342,7 @@ function RelationshipGraphFullscreen({
           })
         })
 
-        graph.on('node:dragend', async (evt: any) => {
+        graph.on('node:dragend', async (evt: IElementEvent) => {
           const nodeId = evt.target.id
           const nodeData = graph.getNodeData(nodeId)
           if (nodeData && nodeData.style) {
@@ -411,7 +412,7 @@ function RelationshipGraphFullscreen({
 
     // 转换节点数据 - 包含位置
     const nodes = currentGraph.nodes.map((node, index) => {
-      const styleData: any = {
+      const styleData: Record<string, unknown> = {
         fill: node.color || '#1890ff',
         stroke: node.color || '#1890ff'
       }

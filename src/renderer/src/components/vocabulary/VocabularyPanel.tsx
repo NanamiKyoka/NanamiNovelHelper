@@ -194,9 +194,16 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
 
     // 嵌入模式下使用外部传入的 currentTypeId，否则使用内部状态
     const currentType = embedded ? currentTypeId || '' : internalCurrentType
-    const setCurrentType = embedded
-      ? (typeId: string) => onTypeChange?.(typeId)
-      : setInternalCurrentType
+    const setCurrentType = useCallback(
+      (typeId: string) => {
+        if (embedded) {
+          onTypeChange?.(typeId)
+        } else {
+          setInternalCurrentType(typeId)
+        }
+      },
+      [embedded, onTypeChange]
+    )
 
     // 加载数据
     useEffect(() => {
@@ -222,7 +229,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       } else {
         setCurrentType('')
       }
-    }, [types, currentType])
+    }, [types, currentType, setCurrentType])
 
     const currentTypeDefinition = types.find(t => t.id === currentType)
     const currentEntries = entries.filter(item => item.typeId === currentType)
@@ -314,17 +321,93 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     // 当前拖拽的条目
     const activeEntry = activeId ? entries.find(e => e.id === activeId) : null
 
-    const toggleStarred = async (entry: VocabularyEntry): Promise<void> => {
-      try {
-        await updateEntry(entry.id, { starred: !entry.starred })
-      } catch (error) {
-        console.error('切换收藏失败:', error)
-        message.error('操作失败')
-      }
-    }
+    const toggleStarred = useCallback(
+      async (entry: VocabularyEntry): Promise<void> => {
+        try {
+          await updateEntry(entry.id, { starred: !entry.starred })
+        } catch (error) {
+          console.error('切换收藏失败:', error)
+          message.error('操作失败')
+        }
+      },
+      [updateEntry]
+    )
 
     // 根据配置生成表格列
     const columns = useMemo(() => {
+      function getDefaultColumns() {
+        const baseColumns = [
+          {
+            title: '名称',
+            dataIndex: 'name',
+            key: 'name',
+            width: 120,
+            render: (name: string, record: VocabularyEntry) => (
+              <Space>
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: record.color
+                  }}
+                />
+                <span>{highlightText(name, searchText)}</span>
+              </Space>
+            )
+          },
+          {
+            title: '描述',
+            dataIndex: 'description',
+            key: 'description',
+            ellipsis: true,
+            render: (desc: string) => (desc ? highlightText(desc, searchText) : '-')
+          },
+          {
+            title: '别名',
+            dataIndex: 'aliases',
+            key: 'aliases',
+            width: 150,
+            render: (aliases: string[]) =>
+              aliases?.length > 0
+                ? aliases.slice(0, 3).map((a, i) => (
+                    <Tag key={i} style={{ margin: '2px' }}>
+                      {highlightText(a, searchText)}
+                    </Tag>
+                  ))
+                : '-'
+          }
+        ]
+
+        if (!readOnly) {
+          baseColumns.push({
+            title: '操作',
+            key: 'action',
+            width: 80,
+            render: (_: unknown, record: VocabularyEntry) => (
+              <Space>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
+                />
+                <Popconfirm
+                  title="确定删除此词汇？"
+                  onConfirm={() => handleDelete(record.id)}
+                  okText="删除"
+                  cancelText="取消"
+                >
+                  <Button type="text" size="small" icon={<DeleteOutlined />} danger />
+                </Popconfirm>
+              </Space>
+            )
+          } as unknown)
+        }
+
+        return baseColumns
+      }
+
       // 拖拽手柄列
       const dragHandleColumn = {
         title: '',
@@ -522,7 +605,17 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       return [dragHandleColumn, starredColumn, nameColumn, ...fieldColumns, actionColumn].filter(
         Boolean
       )
-    }, [currentTypeDefinition, readOnly, columnVisibility, searchText])
+    }, [
+      currentTypeDefinition,
+      readOnly,
+      columnVisibility,
+      searchText,
+      handleDelete,
+      handleEdit,
+      handleOpenLinkedFile,
+      highlightText,
+      toggleStarred
+    ])
 
     // 获取所有可选列
     const allFieldColumns = useMemo(() => {
@@ -543,87 +636,12 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       setColumnVisibility({})
     }
 
-    // 默认列定义
-    function getDefaultColumns() {
-      const baseColumns = [
-        {
-          title: '名称',
-          dataIndex: 'name',
-          key: 'name',
-          width: 120,
-          render: (name: string, record: VocabularyEntry) => (
-            <Space>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: record.color
-                }}
-              />
-              <span>{highlightText(name, searchText)}</span>
-            </Space>
-          )
-        },
-        {
-          title: '描述',
-          dataIndex: 'description',
-          key: 'description',
-          ellipsis: true,
-          render: (desc: string) => (desc ? highlightText(desc, searchText) : '-')
-        },
-        {
-          title: '别名',
-          dataIndex: 'aliases',
-          key: 'aliases',
-          width: 150,
-          render: (aliases: string[]) =>
-            aliases?.length > 0
-              ? aliases.slice(0, 3).map((a, i) => (
-                  <Tag key={i} style={{ margin: '2px' }}>
-                    {highlightText(a, searchText)}
-                  </Tag>
-                ))
-              : '-'
-        }
-      ]
-
-      if (!readOnly) {
-        baseColumns.push({
-          title: '操作',
-          key: 'action',
-          width: 80,
-          render: (_: unknown, record: VocabularyEntry) => (
-            <Space>
-              <Button
-                type="text"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEdit(record)}
-              />
-              <Popconfirm
-                title="确定删除此词汇？"
-                onConfirm={() => handleDelete(record.id)}
-                okText="删除"
-                cancelText="取消"
-              >
-                <Button type="text" size="small" icon={<DeleteOutlined />} danger />
-              </Popconfirm>
-            </Space>
-          )
-        } as unknown)
-      }
-
-      return baseColumns
-    }
-
     // 打开新建抽屉
-    const handleCreate = (): void => {
+    const handleCreate = useCallback((): void => {
       if (readOnly) return
       setEditingEntry(null)
       form.resetFields()
 
-      // 设置默认值
       const defaultFields: Record<string, string | string[]> = {}
       currentTypeDefinition?.fields.forEach(field => {
         if (field.defaultValue) {
@@ -644,7 +662,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         tags: []
       })
       setDrawerOpen(true)
-    }
+    }, [readOnly, form, currentTypeDefinition])
 
     useImperativeHandle(
       ref,
@@ -654,7 +672,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         focusSearch: () => searchInputRef.current?.focus(),
         isDrawerOpen: () => drawerOpen
       }),
-      [drawerOpen]
+      [drawerOpen, handleCreate]
     )
 
     // 快速创建词汇
@@ -701,20 +719,23 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }
 
     // 打开编辑抽屉
-    const handleEdit = (entry: VocabularyEntry): void => {
-      if (readOnly) return
-      setEditingEntry(entry)
-      form.setFieldsValue({
-        name: entry.name,
-        aliases: entry.aliases || [],
-        color: entry.color,
-        tags: entry.tags || [],
-        description: entry.description,
-        linkedFilePath: entry.linkedFilePath,
-        fields: entry.fields || {}
-      })
-      setDrawerOpen(true)
-    }
+    const handleEdit = useCallback(
+      (entry: VocabularyEntry): void => {
+        if (readOnly) return
+        setEditingEntry(entry)
+        form.setFieldsValue({
+          name: entry.name,
+          aliases: entry.aliases || [],
+          color: entry.color,
+          tags: entry.tags || [],
+          description: entry.description,
+          linkedFilePath: entry.linkedFilePath,
+          fields: entry.fields || {}
+        })
+        setDrawerOpen(true)
+      },
+      [readOnly, form]
+    )
 
     // 保存条目
     const handleSave = async (): Promise<void> => {
@@ -822,76 +843,78 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }
 
     // 删除条目
-    const handleDelete = async (id: string): Promise<void> => {
-      if (readOnly) return
+    const handleDelete = useCallback(
+      async (id: string): Promise<void> => {
+        if (readOnly) return
 
-      // 保存被删除的条目用于撤销
-      const entryToDelete = entries.find(e => e.id === id)
-      if (!entryToDelete) return
+        const entryToDelete = entries.find(e => e.id === id)
+        if (!entryToDelete) return
 
-      // 清除之前的撤销状态
-      if (undoMessageKey) {
-        message.destroy(undoMessageKey)
-      }
-
-      await deleteEntry(id)
-      setDeletedEntry(entryToDelete)
-
-      // 显示带撤销按钮的消息
-      const key = `delete-${id}-${Date.now()}`
-      setUndoMessageKey(key)
-
-      message.open({
-        type: 'success',
-        content: (
-          <span>
-            已删除「{entryToDelete.name}」
-            <Button
-              type="link"
-              size="small"
-              style={{ marginLeft: 8, padding: 0 }}
-              onClick={() => handleUndoDelete(key)}
-            >
-              撤销
-            </Button>
-          </span>
-        ),
-        duration: 5,
-        key,
-        onClose: () => {
-          setDeletedEntry(null)
-          setUndoMessageKey('')
+        if (undoMessageKey) {
+          message.destroy(undoMessageKey)
         }
-      })
-    }
+
+        await deleteEntry(id)
+        setDeletedEntry(entryToDelete)
+
+        const key = `delete-${id}-${Date.now()}`
+        setUndoMessageKey(key)
+
+        message.open({
+          type: 'success',
+          content: (
+            <span>
+              已删除「{entryToDelete.name}」
+              <Button
+                type="link"
+                size="small"
+                style={{ marginLeft: 8, padding: 0 }}
+                onClick={() => handleUndoDelete(key)}
+              >
+                撤销
+              </Button>
+            </span>
+          ),
+          duration: 5,
+          key,
+          onClose: () => {
+            setDeletedEntry(null)
+            setUndoMessageKey('')
+          }
+        })
+      },
+      [readOnly, entries, undoMessageKey, deleteEntry, handleUndoDelete]
+    )
 
     // 撤销删除
-    const handleUndoDelete = async (key: string): Promise<void> => {
-      if (!deletedEntry) return
+    const handleUndoDelete = useCallback(
+      async (key: string): Promise<void> => {
+        if (!deletedEntry) return
 
-      try {
-        // 重新添加被删除的条目
-        await addEntry({
-          name: deletedEntry.name,
-          aliases: deletedEntry.aliases,
-          color: deletedEntry.color,
-          typeId: deletedEntry.typeId,
-          typeName: deletedEntry.typeName,
-          fields: deletedEntry.fields,
-          tags: deletedEntry.tags,
-          description: deletedEntry.description,
-          linkedFilePath: deletedEntry.linkedFilePath
-        })
+        try {
+          await addEntry({
+            name: deletedEntry.name,
+            aliases: deletedEntry.aliases,
+            color: deletedEntry.color,
+            typeId: deletedEntry.typeId,
+            typeName: deletedEntry.typeName,
+            fields: deletedEntry.fields,
+            tags: deletedEntry.tags,
+            description: deletedEntry.description,
+            linkedFilePath: deletedEntry.linkedFilePath
+          })
 
-        message.destroy(key)
-        message.success('已撤销删除')
-        setDeletedEntry(null)
-        setUndoMessageKey('')
-      } catch (error) {
-        console.error('撤销删除失败:', error)
-        message.error('撤销失败')
-      }
-    }
+          message.destroy(key)
+          message.success('已撤销删除')
+          setDeletedEntry(null)
+          setUndoMessageKey('')
+        } catch (error) {
+          console.error('撤销删除失败:', error)
+          message.error('撤销失败')
+        }
+      },
+      [deletedEntry, addEntry]
+    )
 
     // 渲染空状态
     const renderEmptyState = (): React.ReactNode => {
@@ -1058,17 +1081,20 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }
 
     // 打开关联文件（在编辑器中打开并定位到文件树）
-    const handleOpenLinkedFile = async (filePath: string): Promise<void> => {
-      try {
-        const fileName = filePath.split(/[/\\]/).pop() || filePath
-        await expandToPath(filePath)
-        selectFile(filePath)
-        await openFile(filePath, fileName)
-      } catch (error) {
-        console.error('打开文件失败:', error)
-        message.error('打开文件失败')
-      }
-    }
+    const handleOpenLinkedFile = useCallback(
+      async (filePath: string): Promise<void> => {
+        try {
+          const fileName = filePath.split(/[/\\]/).pop() || filePath
+          await expandToPath(filePath)
+          selectFile(filePath)
+          await openFile(filePath, fileName)
+        } catch (error) {
+          console.error('打开文件失败:', error)
+          message.error('打开文件失败')
+        }
+      },
+      [expandToPath, selectFile, openFile]
+    )
 
     const tabItems = types.map(type => ({
       key: type.id,

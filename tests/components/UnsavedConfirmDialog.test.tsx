@@ -3,41 +3,43 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import React from 'react'
 
-let capturedProps: any = null
+let capturedProps: Record<string, unknown> | null = null
 
 vi.mock('antd', async importOriginal => {
   const actual = await importOriginal<typeof import('antd')>()
   return {
     ...actual,
-    Modal: (props: any) => {
+    Modal: (props: Record<string, unknown>) => {
       capturedProps = props
       return (
         <div data-testid="mock-modal">
           <div data-testid="modal-title">
-            {React.Children.toArray(props.title?.props?.children)
-              .filter((child: any) => child?.props?.children)
-              .map((child: any, i: number) => (
-                <span key={i}>{child.props.children}</span>
+            {React.Children.toArray(props.title as React.ReactNode)
+              .filter((child: React.ReactElement) => (child as React.ReactElement)?.props?.children)
+              .map((child: React.ReactElement, i: number) => (
+                <span key={i}>{(child as React.ReactElement).props.children}</span>
               ))}
           </div>
-          <span data-testid="ok-text">{props.okText}</span>
-          <span data-testid="cancel-text">{props.cancelText}</span>
-          <span data-testid="ok-type">{props.okType}</span>
+          <span data-testid="ok-text">{props.okText as string}</span>
+          <span data-testid="cancel-text">{props.cancelText as string}</span>
+          <span data-testid="ok-type">{props.okType as string}</span>
           <span data-testid="confirm-loading">{String(props.confirmLoading)}</span>
           <span data-testid="mask-closable">{String(props.maskClosable)}</span>
-          <div data-testid="modal-content">{props.children}</div>
+          <div data-testid="modal-content">{props.children as React.ReactNode}</div>
           <div data-testid="modal-footer">
-            {props.footer?.map((btn: any, i: number) => (
-              <button
-                key={i}
-                data-testid={`footer-btn-${i}`}
-                onClick={btn.props.onClick}
-                disabled={btn.props.disabled}
-                aria-label={btn.props['aria-label']}
-              >
-                {btn.props.children}
-              </button>
-            ))}
+            {((props.footer as Array<React.ReactElement>) || []).map(
+              (btn: React.ReactElement, i: number) => (
+                <button
+                  key={i}
+                  data-testid={`footer-btn-${i}`}
+                  onClick={btn.props.onClick as () => void}
+                  disabled={btn.props.disabled as boolean}
+                  aria-label={btn.props['aria-label'] as string}
+                >
+                  {btn.props.children as React.ReactNode}
+                </button>
+              )
+            )}
           </div>
         </div>
       )

@@ -70,7 +70,7 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
   const [matches, setMatches] = useState<MatchInfo[]>([])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [showReplace, setShowReplace] = useState(false)
-  const searchInputRef = useRef<any>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // 总匹配数
@@ -184,7 +184,7 @@ export function SearchReplacePanel({ editor, visible, onClose }: SearchReplacePa
   // 监听搜索文本变化
   useEffect(() => {
     onSearchInput()
-  }, [searchText])
+  }, [searchText, onSearchInput])
 
   // 面板可见性变化
   useEffect(() => {

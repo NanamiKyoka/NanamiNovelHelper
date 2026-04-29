@@ -200,47 +200,53 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
     }
   }
 
-  const handleDelete = (timeline: TimelineMeta) => {
-    setContextMenu(prev => ({ ...prev, visible: false }))
-    modal.confirm({
-      title: '确定要删除这个时间线吗？',
-      content: `将删除「${timeline.name}」，删除后无法恢复。${
-        timeline.branchInfo.type === 'main'
-          ? '\n注意：该时间线下的分支时间线不会被删除，但会失去关联。'
-          : ''
-      }`,
-      okText: '删除',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await deleteTimeline(timeline.id)
-          message.success('删除成功')
-        } catch {
-          message.error('删除失败')
+  const handleDelete = useCallback(
+    (timeline: TimelineMeta) => {
+      setContextMenu(prev => ({ ...prev, visible: false }))
+      modal.confirm({
+        title: '确定要删除这个时间线吗？',
+        content: `将删除「${timeline.name}」，删除后无法恢复。${
+          timeline.branchInfo.type === 'main'
+            ? '\n注意：该时间线下的分支时间线不会被删除，但会失去关联。'
+            : ''
+        }`,
+        okText: '删除',
+        okButtonProps: { danger: true },
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteTimeline(timeline.id)
+            message.success('删除成功')
+          } catch {
+            message.error('删除失败')
+          }
         }
-      }
-    })
-  }
+      })
+    },
+    [modal, deleteTimeline, message]
+  )
 
-  const handleExport = async (timeline: TimelineMeta, format: 'json' | 'markdown' = 'json') => {
-    try {
-      const filePath = await window.electron.timeline.showExportDialog(timeline.name, format)
-      if (filePath) {
-        const content =
-          format === 'markdown'
-            ? await exportTimelineAsMarkdown(timeline.id)
-            : await exportTimeline(timeline.id)
-        if (content) {
-          await window.electron.timeline.saveExportFile(filePath, content)
-          message.success('导出成功')
+  const handleExport = useCallback(
+    async (timeline: TimelineMeta, format: 'json' | 'markdown' = 'json') => {
+      try {
+        const filePath = await window.electron.timeline.showExportDialog(timeline.name, format)
+        if (filePath) {
+          const content =
+            format === 'markdown'
+              ? await exportTimelineAsMarkdown(timeline.id)
+              : await exportTimeline(timeline.id)
+          if (content) {
+            await window.electron.timeline.saveExportFile(filePath, content)
+            message.success('导出成功')
+          }
         }
+      } catch {
+        message.error('导出失败')
       }
-    } catch {
-      message.error('导出失败')
-    }
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [exportTimelineAsMarkdown, exportTimeline, message]
+  )
 
   const handleImport = async () => {
     try {

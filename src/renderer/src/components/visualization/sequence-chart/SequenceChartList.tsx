@@ -228,43 +228,49 @@ function SequenceChartList({
     }
   }
 
-  const handleDelete = (chart: SequenceChartMeta) => {
-    setContextMenu(prev => ({ ...prev, visible: false }))
-    modal.confirm({
-      title: '确定要删除这个事序图吗？',
-      content: `将删除「${chart.name}」，删除后无法恢复。`,
-      okText: '删除',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await deleteChart(chart.id)
-          message.success('删除成功')
-        } catch {
-          message.error('删除失败')
+  const handleDelete = useCallback(
+    (chart: SequenceChartMeta) => {
+      setContextMenu(prev => ({ ...prev, visible: false }))
+      modal.confirm({
+        title: '确定要删除这个事序图吗？',
+        content: `将删除「${chart.name}」，删除后无法恢复。`,
+        okText: '删除',
+        okButtonProps: { danger: true },
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteChart(chart.id)
+            message.success('删除成功')
+          } catch {
+            message.error('删除失败')
+          }
         }
-      }
-    })
-  }
+      })
+    },
+    [modal, deleteChart, message]
+  )
 
-  const handleExport = async (chart: SequenceChartMeta, format: 'json' | 'markdown' = 'json') => {
-    try {
-      const filePath = await window.electron.sequenceChart.showExportDialog(chart.name, format)
-      if (filePath) {
-        const content =
-          format === 'markdown'
-            ? await exportChartAsMarkdown(chart.id)
-            : await exportChart(chart.id)
-        if (content) {
-          await window.electron.sequenceChart.saveExportFile(filePath, content)
-          message.success('导出成功')
+  const handleExport = useCallback(
+    async (chart: SequenceChartMeta, format: 'json' | 'markdown' = 'json') => {
+      try {
+        const filePath = await window.electron.sequenceChart.showExportDialog(chart.name, format)
+        if (filePath) {
+          const content =
+            format === 'markdown'
+              ? await exportChartAsMarkdown(chart.id)
+              : await exportChart(chart.id)
+          if (content) {
+            await window.electron.sequenceChart.saveExportFile(filePath, content)
+            message.success('导出成功')
+          }
         }
+      } catch {
+        message.error('导出失败')
       }
-    } catch {
-      message.error('导出失败')
-    }
-    setContextMenu(prev => ({ ...prev, visible: false }))
-  }
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [exportChartAsMarkdown, exportChart, message]
+  )
 
   const handleImport = async () => {
     try {

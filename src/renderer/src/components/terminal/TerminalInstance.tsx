@@ -12,6 +12,10 @@ import { useThemeStore } from '@stores/themeStore'
 import { useTerminalStore } from '@stores/terminalStore'
 import styles from './TerminalInstance.module.css'
 
+interface TerminalContainerElement extends HTMLDivElement {
+  fitTerminal?: () => void
+}
+
 interface TerminalInstanceProps {
   id: string
   cwd?: string
@@ -30,6 +34,9 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
   // 判断是否为暗色主题
   const isDark = resolvedMode === 'dark'
 
+  const isDarkRef = useRef(isDark)
+  isDarkRef.current = isDark
+
   // 初始化终端
   useEffect(() => {
     if (!containerRef.current || isInitializedRef.current) return
@@ -42,7 +49,7 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
       fontSize: 14,
       fontFamily: 'Consolas, "Courier New", monospace',
       lineHeight: 1.2,
-      theme: isDark
+      theme: isDarkRef.current
         ? {
             background: '#1e1e1e',
             foreground: '#d4d4d4',
@@ -232,7 +239,7 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
   // 暴露 fit 方法
   useEffect(() => {
     if (containerRef.current) {
-      ;(containerRef.current as any).fitTerminal = fit
+      ;(containerRef.current as TerminalContainerElement).fitTerminal = fit
     }
   }, [fit])
 

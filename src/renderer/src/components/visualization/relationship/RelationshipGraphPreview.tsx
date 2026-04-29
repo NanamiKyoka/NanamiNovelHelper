@@ -3,7 +3,7 @@
  * 基于 AntV G6 v5 重新开发
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Button, Empty, Spin, Typography, theme, Tooltip } from 'antd'
 import {
   ZoomInOutlined,
@@ -13,6 +13,7 @@ import {
   ArrowLeftOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
+import type { NodeData, EdgeData } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { BUILTIN_RELATION_TYPES, type RelationType } from '@types/relationship'
 import styles from './RelationshipGraphPreview.module.css'
@@ -43,9 +44,13 @@ function RelationshipGraphPreview({
   const [graphReady, setGraphReady] = useState(false)
 
   // 获取所有关系类型
-  const relationTypes: RelationType[] = currentGraph?.customRelationTypes
-    ? [...BUILTIN_RELATION_TYPES, ...currentGraph.customRelationTypes]
-    : [...BUILTIN_RELATION_TYPES]
+  const relationTypes: RelationType[] = useMemo(
+    () =>
+      currentGraph?.customRelationTypes
+        ? [...BUILTIN_RELATION_TYPES, ...currentGraph.customRelationTypes]
+        : [...BUILTIN_RELATION_TYPES],
+    [currentGraph?.customRelationTypes]
+  )
 
   // 加载关系图数据
   useEffect(() => {
@@ -89,11 +94,11 @@ function RelationshipGraphPreview({
             type: 'circle',
             style: {
               size: 50,
-              fill: (d: any) => d.style?.fill || '#1890ff',
-              stroke: (d: any) => d.style?.stroke || '#1890ff',
+              fill: (d: NodeData) => d.style?.fill || '#1890ff',
+              stroke: (d: NodeData) => d.style?.stroke || '#1890ff',
               lineWidth: 2,
               cursor: 'pointer',
-              labelText: (d: any) => d.data?.label || '',
+              labelText: (d: NodeData) => (d.data?.label as string) || '',
               labelFill: '#ffffff',
               labelFontSize: 11,
               labelFontWeight: '500',
@@ -117,14 +122,14 @@ function RelationshipGraphPreview({
           edge: {
             type: 'quadratic',
             style: {
-              stroke: (d: any) => d.style?.stroke || '#999999',
-              lineWidth: (d: any) => d.style?.lineWidth || 2,
+              stroke: (d: EdgeData) => d.style?.stroke || '#999999',
+              lineWidth: (d: EdgeData) => d.style?.lineWidth || 2,
               endArrow: true,
               endArrowSize: 8,
-              endArrowFill: (d: any) => d.style?.stroke || '#999999',
-              endArrowStroke: (d: any) => d.style?.stroke || '#999999',
+              endArrowFill: (d: EdgeData) => d.style?.stroke || '#999999',
+              endArrowStroke: (d: EdgeData) => d.style?.stroke || '#999999',
               cursor: 'pointer',
-              labelText: (d: any) => d.data?.label || '',
+              labelText: (d: EdgeData) => (d.data?.label as string) || '',
               labelFill: edgeLabelColor,
               labelFontSize: 10,
               labelBackground: true,
@@ -190,7 +195,7 @@ function RelationshipGraphPreview({
 
     // 转换节点数据 - 包含位置
     const nodes = currentGraph.nodes.map((node, index) => {
-      const styleData: any = {
+      const styleData: Record<string, unknown> = {
         fill: node.color || '#1890ff',
         stroke: node.color || '#1890ff'
       }

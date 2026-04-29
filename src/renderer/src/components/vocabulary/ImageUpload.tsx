@@ -3,7 +3,7 @@
  * 支持文件选择、拖拽、粘贴上传
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { Button, message, Spin, Image } from 'antd'
 import { PictureOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ImageFieldConfig } from '@shared/vocabulary'
@@ -36,7 +36,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const finalConfig = { ...DEFAULT_CONFIG, ...config }
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config])
 
   // 加载图片预览
   useEffect(() => {

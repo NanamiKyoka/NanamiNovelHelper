@@ -19,6 +19,7 @@ import {
   ArrowLeftOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
+import type { NodeData } from '@antv/g6'
 import {
   DndContext,
   closestCenter,
@@ -298,7 +299,7 @@ function OrganizationGraphPreview({
   }, [graphId, loadGraph])
 
   // 获取所有节点和根节点
-  const allNodes = currentGraph?.nodes || []
+  const allNodes = useMemo(() => currentGraph?.nodes || [], [currentGraph?.nodes])
   const rootNodes = useMemo(() => {
     return allNodes.filter(n => !n.parentId).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   }, [allNodes])
@@ -338,16 +339,16 @@ function OrganizationGraphPreview({
             type: 'rect',
             style: {
               size: nodeSize,
-              fill: (d: any) => d.style?.fill || token.colorPrimary,
-              stroke: (d: any) => d.style?.stroke || token.colorPrimary,
+              fill: (d: NodeData) => d.style?.fill || token.colorPrimary,
+              stroke: (d: NodeData) => d.style?.stroke || token.colorPrimary,
               lineWidth: 2,
               radius: nodeRadius,
               cursor: 'default',
-              labelText: (d: any) => {
+              labelText: (d: NodeData) => {
                 if (nodeStyle === 'card' && d.data?.description) {
-                  return `${d.data.label}\n${d.data.description}`
+                  return `${d.data.label as string}\n${d.data.description as string}`
                 }
-                return d.data?.label || ''
+                return (d.data?.label as string) || ''
               },
               labelFill: '#ffffff',
               labelFontSize: nodeStyle === 'card' ? 13 : 13,

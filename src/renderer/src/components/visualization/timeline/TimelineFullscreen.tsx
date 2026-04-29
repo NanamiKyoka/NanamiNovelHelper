@@ -321,8 +321,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   }, [currentTimeline, isDarkMode, saveThumbnail])
 
   // 缩略图生成 - 延迟执行
+  const currentTimelineRef = useRef(currentTimeline)
+  currentTimelineRef.current = currentTimeline
+
   useEffect(() => {
-    if (!currentTimeline) return
+    if (!currentTimelineRef.current) return
     const timer = setTimeout(generateThumbnail, 500)
     return () => clearTimeout(timer)
   }, [currentTimeline?.nodes?.length, generateThumbnail])
@@ -443,7 +446,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   }
 
   // 批量删除
-  const handleBatchDelete = () => {
+  const handleBatchDelete = useCallback(() => {
     if (selectedNodes.length === 0) return
     modal.confirm({
       title: `确定要删除选中的 ${selectedNodes.length} 个节点吗？`,
@@ -457,7 +460,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         setIsBatchMode(false)
       }
     })
-  }
+  }, [selectedNodes, modal, batchDeleteNodes])
 
   // 拖拽开始
   // DnD 传感器
@@ -518,17 +521,17 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   }
 
   // 缩放控制
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     setZoom(prev => Math.min(prev + 0.1, 2))
-  }
+  }, [])
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     setZoom(prev => Math.max(prev - 0.1, 0.5))
-  }
+  }, [])
 
-  const handleZoomReset = () => {
+  const handleZoomReset = useCallback(() => {
     setZoom(1)
-  }
+  }, [])
 
   // 格式化时间信息
   const formatTimeInfo = (timeInfo?: TimeInfo): string => {

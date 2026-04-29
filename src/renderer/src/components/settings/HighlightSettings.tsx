@@ -73,7 +73,7 @@ export function HighlightSettings(): JSX.Element {
 
   // 自动保存表单值变化
   const handleValuesChange = useCallback(
-    (_changedValues: any, allValues: any) => {
+    (_changedValues: Record<string, unknown>, allValues: Record<string, unknown>) => {
       if (!config) return
 
       const newConfig: Partial<HighlightConfig> = {
@@ -119,7 +119,7 @@ export function HighlightSettings(): JSX.Element {
     setLoadingDirs(true)
     try {
       const tree = await window.electron.file.getTree(currentProject.path, { depth: 3 })
-      const convertToTreeData = (nodes: any[], parentPath: string = ''): TreeDataNode[] => {
+      const convertToTreeData = (nodes: FileNode[], parentPath: string = ''): TreeDataNode[] => {
         return nodes
           .filter(node => node.isDirectory)
           .map(node => {

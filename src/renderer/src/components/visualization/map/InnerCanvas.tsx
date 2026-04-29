@@ -55,7 +55,7 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
         }
       }
     },
-    [draggingElementId, moveElementToHex, zoom, panX, panY]
+    [draggingElementId, moveElementToHex, zoom, panX, panY, containerRef]
   )
 
   const handleMouseUp = useCallback(() => {

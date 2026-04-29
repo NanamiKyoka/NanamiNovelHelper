@@ -190,6 +190,11 @@ function App(): JSX.Element {
     }
   }, [currentProject])
 
+  // 切换右侧面板
+  const toggleRightPanel = useCallback((key: Exclude<RightPanelKey, null>) => {
+    setRightPanelKey(prev => (prev === key ? null : key))
+  }, [])
+
   // 全局快捷键
   const shortcuts: ShortcutConfig[] = useMemo(
     () => [
@@ -251,7 +256,7 @@ function App(): JSX.Element {
         category: '工具'
       }
     ],
-    []
+    [toggleRightPanel]
   )
 
   useShortcuts(shortcuts, [])
@@ -285,11 +290,6 @@ function App(): JSX.Element {
       }
     }
   }
-
-  // 切换右侧面板
-  const toggleRightPanel = useCallback((key: Exclude<RightPanelKey, null>) => {
-    setRightPanelKey(prev => (prev === key ? null : key))
-  }, [])
 
   // 关闭右侧面板
   const closeRightPanel = useCallback(() => {
