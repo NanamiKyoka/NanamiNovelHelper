@@ -301,7 +301,7 @@ function FileTree(): JSX.Element {
 
   // 文件树 Store
   const {
-    roots: _roots,
+    roots,
     loading,
     error,
     expandedKeys,
@@ -310,11 +310,11 @@ function FileTree(): JSX.Element {
     editingKey,
     editingName,
     newItemParent,
-    newItemType: _newItemType,
+    newItemType,
     newItemName,
     clipboard,
     searchPattern,
-    filteredKeys: _filteredKeys,
+    filteredKeys,
     sortMode,
     sortOptions,
     gitStatus,
@@ -356,7 +356,11 @@ function FileTree(): JSX.Element {
   )
 
   // 扁平化的节点列表（用于虚拟滚动）
-  const flattenedNodes = useMemo(() => getFlattenedNodes(), [getFlattenedNodes])
+  const flattenedNodes = useMemo(
+    () => getFlattenedNodes(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- roots/expandedKeys/filteredKeys/newItem* are read indirectly via getFlattenedNodes()
+    [roots, expandedKeys, filteredKeys, newItemParent, newItemType, newItemName, getFlattenedNodes]
+  )
 
   // 虚拟滚动
   const virtualizer = useVirtualizer({
