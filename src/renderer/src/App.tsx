@@ -175,7 +175,7 @@ function App(): JSX.Element {
         }
 
         if (changedPaths.length > 0 || deletedPaths.length > 0) {
-          useGitStore.getState().refresh()
+          useGitStore.getState().scheduleRefresh()
         }
         if (hasFileStructureChange) {
           useFileTreeStore.getState().refreshTree()

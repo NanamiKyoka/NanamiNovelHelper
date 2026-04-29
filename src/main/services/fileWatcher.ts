@@ -1,6 +1,6 @@
-import * as fs from 'fs'
 import * as path from 'path'
 import { BrowserWindow } from 'electron'
+import chokidar, { type FSWatcher } from 'chokidar'
 import { ServiceCore } from './service-core'
 
 export interface FileChangeEvent {
@@ -18,13 +18,8 @@ export interface BulkOperationEndEvent {
   timestamp: number
 }
 
-interface WatchOptions {
-  ignored?: string[]
-  batchDebounceMs?: number
-}
-
 class FileWatcherService extends ServiceCore {
-  private watcher: fs.FSWatcher | null = null
+  private watcher: FSWatcher | null = null
   private watchedPath: string | null = null
   private mainWindow: BrowserWindow | null = null
 
@@ -33,57 +28,43 @@ class FileWatcherService extends ServiceCore {
 
   private pendingEvents: Map<string, FileChangeEvent> = new Map()
   private batchTimer: ReturnType<typeof setTimeout> | null = null
-
-  private defaultOptions: WatchOptions = {
-    ignored: [
-      '**/node_modules/**',
-      '**/.git/objects/**',
-      '**/.git/refs/**',
-      '**/.git/logs/**',
-      '**/dist/**',
-      '**/build/**',
-      '**/.DS_Store',
-      '**/Thumbs.db'
-    ],
-    batchDebounceMs: 500
-  }
+  private batchDebounceMs = 500
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
   }
 
-  start(projectPath: string, options?: WatchOptions): boolean {
+  start(projectPath: string): boolean {
     if (this.watcher) {
       this.stop()
     }
 
-    if (!fs.existsSync(projectPath)) {
-      this.logger.error(`项目路径不存在: ${projectPath}`)
-      return false
-    }
-
     this.watchedPath = projectPath
-    const opts = { ...this.defaultOptions, ...options }
 
     try {
-      this.watcher = fs.watch(
-        projectPath,
-        {
-          recursive: true,
-          encoding: 'utf-8'
+      this.watcher = chokidar.watch(projectPath, {
+        ignored: [
+          /(^|[/\\])\../,
+          '**/node_modules/**',
+          '**/.git/objects/**',
+          '**/.git/refs/**',
+          '**/.git/logs/**',
+          '**/dist/**',
+          '**/build/**'
+        ],
+        persistent: true,
+        ignoreInitial: true,
+        awaitWriteFinish: {
+          stabilityThreshold: 100,
+          pollInterval: 50
         },
-        (eventType, filename) => {
-          if (!filename) return
+        usePolling: false,
+        depth: undefined
+      })
 
-          const filePath = path.join(projectPath, filename)
-
-          if (this.shouldIgnore(filePath, opts.ignored || [])) {
-            return
-          }
-
-          this.handleFileEvent(eventType, filePath)
-        }
-      )
+      this.watcher.on('add', filePath => this.handleFileEvent('add', filePath))
+      this.watcher.on('change', filePath => this.handleFileEvent('change', filePath))
+      this.watcher.on('unlink', filePath => this.handleFileEvent('unlink', filePath))
 
       this.watcher.on('error', error => {
         this.logger.error('文件监听错误:', error)
@@ -99,7 +80,9 @@ class FileWatcherService extends ServiceCore {
 
   stop(): void {
     if (this.watcher) {
-      this.watcher.close()
+      this.watcher.close().catch(err => {
+        this.logger.error('关闭文件监听失败:', err)
+      })
       this.watcher = null
       this.logger.info('文件监听已停止')
     }
@@ -136,50 +119,22 @@ class FileWatcherService extends ServiceCore {
     return this.paused
   }
 
-  private shouldIgnore(filePath: string, ignored: string[]): boolean {
-    const normalizedPath = filePath.replace(/\\/g, '/')
-
-    for (const pattern of ignored) {
-      const normalizedPattern = pattern.replace(/\\/g, '/')
-      if (normalizedPattern.includes('**')) {
-        const regexPattern = normalizedPattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*')
-        if (new RegExp(regexPattern).test(normalizedPath)) {
-          return true
-        }
-      } else if (normalizedPath.includes(normalizedPattern.replace('*', ''))) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  private handleFileEvent(eventType: string, filePath: string): void {
+  private handleFileEvent(type: FileChangeEvent['type'], filePath: string): void {
     if (this.paused) return
 
-    let type: FileChangeEvent['type']
+    const normalizedPath = path.normalize(filePath)
 
-    if (eventType === 'rename') {
-      if (fs.existsSync(filePath)) {
-        type = 'add'
-      } else {
-        type = 'unlink'
-      }
-    } else {
-      type = 'change'
-    }
-
-    const existing = this.pendingEvents.get(filePath)
+    const existing = this.pendingEvents.get(normalizedPath)
     if (existing) {
       if (existing.type === 'add' && type === 'unlink') {
-        this.pendingEvents.delete(filePath)
+        this.pendingEvents.delete(normalizedPath)
       } else if (existing.type === 'unlink' && type === 'add') {
         existing.type = 'change'
       } else {
         existing.type = type
       }
     } else {
-      this.pendingEvents.set(filePath, { type, path: filePath })
+      this.pendingEvents.set(normalizedPath, { type, path: normalizedPath })
     }
 
     this.scheduleBatch()
@@ -191,7 +146,7 @@ class FileWatcherService extends ServiceCore {
     this.batchTimer = setTimeout(() => {
       this.batchTimer = null
       this.flushBatch()
-    }, this.defaultOptions.batchDebounceMs)
+    }, this.batchDebounceMs)
   }
 
   private flushBatch(): void {

@@ -2,7 +2,13 @@ import { create } from 'zustand'
 import { useProjectStore } from './projectStore'
 import { useEditorStore } from './editorStore'
 import { useFileTreeStore } from './fileTreeStore'
-import { Sequencer, Throttler, CancellationTokenSource, CancellationError } from '@shared/async'
+import {
+  Sequencer,
+  Throttler,
+  CancellationTokenSource,
+  CancellationError,
+  debounce
+} from '@shared/async'
 import type {
   GitMode,
   GitFileChange,
@@ -202,6 +208,7 @@ interface GitState {
 
   init: () => Promise<void>
   refresh: () => Promise<void>
+  scheduleRefresh: () => void
   checkRepo: () => Promise<boolean>
 
   getLog: (options?: GitLogOptions) => Promise<void>
@@ -239,6 +246,10 @@ export const useGitStore = create<GitState>((set, get) => {
   const statusSequencer = new Sequencer()
   const refreshThrottler = new Throttler()
   let currentCts = new CancellationTokenSource()
+
+  const debouncedRefresh = debounce(() => {
+    get().refresh()
+  }, 1000)
 
   const runOperation = async <T>(operation: Operation, task: () => Promise<T>): Promise<T> => {
     currentCts.cancel()
@@ -399,6 +410,10 @@ export const useGitStore = create<GitState>((set, get) => {
           set({ error: String(error), loading: false })
         }
       })
+    },
+
+    scheduleRefresh: () => {
+      debouncedRefresh()
     },
 
     checkRepo: async () => {
@@ -780,6 +795,7 @@ export const useGitStore = create<GitState>((set, get) => {
         clearInterval(autoCommitTimer)
       }
       currentCts.cancel()
+      debouncedRefresh.cancel()
       set({
         initialized: false,
         isRepo: false,

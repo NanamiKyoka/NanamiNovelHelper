@@ -10,6 +10,7 @@ import { NovelEditor } from './NovelEditor'
 import { MarkdownEditor } from './MarkdownEditor'
 import DiffViewer from '@components/git/DiffViewer'
 import { useEditorStore } from '@stores/editorStore'
+import { useGitStore } from '@stores/gitStore'
 import styles from './EditorPanel.module.css'
 
 export function EditorPanel() {
@@ -26,6 +27,7 @@ export function EditorPanel() {
       await saveFileContent(activeTab.path, content)
       message.success('保存成功')
       markDirty(activeTab.id, false)
+      useGitStore.getState().refresh()
     } catch (error) {
       message.error('保存失败')
       console.error('Save error:', error)
