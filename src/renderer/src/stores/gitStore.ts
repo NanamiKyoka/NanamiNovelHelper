@@ -403,6 +403,10 @@ export const useGitStore = create<GitState>((set, get) => {
               loading: false
             })
             syncGitStatusToFileTree(statusResult.data)
+            const { selectedFile } = get()
+            if (selectedFile) {
+              get().getDiff(selectedFile.path, selectedFile.staged)
+            }
           } else {
             set({ error: statusResult.error || '刷新状态失败', loading: false })
           }
