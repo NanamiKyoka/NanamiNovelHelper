@@ -333,6 +333,115 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       [updateEntry]
     )
 
+    // 撤销删除
+    const handleUndoDelete = useCallback(
+      async (key: string): Promise<void> => {
+        if (!deletedEntry) return
+
+        try {
+          await addEntry({
+            name: deletedEntry.name,
+            aliases: deletedEntry.aliases,
+            color: deletedEntry.color,
+            typeId: deletedEntry.typeId,
+            typeName: deletedEntry.typeName,
+            fields: deletedEntry.fields,
+            tags: deletedEntry.tags,
+            description: deletedEntry.description,
+            linkedFilePath: deletedEntry.linkedFilePath
+          })
+
+          message.destroy(key)
+          message.success('已撤销删除')
+          setDeletedEntry(null)
+          setUndoMessageKey('')
+        } catch (error) {
+          console.error('撤销删除失败:', error)
+          message.error('撤销失败')
+        }
+      },
+      [deletedEntry, addEntry]
+    )
+
+    // 删除条目
+    const handleDelete = useCallback(
+      async (id: string): Promise<void> => {
+        if (readOnly) return
+
+        const entryToDelete = entries.find(e => e.id === id)
+        if (!entryToDelete) return
+
+        if (undoMessageKey) {
+          message.destroy(undoMessageKey)
+        }
+
+        await deleteEntry(id)
+        setDeletedEntry(entryToDelete)
+
+        const key = `delete-${id}-${Date.now()}`
+        setUndoMessageKey(key)
+
+        message.open({
+          type: 'success',
+          content: (
+            <span>
+              已删除「{entryToDelete.name}」
+              <Button
+                type="link"
+                size="small"
+                style={{ marginLeft: 8, padding: 0 }}
+                onClick={() => handleUndoDelete(key)}
+              >
+                撤销
+              </Button>
+            </span>
+          ),
+          duration: 5,
+          key,
+          onClose: () => {
+            setDeletedEntry(null)
+            setUndoMessageKey('')
+          }
+        })
+      },
+      [readOnly, entries, undoMessageKey, deleteEntry, handleUndoDelete]
+    )
+
+    // 打开编辑抽屉
+    const handleEdit = useCallback(
+      (entry: VocabularyEntry): void => {
+        if (readOnly) return
+        setEditingEntry(entry)
+        form.setFieldsValue({
+          name: entry.name,
+          aliases: entry.aliases || [],
+          color: entry.color,
+          tags: entry.tags || [],
+          description: entry.description,
+          linkedFilePath: entry.linkedFilePath,
+          fields: entry.fields || {}
+        })
+        setDrawerOpen(true)
+      },
+      [readOnly, form]
+    )
+
+    // 打开关联文件（在编辑器中打开并定位到文件树）
+    const handleOpenLinkedFile = useCallback(
+      async (filePath: string): Promise<void> => {
+        try {
+          const fileName = filePath.split(/[/\\]/).pop() || filePath
+          await expandToPath(filePath)
+          selectFile(filePath)
+          await openFile(filePath, fileName)
+        } catch (error) {
+          console.error('打开文件失败:', error)
+          message.error('打开文件失败')
+        }
+      },
+      [expandToPath, selectFile, openFile]
+    )
+
     // 根据配置生成表格列
     const columns = useMemo(() => {
       function getDefaultColumns() {
@@ -718,25 +827,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       }
     }
 
-    // 打开编辑抽屉
-    const handleEdit = useCallback(
-      (entry: VocabularyEntry): void => {
-        if (readOnly) return
-        setEditingEntry(entry)
-        form.setFieldsValue({
-          name: entry.name,
-          aliases: entry.aliases || [],
-          color: entry.color,
-          tags: entry.tags || [],
-          description: entry.description,
-          linkedFilePath: entry.linkedFilePath,
-          fields: entry.fields || {}
-        })
-        setDrawerOpen(true)
-      },
-      [readOnly, form]
-    )
-
     // 保存条目
     const handleSave = async (): Promise<void> => {
       try {
@@ -841,80 +931,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         setLoading(false)
       }
     }
-
-    // 删除条目
-    const handleDelete = useCallback(
-      async (id: string): Promise<void> => {
-        if (readOnly) return
-
-        const entryToDelete = entries.find(e => e.id === id)
-        if (!entryToDelete) return
-
-        if (undoMessageKey) {
-          message.destroy(undoMessageKey)
-        }
-
-        await deleteEntry(id)
-        setDeletedEntry(entryToDelete)
-
-        const key = `delete-${id}-${Date.now()}`
-        setUndoMessageKey(key)
-
-        message.open({
-          type: 'success',
-          content: (
-            <span>
-              已删除「{entryToDelete.name}」
-              <Button
-                type="link"
-                size="small"
-                style={{ marginLeft: 8, padding: 0 }}
-                onClick={() => handleUndoDelete(key)}
-              >
-                撤销
-              </Button>
-            </span>
-          ),
-          duration: 5,
-          key,
-          onClose: () => {
-            setDeletedEntry(null)
-            setUndoMessageKey('')
-          }
-        })
-      },
-      [readOnly, entries, undoMessageKey, deleteEntry, handleUndoDelete]
-    )
-
-    // 撤销删除
-    const handleUndoDelete = useCallback(
-      async (key: string): Promise<void> => {
-        if (!deletedEntry) return
-
-        try {
-          await addEntry({
-            name: deletedEntry.name,
-            aliases: deletedEntry.aliases,
-            color: deletedEntry.color,
-            typeId: deletedEntry.typeId,
-            typeName: deletedEntry.typeName,
-            fields: deletedEntry.fields,
-            tags: deletedEntry.tags,
-            description: deletedEntry.description,
-            linkedFilePath: deletedEntry.linkedFilePath
-          })
-
-          message.destroy(key)
-          message.success('已撤销删除')
-          setDeletedEntry(null)
-          setUndoMessageKey('')
-        } catch (error) {
-          console.error('撤销删除失败:', error)
-          message.error('撤销失败')
-        }
-      },
-      [deletedEntry, addEntry]
-    )
 
     // 渲染空状态
     const renderEmptyState = (): React.ReactNode => {
@@ -1079,22 +1095,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         form.setFieldValue('linkedFilePath', filePath)
       }
     }
-
-    // 打开关联文件（在编辑器中打开并定位到文件树）
-    const handleOpenLinkedFile = useCallback(
-      async (filePath: string): Promise<void> => {
-        try {
-          const fileName = filePath.split(/[/\\]/).pop() || filePath
-          await expandToPath(filePath)
-          selectFile(filePath)
-          await openFile(filePath, fileName)
-        } catch (error) {
-          console.error('打开文件失败:', error)
-          message.error('打开文件失败')
-        }
-      },
-      [expandToPath, selectFile, openFile]
-    )
 
     const tabItems = types.map(type => ({
       key: type.id,
