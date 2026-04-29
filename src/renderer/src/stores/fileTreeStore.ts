@@ -416,6 +416,11 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       await window.electron.file.rename(node.path, newPath)
       set({ editingKey: null, editingName: '' })
       await refreshTree()
+
+      const { useEditorStore } = await import('./editorStore')
+      const { useGitStore } = await import('./gitStore')
+      useEditorStore.getState().updateTabPath(node.path, newPath, newName.trim())
+      useGitStore.getState().scheduleRefresh()
     },
 
     cancelEdit: () => {
@@ -456,11 +461,16 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       }
       set({ newItemParent: undefined, newItemName: '' })
       await refreshTree()
+
+      const { useGitStore } = await import('./gitStore')
+      useGitStore.getState().scheduleRefresh()
     },
 
     deleteItems: async (keys, permanent) => {
       const { findNode, refreshTree, clearSelection } = get()
       const nodes = keys.map(k => findNode(k)).filter(Boolean) as FileNodeData[]
+
+      const deletedPaths = nodes.map(n => n.path)
 
       for (const node of nodes) {
         await window.electron.file.delete(node.path, {
@@ -471,6 +481,11 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
 
       clearSelection()
       await refreshTree()
+
+      const { useEditorStore } = await import('./editorStore')
+      const { useGitStore } = await import('./gitStore')
+      useEditorStore.getState().closeTabsByPaths(deletedPaths)
+      useGitStore.getState().scheduleRefresh()
     },
 
     copyItems: keys => {
@@ -507,6 +522,9 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       }
 
       await refreshTree()
+
+      const { useGitStore } = await import('./gitStore')
+      useGitStore.getState().scheduleRefresh()
     },
 
     search: pattern => {

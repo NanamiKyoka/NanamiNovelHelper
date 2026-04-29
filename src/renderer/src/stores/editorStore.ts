@@ -163,6 +163,8 @@ interface EditorState {
   closeTab: (tabId: string) => void
   closeOtherTabs: (tabId: string) => void
   closeAllTabs: () => void
+  closeTabsByPaths: (paths: string[]) => void
+  updateTabPath: (oldPath: string, newPath: string, newName: string) => void
   setActiveTab: (tabId: string) => void
   moveTab: (fromIndex: number, toIndex: number) => void
   markDirty: (tabId: string, isDirty: boolean) => void
@@ -360,6 +362,61 @@ export const useEditorStore = create<EditorState>()(
 
         closeAllTabs: () => {
           set({ tabs: [], activeTabId: null, previewTabId: null })
+        },
+
+        closeTabsByPaths: (paths: string[]) => {
+          const state = get()
+          const deletedPaths = new Set(paths)
+
+          const tabsToRemove = state.tabs.filter(t => deletedPaths.has(t.path))
+
+          if (tabsToRemove.length === 0) return
+
+          const removeIds = new Set(tabsToRemove.map(t => t.id))
+          const newTabs = state.tabs.filter(t => !removeIds.has(t.id))
+
+          let newActiveTabId = state.activeTabId
+          if (newActiveTabId && removeIds.has(newActiveTabId)) {
+            const idx = state.tabs.findIndex(t => t.id === newActiveTabId)
+            const rightTab = newTabs[idx]
+            const leftTab = newTabs[idx - 1]
+            newActiveTabId = rightTab?.id || leftTab?.id || null
+          }
+
+          let newPreviewTabId = state.previewTabId
+          if (newPreviewTabId && removeIds.has(newPreviewTabId)) {
+            newPreviewTabId = null
+          }
+
+          for (const tab of tabsToRemove) {
+            state.fileContents.delete(tab.path)
+          }
+
+          set({
+            tabs: newTabs,
+            activeTabId: newActiveTabId,
+            previewTabId: newPreviewTabId,
+            fileContents: state.fileContents
+          })
+        },
+
+        updateTabPath: (oldPath: string, newPath: string, newName: string) => {
+          const state = get()
+          const tab = state.tabs.find(t => t.path === oldPath)
+          if (!tab) return
+
+          const existingContent = state.fileContents.get(oldPath)
+          if (existingContent) {
+            state.fileContents.delete(oldPath)
+            state.fileContents.set(newPath, { ...existingContent, path: newPath })
+          }
+
+          set({
+            tabs: state.tabs.map(t =>
+              t.id === tab.id ? { ...t, path: newPath, name: newName } : t
+            ),
+            fileContents: state.fileContents
+          })
         },
 
         setActiveTab: (tabId: string) => {
