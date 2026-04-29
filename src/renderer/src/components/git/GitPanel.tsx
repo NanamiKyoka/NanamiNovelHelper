@@ -44,19 +44,12 @@ function GitPanel(): JSX.Element {
   const [showInitModal, setShowInitModal] = useState(false)
   const [initing, setIniting] = useState(false)
 
-  // 初始化
+  // 兜底初始化：项目打开时 git 可能尚未初始化完成
   useEffect(() => {
-    if (currentProject?.path && !initialized) {
+    if (currentProject?.path && !initialized && !loading) {
       init()
     }
-  }, [currentProject?.path, initialized, init])
-
-  // 项目切换时重新初始化
-  useEffect(() => {
-    if (currentProject?.path) {
-      init()
-    }
-  }, [currentProject?.path])
+  }, [currentProject?.path, initialized, loading, init])
 
   // 初始化仓库
   const handleInitRepo = async () => {

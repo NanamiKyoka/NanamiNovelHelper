@@ -230,6 +230,8 @@ interface GitState {
   getCommitDetail: (commit: GitCommit) => Promise<void>
   getCommitFileDiff: (commitHash: string, filepath: string) => Promise<GitFileDiff | null>
   clearCommitDetail: () => void
+
+  dispose: () => void
 }
 
 export const useGitStore = create<GitState>((set, get) => {
@@ -770,6 +772,31 @@ export const useGitStore = create<GitState>((set, get) => {
 
     clearCommitDetail: () => {
       set({ commitDetail: null, currentDiff: null })
+    },
+
+    dispose: () => {
+      const { autoCommitTimer } = get()
+      if (autoCommitTimer) {
+        clearInterval(autoCommitTimer)
+      }
+      currentCts.cancel()
+      set({
+        initialized: false,
+        isRepo: false,
+        loading: false,
+        error: null,
+        repository: null,
+        branches: [],
+        commits: [],
+        currentBranch: null,
+        currentDiff: null,
+        selectedFile: null,
+        commitDetail: null,
+        autoCommitTimer: null,
+        autoCommitEnabled: false,
+        operationsRunning: false
+      })
+      useFileTreeStore.getState().updateGitStatus([])
     }
   }
 })

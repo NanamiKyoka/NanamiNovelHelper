@@ -15,6 +15,7 @@ import { useTimelineStore } from '@stores/timelineStore'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
+import { useGitStore } from '@stores/gitStore'
 import { useHighlightService, updateHighlightPatterns } from '@services/highlightService'
 import type { CreateProjectOptions } from '@shared/project'
 import type { ProjectSettings } from '@shared/settings'
@@ -178,6 +179,12 @@ export function useProjectActions() {
         // 分发数据到各个 Store
         dispatchInitData(initData)
 
+        // 自动初始化 Git（不阻塞项目打开流程）
+        useGitStore
+          .getState()
+          .init()
+          .catch(() => {})
+
         // 刷新最近项目列表
         loadRecentProjects()
 
@@ -221,6 +228,12 @@ export function useProjectActions() {
         // 分发数据到各个 Store
         dispatchInitData(initData)
 
+        // 自动初始化 Git（不阻塞项目打开流程）
+        useGitStore
+          .getState()
+          .init()
+          .catch(() => {})
+
         // 刷新最近项目列表
         loadRecentProjects()
 
@@ -249,6 +262,9 @@ export function useProjectActions() {
 
       // 清除所有项目相关数据
       clearAllProjectData()
+
+      // 清理 Git 状态
+      useGitStore.getState().dispose()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '关闭项目失败'
       setError(errorMessage)
