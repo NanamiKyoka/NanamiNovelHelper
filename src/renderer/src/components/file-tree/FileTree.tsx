@@ -131,17 +131,24 @@ const TreeNode = memo(function TreeNode({
 }: TreeNodeProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isCanceling = useRef(false)
+  const hasSelected = useRef(false)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus()
-      const dotIndex = node.name.lastIndexOf('.')
-      if (dotIndex > 0 && !node.isDirectory) {
-        inputRef.current.setSelectionRange(0, dotIndex)
-      } else {
-        inputRef.current.select()
+      if (!hasSelected.current) {
+        const dotIndex = node.name.lastIndexOf('.')
+        if (dotIndex > 0 && !node.isDirectory) {
+          inputRef.current.setSelectionRange(0, dotIndex)
+        } else {
+          inputRef.current.select()
+        }
+        hasSelected.current = true
       }
       isCanceling.current = false
+    }
+    if (!isEditing) {
+      hasSelected.current = false
     }
   }, [isEditing, node.name, node.isDirectory])
 
@@ -229,19 +236,23 @@ const NewItem = memo(function NewItem({
 }: NewItemProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isCanceling = useRef(false)
+  const hasSelected = useRef(false)
 
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
-      if (type === 'file') {
-        const dotIndex = name.lastIndexOf('.')
-        if (dotIndex > 0) {
-          inputRef.current.setSelectionRange(0, dotIndex)
+      if (!hasSelected.current) {
+        if (type === 'file') {
+          const dotIndex = name.lastIndexOf('.')
+          if (dotIndex > 0) {
+            inputRef.current.setSelectionRange(0, dotIndex)
+          } else {
+            inputRef.current.select()
+          }
         } else {
           inputRef.current.select()
         }
-      } else {
-        inputRef.current.select()
+        hasSelected.current = true
       }
     }
   }, [type, name])
