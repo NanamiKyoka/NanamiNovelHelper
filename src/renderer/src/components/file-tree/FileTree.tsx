@@ -389,6 +389,45 @@ function FileTree(): JSX.Element {
     }
   }, [])
 
+  // 确认删除
+  const confirmDelete = useCallback(
+    (keys: string[], useTrash: boolean) => {
+      modal.confirm({
+        title: useTrash ? '删除确认' : '永久删除',
+        content: useTrash
+          ? `确定要将 ${keys.length} 个项目移至回收站吗？`
+          : `确定要永久删除 ${keys.length} 个项目吗？此操作不可撤销。`,
+        okText: useTrash ? '删除' : '永久删除',
+        okType: 'danger',
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            await deleteItems(keys, !useTrash)
+            message.success(useTrash ? '已移至回收站' : '已永久删除')
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : '删除失败'
+            message.error(errorMessage)
+          }
+        }
+      })
+    },
+    [modal, message, deleteItems]
+  )
+
+  // 粘贴处理
+  const handlePaste = useCallback(
+    async (targetKey: string | null) => {
+      try {
+        await paste(targetKey)
+        message.success(`已粘贴 ${clipboard?.nodes.length || 0} 个项目`)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : '粘贴失败'
+        message.error(errorMessage)
+      }
+    },
+    [paste, clipboard, message]
+  )
+
   // 键盘导航
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -552,45 +591,6 @@ function FileTree(): JSX.Element {
     startRename,
     toggleExpand
   ])
-
-  // 确认删除
-  const confirmDelete = useCallback(
-    (keys: string[], useTrash: boolean) => {
-      modal.confirm({
-        title: useTrash ? '删除确认' : '永久删除',
-        content: useTrash
-          ? `确定要将 ${keys.length} 个项目移至回收站吗？`
-          : `确定要永久删除 ${keys.length} 个项目吗？此操作不可撤销。`,
-        okText: useTrash ? '删除' : '永久删除',
-        okType: 'danger',
-        cancelText: '取消',
-        onOk: async () => {
-          try {
-            await deleteItems(keys, !useTrash)
-            message.success(useTrash ? '已移至回收站' : '已永久删除')
-          } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : '删除失败'
-            message.error(errorMessage)
-          }
-        }
-      })
-    },
-    [modal, message, deleteItems]
-  )
-
-  // 粘贴处理
-  const handlePaste = useCallback(
-    async (targetKey: string | null) => {
-      try {
-        await paste(targetKey)
-        message.success(`已粘贴 ${clipboard?.nodes.length || 0} 个项目`)
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '粘贴失败'
-        message.error(errorMessage)
-      }
-    },
-    [paste, clipboard, message]
-  )
 
   // 导出 .novel 文件为 TXT
   const handleExportNovel = useCallback(
