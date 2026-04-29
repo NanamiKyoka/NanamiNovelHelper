@@ -33,6 +33,8 @@ import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
 import { useLoadingStore } from '@stores/loadingStore'
 import { useEditorStore } from '@stores/editorStore'
+import { useGitStore } from '@stores/gitStore'
+import { useFileTreeStore } from '@stores/fileTreeStore'
 import { DEFAULT_BADGE_VISIBILITY } from '@shared/settings'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
@@ -144,18 +146,24 @@ function App(): JSX.Element {
     ) => {
       if ('type' in event && event.type === 'bulk-operation-end') {
         useEditorStore.getState().handleBulkOperationEnd()
+        useGitStore.getState().refresh()
+        useFileTreeStore.getState().refreshTree()
         return
       }
 
       if ('changes' in event) {
         const changedPaths: string[] = []
         const deletedPaths: string[] = []
+        let hasFileStructureChange = false
 
         for (const change of event.changes) {
           if (change.type === 'change' || change.type === 'add') {
             changedPaths.push(change.path)
           } else if (change.type === 'unlink') {
             deletedPaths.push(change.path)
+          }
+          if (change.type === 'add' || change.type === 'unlink') {
+            hasFileStructureChange = true
           }
         }
 
@@ -164,6 +172,13 @@ function App(): JSX.Element {
         }
         if (deletedPaths.length > 0) {
           useEditorStore.getState().handleExternalFileDeletions(deletedPaths)
+        }
+
+        if (changedPaths.length > 0 || deletedPaths.length > 0) {
+          useGitStore.getState().refresh()
+        }
+        if (hasFileStructureChange) {
+          useFileTreeStore.getState().refreshTree()
         }
       }
     }
