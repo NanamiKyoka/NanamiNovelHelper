@@ -125,17 +125,10 @@ function calculateWordCount(content: string): WordCount {
 
 function getFileType(name: string): EditorTab['type'] {
   const ext = name.split('.').pop()?.toLowerCase()
-  switch (ext) {
-    case 'novel':
-      return 'novel'
-    case 'txt':
-      return 'text'
-    case 'md':
-    case 'markdown':
-      return 'markdown'
-    default:
-      return 'other'
+  if (ext === 'novel') {
+    return 'novel'
   }
+  return 'markdown'
 }
 
 function createFileCache(): LRUCache<string, EditorFileContent> {

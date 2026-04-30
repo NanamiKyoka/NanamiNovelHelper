@@ -103,8 +103,7 @@ export function EditorToolbar({
   const [aiCurrentAction, setAiCurrentAction] = useState('')
 
   const isNovel = fileType === 'novel'
-  const isMarkdown = fileType === 'markdown'
-  const isRichText = isNovel || isMarkdown
+  const isRichText = isNovel
 
   // AI 辅助功能：调用 AI API
   const callAiApi = useCallback(

@@ -138,7 +138,7 @@ export type FileType = 'chapter' | 'character' | 'setting' | 'note' | 'outline'
 /**
  * 项目配置文件名
  */
-export const PROJECT_CONFIG_FILE = 'anhproject.novel'
+export const PROJECT_CONFIG_FILE = 'project.json5'
 
 /**
  * 项目元数据目录名

@@ -230,10 +230,13 @@ backup/
    * 保存项目配置文件
    */
   private async saveProjectConfig(project: Project): Promise<void> {
-    const configPath = join(project.path, PROJECT_CONFIG_FILE)
+    const metaDir = join(project.path, PROJECT_META_DIR)
+    if (!existsSync(metaDir)) {
+      mkdirSync(metaDir, { recursive: true })
+    }
+    const configPath = join(metaDir, PROJECT_CONFIG_FILE)
 
-    // 构建 YAML frontmatter
-    const frontmatter = {
+    const config = {
       id: project.id,
       name: project.name,
       description: project.description,
@@ -244,15 +247,7 @@ backup/
       updatedAt: project.updatedAt
     }
 
-    const yamlContent = yaml.dump(frontmatter, {
-      sortKeys: true,
-      quotingType: '"',
-      forceQuotes: false
-    })
-
-    const content = `---\n${yamlContent}---\n\n# ${project.name}\n\n${project.description || ''}\n`
-
-    writeFileSync(configPath, content, 'utf-8')
+    writeFileSync(configPath, JSON5.stringify(config, null, 2), 'utf-8')
   }
 
   /**
@@ -268,9 +263,12 @@ backup/
       throw Errors.projectInvalidPath('指定路径不是目录', 'ProjectService')
     }
 
-    const configPath = join(path, PROJECT_CONFIG_FILE)
+    const configPath = join(path, PROJECT_META_DIR, PROJECT_CONFIG_FILE)
     if (!existsSync(configPath)) {
-      throw Errors.projectInvalidPath('不是有效的项目目录：缺少项目配置文件', 'ProjectService')
+      await this.migrateProjectConfig(path)
+      if (!existsSync(configPath)) {
+        throw Errors.projectInvalidPath('不是有效的项目目录：缺少项目配置文件', 'ProjectService')
+      }
     }
 
     const project = await this.loadProjectConfig(path)
@@ -286,33 +284,55 @@ backup/
     return project
   }
 
-  /**
-   * 加载项目配置
-   */
-  private async loadProjectConfig(projectPath: string): Promise<Project> {
-    const configPath = join(projectPath, PROJECT_CONFIG_FILE)
-    const content = readFileSync(configPath, 'utf-8')
-
-    const match = content.match(/^---\n([\s\S]*?)\n---/)
-    if (!match) {
-      throw new ServiceError(ErrorCode.DATA_INVALID, '项目配置文件格式错误', {
-        module: 'ProjectService'
-      })
-    }
+  private async migrateProjectConfig(projectPath: string): Promise<void> {
+    const oldConfigPath = join(projectPath, 'anhproject.novel')
+    if (!existsSync(oldConfigPath)) return
 
     try {
+      const content = readFileSync(oldConfigPath, 'utf-8')
+      const match = content.match(/^---\n([\s\S]*?)\n---/)
+      if (!match) return
+
       const frontmatter = yaml.load(match[1]) as Record<string, unknown>
 
       const project: Project = {
-        id: frontmatter.id as string,
-        name: frontmatter.name as string,
+        id: (frontmatter.id as string) || '',
+        name: (frontmatter.name as string) || '',
         description: frontmatter.description as string | undefined,
         author: frontmatter.author as string | undefined,
         path: projectPath,
         cover: frontmatter.cover as string | undefined,
         tags: (frontmatter.tags as string[]) || [],
-        createdAt: frontmatter.createdAt as string,
-        updatedAt: frontmatter.updatedAt as string
+        createdAt: (frontmatter.createdAt as string) || new Date().toISOString(),
+        updatedAt: (frontmatter.updatedAt as string) || new Date().toISOString()
+      }
+
+      await this.saveProjectConfig(project)
+      this.logger.info(
+        `Migrated project config: ${oldConfigPath} -> ${PROJECT_META_DIR}/${PROJECT_CONFIG_FILE}`
+      )
+    } catch (error) {
+      this.logger.error(`Failed to migrate project config: ${error}`)
+    }
+  }
+
+  private async loadProjectConfig(projectPath: string): Promise<Project> {
+    const configPath = join(projectPath, PROJECT_META_DIR, PROJECT_CONFIG_FILE)
+    const content = readFileSync(configPath, 'utf-8')
+
+    try {
+      const config = JSON5.parse(content)
+
+      const project: Project = {
+        id: config.id,
+        name: config.name,
+        description: config.description,
+        author: config.author,
+        path: projectPath,
+        cover: config.cover,
+        tags: config.tags || [],
+        createdAt: config.createdAt,
+        updatedAt: config.updatedAt
       }
 
       return project
@@ -460,8 +480,13 @@ backup/
       return false
     }
 
-    const configPath = join(path, PROJECT_CONFIG_FILE)
-    return existsSync(configPath)
+    const configPath = join(path, PROJECT_META_DIR, PROJECT_CONFIG_FILE)
+    if (existsSync(configPath)) {
+      return true
+    }
+
+    const oldConfigPath = join(path, 'anhproject.novel')
+    return existsSync(oldConfigPath)
   }
 
   /**
