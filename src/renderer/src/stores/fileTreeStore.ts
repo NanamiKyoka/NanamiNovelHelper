@@ -294,6 +294,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
         return
       }
       treeRefreshing = true
+      set({ loading: true })
       try {
         do {
           needsTreeRefresh = false
