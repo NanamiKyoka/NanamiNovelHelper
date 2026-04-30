@@ -15,6 +15,22 @@ function getMarkdownFromEditor(editor: {
   return editor.storage.markdown.getMarkdown()
 }
 
+function plainTextToHtml(text: string): string {
+  return text
+    .split('\n')
+    .map(line => {
+      const leadingSpaces = line.match(/^(\s*)/)?.[1] || ''
+      const rest = line.slice(leadingSpaces.length)
+      const preservedSpaces = leadingSpaces.replace(/ /g, '&nbsp;').replace(/\t/g, '&nbsp;&nbsp;')
+      return `<p>${preservedSpaces}${escapeHtml(rest)}</p>`
+    })
+    .join('')
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 interface MarkdownEditorProps {
   onChange?: (content: string) => void
   onSave?: () => void
@@ -70,9 +86,10 @@ export function MarkdownEditor({
 
   const { getExtensions } = useMarkdownExtensions()
 
+  const initialContent = getCurrentContent()
   const editor = useEditor({
     extensions: getExtensions(plainText),
-    content: getCurrentContent(),
+    content: plainText ? plainTextToHtml(initialContent) : initialContent,
     editable: !readonly,
     editorProps: {
       attributes: {
@@ -96,10 +113,10 @@ export function MarkdownEditor({
     onUpdate: ({ editor }) => {
       if (isComposing) return
 
-      const markdownContent = getMarkdownFromEditor(editor)
+      const content = plainText ? editor.getText() : getMarkdownFromEditor(editor)
       const textContent = editor.getText()
-      updateContent(markdownContent)
-      onChange?.(markdownContent)
+      updateContent(content)
+      onChange?.(content)
 
       debouncedUpdateWordCount(textContent)
 
@@ -143,10 +160,10 @@ export function MarkdownEditor({
     const handleCompositionStart = () => setIsComposing(true)
     const handleCompositionEnd = () => {
       setIsComposing(false)
-      const markdownContent = getMarkdownFromEditor(editor)
+      const content = plainText ? editor.getText() : getMarkdownFromEditor(editor)
       const textContent = editor.getText()
-      updateContent(markdownContent)
-      onChange?.(markdownContent)
+      updateContent(content)
+      onChange?.(content)
       debouncedUpdateWordCount(textContent)
     }
 
@@ -157,7 +174,7 @@ export function MarkdownEditor({
       editorElement.removeEventListener('compositionstart', handleCompositionStart)
       editorElement.removeEventListener('compositionend', handleCompositionEnd)
     }
-  }, [editor, updateContent, onChange, debouncedUpdateWordCount])
+  }, [editor, updateContent, onChange, debouncedUpdateWordCount, plainText])
 
   useEffect(() => {
     if (!editor) return
@@ -177,16 +194,17 @@ export function MarkdownEditor({
     }
 
     const currentContent = getCurrentContent()
+    const displayContent = plainText ? plainTextToHtml(currentContent) : currentContent
     const savedState = getEditorState(currentPath)
 
     if (savedState) {
       try {
         editor.view.updateState(savedState as typeof editor.view.state)
       } catch {
-        editor.commands.setContent(currentContent, false)
+        editor.commands.setContent(displayContent, false)
       }
     } else {
-      editor.commands.setContent(currentContent, false)
+      editor.commands.setContent(displayContent, false)
     }
 
     const textContent = editor.getText()
@@ -200,7 +218,8 @@ export function MarkdownEditor({
     currentFilePath,
     getEditorState,
     saveEditorState,
-    updateWordCount
+    updateWordCount,
+    plainText
   ])
 
   useEffect(() => {
@@ -298,7 +317,8 @@ export function MarkdownEditor({
 
     if (externalRefreshRequest === currentFilePathRef.current) {
       loadFileContent(externalRefreshRequest).then(content => {
-        editor.commands.setContent(content, false)
+        const displayContent = plainText ? plainTextToHtml(content) : content
+        editor.commands.setContent(displayContent, false)
         const textContent = editor.getText()
         updateWordCount(textContent)
       })
@@ -309,7 +329,8 @@ export function MarkdownEditor({
     externalRefreshRequest,
     loadFileContent,
     clearExternalRefreshRequest,
-    updateWordCount
+    updateWordCount,
+    plainText
   ])
 
   // 监听全局刷新时间戳变化（Git操作后触发）
@@ -319,12 +340,13 @@ export function MarkdownEditor({
     const filePath = currentFilePathRef.current
     if (filePath) {
       loadFileContent(filePath).then(content => {
-        editor.commands.setContent(content, false)
+        const displayContent = plainText ? plainTextToHtml(content) : content
+        editor.commands.setContent(displayContent, false)
         const textContent = editor.getText()
         updateWordCount(textContent)
       })
     }
-  }, [editor, lastRefreshTime, loadFileContent, updateWordCount])
+  }, [editor, lastRefreshTime, loadFileContent, updateWordCount, plainText])
 
   useEffect(() => {
     if (!editor) return

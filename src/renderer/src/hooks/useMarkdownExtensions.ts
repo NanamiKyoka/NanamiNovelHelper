@@ -34,12 +34,6 @@ export function useMarkdownExtensions() {
           strike: false,
           code: false
         }),
-        Markdown.configure({
-          html: false,
-          transformPastedText: true,
-          transformCopiedText: true,
-          breaks: true
-        }),
         Placeholder.configure({
           placeholder: 'Start editing...',
           emptyEditorClass: 'is-empty'
