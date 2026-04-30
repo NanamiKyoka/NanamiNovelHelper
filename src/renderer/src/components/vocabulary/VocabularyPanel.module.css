@@ -184,6 +184,14 @@
   background: transparent;
 }
 
+.tableContainer :global(.ant-table-placeholder) {
+  background: transparent !important;
+}
+
+.tableContainer :global(.ant-table-placeholder .ant-table-cell) {
+  background: transparent !important;
+}
+
 /* 拖拽手柄单元格 */
 .tableContainer :global(.drag-handle-cell) {
   padding: 0 4px !important;
