@@ -580,10 +580,50 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
 
     updateGitStatus: (changes: { path: string; statusShort: string; staged: boolean }[]) => {
       const newStatus = new Map<string, string>()
+      const isWindows = window.electron.platform === 'win32'
+      const normalizePath = (p: string) => (isWindows ? p.replace(/\//g, '\\') : p)
+
+      const statusPriority: Record<string, number> = {
+        M: 5,
+        A: 4,
+        D: 3,
+        R: 2,
+        C: 2,
+        '?': 1,
+        '!': 0
+      }
+      const dirStatusMap = new Map<
+        string,
+        { statusShort: string; staged: boolean; priority: number }
+      >()
+
       for (const change of changes) {
         const prefix = change.staged ? 'S' : ''
-        newStatus.set(change.path, `${prefix}${change.statusShort}`)
+        const normalizedPath = normalizePath(change.path)
+        newStatus.set(normalizedPath, `${prefix}${change.statusShort}`)
+
+        const parts = normalizedPath.split(isWindows ? '\\' : '/')
+        for (let i = 1; i < parts.length; i++) {
+          const dirPath = parts.slice(0, i).join(isWindows ? '\\' : '/')
+          const priority = (statusPriority[change.statusShort] || 0) + (change.staged ? 10 : 0)
+          const existing = dirStatusMap.get(dirPath)
+          if (!existing || priority > existing.priority) {
+            dirStatusMap.set(dirPath, {
+              statusShort: change.statusShort,
+              staged: change.staged,
+              priority
+            })
+          }
+        }
       }
+
+      for (const [dirPath, dirStatus] of dirStatusMap) {
+        if (!newStatus.has(dirPath)) {
+          const prefix = dirStatus.staged ? 'S' : ''
+          newStatus.set(dirPath, `${prefix}${dirStatus.statusShort}`)
+        }
+      }
+
       set({ gitStatus: newStatus })
     },
 

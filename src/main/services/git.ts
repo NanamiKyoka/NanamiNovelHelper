@@ -194,7 +194,7 @@ class GitService {
     }
 
     // 获取文件状态
-    const statusOutput = await this.execGit(repoPath, ['status', '--porcelain=v1', '-z'])
+    const statusOutput = await this.execGit(repoPath, ['status', '--porcelain=v1', '-z', '-uall'])
     const changes: GitFileChange[] = []
     const stagedChanges: GitFileChange[] = []
 
