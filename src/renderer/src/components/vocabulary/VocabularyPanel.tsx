@@ -164,9 +164,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
     const [batchMode, setBatchMode] = useState(false)
 
-    const [quickAddMode, setQuickAddMode] = useState(false)
-    const [quickAddName, setQuickAddName] = useState('')
-
     const [deletedEntry, setDeletedEntry] = useState<VocabularyEntry | null>(null)
     const [undoMessageKey, setUndoMessageKey] = useState<string>('')
 
@@ -784,49 +781,6 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       [drawerOpen, handleCreate]
     )
 
-    // 快速创建词汇
-    const handleQuickAdd = async (): Promise<void> => {
-      if (readOnly || !quickAddName.trim() || !currentType) return
-
-      try {
-        setLoading(true)
-        const typeName = types.find(t => t.id === currentType)?.name || '未知'
-        const color =
-          currentTypeDefinition?.color ||
-          VOCABULARY_DEFAULT_COLORS[Math.floor(Math.random() * VOCABULARY_DEFAULT_COLORS.length)]
-
-        await addEntry({
-          name: quickAddName.trim(),
-          aliases: [],
-          color,
-          typeId: currentType,
-          typeName,
-          fields: {},
-          tags: [],
-          description: ''
-        })
-
-        message.success('创建成功')
-        setQuickAddName('')
-        setQuickAddMode(false)
-      } catch (error) {
-        console.error('快速创建失败:', error)
-        message.error('创建失败')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    // 快速创建按键处理
-    const handleQuickAddKeyDown = (e: React.KeyboardEvent): void => {
-      if (e.key === 'Enter') {
-        handleQuickAdd()
-      } else if (e.key === 'Escape') {
-        setQuickAddMode(false)
-        setQuickAddName('')
-      }
-    }
-
     // 保存条目
     const handleSave = async (): Promise<void> => {
       try {
@@ -970,14 +924,9 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
             <Space direction="vertical" size="middle">
               <span>还没有词汇，开始添加吧</span>
               {!readOnly && (
-                <Space>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                    新建词汇
-                  </Button>
-                  <Button icon={<TagOutlined />} onClick={() => setQuickAddMode(true)}>
-                    快速添加
-                  </Button>
-                </Space>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                  新建词汇
+                </Button>
               )}
             </Space>
           }
@@ -1223,89 +1172,27 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
               <Button icon={<FullscreenOutlined />} onClick={() => setFullscreen(true)}>
                 编辑
               </Button>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: 'create',
-                      label: '新建（完整）',
-                      icon: <PlusOutlined />,
-                      onClick: handleCreate
-                    },
-                    {
-                      key: 'quickAdd',
-                      label: '快速添加',
-                      icon: <TagOutlined />,
-                      onClick: () => setQuickAddMode(true)
-                    }
-                  ] as MenuProps['items']
-                }}
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                disabled={readOnly || !currentType}
+                onClick={handleCreate}
               >
-                <Button type="primary" icon={<PlusOutlined />} disabled={readOnly || !currentType}>
-                  新建
-                </Button>
-              </Dropdown>
+                新建
+              </Button>
             </Space>
           )}
           {embedded && (
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: 'create',
-                    label: '新建（完整）',
-                    icon: <PlusOutlined />,
-                    onClick: handleCreate
-                  },
-                  {
-                    key: 'quickAdd',
-                    label: '快速添加',
-                    icon: <TagOutlined />,
-                    onClick: () => setQuickAddMode(true)
-                  }
-                ] as MenuProps['items']
-              }}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              disabled={readOnly || !currentType}
+              onClick={handleCreate}
             >
-              <Button type="primary" icon={<PlusOutlined />} disabled={readOnly || !currentType}>
-                新建
-              </Button>
-            </Dropdown>
+              新建
+            </Button>
           )}
         </div>
-
-        {/* 快速添加输入框 */}
-        {quickAddMode && !embedded && (
-          <div className={styles.quickAddBar}>
-            <Space>
-              <span className={styles.quickAddLabel}>快速添加：</span>
-              <Input
-                placeholder="输入词汇名称，按 Enter 保存，Esc 取消"
-                value={quickAddName}
-                onChange={e => setQuickAddName(e.target.value)}
-                onKeyDown={handleQuickAddKeyDown}
-                style={{ width: 300 }}
-                autoFocus
-                disabled={loading}
-              />
-              <Button
-                type="primary"
-                onClick={handleQuickAdd}
-                loading={loading}
-                disabled={!quickAddName.trim()}
-              >
-                保存
-              </Button>
-              <Button
-                onClick={() => {
-                  setQuickAddMode(false)
-                  setQuickAddName('')
-                }}
-              >
-                取消
-              </Button>
-            </Space>
-          </div>
-        )}
 
         {filterPanelOpen && !embedded && (
           <VocabularyFilterPanel
