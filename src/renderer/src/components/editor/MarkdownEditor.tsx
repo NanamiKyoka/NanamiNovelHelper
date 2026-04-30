@@ -19,9 +19,15 @@ interface MarkdownEditorProps {
   onChange?: (content: string) => void
   onSave?: () => void
   readonly?: boolean
+  plainText?: boolean
 }
 
-export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownEditorProps) {
+export function MarkdownEditor({
+  onChange,
+  onSave,
+  readonly = false,
+  plainText = false
+}: MarkdownEditorProps) {
   const settings = useEditorStore(state => state.settings)
   const updateSettings = useEditorStore(state => state.updateSettings)
   const updateContent = useEditorStore(state => state.updateContent)
@@ -65,7 +71,7 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
   const { getExtensions } = useMarkdownExtensions()
 
   const editor = useEditor({
-    extensions: getExtensions(),
+    extensions: getExtensions(plainText),
     content: getCurrentContent(),
     editable: !readonly,
     editorProps: {
@@ -401,7 +407,10 @@ export function MarkdownEditor({ onChange, onSave, readonly = false }: MarkdownE
         onClose={() => setSearchPanelVisible(false)}
       />
 
-      <EditorContent editor={editor} className={styles.editorContainer} />
+      <EditorContent
+        editor={editor}
+        className={`${styles.editorContainer} ${plainText ? styles.plainTextEditor : ''}`}
+      />
     </div>
   )
 }

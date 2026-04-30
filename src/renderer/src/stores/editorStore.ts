@@ -128,7 +128,10 @@ function getFileType(name: string): EditorTab['type'] {
   if (ext === 'novel') {
     return 'novel'
   }
-  return 'markdown'
+  if (ext === 'md' || ext === 'markdown') {
+    return 'markdown'
+  }
+  return 'text'
 }
 
 function createFileCache(): LRUCache<string, EditorFileContent> {

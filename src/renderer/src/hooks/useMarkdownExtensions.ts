@@ -21,7 +21,33 @@ import {
 const lowlight = createLowlight(common)
 
 export function useMarkdownExtensions() {
-  const getExtensions = useCallback(() => {
+  const getExtensions = useCallback((plainText = false) => {
+    if (plainText) {
+      return [
+        StarterKit.configure({
+          heading: false,
+          blockquote: false,
+          bulletList: false,
+          orderedList: false,
+          codeBlock: false,
+          horizontalRule: false,
+          strike: false,
+          code: false
+        }),
+        Markdown.configure({
+          html: false,
+          transformPastedText: true,
+          transformCopiedText: true,
+          breaks: true
+        }),
+        Placeholder.configure({
+          placeholder: 'Start editing...',
+          emptyEditorClass: 'is-empty'
+        }),
+        TabInsert
+      ]
+    }
+
     return [
       StarterKit.configure({
         heading: {

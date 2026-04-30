@@ -57,6 +57,7 @@ export function EditorPanel() {
   }
 
   const isMarkdown = activeTab?.type === 'markdown'
+  const isText = activeTab?.type === 'text'
   const isDiff = activeTab?.type === 'diff'
 
   return (
@@ -79,8 +80,13 @@ export function EditorPanel() {
                   }
                 }}
               />
-            ) : isMarkdown ? (
-              <MarkdownEditor onChange={handleChange} onSave={handleSave} readonly={false} />
+            ) : isMarkdown || isText ? (
+              <MarkdownEditor
+                onChange={handleChange}
+                onSave={handleSave}
+                readonly={false}
+                plainText={isText}
+              />
             ) : (
               <NovelEditor onChange={handleChange} onSave={handleSave} readonly={false} />
             )}

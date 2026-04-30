@@ -366,3 +366,17 @@
 .editorContainer::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+.plainTextEditor {
+  --paragraph-spacing: 0;
+}
+
+.plainTextEditor .editorContent {
+  font-family: var(--font-family-mono);
+  max-width: none;
+  white-space: pre-wrap;
+}
+
+.plainTextEditor .editorContent p {
+  margin: 0;
+}
