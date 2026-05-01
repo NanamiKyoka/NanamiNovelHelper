@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useHighlightService } from '@renderer/services/highlightService'
-import { DEFAULT_HIGHLIGHT_CONFIG } from '@shared/highlight'
+import { DEFAULT_HIGHLIGHT_CONFIG, type HighlightPattern } from '@shared/highlight'
 import type { HighlightConfig } from '@shared/highlight'
 
 describe('HighlightService - 辅助方法', () => {
@@ -180,12 +180,12 @@ describe('HighlightService - 辅助方法', () => {
             aliases: [],
             color: '#000',
             typeId: 't1',
-            matchMode: 'wholeWord',
+            matchMode: 'wholeWord' as const,
             caseSensitive: false,
             isSensitive: false,
             priority: 10
           }
-        ] as any
+        ] satisfies HighlightPattern[]
       })
       const store = useHighlightService.getState()
       store.clearPatterns()

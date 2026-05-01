@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useTimelineStore } from '@renderer/stores/timelineStore'
-import type { Timeline, TimelineMeta, TimelineNode } from '@renderer/types/timeline'
+import type {
+  Timeline,
+  TimelineMeta,
+  TimelineNode,
+  TimelineHistoryAction
+} from '@renderer/types/timeline'
 
 function createNode(
   overrides: Partial<TimelineNode> & { id: string; title: string }
@@ -197,7 +202,7 @@ describe('TimelineStore - 辅助查询方法', () => {
     it('应该清除历史记录', () => {
       setupStore()
       useTimelineStore.setState({
-        history: [{ type: 'addNode', data: {} }] as any,
+        history: [{ type: 'addNode', data: {} }] satisfies TimelineHistoryAction[],
         historyIndex: 0
       })
       const store = useTimelineStore.getState()
