@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { Logger, createLogger, logger } from '@shared/logger'
+import {
+  Logger,
+  createLogger,
+  createMainLogger,
+  createRendererLogger,
+  logger
+} from '@shared/logger'
 
 describe('Logger', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
@@ -61,6 +67,24 @@ describe('Logger', () => {
       log.debug('debug message')
       expect(consoleLogSpy).not.toHaveBeenCalled()
     })
+
+    it('info应该支持额外参数', () => {
+      const log = new Logger({ module: 'Test', enableDebug: true })
+      log.info('message', 'extra1', 'extra2')
+      expect(consoleInfoSpy).toHaveBeenCalled()
+    })
+
+    it('warn应该支持额外参数', () => {
+      const log = new Logger({ module: 'Test', enableDebug: true })
+      log.warn('message', 'extra')
+      expect(consoleWarnSpy).toHaveBeenCalled()
+    })
+
+    it('debug应该支持额外参数', () => {
+      const log = new Logger({ module: 'Test', enableDebug: true })
+      log.debug('message', 'extra')
+      expect(consoleLogSpy).toHaveBeenCalled()
+    })
   })
 
   describe('模块标识', () => {
@@ -100,6 +124,19 @@ describe('Logger', () => {
       const child = parent.child('B').child('C')
       child.info('deep child')
       expect(consoleInfoSpy.mock.calls[0][0]).toContain('[A:B:C]')
+    })
+
+    it('子日志器应该继承enableDebug=true', () => {
+      const parent = new Logger({ module: 'Parent', enableDebug: true })
+      const child = parent.child('Sub')
+      child.debug('debug msg')
+      expect(consoleLogSpy).toHaveBeenCalled()
+    })
+
+    it('子日志器应返回Logger实例', () => {
+      const parent = new Logger({ module: 'Parent', enableDebug: true })
+      const child = parent.child('Sub')
+      expect(child).toBeInstanceOf(Logger)
     })
   })
 
@@ -154,20 +191,52 @@ describe('createLogger', () => {
     const log = createLogger('Test', { isDev: () => true })
     expect(log).toBeInstanceOf(Logger)
   })
+
+  it('应该支持enableDebug选项', () => {
+    const log = createLogger('Test', { enableDebug: true })
+    expect(log).toBeInstanceOf(Logger)
+  })
+})
+
+describe('createMainLogger', () => {
+  it('应该创建Logger实例', () => {
+    const log = createMainLogger('MainModule')
+    expect(log).toBeInstanceOf(Logger)
+  })
+
+  it('应该支持enableDebug选项', () => {
+    const log = createMainLogger('MainModule', { enableDebug: true })
+    expect(log).toBeInstanceOf(Logger)
+  })
+})
+
+describe('createRendererLogger', () => {
+  it('应该创建Logger实例', () => {
+    const log = createRendererLogger('RendererModule')
+    expect(log).toBeInstanceOf(Logger)
+  })
+
+  it('应该支持enableDebug选项', () => {
+    const log = createRendererLogger('RendererModule', { enableDebug: true })
+    expect(log).toBeInstanceOf(Logger)
+  })
 })
 
 describe('logger全局实例', () => {
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>
   let consoleInfoSpy: ReturnType<typeof vi.spyOn>
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
+    consoleLogSpy.mockRestore()
     consoleInfoSpy.mockRestore()
     consoleWarnSpy.mockRestore()
     consoleErrorSpy.mockRestore()
@@ -192,5 +261,20 @@ describe('logger全局实例', () => {
     const error = new Error('test')
     logger.error('TestModule', 'failed', error)
     expect(consoleErrorSpy).toHaveBeenCalledWith('[TestModule] failed', error)
+  })
+
+  it('logger.error应该正确处理非Error对象', () => {
+    logger.error('TestModule', 'failed', 'string error')
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[TestModule] failed', 'string error')
+  })
+
+  it('logger.info应该支持额外参数', () => {
+    logger.info('TestModule', 'message', 'extra1', 'extra2')
+    expect(consoleInfoSpy).toHaveBeenCalledWith('[TestModule] message', 'extra1', 'extra2')
+  })
+
+  it('logger.warn应该支持额外参数', () => {
+    logger.warn('TestModule', 'message', 'extra')
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[TestModule] message', 'extra')
   })
 })

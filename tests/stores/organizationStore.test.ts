@@ -1,14 +1,33 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useOrganizationStore } from '@renderer/stores/organizationStore'
-import type { OrganizationNode, OrganizationGraph } from '@renderer/types/organization'
+import type {
+  OrganizationNode,
+  OrganizationGraph,
+  OrganizationGraphMeta
+} from '@shared/organization'
 
 function createNode(overrides: Partial<OrganizationNode> & { id: string }): OrganizationNode {
   return {
     name: 'Node',
-    graphId: 'graph-1',
     parentId: undefined,
-    role: '',
     description: '',
+    color: '#1890ff',
+    order: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides
+  }
+}
+
+function createGraphMeta(
+  overrides: Partial<OrganizationGraphMeta> & { id: string; name: string }
+): OrganizationGraphMeta {
+  return {
+    description: '',
+    thumbnail: undefined,
+    linkedVocabularyTypes: [],
+    nodeStyle: 'simple',
+    nodeCount: 0,
     order: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -31,27 +50,18 @@ function setupTreeStore() {
     id: 'graph-1',
     name: '测试图',
     description: '',
-    nodes,
+    linkedVocabularyTypes: [],
+    nodeStyle: 'simple',
     nodeCount: nodes.length,
+    order: 0,
+    nodes,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
 
   useOrganizationStore.setState({
     currentGraph: graph,
-    graphs: [
-      {
-        id: 'graph-1',
-        name: '测试图',
-        description: '',
-        thumbnail: undefined,
-        linkedVocabularyTypes: [],
-        nodeStyle: undefined,
-        nodeCount: nodes.length,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
+    graphs: [createGraphMeta({ id: 'graph-1', name: '测试图', nodeCount: nodes.length })],
     isLoading: false,
     error: null
   })
@@ -229,19 +239,7 @@ describe('OrganizationStore - 树遍历辅助方法', () => {
   describe('setGraphs', () => {
     it('应该设置图列表并清除加载状态', () => {
       const store = useOrganizationStore.getState()
-      const graphs = [
-        {
-          id: 'g1',
-          name: '图1',
-          description: '',
-          thumbnail: undefined,
-          linkedVocabularyTypes: [],
-          nodeStyle: undefined,
-          nodeCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ]
+      const graphs = [createGraphMeta({ id: 'g1', name: '图1', nodeCount: 0 })]
       store.setGraphs(graphs)
 
       const state = useOrganizationStore.getState()

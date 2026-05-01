@@ -230,6 +230,76 @@ describe('ParamValidator', () => {
 
     expect(() => validator.validate()).not.toThrow()
   })
+
+  it('should support string chain validation', () => {
+    const validator = validateParams().string('hello', 'name')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support number chain validation', () => {
+    const validator = validateParams().number(42, 'age')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support positiveInt chain validation', () => {
+    const validator = validateParams().positiveInt(5, 'count')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support boolean chain validation', () => {
+    const validator = validateParams().boolean(true, 'enabled')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support object chain validation', () => {
+    const validator = validateParams().object({ key: 'value' }, 'data')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support array chain validation', () => {
+    const validator = validateParams().array([1, 2, 3], 'items')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should support stringArray chain validation', () => {
+    const validator = validateParams().stringArray(['a', 'b'], 'names')
+    expect(() => validator.validate()).not.toThrow()
+  })
+
+  it('should throw for invalid string chain validation', () => {
+    const validator = validateParams().string(123, 'name')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid number chain validation', () => {
+    const validator = validateParams().number('42', 'age')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid positiveInt chain validation', () => {
+    const validator = validateParams().positiveInt(-1, 'count')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid boolean chain validation', () => {
+    const validator = validateParams().boolean(1, 'enabled')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid object chain validation', () => {
+    const validator = validateParams().object(null, 'data')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid array chain validation', () => {
+    const validator = validateParams().array('not-array', 'items')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
+
+  it('should throw for invalid stringArray chain validation', () => {
+    const validator = validateParams().stringArray([1, 2], 'names')
+    expect(() => validator.validate()).toThrow(ValidationError)
+  })
 })
 
 describe('validatePath', () => {

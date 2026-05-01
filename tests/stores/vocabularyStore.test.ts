@@ -27,6 +27,9 @@ function createEntry(
     typeName: '角色',
     fields: {},
     tags: [],
+    description: undefined,
+    linkedFilePath: undefined,
+    starred: false,
     order: 0,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -41,10 +44,25 @@ const sampleTypes: VocabularyType[] = [
 ]
 
 const sampleEntries: VocabularyEntry[] = [
-  createEntry({ id: 'e1', name: '张三', typeId: 'character', typeName: '角色', order: 0 }),
+  createEntry({
+    id: 'e1',
+    name: '张三',
+    typeId: 'character',
+    typeName: '角色',
+    order: 0,
+    description: '主角',
+    starred: true
+  }),
   createEntry({ id: 'e2', name: '李四', typeId: 'character', typeName: '角色', order: 1 }),
   createEntry({ id: 'e3', name: '北京', typeId: 'location', typeName: '地点', order: 0 }),
-  createEntry({ id: 'e4', name: '魔剑', typeId: 'item', typeName: '道具', order: 0 })
+  createEntry({
+    id: 'e4',
+    name: '魔剑',
+    typeId: 'item',
+    typeName: '道具',
+    order: 0,
+    linkedFilePath: 'items/magic-sword.md'
+  })
 ]
 
 describe('VocabularyStore - 辅助查询方法', () => {
@@ -196,6 +214,38 @@ describe('VocabularyStore - 辅助查询方法', () => {
       expect(state.types).toEqual([])
       expect(state.entries).toEqual([])
       expect(state.isLoaded).toBe(true)
+    })
+  })
+
+  describe('新增字段', () => {
+    it('条目应包含description字段', () => {
+      setupStore()
+      const store = useVocabularyStore.getState()
+      const entry = store.getEntryById('e1')
+      expect(entry?.description).toBe('主角')
+    })
+
+    it('条目应包含starred字段', () => {
+      setupStore()
+      const store = useVocabularyStore.getState()
+      const entry = store.getEntryById('e1')
+      expect(entry?.starred).toBe(true)
+    })
+
+    it('条目应包含linkedFilePath字段', () => {
+      setupStore()
+      const store = useVocabularyStore.getState()
+      const entry = store.getEntryById('e4')
+      expect(entry?.linkedFilePath).toBe('items/magic-sword.md')
+    })
+
+    it('未设置的可选字段应为undefined或false', () => {
+      setupStore()
+      const store = useVocabularyStore.getState()
+      const entry = store.getEntryById('e2')
+      expect(entry?.description).toBeUndefined()
+      expect(entry?.linkedFilePath).toBeUndefined()
+      expect(entry?.starred).toBe(false)
     })
   })
 })
