@@ -501,13 +501,15 @@ function TemplateEditor({
             </Title>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>提供商</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  提供商
+                </Text>
                 <Select
                   style={{ width: '100%' }}
                   placeholder="默认使用全局设置"
                   allowClear
                   value={apiConfig.provider || undefined}
-                  onChange={(value) => {
+                  onChange={value => {
                     setApiConfig(prev => ({
                       ...prev,
                       provider: value as TemplateApiConfig['provider'],
@@ -519,7 +521,9 @@ function TemplateEditor({
               </div>
               {apiConfig.provider && (
                 <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>模型</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    模型
+                  </Text>
                   {availableModels.length > 0 ? (
                     <Select
                       style={{ width: '100%' }}
@@ -527,7 +531,7 @@ function TemplateEditor({
                       allowClear
                       showSearch
                       value={apiConfig.model || undefined}
-                      onChange={(value) => {
+                      onChange={value => {
                         setApiConfig(prev => ({ ...prev, model: value }))
                       }}
                       options={availableModels.map(m => ({ value: m, label: m }))}
@@ -536,7 +540,7 @@ function TemplateEditor({
                     <Input
                       placeholder="输入模型名称"
                       value={apiConfig.model || ''}
-                      onChange={(e) => {
+                      onChange={e => {
                         setApiConfig(prev => ({ ...prev, model: e.target.value }))
                       }}
                     />
@@ -546,27 +550,31 @@ function TemplateEditor({
               {apiConfig.provider && (
                 <>
                   <div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>温度 ({apiConfig.temperature ?? 0.7})</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      温度 ({apiConfig.temperature ?? 0.7})
+                    </Text>
                     <InputNumber
                       style={{ width: '100%' }}
                       min={0}
                       max={2}
                       step={0.1}
                       value={apiConfig.temperature ?? 0.7}
-                      onChange={(value) => {
+                      onChange={value => {
                         setApiConfig(prev => ({ ...prev, temperature: value ?? undefined }))
                       }}
                     />
                   </div>
                   <div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>最大 Token ({apiConfig.maxTokens ?? 2000})</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      最大 Token ({apiConfig.maxTokens ?? 2000})
+                    </Text>
                     <InputNumber
                       style={{ width: '100%' }}
                       min={100}
                       max={32000}
                       step={100}
                       value={apiConfig.maxTokens ?? 2000}
-                      onChange={(value) => {
+                      onChange={value => {
                         setApiConfig(prev => ({ ...prev, maxTokens: value ?? undefined }))
                       }}
                     />

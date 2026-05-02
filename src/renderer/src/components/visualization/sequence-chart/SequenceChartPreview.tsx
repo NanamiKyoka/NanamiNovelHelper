@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
-import type { SequenceEvent, SequenceEventType } from '@shared/sequence-chart'
+import type { SequenceEvent } from '@shared/sequence-chart'
 import { BUILT_IN_EVENT_TYPES } from '@shared/sequence-chart'
 import { getThemeColor } from '@utils/theme'
 import styles from './SequenceChartPreview.module.css'

@@ -1,6 +1,11 @@
 import { BrowserWindow } from 'electron'
 import { globalSettingsService } from './globalSettings'
-import type { AIProvider, AiApiCallOptions, AiApiCallResult, AiApiStreamChunk } from '@shared/ai-assistant'
+import type {
+  AIProvider,
+  AiApiCallOptions,
+  AiApiCallResult,
+  AiApiStreamChunk
+} from '@shared/ai-assistant'
 
 const DEFAULT_MAX_TOKENS = 2000
 const DEFAULT_TEMPERATURE = 0.7
@@ -242,14 +247,7 @@ class AiApiService {
             win
           )
         case 'anthropic':
-          return await this.callAnthropicStream(
-            prompt,
-            options,
-            apiKey,
-            config,
-            startTime,
-            win
-          )
+          return await this.callAnthropicStream(prompt, options, apiKey, config, startTime, win)
         case 'custom':
           return await this.callCustomStream(prompt, options, apiKey, startTime, win)
         default: {

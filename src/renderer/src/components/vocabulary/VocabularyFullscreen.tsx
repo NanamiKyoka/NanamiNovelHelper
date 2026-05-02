@@ -411,7 +411,9 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       setLoading(true)
 
       const colorValue =
-        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || 'var(--color-primary)'
+        typeof values.color === 'string'
+          ? values.color
+          : values.color?.toHexString?.() || 'var(--color-primary)'
 
       if (editingType) {
         await updateType(editingType.id, {

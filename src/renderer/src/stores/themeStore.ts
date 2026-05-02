@@ -6,7 +6,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ThemeConfig, ThemeMode } from '@types/theme'
 import { DEFAULT_THEME } from '@types/theme'
-import { getSystemTheme, resolveThemeMode, onSystemThemeChange } from '@utils/theme'
+import { resolveThemeMode, onSystemThemeChange } from '@utils/theme'
 
 interface ThemeState {
   config: ThemeConfig

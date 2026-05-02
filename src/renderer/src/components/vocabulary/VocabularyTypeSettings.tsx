@@ -369,7 +369,9 @@ function VocabularyTypeSettings({
       setLoading(true)
 
       const colorValue =
-        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || 'var(--color-primary)'
+        typeof values.color === 'string'
+          ? values.color
+          : values.color?.toHexString?.() || 'var(--color-primary)'
 
       if (editingType) {
         // 编辑现有类型

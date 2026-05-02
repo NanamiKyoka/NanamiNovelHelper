@@ -137,7 +137,9 @@ export function ApiSettings(): JSX.Element {
   const [configs, setConfigs] = useState<ApiConfig[]>([])
   const [, setLoading] = useState<Record<string, boolean>>({})
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
-  const [testStates, setTestStates] = useState<Record<string, 'idle' | 'testing' | 'success' | 'fail'>>({})
+  const [testStates, setTestStates] = useState<
+    Record<string, 'idle' | 'testing' | 'success' | 'fail'>
+  >({})
   const [form] = Form.useForm()
   const [customForm] = Form.useForm()
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -238,7 +240,12 @@ export function ApiSettings(): JSX.Element {
     }
   }
 
-  const handleSaveCustom = async (values: { name: string; key: string; baseUrl: string; apiFormat: ApiFormat }) => {
+  const handleSaveCustom = async (values: {
+    name: string
+    key: string
+    baseUrl: string
+    apiFormat: ApiFormat
+  }) => {
     const customId = `custom_${Date.now()}`
     setLoading(prev => ({ ...prev, [customId]: true }))
 
@@ -258,7 +265,10 @@ export function ApiSettings(): JSX.Element {
       const customList = [...customConfigs, newCustomConfig]
       setCustomConfigs(customList)
 
-      await setApiKey('custom_providers', JSON.stringify(customList.map(c => ({ id: c.id, name: c.name }))))
+      await setApiKey(
+        'custom_providers',
+        JSON.stringify(customList.map(c => ({ id: c.id, name: c.name })))
+      )
 
       customForm.resetFields()
       setShowCustomForm(false)
@@ -279,7 +289,10 @@ export function ApiSettings(): JSX.Element {
       const newCustomConfigs = customConfigs.filter(c => c.id !== id)
       setCustomConfigs(newCustomConfigs)
 
-      await setApiKey('custom_providers', JSON.stringify(newCustomConfigs.map(c => ({ id: c.id, name: c.name }))))
+      await setApiKey(
+        'custom_providers',
+        JSON.stringify(newCustomConfigs.map(c => ({ id: c.id, name: c.name })))
+      )
 
       message.success('已删除')
     } catch (_error) {
@@ -333,7 +346,7 @@ export function ApiSettings(): JSX.Element {
           </div>
           <Popconfirm
             title="确定删除此 API 密钥？"
-            onConfirm={() => isCustom ? handleDeleteCustom(config.id) : handleDelete(config.id)}
+            onConfirm={() => (isCustom ? handleDeleteCustom(config.id) : handleDelete(config.id))}
             okText="删除"
             cancelText="取消"
           >
@@ -356,10 +369,14 @@ export function ApiSettings(): JSX.Element {
             <Text type="secondary" style={{ fontSize: 12 }}>
               Base URL: {config.baseUrl}
               {officialBaseUrl && config.baseUrl !== officialBaseUrl && (
-                <Tag color="orange" style={{ marginLeft: 8 }}>自定义</Tag>
+                <Tag color="orange" style={{ marginLeft: 8 }}>
+                  自定义
+                </Tag>
               )}
               {officialBaseUrl && config.baseUrl === officialBaseUrl && (
-                <Tag color="green" style={{ marginLeft: 8 }}>官方</Tag>
+                <Tag color="green" style={{ marginLeft: 8 }}>
+                  官方
+                </Tag>
               )}
             </Text>
           </div>
@@ -397,7 +414,8 @@ export function ApiSettings(): JSX.Element {
     <div className={baseStyles.container}>
       <Card title="内置 AI 服务提供商" className={baseStyles.card}>
         <p className={baseStyles.hint}>
-          选择主流 AI 服务提供商，系统已预置官方 API 地址。您也可以自定义 Base URL 以使用代理或私有部署。
+          选择主流 AI 服务提供商，系统已预置官方 API 地址。您也可以自定义 Base URL
+          以使用代理或私有部署。
         </p>
 
         {configs.length === 0 ? (
@@ -436,13 +454,11 @@ export function ApiSettings(): JSX.Element {
             <div key={preset.id} className={styles.formItem}>
               <div className={styles.providerHeader}>
                 <Text strong>{preset.name}</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>{preset.description}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {preset.description}
+                </Text>
               </div>
-              <Form.Item
-                name={`${preset.id}_key`}
-                label="API Key"
-                rules={[{ required: false }]}
-              >
+              <Form.Item name={`${preset.id}_key`} label="API Key" rules={[{ required: false }]}>
                 <Input.Password placeholder={`输入 ${preset.name} API Key`} visibilityToggle />
               </Form.Item>
               <Form.Item
@@ -451,7 +467,9 @@ export function ApiSettings(): JSX.Element {
                   <Space>
                     <span>Base URL</span>
                     <Tooltip title={`官方地址: ${preset.officialBaseUrl}，留空则使用官方地址`}>
-                      <QuestionCircleOutlined style={{ color: 'var(--ant-color-text-secondary)' }} />
+                      <QuestionCircleOutlined
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      />
                     </Tooltip>
                   </Space>
                 }
@@ -498,7 +516,8 @@ export function ApiSettings(): JSX.Element {
         className={baseStyles.card}
       >
         <p className={baseStyles.hint}>
-          配置兼容 OpenAI 或 Anthropic API 格式的第三方服务。适用于私有部署、代理服务或其他兼容服务。
+          配置兼容 OpenAI 或 Anthropic API
+          格式的第三方服务。适用于私有部署、代理服务或其他兼容服务。
         </p>
 
         {customConfigs.length > 0 && (
@@ -528,7 +547,8 @@ export function ApiSettings(): JSX.Element {
               description={
                 <div>
                   <p style={{ margin: '4px 0' }}>
-                    <strong>OpenAI 兼容格式:</strong> 适用于大多数第三方服务，端点通常为 /v1/chat/completions
+                    <strong>OpenAI 兼容格式:</strong> 适用于大多数第三方服务，端点通常为
+                    /v1/chat/completions
                   </p>
                   <p style={{ margin: '4px 0' }}>
                     <strong>Anthropic 格式:</strong> 适用于 Claude 兼容服务，端点通常为 /v1/messages
@@ -591,10 +611,12 @@ export function ApiSettings(): JSX.Element {
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
                   保存
                 </Button>
-                <Button onClick={() => {
-                  setShowCustomForm(false)
-                  customForm.resetFields()
-                }}>
+                <Button
+                  onClick={() => {
+                    setShowCustomForm(false)
+                    customForm.resetFields()
+                  }}
+                >
                   取消
                 </Button>
               </Space>

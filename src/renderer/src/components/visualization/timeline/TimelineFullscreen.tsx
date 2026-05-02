@@ -15,8 +15,7 @@ import {
   Tooltip,
   DatePicker,
   Dropdown,
-  Drawer,
-  theme
+  Drawer
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -122,7 +121,10 @@ function SortableTimelineNode({
       onContextMenu={onContextMenu}
     >
       <div className={styles.timelineLine}>
-        <div className={styles.timelineDot} style={{ backgroundColor: node.color || 'var(--color-primary)' }} />
+        <div
+          className={styles.timelineDot}
+          style={{ backgroundColor: node.color || 'var(--color-primary)' }}
+        />
         {index < totalCount - 1 && <div className={styles.timelineConnector} />}
       </div>
       <div className={styles.timelineContent}>
@@ -185,12 +187,7 @@ function SortableTimelineNode({
 }
 
 function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JSX.Element {
-  const { token } = theme.useToken()
   const { modal, message } = App.useApp()
-  const isDarkMode =
-    token.colorBgContainer === '#141414' ||
-    token.colorBgContainer === '#1f1f1f' ||
-    token.colorTextBase === '#fff'
 
   const {
     currentTimeline,
@@ -319,7 +316,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
 
     const dataUrl = canvas.toDataURL('image/png')
     saveThumbnail(dataUrl)
-  }, [currentTimeline, isDarkMode, saveThumbnail])
+  }, [currentTimeline, saveThumbnail])
 
   // 缩略图生成 - 延迟执行
   const currentTimelineRef = useRef(currentTimeline)
@@ -391,7 +388,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     info => {
       const templates: Record<string, { title: string; description: string; color: string }> = {
         event: { title: '新事件', description: '', color: getThemeColor('--color-primary') },
-        turning: { title: '转折点', description: '故事方向发生重大变化', color: THEME_COLORS.orange },
+        turning: {
+          title: '转折点',
+          description: '故事方向发生重大变化',
+          color: THEME_COLORS.orange
+        },
         climax: { title: '高潮', description: '故事的紧张巅峰', color: THEME_COLORS.red },
         ending: { title: '结局', description: '', color: THEME_COLORS.success }
       }
@@ -1002,23 +1003,21 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           <div className={styles.formItem}>
             <label className={styles.formLabel}>节点颜色</label>
             <div className={styles.colorPicker}>
-              {CHART_PALETTE.map(
-                color => (
-                  <div
-                    key={color}
-                    className={`${styles.colorOption} ${
-                      nodeEdit.node?.color === color ? styles.colorSelected : ''
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() =>
-                      setNodeEdit(prev => ({
-                        ...prev,
-                        node: { ...prev.node, color }
-                      }))
-                    }
-                  />
-                )
-              )}
+              {CHART_PALETTE.map(color => (
+                <div
+                  key={color}
+                  className={`${styles.colorOption} ${
+                    nodeEdit.node?.color === color ? styles.colorSelected : ''
+                  }`}
+                  style={{ backgroundColor: color }}
+                  onClick={() =>
+                    setNodeEdit(prev => ({
+                      ...prev,
+                      node: { ...prev.node, color }
+                    }))
+                  }
+                />
+              ))}
             </div>
           </div>
 

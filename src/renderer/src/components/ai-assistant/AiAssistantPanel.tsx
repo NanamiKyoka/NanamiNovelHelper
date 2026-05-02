@@ -209,7 +209,7 @@ function AiAssistantPanel(): JSX.Element {
         })
         message.success('模板已更新')
       }
-    } catch (error) {
+    } catch (_error) {
       message.error('更新失败')
     }
     setQuickEditId(null)
@@ -351,10 +351,26 @@ function AiAssistantPanel(): JSX.Element {
     ]
 
     return (
-      <List.Item actions={isQuickEditing ? [
-        <Button key="save" type="link" size="small" icon={<SaveOutlined />} onClick={handleSaveQuickEdit}>保存</Button>,
-        <Button key="cancel" type="link" size="small" onClick={handleCancelQuickEdit}>取消</Button>
-      ] : templateActions}>
+      <List.Item
+        actions={
+          isQuickEditing
+            ? [
+                <Button
+                  key="save"
+                  type="link"
+                  size="small"
+                  icon={<SaveOutlined />}
+                  onClick={handleSaveQuickEdit}
+                >
+                  保存
+                </Button>,
+                <Button key="cancel" type="link" size="small" onClick={handleCancelQuickEdit}>
+                  取消
+                </Button>
+              ]
+            : templateActions
+        }
+      >
         <List.Item.Meta
           avatar={CATEGORY_ICONS[item.category]}
           title={
@@ -533,7 +549,9 @@ function AiAssistantPanel(): JSX.Element {
 
     const duration =
       item.completedAt && item.startedAt
-        ? Math.round((new Date(item.completedAt).getTime() - new Date(item.startedAt).getTime()) / 1000)
+        ? Math.round(
+            (new Date(item.completedAt).getTime() - new Date(item.startedAt).getTime()) / 1000
+          )
         : null
 
     const outputPreview = Object.values(item.stepOutputs || {})
@@ -574,7 +592,9 @@ function AiAssistantPanel(): JSX.Element {
               <Tag color={config.color}>{config.text}</Tag>
               {duration !== null && (
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  {duration >= 60 ? `${Math.floor(duration / 60)}分${duration % 60}秒` : `${duration}秒`}
+                  {duration >= 60
+                    ? `${Math.floor(duration / 60)}分${duration % 60}秒`
+                    : `${duration}秒`}
                 </Text>
               )}
             </Space>

@@ -196,7 +196,9 @@ function SortableTimelineItem({
             node.branchedTimelineIds.length > 0 && (
               <div className={styles.branchMark}>
                 <BranchesOutlined style={{ color: THEME_COLORS.purple }} />
-                <Text style={{ color: THEME_COLORS.purple }}>{node.branchedTimelineIds.length} 个分支</Text>
+                <Text style={{ color: THEME_COLORS.purple }}>
+                  {node.branchedTimelineIds.length} 个分支
+                </Text>
                 {node.branchedTimelineIds.map((id, idx) => (
                   <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
                     分支 {idx + 1}

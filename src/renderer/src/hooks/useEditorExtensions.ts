@@ -45,12 +45,7 @@ interface UseEditorExtensionsOptions {
  * 获取编辑器扩展配置
  */
 export function useEditorExtensions(options: UseEditorExtensionsOptions) {
-  const {
-    styleConfig,
-    highlightEnabled = true,
-    onVocabularyClick,
-    onVocabularyHover
-  } = options
+  const { styleConfig, highlightEnabled = true, onVocabularyClick, onVocabularyHover } = options
 
   const getExtensions = useCallback(() => {
     const defaultStyleConfig: HighlightStyleConfig = {

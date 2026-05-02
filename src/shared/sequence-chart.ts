@@ -3,7 +3,13 @@
  * 主进程和渲染进程共享
  */
 
-import { THEME_COLORS, CHART_PALETTE, DEFAULT_COLORS, NEUTRAL_COLORS, FUNCTIONAL_COLORS } from './constants/colors'
+import {
+  THEME_COLORS,
+  CHART_PALETTE,
+  DEFAULT_COLORS,
+  NEUTRAL_COLORS,
+  FUNCTIONAL_COLORS
+} from './constants/colors'
 
 // ============================================
 // 时间格式定义

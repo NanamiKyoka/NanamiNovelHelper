@@ -2,7 +2,7 @@
  * 工作流执行器组件
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Modal,
   Input,
@@ -152,10 +152,7 @@ function WorkflowExecutor({
     currentExecution,
     skills,
     cancelExecution,
-    callApi,
     callApiStream,
-    streamingContent,
-    isStreaming,
     onStreamChunk,
     removeStreamChunkListener,
     resolveVariables,

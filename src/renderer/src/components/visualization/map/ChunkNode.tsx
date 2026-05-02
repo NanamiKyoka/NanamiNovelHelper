@@ -157,7 +157,13 @@ export function ChunkNode({
           <path
             d={hexPath}
             fill={chunk.color}
-            stroke={isConnectingFrom ? '#52c41a' : isSelected ? getThemeColor('--color-primary') : 'rgba(255,255,255,0.3)'}
+            stroke={
+              isConnectingFrom
+                ? '#52c41a'
+                : isSelected
+                  ? getThemeColor('--color-primary')
+                  : 'rgba(255,255,255,0.3)'
+            }
             strokeWidth={isConnectingFrom ? 4 : isSelected ? 3 : 1}
           />
         </svg>

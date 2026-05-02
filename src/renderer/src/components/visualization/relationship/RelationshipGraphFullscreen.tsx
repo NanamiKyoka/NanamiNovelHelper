@@ -630,7 +630,12 @@ function RelationshipGraphFullscreen({
   }
 
   const handleOpenRelationTypeSettings = () => {
-    setRelationTypeModal({ visible: true, editingType: null, name: '', color: getThemeColor('--color-primary') })
+    setRelationTypeModal({
+      visible: true,
+      editingType: null,
+      name: '',
+      color: getThemeColor('--color-primary')
+    })
   }
 
   const handleAddRelationType = async () => {
@@ -651,7 +656,12 @@ function RelationshipGraphFullscreen({
 
     const customTypes = currentGraph?.customRelationTypes || []
     await updateGraph({ customRelationTypes: [...customTypes, newType] })
-    setRelationTypeModal({ visible: false, editingType: null, name: '', color: getThemeColor('--color-primary') })
+    setRelationTypeModal({
+      visible: false,
+      editingType: null,
+      name: '',
+      color: getThemeColor('--color-primary')
+    })
     message.success('关系类型已添加')
   }
 
@@ -1048,7 +1058,12 @@ function RelationshipGraphFullscreen({
         title="添加自定义关系类型"
         open={relationTypeModal.visible}
         onCancel={() =>
-          setRelationTypeModal({ visible: false, editingType: null, name: '', color: getThemeColor('--color-primary') })
+          setRelationTypeModal({
+            visible: false,
+            editingType: null,
+            name: '',
+            color: getThemeColor('--color-primary')
+          })
         }
         onOk={handleAddRelationType}
         okText="添加"

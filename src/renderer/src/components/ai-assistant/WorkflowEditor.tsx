@@ -51,8 +51,6 @@ const CATEGORY_OPTIONS: { value: TemplateCategory; label: string }[] = [
   { value: 'polishing', label: '润色修改' }
 ]
 
-
-
 interface WorkflowEditorProps {
   workflowId?: string
   onBack: () => void
@@ -392,7 +390,6 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
               allowClear
             />
           </div>
-
         </div>
       </Card>
     )

@@ -504,7 +504,10 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => {
     let content = template.content || ''
 
-    const variableMap = new Map<string, { value: VariableValue; variable: typeof template.variables[0] }>()
+    const variableMap = new Map<
+      string,
+      { value: VariableValue; variable: (typeof template.variables)[0] }
+    >()
     for (const variable of template.variables) {
       const value = variables[variable.id]
       if (value) {
@@ -512,7 +515,11 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       }
     }
 
-    const getReplacement = (key: string, value: VariableValue, variable: typeof template.variables[0]): string => {
+    const getReplacement = (
+      key: string,
+      value: VariableValue,
+      _variable: (typeof template.variables)[0]
+    ): string => {
       if (value.entryData && typeof value.entryData === 'object') {
         const propertyMatch = key.match(/\.(\w+)$/)
         if (propertyMatch) {
@@ -533,50 +540,62 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
 
     for (const [key, { value, variable }] of variableMap) {
-      let replacement = getReplacement(key, value, variable)
-      const regex = new RegExp(`\\{\\{${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\.\\w+)?\\}\\}`, 'g')
+      const replacement = getReplacement(key, value, variable)
+      const regex = new RegExp(
+        `\\{\\{${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\.\\w+)?\\}\\}`,
+        'g'
+      )
       content = content.replace(regex, replacement)
     }
 
-    content = content.replace(/\{\{(\w+)(?:\.(\w+))?\|([^}]+)\}\}/g, (match, key, prop, defaultVal) => {
-      const entry = variableMap.get(key)
-      if (!entry) return defaultVal
-      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
-        const val = (entry.value.entryData as Record<string, unknown>)[prop]
-        return val ? String(val) : defaultVal
+    content = content.replace(
+      /\{\{(\w+)(?:\.(\w+))?\|([^}]+)\}\}/g,
+      (match, key, prop, defaultVal) => {
+        const entry = variableMap.get(key)
+        if (!entry) return defaultVal
+        if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+          const val = (entry.value.entryData as Record<string, unknown>)[prop]
+          return val ? String(val) : defaultVal
+        }
+        if (!prop) {
+          const replacement = getReplacement(key, entry.value, entry.variable)
+          return replacement || defaultVal
+        }
+        return defaultVal
       }
-      if (!prop) {
-        const replacement = getReplacement(key, entry.value, entry.variable)
-        return replacement || defaultVal
-      }
-      return defaultVal
-    })
+    )
 
-    content = content.replace(/\{\{#if\s+(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, prop, body) => {
-      const entry = variableMap.get(key)
-      if (!entry) return ''
-      let hasValue = false
-      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
-        hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
-      } else if (!prop) {
-        const replacement = getReplacement(key, entry.value, entry.variable)
-        hasValue = replacement !== ''
+    content = content.replace(
+      /\{\{#if\s+(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g,
+      (_, key, prop, body) => {
+        const entry = variableMap.get(key)
+        if (!entry) return ''
+        let hasValue = false
+        if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+          hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
+        } else if (!prop) {
+          const replacement = getReplacement(key, entry.value, entry.variable)
+          hasValue = replacement !== ''
+        }
+        return hasValue ? body : ''
       }
-      return hasValue ? body : ''
-    })
+    )
 
-    content = content.replace(/\{\{#if\s+!(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, prop, body) => {
-      const entry = variableMap.get(key)
-      if (!entry) return body
-      let hasValue = false
-      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
-        hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
-      } else if (!prop) {
-        const replacement = getReplacement(key, entry.value, entry.variable)
-        hasValue = replacement !== ''
+    content = content.replace(
+      /\{\{#if\s+!(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g,
+      (_, key, prop, body) => {
+        const entry = variableMap.get(key)
+        if (!entry) return body
+        let hasValue = false
+        if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+          hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
+        } else if (!prop) {
+          const replacement = getReplacement(key, entry.value, entry.variable)
+          hasValue = replacement !== ''
+        }
+        return hasValue ? '' : body
       }
-      return hasValue ? '' : body
-    })
+    )
 
     return content
   },

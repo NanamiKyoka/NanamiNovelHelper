@@ -3,7 +3,7 @@
  */
 
 import { useCallback } from 'react'
-import { Form, Select, Switch, Slider, message, Checkbox, Card } from 'antd'
+import { Form, Select, Slider, message, Checkbox, Card } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorSettings, StatusBarConfig } from '@types/editor'
 import baseStyles from './SettingsBase.module.css'
@@ -138,7 +138,6 @@ export function EditorSettings() {
           </Form.Item>
         </Form>
       </Card>
-
     </div>
   )
 }

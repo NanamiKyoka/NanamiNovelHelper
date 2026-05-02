@@ -211,7 +211,9 @@ export function HighlightHoverCard({
           </Text>
           <div
             className={styles.colorIndicator}
-            style={{ backgroundColor: entry.color || vocabularyType?.color || 'var(--color-primary)' }}
+            style={{
+              backgroundColor: entry.color || vocabularyType?.color || 'var(--color-primary)'
+            }}
           />
           {vocabularyType && <Tag color={vocabularyType.color}>{vocabularyType.name}</Tag>}
         </div>

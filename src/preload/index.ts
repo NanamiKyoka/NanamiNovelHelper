@@ -1626,7 +1626,15 @@ const api = {
       ipcRenderer.invoke('aiAssistant:callApi', prompt, options),
     callApiStream: (prompt: string, options?: Record<string, unknown>) =>
       ipcRenderer.invoke('aiAssistant:callApiStream', prompt, options),
-    onStreamChunk: (callback: (chunk: { type: string; content?: string; error?: string; tokensUsed?: { input: number; output: number }; duration?: number }) => void) => {
+    onStreamChunk: (
+      callback: (chunk: {
+        type: string
+        content?: string
+        error?: string
+        tokensUsed?: { input: number; output: number }
+        duration?: number
+      }) => void
+    ) => {
       ipcRenderer.on('aiAssistant:streamChunk', (_, chunk) => callback(chunk))
     },
     removeStreamChunkListener: () => {

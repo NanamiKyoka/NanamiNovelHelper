@@ -1382,11 +1382,17 @@ interface AiAssistantAPI {
   importWorkflow: (json5Content: string) => Promise<Record<string, unknown> | null>
   createExecution: (workflowId: string, workflowName: string) => Promise<Record<string, unknown>>
   getExecution: (id: string) => Promise<Record<string, unknown> | null>
-  updateExecution: (id: string, updates: Record<string, unknown>) => Promise<Record<string, unknown> | null>
+  updateExecution: (
+    id: string,
+    updates: Record<string, unknown>
+  ) => Promise<Record<string, unknown> | null>
   getExecutionHistory: () => Promise<Array<Record<string, unknown>>>
   deleteExecution: (id: string) => Promise<boolean>
   callApi: (prompt: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>
-  callApiStream: (prompt: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>
+  callApiStream: (
+    prompt: string,
+    options?: Record<string, unknown>
+  ) => Promise<Record<string, unknown>>
   onStreamChunk: (callback: (chunk: AiApiStreamChunk) => void) => void
   removeStreamChunkListener: () => void
   testApiConnection: (provider: string) => Promise<{ success: boolean; error?: string }>
