@@ -19,6 +19,7 @@ import type {
   GlobalLayoutSettings
 } from '@shared/settings'
 import { DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROJECT_SETTINGS } from '@shared/settings'
+import { getSystemTheme, onSystemThemeChange } from '@utils/theme'
 
 interface SettingsState {
   isLoading: boolean
@@ -66,14 +67,6 @@ interface SettingsState {
   setProjectSettings: (settings: ProjectSettings) => void
   importBackup: () => Promise<string | null>
   getResolvedThemeMode: () => 'light' | 'dark'
-}
-
-/** 获取系统主题偏好 */
-const getSystemTheme = (): 'light' | 'dark' => {
-  if (typeof window !== 'undefined') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-  }
-  return 'light'
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -344,13 +337,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   }
 }))
 
-// 监听系统主题变化，自动更新
-if (typeof window !== 'undefined') {
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  mediaQuery.addEventListener('change', _e => {
-    const state = useSettingsStore.getState()
-    if (state.globalSettings.theme.mode === 'system') {
-      useSettingsStore.setState({ globalSettings: { ...state.globalSettings } })
-    }
-  })
-}
+onSystemThemeChange(() => {
+  const state = useSettingsStore.getState()
+  if (state.globalSettings.theme.mode === 'system') {
+    useSettingsStore.setState({ globalSettings: { ...state.globalSettings } })
+  }
+})

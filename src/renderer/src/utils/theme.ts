@@ -2,6 +2,30 @@
  * 主题相关工具函数
  */
 
+import type { ThemeMode } from '@types/theme'
+
+export function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window !== 'undefined') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return 'light'
+}
+
+export function resolveThemeMode(mode: ThemeMode): 'light' | 'dark' {
+  if (mode === 'system') {
+    return getSystemTheme()
+  }
+  return mode
+}
+
+export function onSystemThemeChange(callback: (isDark: boolean) => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const handler = (e: MediaQueryListEvent) => callback(e.matches)
+  mediaQuery.addEventListener('change', handler)
+  return () => mediaQuery.removeEventListener('change', handler)
+}
+
 export type ThemeColorVar =
   | '--text-primary'
   | '--text-secondary'
