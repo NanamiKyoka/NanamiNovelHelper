@@ -3,7 +3,7 @@
  * 负责图片的上传、压缩、存储等
  */
 
-import { join, extname } from 'path'
+import { join, extname, normalize, relative } from 'path'
 import { existsSync, mkdirSync, unlinkSync, readFileSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
@@ -44,6 +44,21 @@ export interface ImageUploadResult {
  * 图片服务
  */
 class ImageService {
+  private isPathInProject(projectPath: string, imagePath: string): boolean {
+    if (imagePath.startsWith('data:')) return true
+    const fullPath = normalize(join(projectPath, imagePath))
+    const normalizedProject = normalize(projectPath)
+    const rel = relative(normalizedProject, fullPath)
+    return !rel.startsWith('..') && !rel.startsWith('/') && !rel.startsWith('\\')
+  }
+
+  private safeImagePath(projectPath: string, imagePath: string): string {
+    if (imagePath.startsWith('data:')) return imagePath
+    if (!this.isPathInProject(projectPath, imagePath)) {
+      throw new Error('图片路径不在项目目录内')
+    }
+    return join(projectPath, imagePath)
+  }
   /**
    * 获取图片存储目录路径
    */
@@ -224,36 +239,24 @@ class ImageService {
    * @param imagePath 图片路径（相对于项目根目录）
    */
   async deleteImage(projectPath: string, imagePath: string): Promise<void> {
-    const fullPath = join(projectPath, imagePath)
+    const fullPath = this.safeImagePath(projectPath, imagePath)
     if (existsSync(fullPath)) {
       unlinkSync(fullPath)
     }
   }
 
-  /**
-   * 获取图片的完整路径
-   * @param projectPath 项目路径
-   * @param imagePath 图片路径（相对于项目根目录）
-   */
   getFullImagePath(projectPath: string, imagePath: string): string {
-    // 如果是 Base64 数据，直接返回
     if (imagePath.startsWith('data:')) {
       return imagePath
     }
-    return join(projectPath, imagePath)
+    return this.safeImagePath(projectPath, imagePath)
   }
 
-  /**
-   * 检查图片是否存在
-   * @param projectPath 项目路径
-   * @param imagePath 图片路径（相对于项目根目录）
-   */
   imageExists(projectPath: string, imagePath: string): boolean {
-    // Base64 数据总是存在
     if (imagePath.startsWith('data:')) {
       return true
     }
-    return existsSync(join(projectPath, imagePath))
+    return existsSync(this.safeImagePath(projectPath, imagePath))
   }
 
   /**
@@ -279,12 +282,11 @@ class ImageService {
    * @param imagePath 图片路径（相对于项目根目录）
    */
   async readAsBase64(projectPath: string, imagePath: string): Promise<string> {
-    // 如果已经是 Base64，直接返回
     if (imagePath.startsWith('data:')) {
       return imagePath
     }
 
-    const fullPath = join(projectPath, imagePath)
+    const fullPath = this.safeImagePath(projectPath, imagePath)
     if (!existsSync(fullPath)) {
       throw new Error('图片文件不存在')
     }

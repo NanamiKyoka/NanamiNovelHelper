@@ -33,54 +33,55 @@ export interface SortOptions {
 /**
  * 文件系统服务
  */
+function isPathInProjectInternal(absolutePath: string, projectPath: string | null): boolean {
+  if (!projectPath) return false
+
+  try {
+    const normalizedPath = normalize(absolutePath)
+    const normalizedProject = normalize(projectPath)
+
+    if (!existsSync(normalizedPath)) {
+      const relativePath = relative(normalizedProject, normalizedPath)
+      return !relativePath.startsWith('..') && !relativePath.startsWith('/')
+    }
+
+    const realPath = realpathSync(normalizedPath)
+    const realProject = realpathSync(normalizedProject)
+
+    const relativePath = relative(realProject, realPath)
+
+    return (
+      !relativePath.startsWith('..') &&
+      !relativePath.startsWith('/') &&
+      !relativePath.startsWith('\\')
+    )
+  } catch {
+    return false
+  }
+}
+
 class FileService {
   private currentProjectPath: string | null = null
   private logger = createLogger('FileService')
 
-  /**
-   * 初始化文件服务
-   */
   init(projectPath: string): void {
     this.currentProjectPath = projectPath
   }
 
-  /**
-   * 获取当前项目路径
-   */
   getProjectPath(): string | null {
     return this.currentProjectPath
   }
 
-  /**
-   * 检查路径是否在项目目录内（安全检查）
-   * 使用多层验证防止路径遍历攻击
-   */
   private isPathInProject(absolutePath: string): boolean {
-    if (!this.currentProjectPath) return false
+    return isPathInProjectInternal(absolutePath, this.currentProjectPath)
+  }
 
-    try {
-      const normalizedPath = normalize(absolutePath)
-      const normalizedProject = normalize(this.currentProjectPath)
+  isPathInProjectPublic(absolutePath: string): boolean {
+    return isPathInProjectInternal(absolutePath, this.currentProjectPath)
+  }
 
-      if (!existsSync(normalizedPath)) {
-        const relativePath = relative(normalizedProject, normalizedPath)
-        return !relativePath.startsWith('..') && !relativePath.startsWith('/')
-      }
-
-      const realPath = realpathSync(normalizedPath)
-      const realProject = realpathSync(normalizedProject)
-
-      const relativePath = relative(realProject, realPath)
-
-      return (
-        !relativePath.startsWith('..') &&
-        !relativePath.startsWith('/') &&
-        !relativePath.startsWith('\\')
-      )
-    } catch (error) {
-      this.logger.warn('路径验证失败', error)
-      return false
-    }
+  safeResolvePathExport(inputPath: string): string {
+    return this.safeResolvePath(inputPath)
   }
 
   /**

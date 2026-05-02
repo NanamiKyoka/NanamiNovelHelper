@@ -17,6 +17,7 @@ import {
   EyeOutlined
 } from '@ant-design/icons'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import type { GitFileDiff, GitDiffHunk } from '@shared/git'
 import { stripHtmlTagsInline, isHtmlContent, isMarkdownFile, isRenderableFile } from '@utils/html'
 import styles from './GitPanel.module.css'
@@ -232,12 +233,14 @@ function buildRenderedHtml(hunks: GitDiffHunk[], side: 'old' | 'new', isMarkdown
 
       if (group.type === 'context') {
         if (isMarkdown) {
-          segments.push(marked.parse(rawContent) as string)
+          segments.push(DOMPurify.sanitize(marked.parse(rawContent) as string))
         } else {
-          segments.push(rawContent)
+          segments.push(DOMPurify.sanitize(rawContent))
         }
       } else {
-        const renderedContent = isMarkdown ? (marked.parse(rawContent) as string) : rawContent
+        const renderedContent = isMarkdown
+          ? DOMPurify.sanitize(marked.parse(rawContent) as string)
+          : DOMPurify.sanitize(rawContent)
         const cssClass =
           group.type === 'delete' ? 'rendered-diff-block-delete' : 'rendered-diff-block-add'
         segments.push(`<div class="${cssClass}">${renderedContent}</div>`)

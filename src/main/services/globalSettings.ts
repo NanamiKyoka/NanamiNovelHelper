@@ -286,20 +286,15 @@ class GlobalSettingsService {
    */
   private encrypt(plaintext: string): string {
     if (!this.isEncryptionAvailable()) {
-      // 如果不支持加密，返回 base64 编码（不安全，但作为后备）
-      return Buffer.from(plaintext).toString('base64')
+      throw new Error('系统不支持安全加密存储，无法保存 API Key。请检查系统密钥链是否可用。')
     }
     const encrypted = safeStorage.encryptString(plaintext)
     return encrypted.toString('base64')
   }
 
-  /**
-   * 解密字符串
-   */
   private decrypt(ciphertext: string): string {
     if (!this.isEncryptionAvailable()) {
-      // 如果不支持加密，尝试 base64 解码
-      return Buffer.from(ciphertext, 'base64').toString('utf-8')
+      throw new Error('系统不支持安全加密存储，无法读取 API Key。')
     }
     const buffer = Buffer.from(ciphertext, 'base64')
     return safeStorage.decryptString(buffer)

@@ -1,5 +1,5 @@
 import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron'
-import { join } from 'path'
+import { join, normalize } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import * as fs from 'fs'
 import { registerProjectHandlers } from './ipc/project-handler'
@@ -22,6 +22,7 @@ import { terminalService } from './services/terminal'
 import { dynamicSkillService } from './services/dynamicSkill'
 import { aiAssistantService } from './services/aiAssistant'
 import { fileWatcherService } from './services/fileWatcher'
+import { isPathWithinDirectory, isAllowedUrlProtocol } from './utils/pathSecurity'
 
 // 注册 local:// 协议为特权协议（必须在 app.ready 之前）
 // 只能调用一次，所以添加标志防止重复
@@ -236,6 +237,9 @@ function registerMainWindowHandlers(): void {
 
   ipcMain.handle('shell:open-external', async (_event, url: string) => {
     try {
+      if (!isAllowedUrlProtocol(url)) {
+        return false
+      }
       await shell.openExternal(url)
       return true
     } catch {
@@ -257,16 +261,18 @@ function registerMainWindowHandlers(): void {
 app.whenReady().then(() => {
   // 注册 local:// 协议用于加载本地图片
   protocol.handle('local', request => {
-    // URL 格式：local://file/E%3A/path/to/file.png
-    // 其中 E%3A 是 URL 编码后的盘符（避免浏览器把盘符当作主机名）
     const url = request.url
-
-    // 去掉 local://file/ 前缀
     const filePath = decodeURIComponent(url.slice('local://file/'.length))
+    const normalizedPath = normalize(filePath)
+
+    const allowedDirs = [fileWatcherService.getWatchedPath()].filter(Boolean) as string[]
+    if (!allowedDirs.some(dir => isPathWithinDirectory(normalizedPath, dir))) {
+      return new Response(null, { status: 403 })
+    }
 
     try {
-      const data = fs.readFileSync(filePath)
-      const ext = filePath.split('.').pop()?.toLowerCase() || 'png'
+      const data = fs.readFileSync(normalizedPath)
+      const ext = normalizedPath.split('.').pop()?.toLowerCase() || 'png'
       const mimeType =
         ext === 'jpg' || ext === 'jpeg'
           ? 'image/jpeg'

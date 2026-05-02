@@ -3,7 +3,7 @@
  * 加载、解析和执行用户自定义的 SKILL
  */
 
-import { spawn, execSync, ChildProcess } from 'child_process'
+import { spawn, execFileSync, ChildProcess } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
@@ -88,7 +88,10 @@ export class DynamicSkillService {
     const commands = ['python', 'python3']
     for (const cmd of commands) {
       try {
-        const output = execSync(`${cmd} --version`, { encoding: 'utf-8', timeout: 5000 })
+        const output = execFileSync(cmd, ['--version'], {
+          encoding: 'utf-8',
+          timeout: 5000
+        })
         const match = output.match(/Python (\d+\.\d+\.\d+)/)
         return {
           available: true,
@@ -152,7 +155,28 @@ export class DynamicSkillService {
    * 计算 SKILL 路径的 hash
    */
   private calculatePathHash(skillPath: string): string {
-    return crypto.createHash('md5').update(skillPath).digest('hex')
+    const hash = crypto.createHash('sha256')
+    this.hashDirectory(skillPath, hash)
+    return hash.digest('hex')
+  }
+
+  private hashDirectory(dirPath: string, hash: crypto.Hash): void {
+    if (!fs.existsSync(dirPath)) return
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+    for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      const fullPath = path.join(dirPath, entry.name)
+      hash.update(entry.name)
+      if (entry.isDirectory()) {
+        this.hashDirectory(fullPath, hash)
+      } else if (entry.isFile()) {
+        try {
+          const content = fs.readFileSync(fullPath)
+          hash.update(content)
+        } catch {
+          // skip unreadable files
+        }
+      }
+    }
   }
 
   /**
@@ -286,7 +310,9 @@ export class DynamicSkillService {
 
     if (frontmatterMatch) {
       try {
-        const frontmatter = yaml.load(frontmatterMatch[1]) as Record<string, unknown>
+        const frontmatter = yaml.load(frontmatterMatch[1], {
+          schema: yaml.DEFAULT_SAFE_SCHEMA
+        }) as Record<string, unknown>
         const body = frontmatterMatch[2]
 
         const metadata: DynamicSkillMetadata = {

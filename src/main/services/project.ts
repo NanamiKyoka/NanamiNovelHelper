@@ -286,7 +286,10 @@ backup/
       const match = content.match(/^---\n([\s\S]*?)\n---/)
       if (!match) return
 
-      const frontmatter = yaml.load(match[1]) as Record<string, unknown>
+      const frontmatter = yaml.load(match[1], { schema: yaml.DEFAULT_SAFE_SCHEMA }) as Record<
+        string,
+        unknown
+      >
 
       const project: Project = {
         id: (frontmatter.id as string) || '',

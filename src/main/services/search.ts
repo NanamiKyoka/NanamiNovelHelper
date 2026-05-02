@@ -7,6 +7,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { minimatch } from 'minimatch'
 import { Errors } from '../../shared/errors'
+import { isPathWithinDirectory } from '../../main/utils/pathSecurity'
 
 /**
  * 搜索选项
@@ -238,6 +239,9 @@ class SearchService {
     let pattern: string
 
     if (useRegex) {
+      if (query.length > 500) {
+        throw Errors.invalidArgument('正则表达式长度不能超过 500 个字符', 'SearchService')
+      }
       pattern = query
     } else {
       pattern = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -340,6 +344,10 @@ class SearchService {
 
     const fullPath = path.join(this.currentProjectPath, relativePath)
 
+    if (!isPathWithinDirectory(fullPath, this.currentProjectPath)) {
+      return null
+    }
+
     try {
       // 检查文件大小
       const stats = fs.statSync(fullPath)
@@ -431,6 +439,10 @@ class SearchService {
     }
 
     const fullPath = path.join(this.currentProjectPath, filePath)
+
+    if (!isPathWithinDirectory(fullPath, this.currentProjectPath)) {
+      return { success: false, error: '文件路径不在项目目录内' }
+    }
 
     try {
       let content = fs.readFileSync(fullPath, 'utf-8')

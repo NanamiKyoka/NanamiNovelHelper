@@ -506,7 +506,7 @@ class GitService {
   async add(repoPath: string, filepaths: string[]): Promise<GitResult<void>> {
     try {
       if (this.useSystemGit) {
-        await this.execGit(repoPath, ['add', ...filepaths])
+        await this.execGit(repoPath, ['add', '--', ...filepaths])
       } else {
         for (const filepath of filepaths) {
           await git.add({ fs, dir: repoPath, filepath })
@@ -522,7 +522,7 @@ class GitService {
   async unstage(repoPath: string, filepaths: string[]): Promise<GitResult<void>> {
     try {
       if (this.useSystemGit) {
-        await this.execGit(repoPath, ['restore', '--staged', ...filepaths])
+        await this.execGit(repoPath, ['restore', '--staged', '--', ...filepaths])
       } else {
         for (const filepath of filepaths) {
           await git.resetIndex({ fs, dir: repoPath, filepath })
@@ -603,7 +603,7 @@ class GitService {
         if (source) {
           args.push('-s', source)
         }
-        args.push(...filepaths)
+        args.push('--', ...filepaths)
         await this.execGit(repoPath, args)
       } else {
         const ref = source || 'HEAD'

@@ -6,8 +6,8 @@
 import { BrowserWindow, app } from 'electron'
 import * as pty from 'node-pty'
 import { platform } from 'os'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { join, normalize } from 'path'
+import { existsSync, realpathSync } from 'fs'
 import { v4 as uuidv4 } from 'uuid'
 import { TerminalCreateOptions, TerminalInstance, TerminalSize, ShellInfo } from '../types/terminal'
 
@@ -157,20 +157,18 @@ class TerminalService {
    */
   create(options: TerminalCreateOptions, window: BrowserWindow): TerminalInstance {
     const id = uuidv4()
-    const shell = options.shellPath || this.getDefaultShell()
+    const shell = this.validateShellPath(options.shellPath)
     const name = options.name || 'Terminal'
-    const cwd = options.cwd || app.getPath('home')
+    const cwd = this.validateCwd(options.cwd)
 
-    // 准备环境变量
     const env: Record<string, string> = {
       ...process.env,
       TERM: 'xterm-256color',
       COLORTERM: 'truecolor',
-      ...options.env
+      ...(options.env ? this.sanitizeEnv(options.env) : {})
     }
 
-    // 准备 shell 参数
-    let args: string[] = options.shellArgs || []
+    let args: string[] = options.shellArgs ? this.validateShellArgs(options.shellArgs) : []
     if (platform() === 'win32') {
       // Windows 特殊处理
       if (shell.toLowerCase().includes('powershell') || shell.toLowerCase().includes('pwsh')) {
@@ -315,6 +313,43 @@ class TerminalService {
       }
     })
     this.terminals.clear()
+  }
+
+  private validateShellPath(shellPath: string | undefined): string {
+    if (!shellPath) return this.getDefaultShell()
+    const allowedPaths = this.availableShells.map(s => s.path)
+    const normalized = normalize(shellPath)
+    try {
+      const realPath = realpathSync(normalized)
+      if (allowedPaths.includes(realPath)) return realPath
+    } catch {
+      // path doesn't exist
+    }
+    if (allowedPaths.includes(normalized)) return normalized
+    return this.getDefaultShell()
+  }
+
+  private validateCwd(cwd: string | undefined): string {
+    if (!cwd) return app.getPath('home')
+    const normalized = normalize(cwd)
+    if (!existsSync(normalized)) return app.getPath('home')
+    return normalized
+  }
+
+  private validateShellArgs(args: string[]): string[] {
+    return args.filter(arg => typeof arg === 'string' && arg.length < 1000)
+  }
+
+  private sanitizeEnv(env: Record<string, string>): Record<string, string> {
+    const dangerousKeys = ['LD_PRELOAD', 'LD_LIBRARY_PATH', 'DYLD_INSERT_LIBRARIES', 'NODE_OPTIONS']
+    const sanitized: Record<string, string> = {}
+    for (const [key, value] of Object.entries(env)) {
+      if (typeof value !== 'string') continue
+      if (dangerousKeys.includes(key.toUpperCase())) continue
+      if (key.length > 100 || value.length > 10000) continue
+      sanitized[key] = value
+    }
+    return sanitized
   }
 }
 

@@ -195,7 +195,14 @@ export function registerFileHandlers(): void {
   // 解析路径
   ipcMain.handle('path:resolve', async (_, pathSegments: string[]): Promise<string> => {
     try {
-      return path.resolve(...pathSegments)
+      if (!pathSegments.every(s => typeof s === 'string' && s.length < 500)) {
+        throw new Error('无效的路径参数')
+      }
+      const resolved = path.resolve(...pathSegments)
+      if (fileService.isPathInProjectPublic(resolved)) {
+        return resolved
+      }
+      return path.basename(resolved)
     } catch (error) {
       console.error('Failed to resolve path:', error)
       throw error
@@ -227,7 +234,14 @@ export function registerFileHandlers(): void {
   // 连接路径
   ipcMain.handle('path:join', async (_, pathSegments: string[]): Promise<string> => {
     try {
-      return path.join(...pathSegments)
+      if (!pathSegments.every(s => typeof s === 'string' && s.length < 500)) {
+        throw new Error('无效的路径参数')
+      }
+      const joined = path.join(...pathSegments)
+      if (fileService.isPathInProjectPublic(joined)) {
+        return joined
+      }
+      return path.basename(joined)
     } catch (error) {
       console.error('Failed to join paths:', error)
       throw error
@@ -282,7 +296,11 @@ export function registerFileHandlers(): void {
           .nonEmptyString(filePath, 'filePath')
           .string(content, 'content')
           .validate()
-        fs.writeFileSync(filePath, content, 'utf-8')
+        const absolutePath = fileService.safeResolvePathExport(filePath)
+        if (!fileService.isPathInProjectPublic(absolutePath)) {
+          throw new Error('导出路径不在项目目录内')
+        }
+        fs.writeFileSync(absolutePath, content, 'utf-8')
         return true
       } catch (error) {
         console.error('Failed to export txt file:', error)
