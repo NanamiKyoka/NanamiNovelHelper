@@ -6,6 +6,7 @@
 
 .storageItem {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: baseline;
+  line-height: 1.6;
 }

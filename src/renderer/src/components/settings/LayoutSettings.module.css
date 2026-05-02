@@ -7,7 +7,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -37,7 +37,7 @@
 .badgeInfo {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .badgeName {
@@ -48,6 +48,7 @@
 .badgeDesc {
   font-size: 12px;
   color: var(--ant-color-text-secondary);
+  line-height: 1.5;
 }
 
 .badgeSwitches {
@@ -70,4 +71,17 @@
 .switchDivider {
   height: 20px;
   margin: 0;
+}
+
+@media (max-width: 576px) {
+  .badgeItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .badgeSwitches {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

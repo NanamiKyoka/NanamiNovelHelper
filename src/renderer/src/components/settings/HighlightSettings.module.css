@@ -1,21 +1,5 @@
-.container {
-  max-width: 800px;
-}
-
-.card {
-  margin-bottom: 16px;
-}
-
-.card :global(.ant-card-head) {
-  border-bottom: 1px solid var(--ant-color-border);
-}
-
-.card :global(.ant-card-body) {
-  padding: 16px 24px;
-}
-
 .section {
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .section h4 {
@@ -26,14 +10,15 @@
 
 .hint {
   color: var(--ant-color-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
   margin-bottom: 8px;
 }
 
 .tagList {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
   min-height: 32px;
 }
 

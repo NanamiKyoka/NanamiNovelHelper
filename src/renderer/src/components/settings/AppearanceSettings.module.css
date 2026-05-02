@@ -1,11 +1,12 @@
 .modeOptions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .systemHint {
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .colorOptions {
@@ -16,8 +17,8 @@
 }
 
 .colorItem {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -45,7 +46,7 @@
 .customColor {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .fontSizeOption {

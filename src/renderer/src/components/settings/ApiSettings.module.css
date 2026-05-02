@@ -1,5 +1,5 @@
 .apiItem {
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--ant-color-border-secondary);
 }
 
@@ -37,5 +37,5 @@
   padding-left: 20px;
   color: var(--ant-color-text-secondary);
   font-size: 13px;
-  line-height: 2;
+  line-height: 1.8;
 }

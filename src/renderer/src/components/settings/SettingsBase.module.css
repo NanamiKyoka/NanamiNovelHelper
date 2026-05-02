@@ -1,9 +1,10 @@
 .container {
   max-width: 800px;
+  margin: 0 auto;
 }
 
 .card {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .card :global(.ant-card-head) {
@@ -11,7 +12,7 @@
 }
 
 .card :global(.ant-card-body) {
-  padding: 16px 24px;
+  padding: 20px 24px;
 }
 
 .cardTitle {
@@ -21,7 +22,8 @@
 
 .hint {
   color: var(--ant-color-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.6;
   margin-bottom: 12px;
 }
 
@@ -35,6 +37,7 @@
   font-size: 13px;
   color: var(--ant-color-text-secondary);
   margin-bottom: 16px;
+  line-height: 1.6;
 }
 
 .tipIcon {
@@ -47,7 +50,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
+  padding: 14px 0;
 }
 
 .actionItem:not(:last-child) {

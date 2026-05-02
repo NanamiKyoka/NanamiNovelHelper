@@ -268,7 +268,7 @@ function SettingsPage(): JSX.Element {
 
   return (
     <Layout className={styles.container}>
-      <Sider width={220} className={styles.sider}>
+      <Sider width={220} className={styles.sider} breakpoint="md" collapsedWidth={56}>
         <div className={styles.header}>
           <SettingOutlined />
           <span>设置</span>

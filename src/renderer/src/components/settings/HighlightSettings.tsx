@@ -29,6 +29,7 @@ import type { HighlightConfig, HoverCardTypeConfig } from '@shared/highlight'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useProjectStore } from '@stores/projectStore'
+import baseStyles from './SettingsBase.module.css'
 import styles from './HighlightSettings.module.css'
 
 const { Option } = Select
@@ -272,7 +273,7 @@ export function HighlightSettings(): JSX.Element {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={baseStyles.container}>
       <Form
         form={form}
         layout="vertical"
@@ -298,7 +299,7 @@ export function HighlightSettings(): JSX.Element {
         }}
       >
         {/* 基础设置 */}
-        <Card title="基础设置" className={styles.card}>
+        <Card title="基础设置" className={baseStyles.card}>
           <Form.Item name="enabled" label="启用词汇高亮" valuePropName="checked">
             <Switch />
           </Form.Item>
@@ -308,7 +309,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 高亮范围设置 */}
-        <Card title="高亮范围" className={styles.card}>
+        <Card title="高亮范围" className={baseStyles.card}>
           <div className={styles.section}>
             <h4>包含目录</h4>
             <p className={styles.hint}>
@@ -416,7 +417,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 匹配设置 */}
-        <Card title="匹配设置" className={styles.card}>
+        <Card title="匹配设置" className={baseStyles.card}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="matchMode" label="匹配模式">
@@ -438,7 +439,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 样式设置 */}
-        <Card title="样式设置" className={styles.card}>
+        <Card title="样式设置" className={baseStyles.card}>
           <p className={styles.hint}>
             配置词汇高亮的显示样式。文字颜色将使用词汇条目中设置的颜色。
           </p>
@@ -500,7 +501,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 性能设置 */}
-        <Card title="性能设置" className={styles.card}>
+        <Card title="性能设置" className={baseStyles.card}>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="largeFileThreshold" label="大文件阈值 (字节)">
@@ -533,7 +534,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 敏感词颜色设置 */}
-        <Card title="敏感词颜色" className={styles.card}>
+        <Card title="敏感词颜色" className={baseStyles.card}>
           <p className={styles.hint}>按严重程度设置敏感词的高亮颜色</p>
           <Row gutter={[16, 16]}>
             {Object.entries(config.match.sensitiveWordColors).map(([severity, color]) => (
@@ -568,7 +569,7 @@ export function HighlightSettings(): JSX.Element {
         </Card>
 
         {/* 悬浮卡片配置 */}
-        <Card title="悬浮卡片配置" className={styles.card}>
+        <Card title="悬浮卡片配置" className={baseStyles.card}>
           <p className={styles.hint}>
             配置悬浮时显示的词汇详细信息。可以为每种词汇类型单独设置显示的字段。
           </p>
