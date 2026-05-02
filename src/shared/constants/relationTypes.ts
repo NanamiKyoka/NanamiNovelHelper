@@ -6,6 +6,7 @@
  */
 
 import type { RelationType } from '@shared/relationship'
+import { THEME_COLORS, NEUTRAL_COLORS } from './colors'
 
 /**
  * 内置关系类型 ID
@@ -29,7 +30,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'family',
     name: '亲情',
-    color: '#f5222d',
+    color: THEME_COLORS.red,
     lineStyle: 'solid',
     lineWidth: 2,
     isBuiltIn: true,
@@ -38,7 +39,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'friendship',
     name: '友情',
-    color: '#52c41a',
+    color: THEME_COLORS.success,
     lineStyle: 'solid',
     lineWidth: 2,
     isBuiltIn: true,
@@ -47,7 +48,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'love',
     name: '爱情',
-    color: '#eb2f96',
+    color: THEME_COLORS.magenta,
     lineStyle: 'solid',
     lineWidth: 2,
     isBuiltIn: true,
@@ -56,7 +57,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'enemy',
     name: '敌对',
-    color: '#262626',
+    color: NEUTRAL_COLORS.dark,
     lineStyle: 'dashed',
     lineWidth: 2,
     isBuiltIn: true,
@@ -65,7 +66,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'master',
     name: '师徒',
-    color: '#722ed1',
+    color: THEME_COLORS.purple,
     lineStyle: 'solid',
     lineWidth: 2,
     isBuiltIn: true,
@@ -74,7 +75,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'superior',
     name: '上下级',
-    color: '#1890ff',
+    color: THEME_COLORS.primary,
     lineStyle: 'solid',
     lineWidth: 1,
     isBuiltIn: true,
@@ -83,7 +84,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'ally',
     name: '同盟',
-    color: '#13c2c2',
+    color: THEME_COLORS.cyan,
     lineStyle: 'solid',
     lineWidth: 2,
     isBuiltIn: true,
@@ -92,7 +93,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'rival',
     name: '对手',
-    color: '#fa8c16',
+    color: THEME_COLORS.orange,
     lineStyle: 'dashed',
     lineWidth: 2,
     isBuiltIn: true,
@@ -101,7 +102,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'colleague',
     name: '同事',
-    color: '#8c8c8c',
+    color: NEUTRAL_COLORS.grey,
     lineStyle: 'solid',
     lineWidth: 1,
     isBuiltIn: true,
@@ -110,7 +111,7 @@ export const BUILTIN_RELATION_TYPES: RelationType[] = [
   {
     id: 'neighbor',
     name: '邻居',
-    color: '#bfbfbf',
+    color: NEUTRAL_COLORS.lightGrey,
     lineStyle: 'dotted',
     lineWidth: 1,
     isBuiltIn: true,

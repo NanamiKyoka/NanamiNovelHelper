@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   THEME_COLORS,
   THEME_COLOR_OPTIONS,
+  FUNCTIONAL_COLORS,
   SEMANTIC_COLORS,
   DEFAULT_COLORS,
   CHART_PALETTE,
@@ -11,12 +12,12 @@ import {
 
 describe('colors constants', () => {
   describe('THEME_COLORS', () => {
-    it('应该包含所有主色调', () => {
+    it('应该包含所有调色板颜色', () => {
       expect(THEME_COLORS.primary).toBe('#1890ff')
-      expect(THEME_COLORS.danger).toBe('#f5222d')
-      expect(THEME_COLORS.warning).toBe('#fa8c16')
+      expect(THEME_COLORS.red).toBe('#f5222d')
+      expect(THEME_COLORS.orange).toBe('#fa8c16')
       expect(THEME_COLORS.success).toBe('#52c41a')
-      expect(THEME_COLORS.info).toBe('#13c2c2')
+      expect(THEME_COLORS.cyan).toBe('#13c2c2')
     })
 
     it('应该包含扩展色', () => {
@@ -51,8 +52,31 @@ describe('colors constants', () => {
     it('选项的value应与THEME_COLORS对应', () => {
       const values = THEME_COLOR_OPTIONS.map(o => o.value)
       expect(values).toContain(THEME_COLORS.primary)
-      expect(values).toContain(THEME_COLORS.danger)
+      expect(values).toContain(THEME_COLORS.red)
       expect(values).toContain(THEME_COLORS.success)
+    })
+  })
+
+  describe('FUNCTIONAL_COLORS', () => {
+    it('应该包含所有功能色', () => {
+      expect(FUNCTIONAL_COLORS.error).toBe('#ff4d4f')
+      expect(FUNCTIONAL_COLORS.warning).toBe('#faad14')
+      expect(FUNCTIONAL_COLORS.success).toBe('#52c41a')
+      expect(FUNCTIONAL_COLORS.info).toBe('#1890ff')
+    })
+
+    it('应该包含背景色', () => {
+      expect(FUNCTIONAL_COLORS.errorBg).toBe('#fff2f0')
+      expect(FUNCTIONAL_COLORS.warningBg).toBe('#fffbe6')
+      expect(FUNCTIONAL_COLORS.successBg).toBe('#f6ffed')
+      expect(FUNCTIONAL_COLORS.infoBg).toBe('#e6f7ff')
+    })
+
+    it('所有颜色值应该是有效的十六进制格式', () => {
+      const hexPattern = /^#[0-9a-fA-F]{6}$/
+      Object.values(FUNCTIONAL_COLORS).forEach(color => {
+        expect(color).toMatch(hexPattern)
+      })
     })
   })
 
@@ -69,13 +93,6 @@ describe('colors constants', () => {
       expect(SEMANTIC_COLORS.severity.medium).toBeDefined()
       expect(SEMANTIC_COLORS.severity.high).toBeDefined()
       expect(SEMANTIC_COLORS.severity.critical).toBeDefined()
-    })
-
-    it('应该包含高亮级别颜色', () => {
-      expect(SEMANTIC_COLORS.highlight.low).toBeDefined()
-      expect(SEMANTIC_COLORS.highlight.medium).toBeDefined()
-      expect(SEMANTIC_COLORS.highlight.high).toBeDefined()
-      expect(SEMANTIC_COLORS.highlight.critical).toBeDefined()
     })
 
     it('所有颜色值应该是有效的十六进制格式', () => {

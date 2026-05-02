@@ -3,7 +3,7 @@
  * 主进程和渲染进程共享
  */
 
-import { THEME_COLORS, CHART_PALETTE, DEFAULT_COLORS } from './constants/colors'
+import { THEME_COLORS, CHART_PALETTE, DEFAULT_COLORS, NEUTRAL_COLORS, FUNCTIONAL_COLORS } from './constants/colors'
 
 // ============================================
 // 时间格式定义
@@ -72,16 +72,16 @@ export interface SequenceEventType {
 
 /** 内置事件类型 */
 export const BUILT_IN_EVENT_TYPES: SequenceEventType[] = [
-  { id: 'battle', name: '战斗', color: '#ff4d4f', isBuiltIn: true, order: 0 },
+  { id: 'battle', name: '战斗', color: FUNCTIONAL_COLORS.error, isBuiltIn: true, order: 0 },
   { id: 'dialogue', name: '对话', color: THEME_COLORS.primary, isBuiltIn: true, order: 1 },
   { id: 'travel', name: '旅行', color: THEME_COLORS.success, isBuiltIn: true, order: 2 },
   { id: 'romance', name: '感情', color: THEME_COLORS.magenta, isBuiltIn: true, order: 3 },
   { id: 'mystery', name: '悬疑', color: THEME_COLORS.purple, isBuiltIn: true, order: 4 },
-  { id: 'daily', name: '日常', color: '#faad14', isBuiltIn: true, order: 5 },
+  { id: 'daily', name: '日常', color: FUNCTIONAL_COLORS.warning, isBuiltIn: true, order: 5 },
   { id: 'conflict', name: '冲突', color: '#fa541c', isBuiltIn: true, order: 6 },
-  { id: 'revelation', name: '揭秘', color: THEME_COLORS.info, isBuiltIn: true, order: 7 },
-  { id: 'death', name: '死亡', color: '#595959', isBuiltIn: true, order: 8 },
-  { id: 'other', name: '其他', color: '#8c8c8c', isBuiltIn: true, order: 9 }
+  { id: 'revelation', name: '揭秘', color: THEME_COLORS.cyan, isBuiltIn: true, order: 7 },
+  { id: 'death', name: '死亡', color: THEME_COLORS.grey, isBuiltIn: true, order: 8 },
+  { id: 'other', name: '其他', color: NEUTRAL_COLORS.grey, isBuiltIn: true, order: 9 }
 ]
 
 // ============================================
