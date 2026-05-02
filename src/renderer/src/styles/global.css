@@ -613,42 +613,42 @@ a:hover {
 
 /* Message (Toast) 组件主题适配 */
 body.dark .ant-message-notice-content {
-  background-color: var(--bg-elevated, #2d2d2d) !important;
-  border: 1px solid var(--border-primary, #3c3c3c);
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-primary);
   box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.45));
 }
 
 body.dark .ant-message-notice-content .ant-message-custom-content {
-  color: var(--text-primary, rgba(255, 255, 255, 0.85)) !important;
+  color: var(--text-primary) !important;
 }
 
 body.dark .ant-message-notice-content span {
-  color: var(--text-primary, rgba(255, 255, 255, 0.85)) !important;
+  color: var(--text-primary) !important;
 }
 
 body.dark .ant-message-notice-content .anticon {
-  color: var(--color-success, #49aa19);
+  color: var(--color-success);
 }
 
 body.dark .ant-message-notice-content.ant-message-success .anticon {
-  color: var(--color-success, #49aa19);
+  color: var(--color-success);
 }
 
 body.dark .ant-message-notice-content.ant-message-error .anticon {
-  color: var(--color-error, #a61d24);
+  color: var(--color-error);
 }
 
 body.dark .ant-message-notice-content.ant-message-warning .anticon {
-  color: var(--color-warning, #d89614);
+  color: var(--color-warning);
 }
 
 body.dark .ant-message-notice-content.ant-message-info .anticon {
-  color: var(--color-info, #177ddc);
+  color: var(--color-info);
 }
 
 body.light .ant-message-notice-content {
-  background-color: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-primary, #f0f0f0);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
   box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.15));
 }
 
@@ -682,50 +682,50 @@ body.light .ant-message-notice-content {
 
 /* Notification 组件主题适配 */
 body.dark .ant-notification-notice {
-  background: var(--bg-elevated, #2d2d2d);
-  border: 1px solid var(--border-primary, #3c3c3c);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
   box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.45));
 }
 
 body.dark .ant-notification-notice-message {
-  color: var(--text-primary, rgba(255, 255, 255, 0.85));
+  color: var(--text-primary);
 }
 
 body.dark .ant-notification-notice-description {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  color: var(--text-secondary);
 }
 
 body.dark .ant-notification-notice .anticon {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  color: var(--text-secondary);
 }
 
 body.dark .ant-notification-notice-success .anticon {
-  color: var(--color-success, #49aa19);
+  color: var(--color-success);
 }
 
 body.dark .ant-notification-notice-error .anticon {
-  color: var(--color-error, #a61d24);
+  color: var(--color-error);
 }
 
 body.dark .ant-notification-notice-warning .anticon {
-  color: var(--color-warning, #d89614);
+  color: var(--color-warning);
 }
 
 body.dark .ant-notification-notice-info .anticon {
-  color: var(--color-info, #177ddc);
+  color: var(--color-info);
 }
 
 body.dark .ant-notification-notice-close {
-  color: var(--text-tertiary, rgba(255, 255, 255, 0.45));
+  color: var(--text-tertiary);
 }
 
 body.dark .ant-notification-notice-close:hover {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  color: var(--text-secondary);
 }
 
 body.light .ant-notification-notice {
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-primary, #f0f0f0);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
   box-shadow: var(--shadow-popup, 0 2px 8px rgba(0, 0, 0, 0.15));
 }
 

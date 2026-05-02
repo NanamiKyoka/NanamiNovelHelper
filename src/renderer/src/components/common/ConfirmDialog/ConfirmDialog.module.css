@@ -1,7 +1,7 @@
 .title {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2, 8px);
+  gap: var(--spacing-2);
 }
 
 .discardBtn,
@@ -9,32 +9,32 @@
 .saveBtn {
   padding: 4px 15px;
   font-size: 14px;
-  border-radius: var(--radius-base, 4px);
+  border-radius: var(--radius-base);
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid var(--border-color, #d9d9d9);
-  background: var(--bg-component, #ffffff);
+  border: 1px solid var(--border-color);
+  background: var(--bg-component);
 }
 
 .discardBtn:hover {
-  color: var(--color-primary, #1890ff);
-  border-color: var(--color-primary, #1890ff);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .cancelBtn:hover {
-  color: var(--color-primary, #1890ff);
-  border-color: var(--color-primary, #1890ff);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .saveBtn {
-  background: var(--color-primary, #1890ff);
-  border-color: var(--color-primary, #1890ff);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: #ffffff;
 }
 
 .saveBtn:hover {
-  background: var(--color-primary-hover, #40a9ff);
-  border-color: var(--color-primary-hover, #40a9ff);
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
 .saveBtn:disabled {

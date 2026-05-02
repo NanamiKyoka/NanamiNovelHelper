@@ -1,12 +1,11 @@
 .container {
-  padding: var(--spacing-4, 16px);
+  padding: var(--spacing-4);
 }
 
 .animate {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* 卡片骨架屏 */
 .cardImage {
   width: 100% !important;
   height: 150px !important;
@@ -15,17 +14,16 @@
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-4, 16px);
-  padding: var(--spacing-4, 16px);
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
 }
 
-/* 列表骨架屏 */
 .listItem {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3, 12px);
-  padding: var(--spacing-3, 12px) 0;
-  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) 0;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .listItem:last-child {
@@ -37,20 +35,19 @@
   margin: 0 !important;
 }
 
-/* 表格骨架屏 */
 .tableHeader {
   display: flex;
-  gap: var(--spacing-2, 8px);
-  padding: var(--spacing-3, 12px);
-  background: var(--bg-muted, #f5f5f5);
-  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  background: var(--bg-muted);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .tableRow {
   display: flex;
-  gap: var(--spacing-2, 8px);
-  padding: var(--spacing-3, 12px);
-  border-bottom: 1px solid var(--border-primary, #f0f0f0);
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .tableCell {

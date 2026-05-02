@@ -21,7 +21,7 @@
   flex-direction: column;
   align-items: center;
   padding: 32px 48px;
-  background: var(--color-bg-container, #fff);
+  background: var(--color-bg-container);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   animation: fadeIn 0.2s ease-out;
@@ -46,18 +46,16 @@
 /* 加载消息 */
 .message {
   font-size: 16px;
-  color: var(--color-text, rgba(0, 0, 0, 0.88));
+  color: var(--color-text);
   text-align: center;
   margin-bottom: 12px;
 }
 
-/* 进度条 */
 .progress {
   width: 200px;
   margin-top: 8px;
 }
 
-/* 加载模块标签 */
 .modules {
   display: flex;
   flex-wrap: wrap;
@@ -68,17 +66,16 @@
 
 .moduleTag {
   padding: 2px 8px;
-  background: var(--color-primary-bg, #e6f4ff);
-  color: var(--color-primary, #1677ff);
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
   border-radius: 4px;
   font-size: 12px;
 }
 
-/* 任务计数 */
 .taskCount {
   margin-top: 8px;
   font-size: 12px;
-  color: var(--color-text-secondary, rgba(0, 0, 0, 0.45));
+  color: var(--color-text-secondary);
 }
 
 /* 应用初始化加载 - 深色背景 */
@@ -133,33 +130,32 @@
   align-items: center;
   gap: 8px;
   padding: 4px 12px;
-  background: var(--color-bg-container, #fff);
+  background: var(--color-bg-container);
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .inlineText {
   font-size: 13px;
-  color: var(--color-text-secondary, rgba(0, 0, 0, 0.45));
+  color: var(--color-text-secondary);
 }
 
-/* 暗色主题适配 */
 :global(.dark) .overlay {
   background: rgba(0, 0, 0, 0.65);
 }
 
 :global(.dark) .container {
-  background: var(--color-bg-container, #1f1f1f);
+  background: var(--color-bg-container);
 }
 
 :global(.dark) .message {
-  color: var(--color-text, rgba(255, 255, 255, 0.88));
+  color: var(--color-text);
 }
 
 :global(.dark) .moduleTag {
-  background: var(--color-primary-bg, rgba(22, 119, 255, 0.2));
+  background: var(--color-primary-bg);
 }
 
 :global(.dark) .taskCount {
-  color: var(--color-text-secondary, rgba(255, 255, 255, 0.45));
+  color: var(--color-text-secondary);
 }

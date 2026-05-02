@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: center;
   padding: 0 8px;
-  color: var(--text-color-secondary, #999);
+  color: var(--text-color-secondary);
   cursor: grab;
   opacity: 0;
   transition: opacity 0.2s;

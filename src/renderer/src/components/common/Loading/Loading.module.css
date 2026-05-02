@@ -11,8 +11,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg-base, #f0f2f5);
-  z-index: var(--z-modal, 1050);
+  background: var(--bg-base);
+  z-index: var(--z-modal);
 }
 
 .centered {

@@ -33,7 +33,7 @@
   position: relative;
   width: 40px;
   height: 40px;
-  background: var(--ant-color-bg-container, #fff);
+  background: var(--ant-color-bg-container);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -42,17 +42,17 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
   font-size: 16px;
-  color: var(--ant-color-text-secondary, #666);
+  color: var(--ant-color-text-secondary);
 }
 
 .triggerBtn:hover {
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   color: #fff;
   transform: scale(1.1);
 }
 
 .triggerBtn.active {
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   color: #fff;
 }
 
@@ -82,7 +82,7 @@
   top: 56px;
   bottom: 24px;
   width: 400px;
-  background: var(--ant-color-bg-container, #fff);
+  background: var(--ant-color-bg-container);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 99;
@@ -109,10 +109,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  border-bottom: 1px solid var(--ant-color-border, #f0f0f0);
+  border-bottom: 1px solid var(--ant-color-border);
   font-weight: 600;
   font-size: 14px;
-  color: var(--ant-color-text, #333);
+  color: var(--ant-color-text);
 }
 
 .rightSidebarBody {

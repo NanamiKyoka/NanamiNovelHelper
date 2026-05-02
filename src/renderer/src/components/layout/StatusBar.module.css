@@ -4,7 +4,7 @@
   align-items: center;
   height: 22px;
   padding: 0 10px;
-  background-color: var(--ant-color-primary, #1890ff);
+  background-color: var(--ant-color-primary);
   color: rgba(255, 255, 255, 0.9);
   font-size: 12px;
   user-select: none;

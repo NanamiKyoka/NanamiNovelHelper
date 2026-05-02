@@ -27,11 +27,11 @@
 .dropIndicator {
   position: absolute;
   height: 3px;
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   border-radius: 2px;
   pointer-events: none;
   z-index: 10;
-  box-shadow: 0 0 8px var(--ant-color-primary, #1890ff);
+  box-shadow: 0 0 8px var(--ant-color-primary);
   animation: dropIndicatorPulse 1s ease-in-out infinite;
 }
 
@@ -43,7 +43,7 @@
   transform: translateY(-50%);
   width: 8px;
   height: 8px;
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   border-radius: 50%;
 }
 
@@ -90,7 +90,7 @@
   position: relative;
   width: 40px;
   height: 40px;
-  background: var(--ant-color-bg-container, #fff);
+  background: var(--ant-color-bg-container);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -99,17 +99,17 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
   font-size: 16px;
-  color: var(--ant-color-text-secondary, #666);
+  color: var(--ant-color-text-secondary);
 }
 
 .triggerBtn:hover {
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   color: #fff;
   transform: scale(1.1);
 }
 
 .triggerBtn.active {
-  background: var(--ant-color-primary, #1890ff);
+  background: var(--ant-color-primary);
   color: #fff;
 }
 
@@ -130,7 +130,7 @@
 }
 
 .hint {
-  color: var(--ant-color-text-tertiary, #999);
+  color: var(--ant-color-text-tertiary);
   font-size: 11px;
 }
 
@@ -141,11 +141,11 @@
   transform: translateX(-50%);
   margin-top: 8px;
   padding: 4px 8px;
-  background: var(--ant-color-bg-elevated, #fff);
+  background: var(--ant-color-bg-elevated);
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   font-size: 12px;
-  color: var(--ant-color-text-secondary, #666);
+  color: var(--ant-color-text-secondary);
   white-space: nowrap;
   animation: fadeIn 0.2s ease;
 }
