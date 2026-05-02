@@ -1037,6 +1037,17 @@ export interface AiApiCallResult {
   duration: number // 毫秒
 }
 
+export interface AiApiStreamChunk {
+  type: 'chunk' | 'done' | 'error'
+  content?: string
+  error?: string
+  tokensUsed?: {
+    input: number
+    output: number
+  }
+  duration?: number
+}
+
 /**
  * SKILL 执行上下文
  */

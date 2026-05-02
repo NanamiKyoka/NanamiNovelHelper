@@ -2,7 +2,7 @@
  * AI写作助手 IPC 处理器
  */
 
-import { ipcMain } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import { aiAssistantService } from '../services/aiAssistant'
 import { aiApiService } from '../services/aiApi'
 import { validateParams } from '../utils/validation'
@@ -194,4 +194,16 @@ export function registerAiAssistantHandlers(): void {
     validateParams('aiAssistant:getAvailableModels').object(provider, 'provider').validate()
     return aiApiService.getAvailableModels(provider)
   })
+
+  ipcMain.handle(
+    'aiAssistant:callApiStream',
+    async (_event, prompt: string, options?: AiApiCallOptions): Promise<AiApiCallResult> => {
+      validateParams('aiAssistant:callApiStream').nonEmptyString(prompt, 'prompt').validate()
+      const win = BrowserWindow.fromWebContents(_event.sender)
+      if (!win) {
+        return { success: false, error: '无法获取窗口实例', duration: 0 }
+      }
+      return await aiApiService.callStream(prompt, options || {}, win)
+    }
+  )
 }

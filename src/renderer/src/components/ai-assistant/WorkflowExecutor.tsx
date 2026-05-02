@@ -2,7 +2,7 @@
  * 工作流执行器组件
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Modal,
   Input,
@@ -37,6 +37,7 @@ import type {
   VariableValue,
   WorkflowStep,
   AiApiCallResult,
+  AiApiStreamChunk,
   SkillDefinition,
   SkillExecutionResult,
   SkillExecutionContext
@@ -152,6 +153,11 @@ function WorkflowExecutor({
     skills,
     cancelExecution,
     callApi,
+    callApiStream,
+    streamingContent,
+    isStreaming,
+    onStreamChunk,
+    removeStreamChunkListener,
     resolveVariables,
     executeSkill
   } = useAiAssistantStore()
@@ -169,6 +175,7 @@ function WorkflowExecutor({
   const [apiResult, setApiResult] = useState<AiApiCallResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [localStreamContent, setLocalStreamContent] = useState('')
 
   // 获取当前工作流或模板
   const currentWorkflow = useMemo(
@@ -220,6 +227,13 @@ function WorkflowExecutor({
     if (!template || !template.content) return ''
     return resolveVariables(template, variableValues)
   }, [currentStepTemplate, currentTemplate, variableValues, resolveVariables])
+
+  // 清理流式监听器
+  useEffect(() => {
+    return () => {
+      removeStreamChunkListener()
+    }
+  }, [removeStreamChunkListener])
 
   // 处理变量值变化
   const handleVariableChange = (
@@ -394,22 +408,8 @@ function WorkflowExecutor({
   }
 
   // 执行 API 调用
-  const executeApiCall = async (prompt: string): Promise<AiApiCallResult> => {
-    const template = currentStepTemplate || currentTemplate
-    const apiConfig = template?.apiConfig
-
-    return callApi(prompt, {
-      provider: apiConfig?.provider,
-      model: apiConfig?.model,
-      temperature: apiConfig?.temperature,
-      maxTokens: apiConfig?.maxTokens,
-      systemPrompt: apiConfig?.systemPrompt
-    })
-  }
-
   // 开始执行
   const handleExecute = async () => {
-    // 验证必填变量
     const missingVariables = activeVariables.filter(v => v.required && !variableValues[v.id]?.value)
     if (missingVariables.length > 0) {
       message.error(`请填写必填变量: ${missingVariables.map(v => v.name).join(', ')}`)
@@ -418,12 +418,32 @@ function WorkflowExecutor({
 
     setLoading(true)
     setStatus('executing')
+    setLocalStreamContent('')
 
     try {
       const prompt = generatePrompt()
       setGeneratedPrompt(prompt)
 
-      const result = await executeApiCall(prompt)
+      const template = currentStepTemplate || currentTemplate
+      const apiConfig = template?.apiConfig
+      const streamOptions = {
+        provider: apiConfig?.provider,
+        model: apiConfig?.model,
+        temperature: apiConfig?.temperature,
+        maxTokens: apiConfig?.maxTokens,
+        systemPrompt: apiConfig?.systemPrompt
+      }
+
+      const streamChunkHandler = (chunk: AiApiStreamChunk) => {
+        if (chunk.type === 'chunk' && chunk.content) {
+          setLocalStreamContent(prev => prev + chunk.content)
+        }
+      }
+      onStreamChunk(streamChunkHandler)
+
+      const result = await callApiStream(prompt, streamOptions)
+      removeStreamChunkListener()
+
       setApiResult(result)
 
       if (result.success) {
@@ -433,6 +453,7 @@ function WorkflowExecutor({
         setError(result.error || 'API 调用失败')
       }
     } catch (err) {
+      removeStreamChunkListener()
       setStatus('error')
       setError(err instanceof Error ? err.message : '执行失败')
     } finally {
@@ -555,7 +576,12 @@ function WorkflowExecutor({
     <div className={styles.executingPhase}>
       <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
       <Title level={4}>正在调用 AI...</Title>
-      <Text type="secondary">这可能需要几秒钟</Text>
+      {localStreamContent && (
+        <div className={styles.streamingContent}>
+          <Paragraph style={{ whiteSpace: 'pre-wrap' }}>{localStreamContent}</Paragraph>
+        </div>
+      )}
+      {!localStreamContent && <Text type="secondary">这可能需要几秒钟</Text>}
     </div>
   )
 

@@ -11,7 +11,8 @@ import type {
   WorkflowListItem,
   VariableValue,
   AiApiCallOptions,
-  AiApiCallResult
+  AiApiCallResult,
+  AiApiStreamChunk
 } from '@shared/ai-assistant'
 
 interface AiAssistantState {
@@ -69,6 +70,11 @@ interface AiAssistantState {
 
   // API 调用
   callApi: (prompt: string, options?: AiApiCallOptions) => Promise<AiApiCallResult>
+  callApiStream: (prompt: string, options?: AiApiCallOptions) => Promise<AiApiCallResult>
+  streamingContent: string
+  isStreaming: boolean
+  onStreamChunk: (callback: (chunk: AiApiStreamChunk) => void) => void
+  removeStreamChunkListener: () => void
   testApiConnection: (
     provider: 'openai' | 'anthropic' | 'custom'
   ) => Promise<{ success: boolean; error?: string }>
@@ -102,6 +108,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   isLoading: false,
   isExecuting: false,
+  isStreaming: false,
+  streamingContent: '',
   error: null,
   activeTab: 'templates',
 
@@ -437,6 +445,32 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
   },
 
+  callApiStream: async (prompt: string, options?: AiApiCallOptions) => {
+    set({ isStreaming: true, streamingContent: '' })
+    try {
+      const result = await window.electron.aiAssistant.callApiStream(prompt, options)
+      if (!result.success) {
+        set({ isStreaming: false })
+      }
+      return result as AiApiCallResult
+    } catch (error) {
+      set({ isStreaming: false })
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'API 流式调用失败',
+        duration: 0
+      }
+    }
+  },
+
+  onStreamChunk: (callback: (chunk: AiApiStreamChunk) => void) => {
+    window.electron.aiAssistant.onStreamChunk(callback)
+  },
+
+  removeStreamChunkListener: () => {
+    window.electron.aiAssistant.removeStreamChunkListener()
+  },
+
   testApiConnection: async (provider: 'openai' | 'anthropic' | 'custom') => {
     try {
       return await window.electron.aiAssistant.testApiConnection(provider)
@@ -516,6 +550,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       executionHistory: [],
       isLoading: false,
       isExecuting: false,
+      isStreaming: false,
+      streamingContent: '',
       error: null,
       activeTab: 'templates'
     })

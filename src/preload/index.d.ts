@@ -1356,6 +1356,66 @@ export interface GitAPI {
   ) => Promise<GitResult<GitFileDiff>>
 }
 
+interface AiApiStreamChunk {
+  type: 'chunk' | 'done' | 'error'
+  content?: string
+  error?: string
+  tokensUsed?: { input: number; output: number }
+  duration?: number
+}
+
+interface AiAssistantAPI {
+  getTemplateList: () => Promise<Array<Record<string, unknown>>>
+  getTemplates: () => Promise<Array<Record<string, unknown>>>
+  getTemplate: (id: string) => Promise<Record<string, unknown> | null>
+  saveTemplate: (template: Record<string, unknown>) => Promise<Record<string, unknown>>
+  deleteTemplate: (id: string) => Promise<boolean>
+  copyTemplateToProject: (id: string) => Promise<Record<string, unknown> | null>
+  exportTemplate: (id: string) => Promise<string | null>
+  importTemplate: (json5Content: string) => Promise<Record<string, unknown> | null>
+  getWorkflowList: () => Promise<Array<Record<string, unknown>>>
+  getWorkflows: () => Promise<Array<Record<string, unknown>>>
+  getWorkflow: (id: string) => Promise<Record<string, unknown> | null>
+  saveWorkflow: (workflow: Record<string, unknown>) => Promise<Record<string, unknown>>
+  deleteWorkflow: (id: string) => Promise<boolean>
+  exportWorkflow: (id: string) => Promise<string | null>
+  importWorkflow: (json5Content: string) => Promise<Record<string, unknown> | null>
+  createExecution: (workflowId: string, workflowName: string) => Promise<Record<string, unknown>>
+  getExecution: (id: string) => Promise<Record<string, unknown> | null>
+  updateExecution: (id: string, updates: Record<string, unknown>) => Promise<Record<string, unknown> | null>
+  getExecutionHistory: () => Promise<Array<Record<string, unknown>>>
+  deleteExecution: (id: string) => Promise<boolean>
+  callApi: (prompt: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>
+  callApiStream: (prompt: string, options?: Record<string, unknown>) => Promise<Record<string, unknown>>
+  onStreamChunk: (callback: (chunk: AiApiStreamChunk) => void) => void
+  removeStreamChunkListener: () => void
+  testApiConnection: (provider: string) => Promise<{ success: boolean; error?: string }>
+  getAvailableModels: (provider: string) => Promise<string[]>
+}
+
+interface DynamicSkillAPI {
+  getList: () => Promise<Array<Record<string, unknown>>>
+  get: (skillId: string) => Promise<Record<string, unknown> | undefined>
+  reload: () => Promise<Array<Record<string, unknown>>>
+  getTools: (skillId: string) => Promise<Array<Record<string, unknown>>>
+  execute: (
+    skillId: string,
+    toolId: string,
+    parameters: Record<string, unknown>,
+    context: Record<string, unknown>
+  ) => Promise<Record<string, unknown>>
+  cancel: (executionId: string) => Promise<boolean>
+  getWhitelist: () => Promise<Array<Record<string, unknown>>>
+  addToWhitelist: (skillId: string, skillName: string, skillPath: string) => Promise<void>
+  removeFromWhitelist: (skillId: string) => Promise<void>
+  isTrusted: (skillId: string, skillPath: string) => Promise<boolean>
+  create: (options: Record<string, unknown>) => Promise<Record<string, unknown>>
+  update: (skillId: string, options: Record<string, unknown>) => Promise<Record<string, unknown>>
+  delete: (skillId: string) => Promise<void>
+  onExecutionOutput: (callback: (data: { executionId: string; line: string }) => void) => void
+  removeExecutionOutputListener: () => void
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI & {
@@ -1375,6 +1435,8 @@ declare global {
       terminal: TerminalAPI
       terminalWindow: TerminalWindowAPI
       git: GitAPI
+      aiAssistant: AiAssistantAPI
+      dynamicSkill: DynamicSkillAPI
       shell: {
         openExternal: (url: string) => Promise<boolean>
       }
