@@ -838,7 +838,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
                   style={{
                     opacity: 0.5,
                     padding: '8px 12px',
-                    background: 'var(--bg-secondary)',
+                    background: 'var(--bg-surface)',
                     borderRadius: 8
                   }}
                 >

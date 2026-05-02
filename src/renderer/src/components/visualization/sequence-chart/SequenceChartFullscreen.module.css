@@ -33,10 +33,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   margin: var(--spacing-4);
-  background: var(--card-bg);
+  background: var(--bg-container);
 }
 
 .tableBody {
@@ -48,8 +48,8 @@
 /* 左侧事件列表 */
 .tableLeft {
   flex: 0 0 280px;
-  border-right: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
+  background: var(--bg-surface);
   display: flex;
   flex-direction: column;
   transition: flex var(--transition-slow);
@@ -64,8 +64,8 @@
 .leftHeader {
   display: flex;
   height: 40px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-surface);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-base);
   color: var(--text-primary);
@@ -76,7 +76,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-primary);
 }
 
 .colIntro {
@@ -91,7 +91,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-primary);
   padding: 0 4px;
 }
 
@@ -136,7 +136,7 @@
 .eventRow {
   display: flex;
   height: 40px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-primary);
   font-size: var(--font-size-base);
   color: var(--text-primary);
 }
@@ -174,8 +174,8 @@
   transform: translateY(-50%);
   width: 20px;
   height: 60px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-primary);
   border-left: none;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   display: flex;
@@ -189,7 +189,7 @@
 
 .toggleButton:hover {
   background: var(--hover-bg);
-  color: var(--primary-color);
+  color: var(--color-primary);
 }
 
 .tableLeft.collapsed + .toggleButton {
@@ -207,8 +207,8 @@
 .rightHeader {
   display: flex;
   height: 40px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-surface);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -225,7 +225,7 @@
 }
 
 .timeCell:nth-child(5n) {
-  border-right-color: var(--border-color);
+  border-right-color: var(--border-primary);
   font-weight: var(--font-weight-medium);
   color: var(--text-secondary);
 }
@@ -256,7 +256,7 @@
 }
 
 .gridCell:nth-child(5n) {
-  border-right-color: var(--border-color);
+  border-right-color: var(--border-primary);
 }
 
 /* 事件条层 */

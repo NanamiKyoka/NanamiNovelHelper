@@ -90,7 +90,7 @@
 }
 
 .timelineItem.dropTarget {
-  border-top: 3px dashed var(--primary-color);
+  border-top: 3px dashed var(--color-primary);
   margin-top: -1.5px;
 }
 
@@ -107,34 +107,34 @@
   height: 18px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
-  border: 3px solid var(--bg-color);
-  box-shadow: 0 0 0 3px var(--border-color);
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 0 0 3px var(--border-primary);
   cursor: grab;
 }
 
 .timelineItem:hover .timelineDot {
-  box-shadow: 0 0 0 4px var(--primary-color);
+  box-shadow: 0 0 0 4px var(--color-primary);
 }
 
 .timelineConnector {
   flex: 1;
   width: 3px;
-  background: var(--border-color);
+  background: var(--border-primary);
   min-height: 60px;
 }
 
 .timelineContent {
   flex: 1;
   padding-bottom: var(--spacing-6);
-  background: var(--card-bg);
+  background: var(--bg-container);
   border-radius: var(--radius-xl);
   padding: var(--spacing-5);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-primary);
   margin-bottom: var(--spacing-4);
 }
 
 .timelineItem:hover .timelineContent {
-  border-color: var(--primary-color);
+  border-color: var(--color-primary);
   box-shadow: var(--shadow-md);
 }
 
@@ -170,7 +170,7 @@
 }
 
 .checkIcon {
-  color: var(--primary-color);
+  color: var(--color-primary);
   font-size: var(--font-size-xl);
 }
 
@@ -181,7 +181,7 @@
   font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-3);
   padding: 6px var(--spacing-3);
-  background: var(--bg-secondary);
+  background: var(--bg-surface);
   border-radius: var(--radius-md);
   width: fit-content;
 }
@@ -221,7 +221,7 @@
   gap: var(--spacing-2);
   font-size: var(--font-size-sm);
   padding: var(--spacing-2) var(--spacing-3);
-  background: var(--bg-secondary);
+  background: var(--bg-surface);
   border-radius: var(--radius-md);
   width: fit-content;
 }

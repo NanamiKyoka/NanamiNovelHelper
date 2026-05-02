@@ -5,7 +5,7 @@
     }
     .ant-modal-header {
       background: var(--background-primary);
-      border-bottom-color: var(--border-color);
+      border-bottom-color: var(--border-primary);
     }
     .ant-modal-title {
       color: var(--text-primary);
@@ -20,7 +20,7 @@
       padding: 24px;
     }
     .ant-modal-footer {
-      border-top-color: var(--border-color);
+      border-top-color: var(--border-primary);
     }
   }
 }
@@ -44,5 +44,5 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-primary);
 }

@@ -21,6 +21,8 @@ export type ThemeColorVar =
   | '--color-primary-hover'
   | '--color-primary-active'
   | '--color-primary-bg'
+  | '--color-primary-bg-hover'
+  | '--color-primary-border'
   | '--color-success'
   | '--color-success-bg'
   | '--color-warning'
@@ -155,9 +157,7 @@ export function applyPrimaryColorToRoot(primaryHex: string, isDark: boolean): vo
   root.style.setProperty('--color-primary-active', variants.active)
   root.style.setProperty('--color-primary-bg', variants.bg)
   root.style.setProperty('--color-primary-bg-hover', variants.bgHover)
-  root.style.setProperty('--primary-color', variants.primary)
-  root.style.setProperty('--primary-color-bg', variants.bg)
-  root.style.setProperty('--primary-color-border', variants.border)
+  root.style.setProperty('--color-primary-border', variants.border)
   root.style.setProperty('--color-info', variants.primary)
   root.style.setProperty('--color-info-bg', variants.bg)
   root.style.setProperty('--focus-bg', variants.focusBg)

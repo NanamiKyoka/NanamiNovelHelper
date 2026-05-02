@@ -37,7 +37,7 @@
   align-items: center;
   gap: var(--spacing-1);
   padding: var(--spacing-1);
-  background: var(--bg-color);
+  background: var(--bg-base);
   border-radius: var(--radius-md);
 }
 
@@ -61,19 +61,19 @@
 }
 
 .toolButtonActive {
-  background: var(--primary-color);
+  background: var(--color-primary);
   color: white;
 }
 
 .toolButtonActive:hover {
-  background: var(--primary-color);
+  background: var(--color-primary);
   color: white;
 }
 
 .divider {
   width: 1px;
   height: 24px;
-  background: var(--border-color);
+  background: var(--border-primary);
   margin: 0 var(--spacing-1);
 }
 
@@ -92,8 +92,8 @@
   display: flex;
   justify-content: space-between;
   padding: var(--spacing-2) var(--spacing-4);
-  background: var(--card-bg);
-  border-top: 1px solid var(--border-color);
+  background: var(--bg-container);
+  border-top: 1px solid var(--border-primary);
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   flex-shrink: 0;
@@ -116,6 +116,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  color: var(--primary-color);
+  color: var(--color-primary);
   font-weight: var(--font-weight-medium);
 }

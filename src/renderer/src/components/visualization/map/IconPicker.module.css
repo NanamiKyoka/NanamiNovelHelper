@@ -45,11 +45,11 @@
 }
 
 .iconButton:hover {
-  background: var(--primary-color);
+  background: var(--color-primary);
   color: white;
 }
 
 .iconButtonActive {
-  background: var(--primary-color);
+  background: var(--color-primary);
   color: white;
 }

@@ -5,8 +5,8 @@
 
 .toolbar {
   width: 52px;
-  background: var(--card-bg);
-  border-right: 1px solid var(--border-color);
+  background: var(--bg-container);
+  border-right: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
   padding: var(--spacing-2);
@@ -38,8 +38,8 @@
 }
 
 .activeTool {
-  background: var(--primary-color) !important;
-  color: var(--bg-color) !important;
+  background: var(--color-primary) !important;
+  color: var(--bg-base) !important;
 }
 
 .activeTool:hover {
@@ -48,13 +48,13 @@
 
 .divider {
   margin: var(--spacing-2) 0;
-  border-color: var(--border-color);
+  border-color: var(--border-primary);
 }
 
 .hint {
   margin-top: auto;
   padding: var(--spacing-2);
-  background: var(--bg-secondary);
+  background: var(--bg-surface);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   color: var(--text-tertiary);

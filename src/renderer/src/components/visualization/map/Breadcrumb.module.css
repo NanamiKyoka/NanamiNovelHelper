@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   padding: var(--spacing-2) var(--spacing-4);
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-container);
+  border-bottom: 1px solid var(--border-primary);
   gap: var(--spacing-1);
   overflow-x: auto;
   flex-shrink: 0;
@@ -28,7 +28,7 @@
 }
 
 .breadcrumbItemActive {
-  color: var(--primary-color);
+  color: var(--color-primary);
   font-weight: var(--font-weight-medium);
   background: rgba(var(--primary-color-rgb), 0.1);
 }
