@@ -74,6 +74,18 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-fullscreen: 9999;
+
+  /* ========== 主色 Primary Color（默认值，运行时由 applyPrimaryColorToRoot() 动态覆盖） ========== */
+  --color-primary: #1890ff;
+  --color-primary-hover: #40a9ff;
+  --color-primary-active: #096dd9;
+  --color-primary-bg: #e6f7ff;
+  --color-primary-bg-hover: #bae7ff;
+  --color-primary-border: #91d5ff;
+  --color-info: #1890ff;
+  --color-info-bg: #e6f7ff;
+  --focus-bg: rgba(24, 144, 255, 0.1);
+  --shadow-focus: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 /* ============================================
@@ -111,16 +123,9 @@ body.light {
   --hover-bg: rgba(0, 0, 0, 0.04);
   --active-bg: rgba(0, 0, 0, 0.08);
   --selected-bg: rgba(0, 0, 0, 0.04);
-  --focus-bg: rgba(24, 144, 255, 0.1);
 
   /* ========== 主色 Primary Color ========== */
-  /* 注意：以下主色变量为 CSS 默认值，运行时由 applyPrimaryColorToRoot() 动态覆盖 */
-  --color-primary: #1890ff;
-  --color-primary-hover: #40a9ff;
-  --color-primary-active: #096dd9;
-  --color-primary-bg: #e6f7ff;
-  --color-primary-bg-hover: #bae7ff;
-  --color-primary-border: #91d5ff;
+  /* 由 applyPrimaryColorToRoot() 动态设置，不在主题选择器中定义 */
 
   /* ========== 功能色 Functional Colors ========== */
   --color-success: #52c41a;
@@ -129,8 +134,6 @@ body.light {
   --color-warning-bg: #fffbe6;
   --color-error: #ff4d4f;
   --color-error-bg: #fff2f0;
-  --color-info: #1890ff;
-  --color-info-bg: #e6f7ff;
 
   /* ========== Git 状态色 ========== */
   --git-color-added: #587c0c;
@@ -157,7 +160,6 @@ body.light {
   --shadow-popup: 0 2px 8px rgba(0, 0, 0, 0.15);
   --shadow-modal: 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-dropdown: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08);
-  --shadow-focus: 0 0 0 2px rgba(24, 144, 255, 0.2);
 
   /* ========== 代码高亮色 Code Highlight (GitHub Light) ========== */
   --code-bg: #f6f8fa;
@@ -229,16 +231,9 @@ body.dark {
   --hover-bg: rgba(255, 255, 255, 0.08);
   --active-bg: rgba(255, 255, 255, 0.12);
   --selected-bg: rgba(255, 255, 255, 0.08);
-  --focus-bg: rgba(24, 144, 255, 0.2);
 
   /* ========== 主色 Primary Color ========== */
-  /* 注意：以下主色变量为 CSS 默认值，运行时由 applyPrimaryColorToRoot() 动态覆盖 */
-  --color-primary: #177ddc;
-  --color-primary-hover: #3c9ae8;
-  --color-primary-active: #155ead;
-  --color-primary-bg: #111d2c;
-  --color-primary-bg-hover: #112545;
-  --color-primary-border: #15395b;
+  /* 由 applyPrimaryColorToRoot() 动态设置，不在主题选择器中定义 */
 
   /* ========== 功能色 Functional Colors ========== */
   --color-success: #49aa19;
@@ -247,8 +242,6 @@ body.dark {
   --color-warning-bg: #2b2111;
   --color-error: #a61d24;
   --color-error-bg: #2c1618;
-  --color-info: #177ddc;
-  --color-info-bg: #111d2c;
 
   /* ========== Git 状态色 ========== */
   --git-color-added: #81b88b;
@@ -275,7 +268,6 @@ body.dark {
   --shadow-popup: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-modal: 0 4px 12px rgba(0, 0, 0, 0.45);
   --shadow-dropdown: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32);
-  --shadow-focus: 0 0 0 2px rgba(24, 144, 255, 0.35);
 
   /* ========== 代码高亮色 Code Highlight (One Dark) ========== */
   --code-bg: #282c34;

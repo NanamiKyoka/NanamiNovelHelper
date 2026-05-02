@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import { AhoCorasick, createAhoCorasick } from './ahoCorasick'
+import { THEME_COLORS } from '@shared/constants/colors'
 import type {
   HighlightConfig,
   HighlightPattern,
@@ -154,7 +155,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
         id: entry.id,
         name: entry.name,
         aliases: entry.aliases || [],
-        color: effective.color || entry.color || type?.color || '#1890ff',
+        color: effective.color || entry.color || type?.color || THEME_COLORS.primary,
         typeId: entry.typeId,
         matchMode: effective.matchMode,
         caseSensitive: effective.caseSensitive,

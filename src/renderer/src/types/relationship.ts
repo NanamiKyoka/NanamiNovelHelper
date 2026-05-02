@@ -13,10 +13,11 @@ export type { BuiltinRelationTypeId } from '@shared/constants'
  * 性别配置
  */
 import type { Gender } from '@shared/relationship'
+import { SEMANTIC_COLORS } from '@shared/constants/colors'
 
 export const GENDER_CONFIG: Record<Gender, { label: string; color: string }> = {
-  male: { label: '男', color: '#1890ff' },
-  female: { label: '女', color: '#eb2f96' },
-  other: { label: '其他', color: '#722ed1' },
-  unknown: { label: '未知', color: '#8c8c8c' }
+  male: { label: '男', color: SEMANTIC_COLORS.gender.male },
+  female: { label: '女', color: SEMANTIC_COLORS.gender.female },
+  other: { label: '其他', color: SEMANTIC_COLORS.gender.other },
+  unknown: { label: '未知', color: SEMANTIC_COLORS.gender.unknown }
 }
