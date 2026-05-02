@@ -186,10 +186,6 @@ export function applyPrimaryColorToRoot(primaryHex: string, isDark: boolean): vo
   root.style.setProperty('--color-info-bg', variants.bg)
   root.style.setProperty('--focus-bg', variants.focusBg)
   root.style.setProperty('--shadow-focus', variants.shadowFocus)
-  root.style.setProperty('--ant-color-primary', variants.primary)
-  root.style.setProperty('--ant-color-primary-hover', variants.hover)
-  root.style.setProperty('--ant-color-primary-bg', variants.bg)
-  root.style.setProperty('--ant-color-primary-border', variants.border)
 }
 
 export const themeColors = {
