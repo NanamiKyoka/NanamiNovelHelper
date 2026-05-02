@@ -613,3 +613,146 @@
   display: flex;
   gap: 12px;
 }
+
+/* 渲染模式差异视图样式 */
+.renderedDiffContainer {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.renderedDiffSide {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.renderedDiffDivider {
+  width: 1px;
+  background: var(--ant-color-border-secondary);
+}
+
+.renderedDiffHeader {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.renderedDiffContent {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.8;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.renderedDiffContent p {
+  margin: 0.5em 0;
+}
+
+.renderedDiffContent h1,
+.renderedDiffContent h2,
+.renderedDiffContent h3,
+.renderedDiffContent h4,
+.renderedDiffContent h5,
+.renderedDiffContent h6 {
+  margin: 0.8em 0 0.4em;
+  font-weight: 600;
+}
+
+.renderedDiffContent ul,
+.renderedDiffContent ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.renderedDiffContent blockquote {
+  border-left: 4px solid var(--color-primary);
+  margin: 0.5em 0;
+  padding: 0.5em 0 0.5em 1em;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-bg-layout);
+  border-radius: 0 4px 4px 0;
+}
+
+.renderedDiffContent pre {
+  background: var(--ant-color-bg-layout);
+  border-radius: 4px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+}
+
+.renderedDiffContent code {
+  background: var(--ant-color-bg-layout);
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+}
+
+.renderedDiffContent pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.renderedDiffContent img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.renderedDiffContent table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+
+.renderedDiffContent th,
+.renderedDiffContent td {
+  border: 1px solid var(--ant-color-border-secondary);
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.renderedDiffContent th {
+  background: var(--ant-color-bg-layout);
+  font-weight: 600;
+}
+
+.renderedDiffContent a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.renderedDiffContent a:hover {
+  text-decoration: underline;
+}
+
+.renderedDiffContent hr {
+  border: none;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  margin: 1em 0;
+}
+
+.renderedDiffContent :global(.rendered-diff-block-delete) {
+  background: var(--color-error-bg);
+  border-left: 3px solid var(--color-error);
+  padding: 4px 8px;
+  margin: 4px 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.renderedDiffContent :global(.rendered-diff-block-add) {
+  background: var(--color-success-bg);
+  border-left: 3px solid var(--color-success);
+  padding: 4px 8px;
+  margin: 4px 0;
+  border-radius: 0 4px 4px 0;
+}

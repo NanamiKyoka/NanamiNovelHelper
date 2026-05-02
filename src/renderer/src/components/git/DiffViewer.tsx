@@ -1,7 +1,8 @@
 /**
  * 差异查看器组件
- * 支持 unified（统一）和 split（左右对比）两种视图模式
- * 支持对 .novel 等 HTML 内容文件自动剥离标签显示纯文本
+ * 支持三种内容模式：渲染（rendered）、源码（source）、纯文本（plaintext）
+ * 支持统一（unified）和左右对比（split）两种视图模式（源码和纯文本模式）
+ * 渲染模式自动对 HTML/Markdown 内容进行渲染并智能高亮变更
  */
 
 import { useState, useMemo } from 'react'
@@ -12,29 +13,33 @@ import {
   SplitCellsOutlined,
   AlignLeftOutlined,
   FileTextOutlined,
-  CodeOutlined
+  CodeOutlined,
+  EyeOutlined
 } from '@ant-design/icons'
+import { marked } from 'marked'
 import type { GitFileDiff, GitDiffHunk } from '@shared/git'
-import { stripHtmlTagsInline, isHtmlContent, isNovelFile } from '@utils/html'
+import { stripHtmlTagsInline, isHtmlContent, isMarkdownFile, isRenderableFile } from '@utils/html'
 import styles from './GitPanel.module.css'
+
+type ContentMode = 'rendered' | 'source' | 'plaintext'
+type DiffViewMode = 'unified' | 'split'
 
 interface DiffViewerProps {
   diff: GitFileDiff
   onClose?: () => void
 }
 
-type DiffViewMode = 'unified' | 'split'
-
 function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
+  const shouldDetectHtml =
+    isRenderableFile(diff.path) ||
+    diff.hunks.some(hunk => hunk.lines.some(line => isHtmlContent(line.content)))
+
+  const defaultContentMode: ContentMode = shouldDetectHtml ? 'rendered' : 'source'
+  const [contentMode, setContentMode] = useState<ContentMode>(defaultContentMode)
   const [viewMode, setViewMode] = useState<DiffViewMode>('unified')
 
-  const shouldDetectHtml =
-    isNovelFile(diff.path) ||
-    diff.hunks.some(hunk => hunk.lines.some(line => isHtmlContent(line.content)))
-  const [plainText, setPlainText] = useState(shouldDetectHtml)
-
   const processedHunks = useMemo(() => {
-    if (!plainText) return diff.hunks
+    if (contentMode !== 'plaintext') return diff.hunks
     return diff.hunks.map(hunk => ({
       ...hunk,
       lines: hunk.lines.map(line => ({
@@ -42,10 +47,10 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
         content: stripHtmlTagsInline(line.content)
       }))
     }))
-  }, [diff.hunks, plainText])
+  }, [diff.hunks, contentMode])
 
   const handleCopy = () => {
-    const hunksToCopy = plainText ? processedHunks : diff.hunks
+    const hunksToCopy = contentMode === 'plaintext' ? processedHunks : diff.hunks
     const content = hunksToCopy
       .map(hunk => {
         const lines = hunk.lines
@@ -121,30 +126,28 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
             <span style={{ color: 'var(--color-error)' }}>-{diff.deletions}</span>
           </span>
           {shouldDetectHtml && (
-            <Tooltip title={plainText ? '显示原始内容' : '显示纯文本'}>
-              <Button
-                size="small"
-                type={plainText ? 'primary' : 'text'}
-                icon={plainText ? <FileTextOutlined /> : <CodeOutlined />}
-                onClick={() => setPlainText(!plainText)}
-              />
-            </Tooltip>
+            <Segmented
+              size="small"
+              value={contentMode}
+              onChange={value => setContentMode(value as ContentMode)}
+              options={[
+                { value: 'rendered', icon: <EyeOutlined />, title: '渲染' },
+                { value: 'source', icon: <CodeOutlined />, title: '源码' },
+                { value: 'plaintext', icon: <FileTextOutlined />, title: '纯文本' }
+              ]}
+            />
           )}
-          <Segmented
-            size="small"
-            value={viewMode}
-            onChange={value => setViewMode(value as DiffViewMode)}
-            options={[
-              {
-                value: 'unified',
-                icon: <AlignLeftOutlined />
-              },
-              {
-                value: 'split',
-                icon: <SplitCellsOutlined />
-              }
-            ]}
-          />
+          {contentMode !== 'rendered' && (
+            <Segmented
+              size="small"
+              value={viewMode}
+              onChange={value => setViewMode(value as DiffViewMode)}
+              options={[
+                { value: 'unified', icon: <AlignLeftOutlined /> },
+                { value: 'split', icon: <SplitCellsOutlined /> }
+              ]}
+            />
+          )}
           <Tooltip title="复制差异">
             <Button size="small" type="text" icon={<CopyOutlined />} onClick={handleCopy} />
           </Tooltip>
@@ -156,11 +159,116 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
         </div>
       </div>
       <div className={styles.diffContent}>
-        {viewMode === 'unified' ? (
+        {contentMode === 'rendered' ? (
+          <RenderedDiffView hunks={diff.hunks} filePath={diff.path} />
+        ) : viewMode === 'unified' ? (
           <UnifiedDiffView hunks={processedHunks} />
         ) : (
           <SplitDiffView hunks={processedHunks} />
         )}
+      </div>
+    </div>
+  )
+}
+
+interface LineGroup {
+  type: 'context' | 'delete' | 'add'
+  lines: { content: string; oldLineNumber?: number; newLineNumber?: number }[]
+}
+
+function groupConsecutiveLines(lines: GitDiffHunk['lines']): LineGroup[] {
+  const groups: LineGroup[] = []
+  let currentGroup: LineGroup | null = null
+
+  for (const line of lines) {
+    if (currentGroup && currentGroup.type === line.type) {
+      currentGroup.lines.push({
+        content: line.content,
+        oldLineNumber: line.oldLineNumber,
+        newLineNumber: line.newLineNumber
+      })
+    } else {
+      if (currentGroup) {
+        groups.push(currentGroup)
+      }
+      currentGroup = {
+        type: line.type,
+        lines: [
+          {
+            content: line.content,
+            oldLineNumber: line.oldLineNumber,
+            newLineNumber: line.newLineNumber
+          }
+        ]
+      }
+    }
+  }
+
+  if (currentGroup) {
+    groups.push(currentGroup)
+  }
+
+  return groups
+}
+
+function buildRenderedHtml(hunks: GitDiffHunk[], side: 'old' | 'new', isMarkdown: boolean): string {
+  const segments: string[] = []
+
+  for (const hunk of hunks) {
+    const groups = groupConsecutiveLines(hunk.lines)
+
+    for (const group of groups) {
+      const isRelevant =
+        (side === 'old' && (group.type === 'context' || group.type === 'delete')) ||
+        (side === 'new' && (group.type === 'context' || group.type === 'add'))
+
+      if (!isRelevant) continue
+
+      const rawContent = group.lines.map(l => l.content).join('\n')
+
+      if (group.type === 'context') {
+        if (isMarkdown) {
+          segments.push(marked.parse(rawContent) as string)
+        } else {
+          segments.push(rawContent)
+        }
+      } else {
+        const renderedContent = isMarkdown ? (marked.parse(rawContent) as string) : rawContent
+        const cssClass =
+          group.type === 'delete' ? 'rendered-diff-block-delete' : 'rendered-diff-block-add'
+        segments.push(`<div class="${cssClass}">${renderedContent}</div>`)
+      }
+    }
+  }
+
+  return segments.join('\n')
+}
+
+interface RenderedDiffViewProps {
+  hunks: GitDiffHunk[]
+  filePath: string
+}
+
+function RenderedDiffView({ hunks, filePath }: RenderedDiffViewProps): JSX.Element {
+  const isMd = isMarkdownFile(filePath)
+
+  const { oldHtml, newHtml } = useMemo(() => {
+    return {
+      oldHtml: buildRenderedHtml(hunks, 'old', isMd),
+      newHtml: buildRenderedHtml(hunks, 'new', isMd)
+    }
+  }, [hunks, isMd])
+
+  return (
+    <div className={styles.renderedDiffContainer}>
+      <div className={styles.renderedDiffSide}>
+        <div className={styles.renderedDiffHeader}>原始版本</div>
+        <div className={styles.renderedDiffContent} dangerouslySetInnerHTML={{ __html: oldHtml }} />
+      </div>
+      <div className={styles.renderedDiffDivider} />
+      <div className={styles.renderedDiffSide}>
+        <div className={styles.renderedDiffHeader}>新版本</div>
+        <div className={styles.renderedDiffContent} dangerouslySetInnerHTML={{ __html: newHtml }} />
       </div>
     </div>
   )

@@ -40,3 +40,11 @@ export function isHtmlContent(content: string): boolean {
 export function isNovelFile(path: string): boolean {
   return path.endsWith('.novel')
 }
+
+export function isMarkdownFile(path: string): boolean {
+  return path.endsWith('.md') || path.endsWith('.markdown')
+}
+
+export function isRenderableFile(path: string): boolean {
+  return isNovelFile(path) || isMarkdownFile(path)
+}

@@ -169,7 +169,7 @@ function CommitDetailPanel({ commit, onClose }: CommitDetailPanelProps): JSX.Ele
               </span>
             </span>
           </div>
-          <DiffViewer diff={currentDiff} viewMode="unified" />
+          <DiffViewer diff={currentDiff} />
         </div>
       )}
     </Drawer>
