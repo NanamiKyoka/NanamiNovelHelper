@@ -40,7 +40,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
-import { THEME_COLORS, NEUTRAL_COLORS } from '@shared/constants/colors'
+import { THEME_COLORS } from '@shared/constants/colors'
 import type { TimelineNode, TimeInfo } from '@renderer/types/timeline'
 import styles from './TimelinePreview.module.css'
 
@@ -267,9 +267,7 @@ function TimelinePreview({
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.scale(scale, scale)
-      ctx.fillStyle =
-        getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() ||
-        NEUTRAL_COLORS.white
+      ctx.fillStyle = getThemeColor('--bg-primary')
       ctx.fillRect(0, 0, rect.width, rect.height)
 
       const svgData = new XMLSerializer().serializeToString(

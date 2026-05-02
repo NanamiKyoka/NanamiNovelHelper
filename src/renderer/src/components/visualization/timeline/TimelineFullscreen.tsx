@@ -295,15 +295,14 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     if (!ctx) return
 
     // 绘制背景
-    ctx.fillStyle = isDarkMode ? '#1f1f1f' : '#f5f5f5'
+    ctx.fillStyle = getThemeColor('--bg-primary')
     ctx.fillRect(0, 0, 200, 120)
 
-    // 绘制时间线简化视图
     const nodes = currentTimeline.nodes.slice().sort((a, b) => a.order - b.order)
     const nodeCount = Math.min(nodes.length, 5)
     const spacing = 100 / (nodeCount + 1)
 
-    ctx.strokeStyle = isDarkMode ? '#434343' : '#d9d9d9'
+    ctx.strokeStyle = getThemeColor('--border-primary')
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(20, 60)
