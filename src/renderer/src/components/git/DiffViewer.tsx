@@ -5,7 +5,7 @@
  * 渲染模式自动对 HTML/Markdown 内容进行渲染并智能高亮变更
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Empty, Button, Tooltip, Segmented, message } from 'antd'
 import {
   CloseOutlined,
@@ -37,6 +37,10 @@ function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
   const defaultContentMode: ContentMode = shouldDetectHtml ? 'rendered' : 'source'
   const [contentMode, setContentMode] = useState<ContentMode>(defaultContentMode)
   const [viewMode, setViewMode] = useState<DiffViewMode>('unified')
+
+  useEffect(() => {
+    setContentMode(shouldDetectHtml ? 'rendered' : 'source')
+  }, [diff.path, shouldDetectHtml])
 
   const processedHunks = useMemo(() => {
     if (contentMode !== 'plaintext') return diff.hunks
