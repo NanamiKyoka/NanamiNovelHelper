@@ -462,6 +462,7 @@
   display: flex;
   min-height: 22px;
   line-height: 22px;
+  align-items: flex-start;
 }
 
 .splitDiffLine.context {
@@ -491,14 +492,14 @@
   user-select: none;
   background: var(--ant-color-bg-layout);
   flex-shrink: 0;
+  line-height: 22px;
 }
 
 .splitLineContent {
   flex: 1;
   padding-left: 4px;
-  white-space: pre;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .diffFilePath {
