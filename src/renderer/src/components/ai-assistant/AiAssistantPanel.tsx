@@ -33,7 +33,8 @@ import {
   FileTextOutlined,
   HistoryOutlined,
   MoreOutlined,
-  ToolOutlined
+  ToolOutlined,
+  SaveOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import type { TemplateListItem, WorkflowListItem, TemplateCategory } from '@shared/ai-assistant'
@@ -80,7 +81,9 @@ function AiAssistantPanel(): JSX.Element {
     exportWorkflow,
     importTemplate,
     importWorkflow,
-    setActiveTab
+    setActiveTab,
+    loadTemplate,
+    saveTemplate
   } = useAiAssistantStore()
 
   const [searchText, setSearchText] = useState('')
@@ -94,6 +97,9 @@ function AiAssistantPanel(): JSX.Element {
   const [showWorkflowExecutor, setShowWorkflowExecutor] = useState(false)
   const [executingWorkflowId, setExecutingWorkflowId] = useState<string | undefined>(undefined)
   const [executingTemplateId, setExecutingTemplateId] = useState<string | undefined>(undefined)
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  const [quickEditName, setQuickEditName] = useState('')
+  const [quickEditDesc, setQuickEditDesc] = useState('')
 
   // 加载数据
   useEffect(() => {
@@ -185,6 +191,34 @@ function AiAssistantPanel(): JSX.Element {
     setExecutingTemplateId(undefined)
   }
 
+  const handleStartQuickEdit = (item: TemplateListItem) => {
+    setQuickEditId(item.id)
+    setQuickEditName(item.name)
+    setQuickEditDesc(item.description || '')
+  }
+
+  const handleSaveQuickEdit = async () => {
+    if (!quickEditId) return
+    try {
+      const template = await loadTemplate(quickEditId)
+      if (template) {
+        await saveTemplate({
+          ...template,
+          name: quickEditName,
+          description: quickEditDesc
+        })
+        message.success('模板已更新')
+      }
+    } catch (error) {
+      message.error('更新失败')
+    }
+    setQuickEditId(null)
+  }
+
+  const handleCancelQuickEdit = () => {
+    setQuickEditId(null)
+  }
+
   // 处理导出模板
   const handleExportTemplate = async (id: string) => {
     try {
@@ -246,6 +280,7 @@ function AiAssistantPanel(): JSX.Element {
   // 渲染模板列表项
   const renderTemplateItem = (item: TemplateListItem) => {
     const categoryConfig = CATEGORY_CONFIG[item.category]
+    const isQuickEditing = quickEditId === item.id
     const templateActions = [
       <Tooltip key="run" title="执行">
         <Button
@@ -275,6 +310,12 @@ function AiAssistantPanel(): JSX.Element {
         key="more"
         menu={{
           items: [
+            {
+              key: 'quickEdit',
+              icon: <EditOutlined />,
+              label: '快速编辑',
+              onClick: () => handleStartQuickEdit(item)
+            },
             {
               key: 'export',
               icon: <ExportOutlined />,
@@ -310,51 +351,74 @@ function AiAssistantPanel(): JSX.Element {
     ]
 
     return (
-      <List.Item actions={templateActions}>
+      <List.Item actions={isQuickEditing ? [
+        <Button key="save" type="link" size="small" icon={<SaveOutlined />} onClick={handleSaveQuickEdit}>保存</Button>,
+        <Button key="cancel" type="link" size="small" onClick={handleCancelQuickEdit}>取消</Button>
+      ] : templateActions}>
         <List.Item.Meta
           avatar={CATEGORY_ICONS[item.category]}
           title={
-            <div className={styles.titleRow}>
-              <Text strong className={styles.templateName}>
-                {item.name}
-              </Text>
-              <div className={styles.tagRow}>
-                <Tag color={categoryConfig.color} style={{ margin: 0 }}>
-                  {categoryConfig.label}
-                </Tag>
-                {item.isBuiltIn && (
-                  <Tag color="default" style={{ margin: 0 }}>
-                    内置
+            isQuickEditing ? (
+              <Input
+                value={quickEditName}
+                onChange={e => setQuickEditName(e.target.value)}
+                size="small"
+                style={{ width: 200 }}
+                onPressEnter={handleSaveQuickEdit}
+              />
+            ) : (
+              <div className={styles.titleRow}>
+                <Text strong className={styles.templateName}>
+                  {item.name}
+                </Text>
+                <div className={styles.tagRow}>
+                  <Tag color={categoryConfig.color} style={{ margin: 0 }}>
+                    {categoryConfig.label}
                   </Tag>
-                )}
-                {item.source === 'project' && (
-                  <Tag color="blue" style={{ margin: 0 }}>
-                    项目
-                  </Tag>
-                )}
+                  {item.isBuiltIn && (
+                    <Tag color="default" style={{ margin: 0 }}>
+                      内置
+                    </Tag>
+                  )}
+                  {item.source === 'project' && (
+                    <Tag color="blue" style={{ margin: 0 }}>
+                      项目
+                    </Tag>
+                  )}
+                </div>
               </div>
-            </div>
+            )
           }
           description={
-            <div className={styles.itemDescription}>
-              <Text type="secondary" ellipsis>
-                {item.description || '暂无描述'}
-              </Text>
-              <div className={styles.itemMeta}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {item.variableCount} 个变量
+            isQuickEditing ? (
+              <Input
+                value={quickEditDesc}
+                onChange={e => setQuickEditDesc(e.target.value)}
+                size="small"
+                placeholder="模板描述"
+                onPressEnter={handleSaveQuickEdit}
+              />
+            ) : (
+              <div className={styles.itemDescription}>
+                <Text type="secondary" ellipsis>
+                  {item.description || '暂无描述'}
                 </Text>
-                {item.tags.length > 0 && (
-                  <div className={styles.tags}>
-                    {item.tags.slice(0, 3).map(tag => (
-                      <Tag key={tag} style={{ margin: 0, fontSize: 11 }}>
-                        {tag}
-                      </Tag>
-                    ))}
-                  </div>
-                )}
+                <div className={styles.itemMeta}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {item.variableCount} 个变量
+                  </Text>
+                  {item.tags.length > 0 && (
+                    <div className={styles.tags}>
+                      {item.tags.slice(0, 3).map(tag => (
+                        <Tag key={tag} style={{ margin: 0, fontSize: 11 }}>
+                          {tag}
+                        </Tag>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )
           }
         />
       </List.Item>
