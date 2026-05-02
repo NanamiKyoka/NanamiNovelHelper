@@ -1662,6 +1662,7 @@ const api = {
     update: (skillId: string, options: Record<string, unknown>) =>
       ipcRenderer.invoke('dynamicSkill:update', skillId, options),
     delete: (skillId: string) => ipcRenderer.invoke('dynamicSkill:delete', skillId),
+    checkPython: () => ipcRenderer.invoke('dynamicSkill:checkPython'),
     onExecutionOutput: (callback: (data: { executionId: string; line: string }) => void) => {
       ipcRenderer.on('dynamicSkill:execution-output', (_, data) => callback(data))
     },

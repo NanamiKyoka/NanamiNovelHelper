@@ -184,4 +184,8 @@ export function registerDynamicSkillHandlers(): void {
     validateParams('dynamicSkill:delete').nonEmptyString(skillId, 'skillId').validate()
     return dynamicSkillService.deleteSkill(skillId)
   })
+
+  ipcMain.handle('dynamicSkill:checkPython', async () => {
+    return dynamicSkillService.checkPythonEnvironment()
+  })
 }

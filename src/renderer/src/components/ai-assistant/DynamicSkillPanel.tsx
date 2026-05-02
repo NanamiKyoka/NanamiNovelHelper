@@ -97,6 +97,11 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   const [whitelist, setWhitelist] = useState<SkillWhitelistEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState<DynamicSkill | null>(null)
+  const [pythonStatus, setPythonStatus] = useState<{
+    checked: boolean
+    available: boolean
+    version?: string
+  }>({ checked: false, available: true })
 
   // 编辑模式状态
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
@@ -124,6 +129,12 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   useEffect(() => {
     loadSkills()
   }, [loadSkills])
+
+  useEffect(() => {
+    window.electron.dynamicSkill.checkPython().then(result => {
+      setPythonStatus({ checked: true, ...result })
+    })
+  }, [])
 
   // 刷新 SKILL
   const handleReload = async () => {
@@ -779,6 +790,24 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
       </Header>
 
       <Layout style={{ flex: 1, overflow: 'hidden' }}>
+        {pythonStatus.checked && !pythonStatus.available && (
+          <Alert
+            message="未检测到 Python 环境"
+            description="部分 SKILL 工具需要 Python 运行环境。请安装 Python 3.x 并确保已添加到系统 PATH。"
+            type="warning"
+            showIcon
+            style={{ margin: '8px 16px' }}
+          />
+        )}
+        {pythonStatus.checked && pythonStatus.available && pythonStatus.version && (
+          <Alert
+            message={`Python ${pythonStatus.version} 已就绪`}
+            type="success"
+            showIcon
+            closable
+            style={{ margin: '8px 16px' }}
+          />
+        )}
         <Content className={styles.mainContent}>
           {loading && skills.length === 0 ? (
             <div className={styles.loadingContainer}>

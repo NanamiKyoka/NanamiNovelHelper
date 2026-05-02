@@ -1412,6 +1412,7 @@ interface DynamicSkillAPI {
   create: (options: Record<string, unknown>) => Promise<Record<string, unknown>>
   update: (skillId: string, options: Record<string, unknown>) => Promise<Record<string, unknown>>
   delete: (skillId: string) => Promise<void>
+  checkPython: () => Promise<{ available: boolean; version?: string; path?: string }>
   onExecutionOutput: (callback: (data: { executionId: string; line: string }) => void) => void
   removeExecutionOutputListener: () => void
 }

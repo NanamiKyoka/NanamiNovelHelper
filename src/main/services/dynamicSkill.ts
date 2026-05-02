@@ -3,7 +3,7 @@
  * 加载、解析和执行用户自定义的 SKILL
  */
 
-import { spawn, ChildProcess } from 'child_process'
+import { spawn, execSync, ChildProcess } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as crypto from 'crypto'
@@ -82,6 +82,24 @@ export class DynamicSkillService {
     const userDataPath = app.getPath('userData')
     this.whitelistPath = path.join(userDataPath, 'skill-whitelist.json')
     await this.loadWhitelist()
+  }
+
+  checkPythonEnvironment(): { available: boolean; version?: string; path?: string } {
+    const commands = ['python', 'python3']
+    for (const cmd of commands) {
+      try {
+        const output = execSync(`${cmd} --version`, { encoding: 'utf-8', timeout: 5000 })
+        const match = output.match(/Python (\d+\.\d+\.\d+)/)
+        return {
+          available: true,
+          version: match ? match[1] : output.trim(),
+          path: cmd
+        }
+      } catch {
+        // continue to next command
+      }
+    }
+    return { available: false }
   }
 
   /**
