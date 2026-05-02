@@ -28,7 +28,6 @@ import {
   ArrowLeftOutlined,
   ReloadOutlined,
   ToolOutlined,
-  ExclamationCircleOutlined,
   SafetyOutlined,
   FileTextOutlined,
   PlayCircleOutlined,
@@ -152,40 +151,6 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   }
 
   // 添加到白名单
-  const handleAddToWhitelist = async (skill: DynamicSkill) => {
-    try {
-      await window.electron.dynamicSkill.addToWhitelist(skill.id, skill.metadata.name, skill.path)
-      setWhitelist([
-        ...whitelist,
-        {
-          skillId: skill.id,
-          skillName: skill.metadata.name,
-          addedAt: new Date().toISOString(),
-          pathHash: skill.path
-        }
-      ])
-      setSkills(skills.map(s => (s.id === skill.id ? { ...s, isTrusted: true } : s)))
-      message.success(`已信任 SKILL: ${skill.metadata.name}`)
-    } catch (error) {
-      console.error('Failed to add to whitelist:', error)
-      message.error('添加信任失败')
-    }
-  }
-
-  // 从白名单移除
-  const handleRemoveFromWhitelist = async (skillId: string) => {
-    try {
-      await window.electron.dynamicSkill.removeFromWhitelist(skillId)
-      setWhitelist(whitelist.filter(w => w.skillId !== skillId))
-      setSkills(skills.map(s => (s.id === skillId ? { ...s, isTrusted: false } : s)))
-      message.success('已取消信任')
-    } catch (error) {
-      console.error('Failed to remove from whitelist:', error)
-      message.error('取消信任失败')
-    }
-  }
-
-  // 检查 SKILL 是否在白名单中
   const isSkillTrusted = (skillId: string) => {
     return whitelist.some(w => w.skillId === skillId)
   }
@@ -847,13 +812,9 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                     <Space>
                       <Text strong>{skill.metadata.name}</Text>
                       <Text type="secondary">({skill.tools.length} 个工具)</Text>
-                      {isSkillTrusted(skill.id) ? (
+                      {isSkillTrusted(skill.id) && (
                         <Tag color="green" icon={<SafetyOutlined />}>
                           已信任
-                        </Tag>
-                      ) : (
-                        <Tag color="orange" icon={<ExclamationCircleOutlined />}>
-                          未信任
                         </Tag>
                       )}
                       {isEditing && <Tag color="blue">编辑中</Tag>}
@@ -899,28 +860,6 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
                               编辑
                             </Button>
                           </Tooltip>
-                          {!isSkillTrusted(skill.id) && (
-                            <Tooltip title="添加到信任列表">
-                              <Button
-                                type="link"
-                                size="small"
-                                icon={<SafetyOutlined />}
-                                onClick={() => handleAddToWhitelist(skill)}
-                              >
-                                信任
-                              </Button>
-                            </Tooltip>
-                          )}
-                          {isSkillTrusted(skill.id) && (
-                            <Popconfirm
-                              title="确定取消信任此 SKILL？"
-                              onConfirm={() => handleRemoveFromWhitelist(skill.id)}
-                            >
-                              <Button type="link" size="small" danger>
-                                取消信任
-                              </Button>
-                            </Popconfirm>
-                          )}
                           <Popconfirm
                             title="确定删除此 SKILL？"
                             description="SKILL 将被移动到系统回收站，可以恢复。"
