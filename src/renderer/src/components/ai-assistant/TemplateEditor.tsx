@@ -39,7 +39,8 @@ import type {
   VariableDefinition,
   TemplateCategory,
   VariableType,
-  VariableValue
+  VariableValue,
+  TemplateApiConfig
 } from '@shared/ai-assistant'
 import styles from './TemplateEditor.module.css'
 
@@ -104,6 +105,14 @@ function TemplateEditor({
   const [previewMode, setPreviewMode] = useState(false)
   const [previewVariables, setPreviewVariables] = useState<Record<string, VariableValue>>({})
   const [saving, setSaving] = useState(false)
+  const [apiConfig, setApiConfig] = useState<TemplateApiConfig>({})
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+
+  const PROVIDER_OPTIONS = [
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'anthropic', label: 'Anthropic' },
+    { value: 'custom', label: '自定义' }
+  ]
 
   // 加载依赖数据
   useEffect(() => {
@@ -129,6 +138,7 @@ function TemplateEditor({
         })
         setVariables(template.variables)
         setContent(template.content)
+        setApiConfig(template.apiConfig || {})
       } else {
         loadTemplate(templateId)
       }
@@ -138,6 +148,7 @@ function TemplateEditor({
       form.resetFields()
       setVariables([])
       setContent('')
+      setApiConfig({})
     }
   }, [templateId, templates, form, loadTemplate, setCurrentTemplate])
 
@@ -153,8 +164,19 @@ function TemplateEditor({
       })
       setVariables(currentTemplate.variables)
       setContent(currentTemplate.content)
+      setApiConfig(currentTemplate.apiConfig || {})
     }
   }, [currentTemplate, form])
+
+  useEffect(() => {
+    if (apiConfig.provider) {
+      window.electron.aiAssistant.getAvailableModels(apiConfig.provider).then(models => {
+        setAvailableModels(models)
+      })
+    } else {
+      setAvailableModels([])
+    }
+  }, [apiConfig.provider])
 
   // 添加变量
   const handleAddVariable = () => {
@@ -192,7 +214,8 @@ function TemplateEditor({
         category: values.category,
         tags: values.tags || [],
         variables: variables.map((v, index) => ({ ...v, order: index })),
-        content: content, // 使用 state 中的 content
+        content: content,
+        apiConfig: apiConfig.provider ? apiConfig : undefined,
         isBuiltIn: false,
         source: 'project',
         order: currentTemplate?.order || 0
@@ -468,6 +491,89 @@ function TemplateEditor({
             ) : (
               variables.map(renderVariableEditor)
             )}
+          </div>
+
+          <Divider />
+
+          <div className={styles.apiConfigSection}>
+            <Title level={5}>
+              <SettingOutlined /> API 配置
+            </Title>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <Text type="secondary" style={{ fontSize: 12 }}>提供商</Text>
+                <Select
+                  style={{ width: '100%' }}
+                  placeholder="默认使用全局设置"
+                  allowClear
+                  value={apiConfig.provider || undefined}
+                  onChange={(value) => {
+                    setApiConfig(prev => ({
+                      ...prev,
+                      provider: value as TemplateApiConfig['provider'],
+                      model: undefined
+                    }))
+                  }}
+                  options={PROVIDER_OPTIONS}
+                />
+              </div>
+              {apiConfig.provider && (
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>模型</Text>
+                  {availableModels.length > 0 ? (
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder="选择模型"
+                      allowClear
+                      showSearch
+                      value={apiConfig.model || undefined}
+                      onChange={(value) => {
+                        setApiConfig(prev => ({ ...prev, model: value }))
+                      }}
+                      options={availableModels.map(m => ({ value: m, label: m }))}
+                    />
+                  ) : (
+                    <Input
+                      placeholder="输入模型名称"
+                      value={apiConfig.model || ''}
+                      onChange={(e) => {
+                        setApiConfig(prev => ({ ...prev, model: e.target.value }))
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+              {apiConfig.provider && (
+                <>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>温度 ({apiConfig.temperature ?? 0.7})</Text>
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      min={0}
+                      max={2}
+                      step={0.1}
+                      value={apiConfig.temperature ?? 0.7}
+                      onChange={(value) => {
+                        setApiConfig(prev => ({ ...prev, temperature: value ?? undefined }))
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>最大 Token ({apiConfig.maxTokens ?? 2000})</Text>
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      min={100}
+                      max={32000}
+                      step={100}
+                      value={apiConfig.maxTokens ?? 2000}
+                      onChange={(value) => {
+                        setApiConfig(prev => ({ ...prev, maxTokens: value ?? undefined }))
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {previewMode && variables.length > 0 && (
