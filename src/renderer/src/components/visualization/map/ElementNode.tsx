@@ -4,6 +4,7 @@ import type { MenuProps } from 'antd'
 import * as Icons from '@ant-design/icons'
 import { ELEMENT_TYPE_CONFIG, hexToPixel, getHexCorners, HEX_SIZE } from '@renderer/types/map'
 import type { MapElement } from '@renderer/types/map'
+import { getThemeColor } from '@utils/theme'
 import styles from './ElementNode.module.css'
 
 interface ElementNodeProps {
@@ -106,7 +107,7 @@ export function ElementNode({
           <path
             d={hexPath}
             fill={element.color}
-            stroke={isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+            stroke={isSelected ? getThemeColor('--color-primary') : 'rgba(255,255,255,0.3)'}
             strokeWidth={isSelected ? 3 : 1}
           />
         </svg>

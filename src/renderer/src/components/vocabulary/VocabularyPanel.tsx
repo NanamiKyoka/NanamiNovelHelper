@@ -790,7 +790,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         const colorValue =
           typeof values.color === 'string'
             ? values.color
-            : values.color?.toHexString?.() || '#1890ff'
+            : values.color?.toHexString?.() || 'var(--color-primary)'
         const typeName = types.find(t => t.id === currentType)?.name || '未知'
 
         if (editingEntry) {
@@ -839,7 +839,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         const colorValue =
           typeof values.color === 'string'
             ? values.color
-            : values.color?.toHexString?.() || '#1890ff'
+            : values.color?.toHexString?.() || 'var(--color-primary)'
         const typeName = types.find(t => t.id === currentType)?.name || '未知'
 
         await addEntry({

@@ -47,7 +47,7 @@ const { Text } = Typography
 
 // 分类配置
 const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; color: string }> = {
-  character: { label: '人物塑造', color: '#1890ff' },
+  character: { label: '人物塑造', color: 'var(--color-primary)' },
   plot: { label: '情节设计', color: '#52c41a' },
   worldbuilding: { label: '世界观构建', color: '#722ed1' },
   polishing: { label: '润色修改', color: '#fa8c16' }

@@ -38,6 +38,7 @@ import type { NodeData, EdgeData, IElementEvent } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
+import { getThemeColor } from '@utils/theme'
 import {
   BUILTIN_RELATION_TYPES,
   type RelationshipNode,
@@ -138,7 +139,7 @@ function RelationshipGraphFullscreen({
     visible: false,
     editingType: null,
     name: '',
-    color: '#1890ff'
+    color: getThemeColor('--color-primary')
   })
 
   // 右键菜单状态
@@ -224,8 +225,8 @@ function RelationshipGraphFullscreen({
             type: 'circle',
             style: {
               size: 70,
-              fill: (d: NodeData) => d.style?.fill || '#1890ff',
-              stroke: (d: NodeData) => d.style?.stroke || '#1890ff',
+              fill: (d: NodeData) => d.style?.fill || getThemeColor('--color-primary'),
+              stroke: (d: NodeData) => d.style?.stroke || getThemeColor('--color-primary'),
               lineWidth: 3,
               cursor: 'pointer',
               labelText: (d: NodeData) => (d.data?.label as string) || '',
@@ -413,8 +414,8 @@ function RelationshipGraphFullscreen({
     // 转换节点数据 - 包含位置
     const nodes = currentGraph.nodes.map((node, index) => {
       const styleData: Record<string, unknown> = {
-        fill: node.color || '#1890ff',
-        stroke: node.color || '#1890ff'
+        fill: node.color || getThemeColor('--color-primary'),
+        stroke: node.color || getThemeColor('--color-primary')
       }
 
       if (node.x !== undefined && node.y !== undefined) {
@@ -524,7 +525,7 @@ function RelationshipGraphFullscreen({
     setNodeModal({
       visible: true,
       mode: 'create',
-      node: { name: '', gender: 'unknown', color: '#1890ff' }
+      node: { name: '', gender: 'unknown', color: getThemeColor('--color-primary') }
     })
   }
 
@@ -533,7 +534,7 @@ function RelationshipGraphFullscreen({
     setNodeModal({
       visible: true,
       mode: 'create',
-      node: { name: '', gender: 'unknown', color: '#1890ff' }
+      node: { name: '', gender: 'unknown', color: getThemeColor('--color-primary') }
     })
   }
 
@@ -546,7 +547,7 @@ function RelationshipGraphFullscreen({
         node: {
           ...prev.node,
           name: entry.name,
-          color: entry.color || type?.color || '#1890ff',
+          color: entry.color || type?.color || getThemeColor('--color-primary'),
           linkedTypeId: entry.typeId,
           linkedEntryId: entry.id,
           description: entry.description
@@ -583,7 +584,7 @@ function RelationshipGraphFullscreen({
         name: nodeModal.node.name.trim(),
         gender: nodeModal.node.gender || 'unknown',
         description: nodeModal.node.description,
-        color: nodeModal.node.color || '#1890ff',
+        color: nodeModal.node.color || getThemeColor('--color-primary'),
         linkedTypeId: nodeModal.node.linkedTypeId,
         linkedEntryId: nodeModal.node.linkedEntryId,
         x: nodeModal.node.x,
@@ -629,7 +630,7 @@ function RelationshipGraphFullscreen({
   }
 
   const handleOpenRelationTypeSettings = () => {
-    setRelationTypeModal({ visible: true, editingType: null, name: '', color: '#1890ff' })
+    setRelationTypeModal({ visible: true, editingType: null, name: '', color: getThemeColor('--color-primary') })
   }
 
   const handleAddRelationType = async () => {
@@ -650,7 +651,7 @@ function RelationshipGraphFullscreen({
 
     const customTypes = currentGraph?.customRelationTypes || []
     await updateGraph({ customRelationTypes: [...customTypes, newType] })
-    setRelationTypeModal({ visible: false, editingType: null, name: '', color: '#1890ff' })
+    setRelationTypeModal({ visible: false, editingType: null, name: '', color: getThemeColor('--color-primary') })
     message.success('关系类型已添加')
   }
 
@@ -732,7 +733,7 @@ function RelationshipGraphFullscreen({
           node: {
             name: '',
             gender: 'unknown',
-            color: '#1890ff',
+            color: getThemeColor('--color-primary'),
             x: contextMenu.canvasX,
             y: contextMenu.canvasY
           }
@@ -960,7 +961,7 @@ function RelationshipGraphFullscreen({
               <div className={styles.formItem}>
                 <label className={styles.formLabel}>颜色</label>
                 <ColorPicker
-                  value={nodeModal.node?.color || '#1890ff'}
+                  value={nodeModal.node?.color || getThemeColor('--color-primary')}
                   onChange={color =>
                     setNodeModal(prev => ({
                       ...prev,
@@ -1047,7 +1048,7 @@ function RelationshipGraphFullscreen({
         title="添加自定义关系类型"
         open={relationTypeModal.visible}
         onCancel={() =>
-          setRelationTypeModal({ visible: false, editingType: null, name: '', color: '#1890ff' })
+          setRelationTypeModal({ visible: false, editingType: null, name: '', color: getThemeColor('--color-primary') })
         }
         onOk={handleAddRelationType}
         okText="添加"

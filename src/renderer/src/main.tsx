@@ -5,6 +5,7 @@ import zhCN from 'antd/locale/zh_CN'
 import App from './App'
 import { useThemeStore } from '@stores/themeStore'
 import { useSettingsStore } from '@stores/settingsStore'
+import { applyPrimaryColorToRoot } from '@utils/theme'
 import './styles/global.css'
 
 // 主题提供者组件
@@ -25,6 +26,11 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
     // 更新 data 属性（用于 CSS 选择器）
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, resolvedMode])
+
+  // 动态更新主题色 CSS 变量
+  useEffect(() => {
+    applyPrimaryColorToRoot(config.primaryColor, resolvedMode === 'dark')
+  }, [config.primaryColor, resolvedMode])
 
   // 设置标题栏高度 CSS 变量（用于全屏模式）
   useEffect(() => {

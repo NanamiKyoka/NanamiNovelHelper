@@ -103,7 +103,7 @@ function SortableTimelineItem({
         <div className={styles.timelineLine}>
           <div
             className={`${styles.timelineDot} ${node.isBranchPoint ? styles.branchDot : ''}`}
-            style={{ backgroundColor: node.color || '#1890ff' }}
+            style={{ backgroundColor: node.color || 'var(--color-primary)' }}
           />
           {index < totalCount - 1 && <div className={styles.timelineConnector} />}
         </div>

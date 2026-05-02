@@ -4,6 +4,7 @@ import type { MenuProps } from 'antd'
 import * as Icons from '@ant-design/icons'
 import { CHUNK_TYPE_CONFIG, hexToPixel, getHexCorners, HEX_SIZE } from '@renderer/types/map'
 import type { Chunk } from '@renderer/types/map'
+import { getThemeColor } from '@utils/theme'
 import styles from './ChunkNode.module.css'
 
 interface ChunkNodeProps {
@@ -156,7 +157,7 @@ export function ChunkNode({
           <path
             d={hexPath}
             fill={chunk.color}
-            stroke={isConnectingFrom ? '#52c41a' : isSelected ? '#1890ff' : 'rgba(255,255,255,0.3)'}
+            stroke={isConnectingFrom ? '#52c41a' : isSelected ? getThemeColor('--color-primary') : 'rgba(255,255,255,0.3)'}
             strokeWidth={isConnectingFrom ? 4 : isSelected ? 3 : 1}
           />
         </svg>

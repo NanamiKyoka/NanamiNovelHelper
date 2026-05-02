@@ -27,6 +27,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import type { SequenceEvent, SequenceEventType } from '@shared/sequence-chart'
+import { getThemeColor } from '@utils/theme'
 import styles from './SequenceChartPreview.module.css'
 
 const { Title, Text } = Typography
@@ -40,7 +41,7 @@ interface SequenceChartPreviewProps {
 // 内置事件类型
 const BUILT_IN_EVENT_TYPES: SequenceEventType[] = [
   { id: 'battle', name: '战斗', color: '#ff4d4f', isBuiltIn: true, order: 0 },
-  { id: 'dialogue', name: '对话', color: '#1890ff', isBuiltIn: true, order: 1 },
+  { id: 'dialogue', name: '对话', color: '#4a90d9', isBuiltIn: true, order: 1 },
   { id: 'travel', name: '旅行', color: '#52c41a', isBuiltIn: true, order: 2 },
   { id: 'romance', name: '感情', color: '#eb2f96', isBuiltIn: true, order: 3 },
   { id: 'mystery', name: '悬疑', color: '#722ed1', isBuiltIn: true, order: 4 },
@@ -153,7 +154,7 @@ function SequenceChartPreview({
     (event: SequenceEvent): string => {
       if (event.color) return event.color
       const type = eventTypes.find(t => t.id === event.eventTypeId)
-      return type?.color || '#1890ff'
+      return type?.color || getThemeColor('--color-primary')
     },
     [eventTypes]
   )

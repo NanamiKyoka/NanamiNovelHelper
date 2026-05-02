@@ -15,6 +15,7 @@ import {
 import { Graph } from '@antv/g6'
 import type { NodeData, EdgeData } from '@antv/g6'
 import { useRelationshipStore } from '@stores/relationshipStore'
+import { getThemeColor } from '@utils/theme'
 import { BUILTIN_RELATION_TYPES, type RelationType } from '@types/relationship'
 import styles from './RelationshipGraphPreview.module.css'
 
@@ -77,6 +78,7 @@ function RelationshipGraphPreview({
         }
 
         // 主题相关颜色
+        const primaryColor = getThemeColor('--color-primary')
         const edgeLabelColor = isDarkMode ? '#b0b0b0' : '#666666'
         const labelBgColor = isDarkMode ? '#1f1f1f' : '#ffffff'
 
@@ -94,8 +96,8 @@ function RelationshipGraphPreview({
             type: 'circle',
             style: {
               size: 50,
-              fill: (d: NodeData) => d.style?.fill || '#1890ff',
-              stroke: (d: NodeData) => d.style?.stroke || '#1890ff',
+              fill: (d: NodeData) => d.style?.fill || primaryColor,
+              stroke: (d: NodeData) => d.style?.stroke || primaryColor,
               lineWidth: 2,
               cursor: 'pointer',
               labelText: (d: NodeData) => (d.data?.label as string) || '',
@@ -109,7 +111,7 @@ function RelationshipGraphPreview({
             state: {
               selected: {
                 lineWidth: 3,
-                shadowColor: '#1890ff',
+                shadowColor: primaryColor,
                 shadowBlur: 10
               },
               hover: {
@@ -196,8 +198,8 @@ function RelationshipGraphPreview({
     // 转换节点数据 - 包含位置
     const nodes = currentGraph.nodes.map((node, index) => {
       const styleData: Record<string, unknown> = {
-        fill: node.color || '#1890ff',
-        stroke: node.color || '#1890ff'
+        fill: node.color || getThemeColor('--color-primary'),
+        stroke: node.color || getThemeColor('--color-primary')
       }
 
       // 如果有位置数据，使用固定位置；否则使用网格布局

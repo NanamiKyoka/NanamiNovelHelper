@@ -128,7 +128,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
                   padding: '12px 16px',
                   borderRadius: 4,
                   backgroundColor:
-                    openingPath === item.path ? 'rgba(24, 144, 255, 0.1)' : 'transparent'
+                    openingPath === item.path ? 'var(--color-primary-bg)' : 'transparent'
                 }}
                 onClick={() => handleOpen(item.path)}
               >

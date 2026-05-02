@@ -411,7 +411,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       setLoading(true)
 
       const colorValue =
-        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || '#1890ff'
+        typeof values.color === 'string' ? values.color : values.color?.toHexString?.() || 'var(--color-primary)'
 
       if (editingType) {
         await updateType(editingType.id, {
@@ -1004,7 +1004,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
             <div className={styles.iconPreviewBox} onClick={() => setIsIconPickerOpen(true)}>
               <div
                 className={styles.iconPreview}
-                style={{ backgroundColor: form.getFieldValue('color') || '#1890ff' }}
+                style={{ backgroundColor: form.getFieldValue('color') || 'var(--color-primary)' }}
               >
                 {getIconPreview(selectedIcon?.value, <TagOutlined />)}
               </div>

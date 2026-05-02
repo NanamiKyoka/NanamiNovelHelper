@@ -55,6 +55,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
+import { getThemeColor } from '@utils/theme'
 import type { TimelineNode, TimeInfo, CharacterRef } from '@types/timeline'
 import type { MenuProps } from 'antd'
 import styles from './TimelineFullscreen.module.css'
@@ -120,7 +121,7 @@ function SortableTimelineNode({
       onContextMenu={onContextMenu}
     >
       <div className={styles.timelineLine}>
-        <div className={styles.timelineDot} style={{ backgroundColor: node.color || '#1890ff' }} />
+        <div className={styles.timelineDot} style={{ backgroundColor: node.color || 'var(--color-primary)' }} />
         {index < totalCount - 1 && <div className={styles.timelineConnector} />}
       </div>
       <div className={styles.timelineContent}>
@@ -312,7 +313,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       const x = 20 + spacing * (i + 1) * 1.6
       ctx.beginPath()
       ctx.arc(x, 60, 4, 0, Math.PI * 2)
-      ctx.fillStyle = node.color || '#1890ff'
+      ctx.fillStyle = node.color || getThemeColor('--color-primary')
       ctx.fill()
     })
 
@@ -350,7 +351,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         },
         characters: [],
         order: maxOrder + 1,
-        color: '#1890ff'
+        color: getThemeColor('--color-primary')
       },
       isNew: true
     })
@@ -389,7 +390,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   const handleQuickAddClick: MenuProps['onClick'] = useCallback(
     info => {
       const templates: Record<string, { title: string; description: string; color: string }> = {
-        event: { title: '新事件', description: '', color: '#1890ff' },
+        event: { title: '新事件', description: '', color: getThemeColor('--color-primary') },
         turning: { title: '转折点', description: '故事方向发生重大变化', color: '#fa8c16' },
         climax: { title: '高潮', description: '故事的紧张巅峰', color: '#f5222d' },
         ending: { title: '结局', description: '', color: '#52c41a' }
@@ -426,7 +427,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         timeInfo: nodeEdit.node.timeInfo || { format: 'custom' },
         characters: nodeEdit.node.characters || [],
         chapter: nodeEdit.node.chapter,
-        color: nodeEdit.node.color || '#1890ff',
+        color: nodeEdit.node.color || getThemeColor('--color-primary'),
         order: nodeEdit.node.order || 0,
         isBranchPoint: nodeEdit.node.isBranchPoint,
         tags: nodeEdit.node.tags,
@@ -1001,7 +1002,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           <div className={styles.formItem}>
             <label className={styles.formLabel}>节点颜色</label>
             <div className={styles.colorPicker}>
-              {['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2'].map(
+              {[getThemeColor('--color-primary'), '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2'].map(
                 color => (
                   <div
                     key={color}
