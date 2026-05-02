@@ -237,12 +237,9 @@ interface ProjectEditorSettings {
   lineHeight: number
   letterSpacing: number
   paragraphSpacing: number
-  viewMode: 'wysiwyg' | 'split'
   toolbarMode: 'fixed' | 'floating'
   showToolbar: boolean
   autoSaveInterval: number
-  wordWrap: boolean
-  showLineNumbers: boolean
   tabSize: number
   spellCheck: boolean
   enablePreviewMode: boolean

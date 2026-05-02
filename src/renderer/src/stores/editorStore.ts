@@ -9,7 +9,6 @@ import type {
   WordCount,
   CursorPosition,
   StatusBarConfig,
-  ViewMode,
   ToolbarMode
 } from '../types/editor'
 import {
@@ -174,7 +173,6 @@ interface EditorState {
   getEditorState: (path: string) => unknown
 
   updateSettings: (settings: Partial<EditorSettings>) => void
-  setViewMode: (mode: ViewMode) => void
   setToolbarMode: (mode: ToolbarMode) => void
 
   updateWordCount: (content: string) => void
@@ -548,10 +546,6 @@ export const useEditorStore = create<EditorState>()(
           set(state => ({
             settings: { ...state.settings, ...newSettings }
           }))
-        },
-
-        setViewMode: (mode: ViewMode) => {
-          get().updateSettings({ viewMode: mode })
         },
 
         setToolbarMode: (mode: ToolbarMode) => {

@@ -130,8 +130,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     },
     onVocabularyHover: (entryId, event) => {
       hoverCard.handleHover(entryId, event)
-    },
-    showLineNumbers: settings.showLineNumbers
+    }
   })
 
   // 创建编辑器实例
@@ -141,7 +140,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     editable: !readonly,
     editorProps: {
       attributes: {
-        class: `${styles.editorContent}${settings.showLineNumbers ? ` ${styles.hasLineNumbers}` : ''}`,
+        class: `${styles.editorContent}`,
         style: `font-family: ${settings.fontFamily}; font-size: ${settings.fontSize}px; line-height: ${settings.lineHeight};`
       },
       handleKeyDown: (_view, event) => {

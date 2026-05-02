@@ -93,34 +93,6 @@ export function EditorSettings() {
         </Form>
       </Card>
 
-      <Card title="视图设置" className={baseStyles.card}>
-        <Form layout="vertical" size="small">
-          <Form.Item label="默认视图模式">
-            <Select
-              value={settings.viewMode}
-              onChange={value => handleSettingChange('viewMode', value)}
-              options={[
-                { value: 'wysiwyg', label: '实时预览 (WYSIWYG)' },
-                { value: 'split', label: '分栏预览' }
-              ]}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-          <Form.Item label="显示行号">
-            <Switch
-              checked={settings.showLineNumbers}
-              onChange={checked => handleSettingChange('showLineNumbers', checked)}
-            />
-          </Form.Item>
-          <Form.Item label="自动换行">
-            <Switch
-              checked={settings.wordWrap}
-              onChange={checked => handleSettingChange('wordWrap', checked)}
-            />
-          </Form.Item>
-        </Form>
-      </Card>
-
       <Card title="工具栏设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="显示工具栏">

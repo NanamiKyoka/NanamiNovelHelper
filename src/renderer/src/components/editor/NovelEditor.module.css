@@ -335,21 +335,3 @@
 .editorContent u {
   text-decoration: underline;
 }
-
-/* 行号样式 */
-.editorContent .line-number {
-  position: absolute;
-  left: -48px;
-  width: 40px;
-  text-align: right;
-  color: var(--text-quaternary);
-  font-size: var(--font-size-xs);
-  font-family: var(--font-family-mono);
-  user-select: none;
-  pointer-events: none;
-}
-
-/* 当显示行号时，编辑器内容需要左边距 */
-.editorContent.hasLineNumbers {
-  padding-left: 48px;
-}

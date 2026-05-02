@@ -182,7 +182,6 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 // ============ 项目编辑器设置 ============
 
-export type ViewMode = 'wysiwyg' | 'split'
 export type ToolbarMode = 'fixed' | 'floating'
 
 export interface ProjectEditorSettings {
@@ -191,12 +190,9 @@ export interface ProjectEditorSettings {
   lineHeight: number
   letterSpacing: number
   paragraphSpacing: number
-  viewMode: ViewMode
   toolbarMode: ToolbarMode
   showToolbar: boolean
   autoSaveInterval: number // 毫秒，0 表示禁用
-  wordWrap: boolean
-  showLineNumbers: boolean
   tabSize: number
   spellCheck: boolean
   enablePreviewMode: boolean
@@ -208,12 +204,9 @@ export const DEFAULT_PROJECT_EDITOR_SETTINGS: ProjectEditorSettings = {
   lineHeight: 1.8,
   letterSpacing: 0,
   paragraphSpacing: 0.5,
-  viewMode: 'wysiwyg',
   toolbarMode: 'fixed',
   showToolbar: true,
   autoSaveInterval: 30000,
-  wordWrap: true,
-  showLineNumbers: false,
   tabSize: 2,
   spellCheck: false,
   enablePreviewMode: false

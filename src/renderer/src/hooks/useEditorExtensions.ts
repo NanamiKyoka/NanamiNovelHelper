@@ -19,7 +19,6 @@ import { common, createLowlight } from 'lowlight'
 import {
   TabInsert,
   CustomKeymap,
-  LineNumbers,
   ImagePaste,
   uploadImageOriginal
 } from '@components/editor/extensions'
@@ -40,8 +39,6 @@ interface UseEditorExtensionsOptions {
   onVocabularyClick?: (entryId: string) => void
   /** 悬停词汇回调 */
   onVocabularyHover?: (entryId: string, event: MouseEvent) => void
-  /** 是否显示行号 */
-  showLineNumbers?: boolean
 }
 
 /**
@@ -52,8 +49,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
     styleConfig,
     highlightEnabled = true,
     onVocabularyClick,
-    onVocabularyHover,
-    showLineNumbers = false
+    onVocabularyHover
   } = options
 
   const getExtensions = useCallback(() => {
@@ -118,10 +114,6 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
       Typography,
       TabInsert,
       CustomKeymap,
-      // 行号扩展
-      LineNumbers.configure({
-        enabled: showLineNumbers
-      }),
       // 词汇高亮扩展
       VocabularyHighlight.configure({
         patterns: [], // 初始为空，通过全局状态更新
@@ -137,7 +129,7 @@ export function useEditorExtensions(options: UseEditorExtensionsOptions) {
     ]
 
     return extensions
-  }, [styleConfig, highlightEnabled, onVocabularyClick, onVocabularyHover, showLineNumbers])
+  }, [styleConfig, highlightEnabled, onVocabularyClick, onVocabularyHover])
 
   return {
     getExtensions

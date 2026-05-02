@@ -159,12 +159,9 @@ class ProjectService {
           lineHeight: 1.8,
           letterSpacing: 0,
           paragraphSpacing: 0.5,
-          viewMode: 'wysiwyg',
           toolbarMode: 'fixed',
           showToolbar: true,
           autoSaveInterval: 30000,
-          wordWrap: true,
-          showLineNumbers: false,
           tabSize: 2,
           spellCheck: false,
           enablePreviewMode: false

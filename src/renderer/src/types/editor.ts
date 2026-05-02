@@ -23,11 +23,6 @@ export interface EditorTab {
 }
 
 /**
- * 视图模式
- */
-export type ViewMode = 'wysiwyg' | 'split'
-
-/**
  * 工具栏模式
  */
 export type ToolbarMode = 'fixed' | 'floating'
@@ -46,18 +41,12 @@ export interface EditorSettings {
   letterSpacing: number
   /** 段落间距 */
   paragraphSpacing: number
-  /** 视图模式 */
-  viewMode: ViewMode
   /** 工具栏模式 */
   toolbarMode: ToolbarMode
   /** 是否显示工具栏 */
   showToolbar: boolean
   /** 自动保存间隔（毫秒，0 表示禁用） */
   autoSaveInterval: number
-  /** 自动换行 */
-  wordWrap: boolean
-  /** 显示行号 */
-  showLineNumbers: boolean
   /** Tab 宽度 */
   tabSize: number
   /** 拼写检查 */
@@ -75,12 +64,9 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   lineHeight: 1.8,
   letterSpacing: 0,
   paragraphSpacing: 0.5,
-  viewMode: 'wysiwyg',
   toolbarMode: 'fixed',
   showToolbar: true,
   autoSaveInterval: 30000, // 30秒
-  wordWrap: true,
-  showLineNumbers: false,
   tabSize: 2,
   spellCheck: false,
   enablePreviewMode: false // 禁用预览模式，单击直接固定打开

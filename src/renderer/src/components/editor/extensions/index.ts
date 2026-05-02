@@ -5,8 +5,6 @@
 
 import { Extension } from '@tiptap/core'
 
-export { LineNumbers } from './lineNumbers'
-
 export { SmartLink } from './smartLink'
 
 export { ImagePaste, uploadImageOriginal } from './imagePaste'
