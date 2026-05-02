@@ -40,6 +40,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useTimelineStore } from '@stores/timelineStore'
 import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
+import { THEME_COLORS, NEUTRAL_COLORS } from '@shared/constants/colors'
 import type { TimelineNode, TimeInfo } from '@renderer/types/timeline'
 import styles from './TimelinePreview.module.css'
 
@@ -194,8 +195,8 @@ function SortableTimelineItem({
             node.branchedTimelineIds &&
             node.branchedTimelineIds.length > 0 && (
               <div className={styles.branchMark}>
-                <BranchesOutlined style={{ color: '#722ed1' }} />
-                <Text style={{ color: '#722ed1' }}>{node.branchedTimelineIds.length} 个分支</Text>
+                <BranchesOutlined style={{ color: THEME_COLORS.purple }} />
+                <Text style={{ color: THEME_COLORS.purple }}>{node.branchedTimelineIds.length} 个分支</Text>
                 {node.branchedTimelineIds.map((id, idx) => (
                   <Tag key={id} color="purple" style={{ margin: 0, fontSize: 11 }}>
                     分支 {idx + 1}
@@ -268,7 +269,7 @@ function TimelinePreview({
       ctx.scale(scale, scale)
       ctx.fillStyle =
         getComputedStyle(document.documentElement).getPropertyValue('--bg-primary').trim() ||
-        '#ffffff'
+        NEUTRAL_COLORS.white
       ctx.fillRect(0, 0, rect.width, rect.height)
 
       const svgData = new XMLSerializer().serializeToString(
@@ -571,7 +572,7 @@ function TimelinePreview({
                 refY="3"
                 orient="auto"
               >
-                <polygon points="0 0, 8 3, 0 6" fill="#722ed1" />
+                <polygon points="0 0, 8 3, 0 6" fill={THEME_COLORS.purple} />
               </marker>
             </defs>
             {causalLines.map((line, idx) => {
@@ -584,7 +585,7 @@ function TimelinePreview({
                 <g key={idx}>
                   <path
                     d={`M ${fromX} ${fromY} C ${fromX} ${midY}, ${toX} ${midY}, ${toX} ${toY}`}
-                    stroke="#722ed1"
+                    stroke={THEME_COLORS.purple}
                     strokeWidth="2"
                     strokeDasharray="6 3"
                     fill="none"
@@ -596,7 +597,7 @@ function TimelinePreview({
                       x={(fromX + toX) / 2}
                       y={midY}
                       textAnchor="middle"
-                      fill="#722ed1"
+                      fill={THEME_COLORS.purple}
                       fontSize="11"
                       opacity="0.8"
                     >

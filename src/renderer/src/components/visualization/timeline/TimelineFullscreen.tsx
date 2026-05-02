@@ -56,6 +56,7 @@ import { useTimelineStore } from '@stores/timelineStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useUIStore } from '@stores/uiStore'
 import { getThemeColor } from '@utils/theme'
+import { THEME_COLORS, CHART_PALETTE } from '@shared/constants/colors'
 import type { TimelineNode, TimeInfo, CharacterRef } from '@types/timeline'
 import type { MenuProps } from 'antd'
 import styles from './TimelineFullscreen.module.css'
@@ -391,9 +392,9 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     info => {
       const templates: Record<string, { title: string; description: string; color: string }> = {
         event: { title: '新事件', description: '', color: getThemeColor('--color-primary') },
-        turning: { title: '转折点', description: '故事方向发生重大变化', color: '#fa8c16' },
-        climax: { title: '高潮', description: '故事的紧张巅峰', color: '#f5222d' },
-        ending: { title: '结局', description: '', color: '#52c41a' }
+        turning: { title: '转折点', description: '故事方向发生重大变化', color: THEME_COLORS.orange },
+        climax: { title: '高潮', description: '故事的紧张巅峰', color: THEME_COLORS.red },
+        ending: { title: '结局', description: '', color: THEME_COLORS.success }
       }
       if (info.key === 'custom') {
         handleAddNode()
@@ -1002,7 +1003,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
           <div className={styles.formItem}>
             <label className={styles.formLabel}>节点颜色</label>
             <div className={styles.colorPicker}>
-              {[getThemeColor('--color-primary'), '#52c41a', '#faad14', '#f5222d', '#722ed1', '#eb2f96', '#13c2c2'].map(
+              {CHART_PALETTE.map(
                 color => (
                   <div
                     key={color}

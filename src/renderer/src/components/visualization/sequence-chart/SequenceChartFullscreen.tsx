@@ -33,6 +33,8 @@ import {
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
 import type { SequenceEvent } from '@shared/sequence-chart'
+import { CHART_PALETTE } from '@shared/constants/colors'
+import { DEFAULT_COLORS } from '@shared/constants/colors'
 import styles from './SequenceChartFullscreen.module.css'
 
 const { TextArea } = Input
@@ -119,7 +121,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const [newEventStart, setNewEventStart] = useState(1)
   const [newEventEnd, setNewEventEnd] = useState(3)
   const [newEventProgress, setNewEventProgress] = useState(0)
-  const [newEventColor, setNewEventColor] = useState('#409EFF')
+  const [newEventColor, setNewEventColor] = useState(DEFAULT_COLORS.event)
   const [expandCellCount, setExpandCellCount] = useState(100)
   const [editingLabelPos, setEditingLabelPos] = useState<number | null>(null)
   const [editingLabelText, setEditingLabelText] = useState('')
@@ -180,7 +182,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setNewEventStart(1)
     setNewEventEnd(3)
     setNewEventProgress(0)
-    setNewEventColor('#409EFF')
+    setNewEventColor(DEFAULT_COLORS.event)
   }
 
   // 双击网格空白区域快速添加事件
@@ -379,7 +381,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     (event: SequenceEvent, lane: number = 0): React.CSSProperties => {
       const start = event.timeInfo.cellStart || 1
       const end = event.timeInfo.cellEnd || 10
-      const color = event.color || '#409EFF'
+      const color = event.color || DEFAULT_COLORS.event
       return {
         left: `${(start - 1) * cellWidth}px`,
         width: `${(end - start + 1) * cellWidth}px`,
@@ -862,16 +864,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
         <div className={styles.formItem}>
           <label className={styles.formLabel}>颜色</label>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {[
-              '#409EFF',
-              '#67C23A',
-              '#E6A23C',
-              '#F56C6C',
-              '#909399',
-              '#722ed1',
-              '#13c2c2',
-              '#eb2f96'
-            ].map(c => (
+            {CHART_PALETTE.map(c => (
               <div
                 key={c}
                 onClick={() => setNewEventColor(c)}
@@ -974,16 +967,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             <div className={styles.formItem}>
               <label className={styles.formLabel}>颜色</label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                {[
-                  '#409EFF',
-                  '#67C23A',
-                  '#E6A23C',
-                  '#F56C6C',
-                  '#909399',
-                  '#722ed1',
-                  '#13c2c2',
-                  '#eb2f96'
-                ].map(c => (
+                {CHART_PALETTE.map(c => (
                   <div
                     key={c}
                     onClick={() => setEditingEvent({ ...editingEvent, color: c })}
@@ -1002,7 +986,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                   />
                 ))}
                 <ColorPicker
-                  value={editingEvent.color || '#409EFF'}
+                  value={editingEvent.color || DEFAULT_COLORS.event}
                   onChange={color =>
                     setEditingEvent({ ...editingEvent, color: color.toHexString() })
                   }
