@@ -153,27 +153,89 @@
   flex: 1;
 }
 
-/* 字体设置下拉菜单 */
-.fontDropdown :global(.ant-dropdown-menu) {
-  max-height: 300px;
-  overflow-y: auto;
+.fontPopover :global(.ant-popover-inner) {
+  padding: 0;
 }
 
-.fontDropdown :global(.ant-dropdown-menu-item-group-title) {
-  padding: 8px 12px 4px;
-  color: var(--ant-color-primary);
-  font-weight: 500;
+.fontPopover :global(.ant-popover-inner-content) {
+  padding: 0;
+}
+
+.fontColumns {
+  display: flex;
+  gap: 0;
+  max-height: 320px;
+}
+
+.fontColumn {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  min-width: 100px;
+}
+
+.fontColumn:last-child {
+  border-right: none;
+}
+
+.columnHeader {
+  padding: 8px 12px;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--ant-color-primary);
+  background: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
 }
 
-.fontDropdown :global(.ant-dropdown-menu-item) {
-  min-width: 150px;
-  padding: 4px 12px;
+.columnList {
+  overflow-y: auto;
+  max-height: 280px;
+  scrollbar-width: thin;
+}
+
+.columnList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.columnList::-webkit-scrollbar-thumb {
+  background: var(--ant-color-border);
+  border-radius: 2px;
+}
+
+.columnList::-webkit-scrollbar-thumb:hover {
+  background: var(--ant-color-text-quaternary);
+}
+
+.columnItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
   font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+  gap: 8px;
 }
 
-.fontDropdown :global(.ant-dropdown-menu-item-divider) {
-  margin: 4px 0;
+.columnItem:hover {
+  background: var(--ant-color-bg-text-hover);
+}
+
+.columnItemActive {
+  color: var(--ant-color-primary);
+  font-weight: 600;
+  background: var(--ant-color-primary-bg);
+}
+
+.checkIcon {
+  font-size: 12px;
+  color: var(--ant-color-primary);
+  flex-shrink: 0;
 }
 
 /* AI 按钮样式 */

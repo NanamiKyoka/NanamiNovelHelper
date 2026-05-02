@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState } from 'react'
-import { Button, Tooltip, Dropdown, Modal, message, Spin } from 'antd'
+import { Button, Tooltip, Dropdown, Modal, message, Spin, Popover } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   BoldOutlined,
@@ -25,6 +25,7 @@ import {
   ClearOutlined,
   MenuOutlined,
   FontSizeOutlined,
+  CheckOutlined,
   RobotOutlined,
   EditOutlined,
   ThunderboltOutlined,
@@ -356,94 +357,98 @@ export function EditorToolbar({
     }
   }, [editor, imageLoading])
 
-  // 字体设置下拉菜单
-  const fontSettingsMenuItems: MenuProps['items'] = [
-    // 字体
-    {
-      key: 'font-group',
-      type: 'group',
-      label: '字体',
-      children: FONT_FAMILIES.map(font => ({
-        key: `font-${font.value}`,
-        label: (
-          <span
-            style={{
-              fontFamily: font.value,
-              fontWeight: settings.fontFamily === font.value ? 'bold' : 'normal'
-            }}
-          >
-            {font.label}
-            {settings.fontFamily === font.value && ' ✓'}
-          </span>
-        ),
-        onClick: () => onSettingsChange('fontFamily', font.value)
-      }))
-    },
-    { type: 'divider' },
-    // 字号
-    {
-      key: 'size-group',
-      type: 'group',
-      label: `字号 (当前: ${settings.fontSize}px)`,
-      children: FONT_SIZES.map(size => ({
-        key: `size-${size}`,
-        label: (
-          <span style={{ fontWeight: settings.fontSize === size ? 'bold' : 'normal' }}>
-            {size}px {settings.fontSize === size ? '✓' : ''}
-          </span>
-        ),
-        onClick: () => onSettingsChange('fontSize', size)
-      }))
-    },
-    { type: 'divider' },
-    // 行高
-    {
-      key: 'lineheight-group',
-      type: 'group',
-      label: `行高 (当前: ${settings.lineHeight})`,
-      children: LINE_HEIGHTS.map(lh => ({
-        key: `lh-${lh}`,
-        label: (
-          <span style={{ fontWeight: settings.lineHeight === lh ? 'bold' : 'normal' }}>
-            {lh} {settings.lineHeight === lh ? '✓' : ''}
-          </span>
-        ),
-        onClick: () => onSettingsChange('lineHeight', lh)
-      }))
-    },
-    { type: 'divider' },
-    // 段落间距
-    {
-      key: 'paragraph-group',
-      type: 'group',
-      label: `段落间距 (当前: ${settings.paragraphSpacing}em)`,
-      children: PARAGRAPH_SPACINGS.map(ps => ({
-        key: `ps-${ps}`,
-        label: (
-          <span style={{ fontWeight: settings.paragraphSpacing === ps ? 'bold' : 'normal' }}>
-            {ps}em {settings.paragraphSpacing === ps ? '✓' : ''}
-          </span>
-        ),
-        onClick: () => onSettingsChange('paragraphSpacing', ps)
-      }))
-    },
-    { type: 'divider' },
-    // 字间距
-    {
-      key: 'letterspacing-group',
-      type: 'group',
-      label: `字间距 (当前: ${settings.letterSpacing}px)`,
-      children: LETTER_SPACINGS.map(ls => ({
-        key: `ls-${ls}`,
-        label: (
-          <span style={{ fontWeight: settings.letterSpacing === ls ? 'bold' : 'normal' }}>
-            {ls}px {settings.letterSpacing === ls ? '✓' : ''}
-          </span>
-        ),
-        onClick: () => onSettingsChange('letterSpacing', ls)
-      }))
-    }
-  ]
+  const [fontPopoverOpen, setFontPopoverOpen] = useState(false)
+
+  const fontSettingsContent = (
+    <div className={styles.fontColumns}>
+      <div className={styles.fontColumn}>
+        <div className={styles.columnHeader}>字体</div>
+        <div className={styles.columnList}>
+          {FONT_FAMILIES.map(font => (
+            <div
+              key={font.value}
+              className={`${styles.columnItem} ${settings.fontFamily === font.value ? styles.columnItemActive : ''}`}
+              style={{ fontFamily: font.value }}
+              onClick={() => {
+                onSettingsChange('fontFamily', font.value)
+              }}
+            >
+              {font.label}
+              {settings.fontFamily === font.value && <CheckOutlined className={styles.checkIcon} />}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.fontColumn}>
+        <div className={styles.columnHeader}>字号</div>
+        <div className={styles.columnList}>
+          {FONT_SIZES.map(size => (
+            <div
+              key={size}
+              className={`${styles.columnItem} ${settings.fontSize === size ? styles.columnItemActive : ''}`}
+              onClick={() => {
+                onSettingsChange('fontSize', size)
+              }}
+            >
+              {size}px
+              {settings.fontSize === size && <CheckOutlined className={styles.checkIcon} />}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.fontColumn}>
+        <div className={styles.columnHeader}>行高</div>
+        <div className={styles.columnList}>
+          {LINE_HEIGHTS.map(lh => (
+            <div
+              key={lh}
+              className={`${styles.columnItem} ${settings.lineHeight === lh ? styles.columnItemActive : ''}`}
+              onClick={() => {
+                onSettingsChange('lineHeight', lh)
+              }}
+            >
+              {lh}
+              {settings.lineHeight === lh && <CheckOutlined className={styles.checkIcon} />}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.fontColumn}>
+        <div className={styles.columnHeader}>段落间距</div>
+        <div className={styles.columnList}>
+          {PARAGRAPH_SPACINGS.map(ps => (
+            <div
+              key={ps}
+              className={`${styles.columnItem} ${settings.paragraphSpacing === ps ? styles.columnItemActive : ''}`}
+              onClick={() => {
+                onSettingsChange('paragraphSpacing', ps)
+              }}
+            >
+              {ps}em
+              {settings.paragraphSpacing === ps && <CheckOutlined className={styles.checkIcon} />}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={styles.fontColumn}>
+        <div className={styles.columnHeader}>字间距</div>
+        <div className={styles.columnList}>
+          {LETTER_SPACINGS.map(ls => (
+            <div
+              key={ls}
+              className={`${styles.columnItem} ${settings.letterSpacing === ls ? styles.columnItemActive : ''}`}
+              onClick={() => {
+                onSettingsChange('letterSpacing', ls)
+              }}
+            >
+              {ls}px
+              {settings.letterSpacing === ls && <CheckOutlined className={styles.checkIcon} />}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
   // 标题下拉菜单
   const headingMenuItems: MenuProps['items'] = HEADING_LEVELS.map(item => ({
@@ -541,15 +546,18 @@ export function EditorToolbar({
 
       {/* 字体设置（整合下拉菜单） */}
       <div className={styles.group}>
-        <Dropdown
-          menu={{ items: fontSettingsMenuItems }}
-          trigger={['click']}
-          overlayClassName={styles.fontDropdown}
+        <Popover
+          content={fontSettingsContent}
+          trigger="click"
+          open={fontPopoverOpen}
+          onOpenChange={setFontPopoverOpen}
+          overlayClassName={styles.fontPopover}
+          placement="bottomLeft"
         >
           <Button type="text" size="small" icon={<FontSizeOutlined />}>
             字体设置 <span className={styles.arrow}>▼</span>
           </Button>
-        </Dropdown>
+        </Popover>
       </div>
 
       {/* 富文本功能：标题级别 */}

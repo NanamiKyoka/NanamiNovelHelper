@@ -90,6 +90,7 @@
 
 .description {
   color: var(--ant-color-text-secondary);
+  text-align: center;
   margin-bottom: 28px;
   font-size: 14px;
   line-height: 1.6;
