@@ -3,8 +3,17 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Form, Input, Button, message, Card, Typography, Alert, Popconfirm } from 'antd'
-import { SaveOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons'
+import { Form, Input, Button, message, Card, Typography, Popconfirm, Tag, Space } from 'antd'
+import {
+  SaveOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  ApiOutlined,
+  LoadingOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined
+} from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import baseStyles from './SettingsBase.module.css'
 import styles from './ApiSettings.module.css'
@@ -42,6 +51,7 @@ export function ApiSettings(): JSX.Element {
   const [configs, setConfigs] = useState<ApiConfig[]>([])
   const [, setLoading] = useState<Record<string, boolean>>({})
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({})
+  const [testStates, setTestStates] = useState<Record<string, 'idle' | 'testing' | 'success' | 'fail'>>({})
   const [form] = Form.useForm()
 
   useEffect(() => {
@@ -122,16 +132,25 @@ export function ApiSettings(): JSX.Element {
     return `${key.slice(0, 4)}${'•'.repeat(Math.min(key.length - 8, 20))}${key.slice(-4)}`
   }
 
+  const handleTestConnection = async (id: string) => {
+    setTestStates(prev => ({ ...prev, [id]: 'testing' }))
+    try {
+      const result = await window.electron.aiAssistant.testApiConnection(id)
+      if (result.success) {
+        setTestStates(prev => ({ ...prev, [id]: 'success' }))
+        message.success(`${PRESET_APIS.find(p => p.id === id)?.name || id} 连接成功`)
+      } else {
+        setTestStates(prev => ({ ...prev, [id]: 'fail' }))
+        message.error(`连接失败: ${result.error || '未知错误'}`)
+      }
+    } catch (err) {
+      setTestStates(prev => ({ ...prev, [id]: 'fail' }))
+      message.error(`连接失败: ${err instanceof Error ? err.message : '未知错误'}`)
+    }
+  }
+
   return (
     <div className={baseStyles.container}>
-      <Alert
-        message="AI 功能即将推出"
-        description="API 密钥功能已预留接口，相关 AI 辅助功能正在开发中。您的密钥将被安全存储在本地。"
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-      />
-
       <Card title="API 密钥管理" className={baseStyles.card}>
         <p className={baseStyles.hint}>配置 AI 服务的 API 密钥，密钥将被安全存储在本地配置中。</p>
 
@@ -167,6 +186,31 @@ export function ApiSettings(): JSX.Element {
                   icon={visibleKeys[config.id] ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                   onClick={() => toggleKeyVisibility(config.id)}
                 />
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <Space>
+                  <Button
+                    size="small"
+                    icon={
+                      testStates[config.id] === 'testing' ? (
+                        <LoadingOutlined />
+                      ) : testStates[config.id] === 'success' ? (
+                        <CheckCircleOutlined />
+                      ) : testStates[config.id] === 'fail' ? (
+                        <CloseCircleOutlined />
+                      ) : (
+                        <ApiOutlined />
+                      )
+                    }
+                    onClick={() => handleTestConnection(config.id)}
+                    loading={testStates[config.id] === 'testing'}
+                    disabled={testStates[config.id] === 'testing'}
+                  >
+                    测试连接
+                  </Button>
+                  {testStates[config.id] === 'success' && <Tag color="success">连接正常</Tag>}
+                  {testStates[config.id] === 'fail' && <Tag color="error">连接失败</Tag>}
+                </Space>
               </div>
             </div>
           ))
