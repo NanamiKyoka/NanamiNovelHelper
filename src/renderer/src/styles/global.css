@@ -159,6 +159,20 @@ body.light {
   --shadow-dropdown: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08);
   --shadow-focus: 0 0 0 2px rgba(24, 144, 255, 0.2);
 
+  /* ========== 代码高亮色 Code Highlight (GitHub Light) ========== */
+  --code-bg: #f6f8fa;
+  --code-text: #24292e;
+  --code-language-label: rgba(0, 0, 0, 0.4);
+  --hljs-comment: #6a737d;
+  --hljs-keyword: #d73a49;
+  --hljs-section: #005cc5;
+  --hljs-literal: #005cc5;
+  --hljs-string: #032f62;
+  --hljs-attr: #e36109;
+  --hljs-number: #005cc5;
+  --hljs-emphasis: inherit;
+  --hljs-strong: inherit;
+
   /* ========== Ant Design 兼容变量（引用主变量，避免重复定义） ========== */
   --ant-color-bg-container: var(--bg-container);
   --ant-color-bg-layout: var(--bg-layout);
@@ -262,6 +276,20 @@ body.dark {
   --shadow-modal: 0 4px 12px rgba(0, 0, 0, 0.45);
   --shadow-dropdown: 0 3px 6px -4px rgba(0, 0, 0, 0.48), 0 6px 16px 0 rgba(0, 0, 0, 0.32);
   --shadow-focus: 0 0 0 2px rgba(24, 144, 255, 0.35);
+
+  /* ========== 代码高亮色 Code Highlight (One Dark) ========== */
+  --code-bg: #282c34;
+  --code-text: #abb2bf;
+  --code-language-label: rgba(255, 255, 255, 0.4);
+  --hljs-comment: #5c6370;
+  --hljs-keyword: #c678dd;
+  --hljs-section: #e06c75;
+  --hljs-literal: #56b6c2;
+  --hljs-string: #98c379;
+  --hljs-attr: #e5c07b;
+  --hljs-number: #61aeee;
+  --hljs-emphasis: inherit;
+  --hljs-strong: inherit;
 
   /* ========== Ant Design 兼容变量（引用主变量，避免重复定义） ========== */
   --ant-color-bg-container: var(--bg-container);

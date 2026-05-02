@@ -103,9 +103,9 @@
 }
 
 .editorContent pre {
-  background: #282c34;
+  background: var(--code-bg);
   border-radius: 6px;
-  color: #abb2bf;
+  color: var(--code-text);
   font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 0.9em;
   padding: 16px;
@@ -120,7 +120,7 @@
   top: 8px;
   right: 12px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--code-language-label);
   text-transform: uppercase;
   font-weight: 500;
 }
@@ -134,14 +134,14 @@
 
 .editorContent pre .hljs-comment,
 .editorContent pre .hljs-quote {
-  color: #5c6370;
+  color: var(--hljs-comment);
   font-style: italic;
 }
 
 .editorContent pre .hljs-doctag,
 .editorContent pre .hljs-keyword,
 .editorContent pre .hljs-formula {
-  color: #c678dd;
+  color: var(--hljs-keyword);
 }
 
 .editorContent pre .hljs-section,
@@ -149,11 +149,11 @@
 .editorContent pre .hljs-selector-tag,
 .editorContent pre .hljs-deletion,
 .editorContent pre .hljs-subst {
-  color: #e06c75;
+  color: var(--hljs-section);
 }
 
 .editorContent pre .hljs-literal {
-  color: #56b6c2;
+  color: var(--hljs-literal);
 }
 
 .editorContent pre .hljs-string,
@@ -161,7 +161,7 @@
 .editorContent pre .hljs-addition,
 .editorContent pre .hljs-attribute,
 .editorContent pre .hljs-meta .hljs-string {
-  color: #98c379;
+  color: var(--hljs-string);
 }
 
 .editorContent pre .hljs-attr,
@@ -170,7 +170,7 @@
 .editorContent pre .hljs-type,
 .editorContent pre .hljs-class .hljs-title,
 .editorContent pre .hljs-built_in {
-  color: #e5c07b;
+  color: var(--hljs-attr);
 }
 
 .editorContent pre .hljs-number,
@@ -180,7 +180,7 @@
 .editorContent pre .hljs-meta,
 .editorContent pre .hljs-selector-id,
 .editorContent pre .hljs-title {
-  color: #61aeee;
+  color: var(--hljs-number);
 }
 
 .editorContent pre .hljs-emphasis {
