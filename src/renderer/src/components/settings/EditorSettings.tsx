@@ -93,29 +93,6 @@ export function EditorSettings() {
         </Form>
       </Card>
 
-      <Card title="工具栏设置" className={baseStyles.card}>
-        <Form layout="vertical" size="small">
-          <Form.Item label="显示工具栏">
-            <Switch
-              checked={settings.showToolbar}
-              onChange={checked => handleSettingChange('showToolbar', checked)}
-            />
-          </Form.Item>
-          <Form.Item label="工具栏模式">
-            <Select
-              value={settings.toolbarMode}
-              onChange={value => handleSettingChange('toolbarMode', value)}
-              options={[
-                { value: 'fixed', label: '固定工具栏' },
-                { value: 'floating', label: '浮动工具栏' }
-              ]}
-              style={{ width: '100%' }}
-              disabled={!settings.showToolbar}
-            />
-          </Form.Item>
-        </Form>
-      </Card>
-
       <Card title="保存设置" className={baseStyles.card}>
         <Form layout="vertical" size="small">
           <Form.Item label="自动保存间隔">
@@ -162,25 +139,6 @@ export function EditorSettings() {
         </Form>
       </Card>
 
-      <Card title="编辑设置" className={baseStyles.card}>
-        <Form layout="vertical" size="small">
-          <Form.Item label={`Tab 宽度: ${settings.tabSize} 个空格`}>
-            <Slider
-              min={2}
-              max={8}
-              value={settings.tabSize}
-              onChange={value => handleSettingChange('tabSize', value)}
-              marks={{ 2: '2', 4: '4', 6: '6', 8: '8' }}
-            />
-          </Form.Item>
-          <Form.Item label="拼写检查">
-            <Switch
-              checked={settings.spellCheck}
-              onChange={checked => handleSettingChange('spellCheck', checked)}
-            />
-          </Form.Item>
-        </Form>
-      </Card>
     </div>
   )
 }

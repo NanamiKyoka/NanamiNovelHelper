@@ -159,11 +159,7 @@ class ProjectService {
           lineHeight: 1.8,
           letterSpacing: 0,
           paragraphSpacing: 0.5,
-          toolbarMode: 'fixed',
-          showToolbar: true,
           autoSaveInterval: 30000,
-          tabSize: 2,
-          spellCheck: false,
           enablePreviewMode: false
         },
         // 高亮设置

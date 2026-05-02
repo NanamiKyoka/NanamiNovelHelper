@@ -195,11 +195,7 @@ interface ProjectEditorSettings {
   lineHeight: number
   letterSpacing: number
   paragraphSpacing: number
-  toolbarMode: 'fixed' | 'floating'
-  showToolbar: boolean
   autoSaveInterval: number
-  tabSize: number
-  spellCheck: boolean
   enablePreviewMode: boolean
 }
 

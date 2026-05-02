@@ -182,19 +182,13 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
 
 // ============ 项目编辑器设置 ============
 
-export type ToolbarMode = 'fixed' | 'floating'
-
 export interface ProjectEditorSettings {
   fontFamily: string
   fontSize: number
   lineHeight: number
   letterSpacing: number
   paragraphSpacing: number
-  toolbarMode: ToolbarMode
-  showToolbar: boolean
   autoSaveInterval: number // 毫秒，0 表示禁用
-  tabSize: number
-  spellCheck: boolean
   enablePreviewMode: boolean
 }
 
@@ -204,11 +198,7 @@ export const DEFAULT_PROJECT_EDITOR_SETTINGS: ProjectEditorSettings = {
   lineHeight: 1.8,
   letterSpacing: 0,
   paragraphSpacing: 0.5,
-  toolbarMode: 'fixed',
-  showToolbar: true,
   autoSaveInterval: 30000,
-  tabSize: 2,
-  spellCheck: false,
   enablePreviewMode: false
 }
 

@@ -8,8 +8,7 @@ import type {
   EditorFileContent,
   WordCount,
   CursorPosition,
-  StatusBarConfig,
-  ToolbarMode
+  StatusBarConfig
 } from '../types/editor'
 import {
   DEFAULT_EDITOR_SETTINGS as defaultSettings,
@@ -173,7 +172,6 @@ interface EditorState {
   getEditorState: (path: string) => unknown
 
   updateSettings: (settings: Partial<EditorSettings>) => void
-  setToolbarMode: (mode: ToolbarMode) => void
 
   updateWordCount: (content: string) => void
   updateCursorPosition: (position: CursorPosition) => void
@@ -546,10 +544,6 @@ export const useEditorStore = create<EditorState>()(
           set(state => ({
             settings: { ...state.settings, ...newSettings }
           }))
-        },
-
-        setToolbarMode: (mode: ToolbarMode) => {
-          get().updateSettings({ toolbarMode: mode })
         },
 
         updateWordCount: (content: string) => {

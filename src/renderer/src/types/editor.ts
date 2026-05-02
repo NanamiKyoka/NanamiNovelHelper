@@ -23,11 +23,6 @@ export interface EditorTab {
 }
 
 /**
- * 工具栏模式
- */
-export type ToolbarMode = 'fixed' | 'floating'
-
-/**
  * 编辑器设置
  */
 export interface EditorSettings {
@@ -41,16 +36,8 @@ export interface EditorSettings {
   letterSpacing: number
   /** 段落间距 */
   paragraphSpacing: number
-  /** 工具栏模式 */
-  toolbarMode: ToolbarMode
-  /** 是否显示工具栏 */
-  showToolbar: boolean
   /** 自动保存间隔（毫秒，0 表示禁用） */
   autoSaveInterval: number
-  /** Tab 宽度 */
-  tabSize: number
-  /** 拼写检查 */
-  spellCheck: boolean
   /** 启用预览模式（VSCode 风格：单击预览，双击固定） */
   enablePreviewMode: boolean
 }
@@ -64,11 +51,7 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   lineHeight: 1.8,
   letterSpacing: 0,
   paragraphSpacing: 0.5,
-  toolbarMode: 'fixed',
-  showToolbar: true,
   autoSaveInterval: 30000, // 30秒
-  tabSize: 2,
-  spellCheck: false,
   enablePreviewMode: false // 禁用预览模式，单击直接固定打开
 }
 
