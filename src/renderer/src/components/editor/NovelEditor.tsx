@@ -406,6 +406,16 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     clearGoToPositionRequest()
   }, [editor, goToPositionRequest, currentFilePath, clearGoToPositionRequest])
 
+  const insertContentRequest = useEditorStore(state => state.insertContentRequest)
+  const clearInsertContentRequest = useEditorStore(state => state.clearInsertContentRequest)
+
+  useEffect(() => {
+    if (!editor || !insertContentRequest) return
+
+    editor.chain().focus().insertContent(insertContentRequest).run()
+    clearInsertContentRequest()
+  }, [editor, insertContentRequest, clearInsertContentRequest])
+
   // 处理外部刷新请求
   const externalRefreshRequest = useEditorStore(state => state.externalRefreshRequest)
   const clearExternalRefreshRequest = useEditorStore(state => state.clearExternalRefreshRequest)

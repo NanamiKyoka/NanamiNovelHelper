@@ -221,6 +221,8 @@ function WorkflowExecutor({
     }
   }, [open, activeVariables.length])
 
+  const requestInsertContent = useEditorStore(state => state.requestInsertContent)
+
   // 实时生成预览提示词
   const previewPrompt = useMemo(() => {
     const template = currentStepTemplate || currentTemplate
@@ -479,7 +481,12 @@ function WorkflowExecutor({
 
   // 插入到编辑器
   const handleInsertToEditor = () => {
-    // TODO: 实现插入到编辑器功能
+    const content = apiResult?.content || localStreamContent
+    if (!content) {
+      message.warning('没有可插入的内容')
+      return
+    }
+    requestInsertContent(content)
     message.success('已插入到编辑器')
     onClose()
   }

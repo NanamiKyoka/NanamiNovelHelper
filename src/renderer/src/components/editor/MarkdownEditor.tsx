@@ -309,6 +309,16 @@ export function MarkdownEditor({
     clearGoToPositionRequest()
   }, [editor, goToPositionRequest, currentFilePath, clearGoToPositionRequest])
 
+  const insertContentRequest = useEditorStore(state => state.insertContentRequest)
+  const clearInsertContentRequest = useEditorStore(state => state.clearInsertContentRequest)
+
+  useEffect(() => {
+    if (!editor || !insertContentRequest) return
+
+    editor.chain().focus().insertContent(insertContentRequest).run()
+    clearInsertContentRequest()
+  }, [editor, insertContentRequest, clearInsertContentRequest])
+
   const externalRefreshRequest = useEditorStore(state => state.externalRefreshRequest)
   const clearExternalRefreshRequest = useEditorStore(state => state.clearExternalRefreshRequest)
   const lastRefreshTime = useEditorStore(state => state.lastRefreshTime)

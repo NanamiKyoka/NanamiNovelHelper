@@ -181,6 +181,10 @@ interface EditorState {
   requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => void
   clearGoToPositionRequest: () => void
 
+  insertContentRequest: string | null
+  requestInsertContent: (content: string) => void
+  clearInsertContentRequest: () => void
+
   externalRefreshRequest: string | null
   requestExternalRefresh: (filePath: string) => void
   clearExternalRefreshRequest: () => void
@@ -230,6 +234,7 @@ export const useEditorStore = create<EditorState>()(
         isLoading: false,
         lastSavedAt: null,
         goToPositionRequest: null,
+        insertContentRequest: null,
         externalRefreshRequest: null,
         lastRefreshTime: 0,
 
@@ -612,6 +617,14 @@ export const useEditorStore = create<EditorState>()(
 
         clearGoToPositionRequest: () => {
           set({ goToPositionRequest: null })
+        },
+
+        requestInsertContent: (content: string) => {
+          set({ insertContentRequest: content })
+        },
+
+        clearInsertContentRequest: () => {
+          set({ insertContentRequest: null })
         },
 
         requestExternalRefresh: (filePath: string) => {
