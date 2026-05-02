@@ -57,12 +57,13 @@
 .inputSuffix {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 0 11px;
   background: var(--ant-color-bg-container);
   border: 1px solid var(--ant-color-border);
   border-left: none;
   border-radius: 0 6px 6px 0;
-  height: 22px;
+  min-height: 32px;
   font-size: 14px;
   color: var(--ant-color-text-secondary);
 }
