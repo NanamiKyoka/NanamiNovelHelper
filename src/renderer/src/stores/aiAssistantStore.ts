@@ -495,37 +495,79 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => {
     let content = template.content || ''
 
+    const variableMap = new Map<string, { value: VariableValue; variable: typeof template.variables[0] }>()
     for (const variable of template.variables) {
       const value = variables[variable.id]
-      if (!value) continue
+      if (value) {
+        variableMap.set(variable.key, { value, variable })
+      }
+    }
 
-      let replacement = ''
-
+    const getReplacement = (key: string, value: VariableValue, variable: typeof template.variables[0]): string => {
       if (value.entryData && typeof value.entryData === 'object') {
-        // 如果有 entryData，尝试解析属性路径
-        const key = variable.key
         const propertyMatch = key.match(/\.(\w+)$/)
         if (propertyMatch) {
           const property = propertyMatch[1]
-          replacement = String((value.entryData as Record<string, unknown>)[property] || '')
-        } else {
-          // 默认使用 name 属性
-          replacement = String(
-            (value.entryData as Record<string, unknown>).name ||
-              (value.entryData as Record<string, unknown>).Name ||
-              ''
-          )
+          return String((value.entryData as Record<string, unknown>)[property] || '')
         }
+        return String(
+          (value.entryData as Record<string, unknown>).name ||
+            (value.entryData as Record<string, unknown>).Name ||
+            ''
+        )
       } else if (Array.isArray(value.value)) {
-        replacement = value.value.join(', ')
+        return value.value.join(', ')
       } else if (value.value !== null && value.value !== undefined) {
-        replacement = String(value.value)
+        return String(value.value)
       }
+      return ''
+    }
 
-      // 替换 {{变量名}} 和 {{变量名.属性}} 格式
-      const regex = new RegExp(`\\{\\{${variable.key}(?:\\.\\w+)?\\}\\}`, 'g')
+    for (const [key, { value, variable }] of variableMap) {
+      let replacement = getReplacement(key, value, variable)
+      const regex = new RegExp(`\\{\\{${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\.\\w+)?\\}\\}`, 'g')
       content = content.replace(regex, replacement)
     }
+
+    content = content.replace(/\{\{(\w+)(?:\.(\w+))?\|([^}]+)\}\}/g, (match, key, prop, defaultVal) => {
+      const entry = variableMap.get(key)
+      if (!entry) return defaultVal
+      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+        const val = (entry.value.entryData as Record<string, unknown>)[prop]
+        return val ? String(val) : defaultVal
+      }
+      if (!prop) {
+        const replacement = getReplacement(key, entry.value, entry.variable)
+        return replacement || defaultVal
+      }
+      return defaultVal
+    })
+
+    content = content.replace(/\{\{#if\s+(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, prop, body) => {
+      const entry = variableMap.get(key)
+      if (!entry) return ''
+      let hasValue = false
+      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+        hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
+      } else if (!prop) {
+        const replacement = getReplacement(key, entry.value, entry.variable)
+        hasValue = replacement !== ''
+      }
+      return hasValue ? body : ''
+    })
+
+    content = content.replace(/\{\{#if\s+!(\w+)(?:\.(\w+))?\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, prop, body) => {
+      const entry = variableMap.get(key)
+      if (!entry) return body
+      let hasValue = false
+      if (prop && entry.value.entryData && typeof entry.value.entryData === 'object') {
+        hasValue = !!(entry.value.entryData as Record<string, unknown>)[prop]
+      } else if (!prop) {
+        const replacement = getReplacement(key, entry.value, entry.variable)
+        hasValue = replacement !== ''
+      }
+      return hasValue ? '' : body
+    })
 
     return content
   },
