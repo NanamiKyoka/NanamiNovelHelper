@@ -29,14 +29,12 @@ import {
   SettingOutlined,
   PlayCircleOutlined,
   ArrowUpOutlined,
-  ArrowDownOutlined,
-  BranchesOutlined
+  ArrowDownOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import type {
   PromptWorkflow,
   WorkflowStep,
-  WorkflowBranch,
   VariableDefinition,
   TemplateCategory
 } from '@shared/ai-assistant'
@@ -53,15 +51,7 @@ const CATEGORY_OPTIONS: { value: TemplateCategory; label: string }[] = [
   { value: 'polishing', label: '润色修改' }
 ]
 
-// 分支条件类型
-const CONDITION_TYPE_OPTIONS = [
-  { value: 'contains', label: '包含' },
-  { value: 'not_contains', label: '不包含' },
-  { value: 'equals', label: '等于' },
-  { value: 'not_equals', label: '不等于' },
-  { value: 'regex', label: '正则匹配' },
-  { value: 'exists', label: '存在值' }
-]
+
 
 interface WorkflowEditorProps {
   workflowId?: string
@@ -190,48 +180,6 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
   }
 
   // 添加分支
-  const handleAddBranch = (stepId: string) => {
-    const newBranch: WorkflowBranch = {
-      id: `branch_${Date.now()}`,
-      name: '新分支',
-      condition: {
-        type: 'contains',
-        value: ''
-      },
-      nextStepId: ''
-    }
-    const step = steps.find(s => s.id === stepId)
-    if (step) {
-      handleUpdateStep(stepId, {
-        branches: [...(step.branches || []), newBranch]
-      })
-    }
-  }
-
-  // 更新分支
-  const handleUpdateBranch = (
-    stepId: string,
-    branchId: string,
-    updates: Partial<WorkflowBranch>
-  ) => {
-    const step = steps.find(s => s.id === stepId)
-    if (step && step.branches) {
-      handleUpdateStep(stepId, {
-        branches: step.branches.map(b => (b.id === branchId ? { ...b, ...updates } : b))
-      })
-    }
-  }
-
-  // 删除分支
-  const handleDeleteBranch = (stepId: string, branchId: string) => {
-    const step = steps.find(s => s.id === stepId)
-    if (step && step.branches) {
-      handleUpdateStep(stepId, {
-        branches: step.branches.filter(b => b.id !== branchId)
-      })
-    }
-  }
-
   // 添加全局变量
   const handleAddGlobalVariable = () => {
     const newVariable: VariableDefinition = {
@@ -445,97 +393,6 @@ function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Elemen
             />
           </div>
 
-          {/* 分支配置 */}
-          <Divider style={{ margin: '12px 0' }}>
-            <Space>
-              <BranchesOutlined />
-              分支条件
-            </Space>
-          </Divider>
-
-          {step.branches && step.branches.length > 0 ? (
-            step.branches.map(branch => (
-              <Card
-                key={branch.id}
-                size="small"
-                className={styles.branchCard}
-                title={
-                  <Input
-                    value={branch.name}
-                    onChange={e => handleUpdateBranch(step.id, branch.id, { name: e.target.value })}
-                    placeholder="分支名称"
-                    style={{ width: 150 }}
-                    bordered={false}
-                  />
-                }
-                extra={
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<DeleteOutlined />}
-                    danger
-                    onClick={() => handleDeleteBranch(step.id, branch.id)}
-                  />
-                }
-              >
-                <div className={styles.branchForm}>
-                  <div className={styles.stepRow}>
-                    <label>条件类型：</label>
-                    <Select
-                      value={branch.condition.type}
-                      onChange={type =>
-                        handleUpdateBranch(step.id, branch.id, {
-                          condition: { ...branch.condition, type }
-                        })
-                      }
-                      options={CONDITION_TYPE_OPTIONS}
-                      style={{ width: 120 }}
-                    />
-                  </div>
-                  <div className={styles.stepRow}>
-                    <label>匹配值：</label>
-                    <Input
-                      value={branch.condition.value}
-                      onChange={e =>
-                        handleUpdateBranch(step.id, branch.id, {
-                          condition: { ...branch.condition, value: e.target.value }
-                        })
-                      }
-                      placeholder="匹配的值或正则表达式"
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                  <div className={styles.stepRow}>
-                    <label>跳转步骤：</label>
-                    <Select
-                      value={branch.nextStepId}
-                      onChange={nextStepId =>
-                        handleUpdateBranch(step.id, branch.id, { nextStepId })
-                      }
-                      options={stepOptions.filter(o => o.value !== step.id)}
-                      placeholder="选择目标步骤"
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                </div>
-              </Card>
-            ))
-          ) : (
-            <Empty
-              description="暂无分支"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ margin: '16px 0' }}
-            />
-          )}
-
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => handleAddBranch(step.id)}
-            style={{ marginTop: 8, width: '100%' }}
-          >
-            添加分支
-          </Button>
         </div>
       </Card>
     )

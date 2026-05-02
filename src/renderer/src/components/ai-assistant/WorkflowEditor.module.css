@@ -109,32 +109,6 @@
   flex-shrink: 0;
 }
 
-/* 分支配置 */
-.branchesSection {
-  margin-top: 8px;
-}
-
-.branchCard {
-  background: var(--ant-color-bg-text-hover);
-  margin-bottom: 8px;
-}
-
-.branchNameInput {
-  font-size: 13px;
-  width: 120px;
-}
-
-.branchCondition {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.branchTarget {
-  display: flex;
-  align-items: center;
-}
-
 /* 侧边栏 */
 .variablesSider {
   background: var(--ant-color-bg-elevated);
