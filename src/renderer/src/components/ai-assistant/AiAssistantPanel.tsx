@@ -531,9 +531,29 @@ function AiAssistantPanel(): JSX.Element {
     }
     const config = statusConfig[item.status]
 
+    const duration =
+      item.completedAt && item.startedAt
+        ? Math.round((new Date(item.completedAt).getTime() - new Date(item.startedAt).getTime()) / 1000)
+        : null
+
+    const outputPreview = Object.values(item.stepOutputs || {})
+      .filter(Boolean)
+      .join(' → ')
+      .slice(0, 80)
+
     return (
       <List.Item
         actions={[
+          item.workflowId && (
+            <Tooltip key="rerun" title="重新执行">
+              <Button
+                type="text"
+                size="small"
+                icon={<PlayCircleOutlined />}
+                onClick={() => handleOpenWorkflowExecutor(item.workflowId)}
+              />
+            </Tooltip>
+          ),
           <Popconfirm
             key="delete"
             title="确定删除此记录？"
@@ -552,12 +572,33 @@ function AiAssistantPanel(): JSX.Element {
             <Space>
               <Text>{item.workflowName}</Text>
               <Tag color={config.color}>{config.text}</Tag>
+              {duration !== null && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {duration >= 60 ? `${Math.floor(duration / 60)}分${duration % 60}秒` : `${duration}秒`}
+                </Text>
+              )}
             </Space>
           }
           description={
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {new Date(item.startedAt).toLocaleString()}
-            </Text>
+            <div>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {new Date(item.startedAt).toLocaleString()}
+              </Text>
+              {outputPreview && (
+                <div style={{ marginTop: 4 }}>
+                  <Text type="secondary" ellipsis style={{ fontSize: 12, display: 'block' }}>
+                    {outputPreview}
+                  </Text>
+                </div>
+              )}
+              {item.error && (
+                <div style={{ marginTop: 4 }}>
+                  <Text type="danger" ellipsis style={{ fontSize: 12, display: 'block' }}>
+                    {item.error}
+                  </Text>
+                </div>
+              )}
+            </div>
           }
         />
       </List.Item>
