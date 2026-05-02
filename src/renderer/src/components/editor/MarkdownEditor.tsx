@@ -94,6 +94,7 @@ export function MarkdownEditor({
     editorProps: {
       attributes: {
         class: styles.editorContent,
+        spellcheck: 'false',
         style: `font-family: ${settings.fontFamily}; font-size: ${settings.fontSize}px; line-height: ${settings.lineHeight};`
       },
       handleKeyDown: (_view, event) => {
