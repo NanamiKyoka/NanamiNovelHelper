@@ -4,7 +4,7 @@
 
 import { ipcMain, dialog } from 'electron'
 import path from 'path'
-import fs from 'fs'
+import { writeFile } from 'fs/promises'
 import { fileService, SortOptions } from '../services/file'
 import { validateParams } from '../utils/validation'
 
@@ -17,7 +17,7 @@ export function registerFileHandlers(): void {
     try {
       // 参数验证
       validateParams('file:exists ').nonEmptyString(path, 'path').validate()
-      return fileService.exists(path)
+      return await fileService.exists(path)
     } catch (error) {
       console.error('Failed to check file exists:', error)
       throw error
@@ -31,7 +31,7 @@ export function registerFileHandlers(): void {
       try {
         // 参数验证
         validateParams('file:read ').nonEmptyString(path, 'path').validate()
-        return fileService.readFile(path, encoding)
+        return await fileService.readFile(path, encoding)
       } catch (error) {
         console.error('Failed to read file:', error)
         throw error
@@ -61,7 +61,7 @@ export function registerFileHandlers(): void {
             }
           })
           .validate()
-        fileService.writeFile(path, content, options)
+        await fileService.writeFile(path, content, options)
       } catch (error) {
         console.error('Failed to write file:', error)
         throw error
@@ -74,7 +74,7 @@ export function registerFileHandlers(): void {
     try {
       // 参数验证
       validateParams('file:mkdir ').nonEmptyString(path, 'path').validate()
-      fileService.mkdir(path, recursive)
+      await fileService.mkdir(path, recursive)
     } catch (error) {
       console.error('Failed to create directory:', error)
       throw error
@@ -111,7 +111,7 @@ export function registerFileHandlers(): void {
         .nonEmptyString(oldPath, 'oldPath')
         .nonEmptyString(newPath, 'newPath')
         .validate()
-      fileService.rename(oldPath, newPath)
+      await fileService.rename(oldPath, newPath)
     } catch (error) {
       console.error('Failed to rename:', error)
       throw error
@@ -128,7 +128,7 @@ export function registerFileHandlers(): void {
           .nonEmptyString(source, 'source')
           .nonEmptyString(destination, 'destination')
           .validate()
-        fileService.copy(source, destination, overwrite)
+        await fileService.copy(source, destination, overwrite)
       } catch (error) {
         console.error('Failed to copy:', error)
         throw error
@@ -150,7 +150,7 @@ export function registerFileHandlers(): void {
       try {
         // 参数验证
         validateParams('file:list ').nonEmptyString(path, 'path').validate()
-        return fileService.listDir(path, options)
+        return await fileService.listDir(path, options)
       } catch (error) {
         console.error('Failed to list directory:', error)
         throw error
@@ -168,7 +168,7 @@ export function registerFileHandlers(): void {
       hiddenItems?: string[]
     ): Promise<ReturnType<typeof fileService.getFileTree>> => {
       try {
-        return fileService.getFileTree(includeHidden, sortOptions, hiddenItems)
+        return await fileService.getFileTree(includeHidden, sortOptions, hiddenItems)
       } catch (error) {
         console.error('Failed to get file tree:', error)
         throw error
@@ -183,7 +183,7 @@ export function registerFileHandlers(): void {
       try {
         // 参数验证
         validateParams('file:get-info ').nonEmptyString(path, 'path').validate()
-        return fileService.getFileInfo(path)
+        return await fileService.getFileInfo(path)
       } catch (error) {
         console.error('Failed to get file info:', error)
         throw error
@@ -300,7 +300,7 @@ export function registerFileHandlers(): void {
         if (!fileService.isPathInProjectPublic(absolutePath)) {
           throw new Error('导出路径不在项目目录内')
         }
-        fs.writeFileSync(absolutePath, content, 'utf-8')
+        await writeFile(absolutePath, content, 'utf-8')
         return true
       } catch (error) {
         console.error('Failed to export txt file:', error)

@@ -24,7 +24,7 @@ class FileWatcherService extends ServiceCore {
   private mainWindow: BrowserWindow | null = null
 
   private paused = false
-  private operationCount = 0
+  private pauseToken: string | null = null
 
   private pendingEvents: Map<string, FileChangeEvent> = new Map()
   private batchTimer: ReturnType<typeof setTimeout> | null = null
@@ -100,19 +100,20 @@ class FileWatcherService extends ServiceCore {
     return this.watchedPath
   }
 
-  pause(): void {
+  pause(): string {
     this.paused = true
-    this.operationCount++
+    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    this.pauseToken = token
+    return token
   }
 
-  resume(): void {
-    this.operationCount = Math.max(0, this.operationCount - 1)
-    if (this.operationCount === 0) {
-      this.paused = false
-      this.pendingEvents.clear()
-      this.flushBatch()
-      this.notifyBulkOperationEnd()
-    }
+  resume(token: string): void {
+    if (this.pauseToken !== token) return
+    this.pauseToken = null
+    this.paused = false
+    this.pendingEvents.clear()
+    this.flushBatch()
+    this.notifyBulkOperationEnd()
   }
 
   isPaused(): boolean {

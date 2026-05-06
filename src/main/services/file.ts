@@ -4,20 +4,19 @@
  */
 
 import { shell } from 'electron'
+import { existsSync, realpathSync } from 'fs'
 import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-  statSync,
-  unlinkSync,
-  rmdirSync,
-  renameSync,
-  copyFileSync,
-  rmSync,
-  realpathSync
-} from 'fs'
+  readFile,
+  writeFile,
+  mkdir,
+  readdir,
+  stat,
+  unlink,
+  rmdir,
+  rename,
+  copyFile,
+  rm
+} from 'fs/promises'
 import { join, relative, dirname, basename, extname, resolve, normalize, sep } from 'path'
 import { FileNode } from '../types/file'
 import { createLogger } from '../utils/logger'
@@ -113,7 +112,7 @@ class FileService {
   /**
    * 检查文件/目录是否存在
    */
-  exists(path: string): boolean {
+  async exists(path: string): Promise<boolean> {
     const absolutePath = this.safeResolvePath(path)
     return existsSync(absolutePath)
   }
@@ -121,7 +120,7 @@ class FileService {
   /**
    * 读取文件内容
    */
-  readFile(path: string, encoding: BufferEncoding = 'utf-8'): string {
+  async readFile(path: string, encoding: BufferEncoding = 'utf-8'): Promise<string> {
     const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
@@ -132,22 +131,22 @@ class FileService {
       throw new Error(`文件不存在: ${path}`)
     }
 
-    const stats = statSync(absolutePath)
+    const stats = await stat(absolutePath)
     if (stats.isDirectory()) {
       throw new Error(`路径是目录，不是文件: ${path}`)
     }
 
-    return readFileSync(absolutePath, encoding)
+    return readFile(absolutePath, encoding)
   }
 
   /**
    * 写入文件
    */
-  writeFile(
+  async writeFile(
     path: string,
     content: string,
     options: { encoding?: BufferEncoding; createParentDir?: boolean } = {}
-  ): void {
+  ): Promise<void> {
     const { encoding = 'utf-8', createParentDir = true } = options
     const absolutePath = this.safeResolvePath(path)
 
@@ -155,21 +154,20 @@ class FileService {
       throw new Error('路径不在项目目录内')
     }
 
-    // 创建父目录
     if (createParentDir) {
       const parentDir = dirname(absolutePath)
       if (!existsSync(parentDir)) {
-        mkdirSync(parentDir, { recursive: true })
+        await mkdir(parentDir, { recursive: true })
       }
     }
 
-    writeFileSync(absolutePath, content, encoding)
+    await writeFile(absolutePath, content, encoding)
   }
 
   /**
    * 创建目录
    */
-  mkdir(path: string, recursive: boolean = true): void {
+  async mkdir(path: string, recursive: boolean = true): Promise<void> {
     const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
@@ -180,7 +178,7 @@ class FileService {
       throw new Error(`目录已存在: ${path}`)
     }
 
-    mkdirSync(absolutePath, { recursive })
+    await mkdir(absolutePath, { recursive })
   }
 
   /**
@@ -201,39 +199,36 @@ class FileService {
       throw new Error(`路径不存在: ${path}`)
     }
 
-    const stats = statSync(absolutePath)
+    const stats = await stat(absolutePath)
 
-    // 尝试使用回收站
     if (useTrash) {
       try {
         await shell.trashItem(absolutePath)
         return
       } catch {
-        // 如果回收站失败，继续使用永久删除
         this.logger.warn('移入回收站失败，使用永久删除')
       }
     }
 
-    // 永久删除
     if (stats.isDirectory()) {
       if (recursive) {
-        rmSync(absolutePath, { recursive: true, force: true })
+        await rm(absolutePath, { recursive: true, force: true })
       } else {
-        const items = readdirSync(absolutePath)
+        const items = await readdir(absolutePath)
         if (items.length > 0) {
           throw new Error(`目录不为空: ${path}`)
         }
-        rmdirSync(absolutePath)
+        await rmdir(absolutePath)
       }
     } else {
-      unlinkSync(absolutePath)
+      await unlink(absolutePath)
     }
   }
 
   /**
    * 重命名/移动文件或目录
    */
-  rename(oldPath: string, newPath: string): void {
+  async rename(oldPath: string, newPath: string): Promise<void> {
     const absoluteOldPath = this.safeResolvePath(oldPath)
     const absoluteNewPath = this.safeResolvePath(newPath)
 
@@ -245,7 +240,6 @@ class FileService {
       throw new Error(`源路径不存在: ${oldPath}`)
     }
 
-    // 如果新旧路径相同，直接返回
     if (absoluteOldPath === absoluteNewPath) {
       return
     }
@@ -254,19 +248,18 @@ class FileService {
       throw new Error(`目标路径已存在: ${newPath}`)
     }
 
-    // 确保目标父目录存在
     const parentDir = dirname(absoluteNewPath)
     if (!existsSync(parentDir)) {
-      mkdirSync(parentDir, { recursive: true })
+      await mkdir(parentDir, { recursive: true })
     }
 
-    renameSync(absoluteOldPath, absoluteNewPath)
+    await rename(absoluteOldPath, absoluteNewPath)
   }
 
   /**
    * 复制文件或目录
    */
-  copy(source: string, destination: string, overwrite: boolean = false): void {
+  async copy(source: string, destination: string, overwrite: boolean = false): Promise<void> {
     const absoluteSource = this.safeResolvePath(source)
     const absoluteDestination = this.safeResolvePath(destination)
 
@@ -282,41 +275,40 @@ class FileService {
       throw new Error(`目标路径已存在: ${destination}`)
     }
 
-    // 确保目标父目录存在
     const parentDir = dirname(absoluteDestination)
     if (!existsSync(parentDir)) {
-      mkdirSync(parentDir, { recursive: true })
+      await mkdir(parentDir, { recursive: true })
     }
 
-    const stats = statSync(absoluteSource)
+    const stats = await stat(absoluteSource)
 
     if (stats.isDirectory()) {
-      // 递归复制目录
-      this.copyDirectory(absoluteSource, absoluteDestination, overwrite)
+      await this.copyDirectory(absoluteSource, absoluteDestination, overwrite)
     } else {
-      copyFileSync(absoluteSource, absoluteDestination)
+      await copyFile(absoluteSource, absoluteDestination)
     }
   }
 
-  /**
-   * 递归复制目录
-   */
-  private copyDirectory(source: string, destination: string, overwrite: boolean): void {
+  private async copyDirectory(
+    source: string,
+    destination: string,
+    overwrite: boolean
+  ): Promise<void> {
     if (!existsSync(destination)) {
-      mkdirSync(destination, { recursive: true })
+      await mkdir(destination, { recursive: true })
     }
 
-    const items = readdirSync(source, { withFileTypes: true })
+    const items = await readdir(source, { withFileTypes: true })
 
     for (const item of items) {
       const sourcePath = join(source, item.name)
       const destPath = join(destination, item.name)
 
       if (item.isDirectory()) {
-        this.copyDirectory(sourcePath, destPath, overwrite)
+        await this.copyDirectory(sourcePath, destPath, overwrite)
       } else {
         if (!existsSync(destPath) || overwrite) {
-          copyFileSync(sourcePath, destPath)
+          await copyFile(sourcePath, destPath)
         }
       }
     }
@@ -325,10 +317,10 @@ class FileService {
   /**
    * 列出目录内容
    */
-  listDir(
+  async listDir(
     path: string,
     options: { recursive?: boolean; includeHidden?: boolean } = {}
-  ): FileNode[] {
+  ): Promise<FileNode[]> {
     const { recursive = false, includeHidden = false } = options
     const absolutePath = this.safeResolvePath(path)
 
@@ -340,7 +332,7 @@ class FileService {
       throw new Error(`目录不存在: ${path}`)
     }
 
-    const stats = statSync(absolutePath)
+    const stats = await stat(absolutePath)
     if (!stats.isDirectory()) {
       throw new Error(`路径不是目录: ${path}`)
     }
@@ -348,21 +340,17 @@ class FileService {
     return this.scanDirectory(absolutePath, recursive, includeHidden)
   }
 
-  /**
-   * 扫描目录
-   */
-  private scanDirectory(
+  private async scanDirectory(
     dirPath: string,
     recursive: boolean,
     includeHidden: boolean,
     sortOptions?: SortOptions,
     hiddenItems?: string[]
-  ): FileNode[] {
-    const items = readdirSync(dirPath, { withFileTypes: true })
+  ): Promise<FileNode[]> {
+    const items = await readdir(dirPath, { withFileTypes: true })
     const nodes: FileNode[] = []
 
     for (const item of items) {
-      // 跳过隐藏文件
       if (!includeHidden && item.name.startsWith('.')) {
         continue
       }
@@ -372,12 +360,11 @@ class FileService {
         ? relative(this.currentProjectPath, absolutePath)
         : absolutePath
 
-      // 跳过用户隐藏的文件/文件夹
       if (hiddenItems && hiddenItems.includes(relativePath)) {
         continue
       }
 
-      const stats = statSync(absolutePath)
+      const stats = await stat(absolutePath)
       const isDirectory = item.isDirectory()
 
       const node: FileNode = {
@@ -391,7 +378,7 @@ class FileService {
       }
 
       if (recursive && isDirectory) {
-        node.children = this.scanDirectory(
+        node.children = await this.scanDirectory(
           absolutePath,
           recursive,
           includeHidden,
@@ -403,7 +390,6 @@ class FileService {
       nodes.push(node)
     }
 
-    // 排序：目录在前，然后按指定字段排序
     return this.sortNodes(nodes, sortOptions)
   }
 
@@ -438,11 +424,11 @@ class FileService {
   /**
    * 获取文件树
    */
-  getFileTree(
+  async getFileTree(
     includeHidden: boolean = false,
     sortOptions?: SortOptions,
     hiddenItems?: string[]
-  ): FileNode[] {
+  ): Promise<FileNode[]> {
     if (!this.currentProjectPath) {
       throw new Error('没有打开的项目')
     }
@@ -456,10 +442,7 @@ class FileService {
     )
   }
 
-  /**
-   * 获取文件信息
-   */
-  getFileInfo(path: string): FileNode {
+  async getFileInfo(path: string): Promise<FileNode> {
     const absolutePath = this.safeResolvePath(path)
 
     if (!this.isPathInProject(absolutePath)) {
@@ -470,7 +453,7 @@ class FileService {
       throw new Error(`路径不存在: ${path}`)
     }
 
-    const stats = statSync(absolutePath)
+    const stats = await stat(absolutePath)
     const relativePath = this.currentProjectPath
       ? relative(this.currentProjectPath, absolutePath)
       : absolutePath

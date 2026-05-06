@@ -86,10 +86,9 @@ export function MarkdownEditor({
 
   const { getExtensions } = useMarkdownExtensions()
 
-  const initialContent = getCurrentContent()
   const editor = useEditor({
     extensions: getExtensions(plainText),
-    content: plainText ? plainTextToHtml(initialContent) : initialContent,
+    content: '',
     editable: !readonly,
     editorProps: {
       attributes: {

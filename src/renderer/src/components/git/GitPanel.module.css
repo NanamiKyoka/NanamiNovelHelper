@@ -254,6 +254,7 @@
 
 .hunk {
   border-bottom: 1px solid var(--ant-color-border-secondary);
+  min-width: max-content;
 }
 
 .hunkHeader {

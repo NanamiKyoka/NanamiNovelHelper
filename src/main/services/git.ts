@@ -572,7 +572,7 @@ class GitService {
   /** 回退 */
   async reset(repoPath: string, options: GitResetOptions): Promise<GitResult<void>> {
     const isBulkOperation = options.mode === 'hard'
-    if (isBulkOperation) fileWatcherService.pause()
+    const watcherToken = isBulkOperation ? fileWatcherService.pause() : null
     try {
       if (this.useSystemGit) {
         const modeFlag =
@@ -591,7 +591,7 @@ class GitService {
     } catch (error) {
       return { success: false, error: String(error) }
     } finally {
-      if (isBulkOperation) fileWatcherService.resume()
+      if (watcherToken) fileWatcherService.resume(watcherToken)
     }
   }
 
@@ -1132,7 +1132,7 @@ class GitService {
   /** 切换分支 */
   async checkout(repoPath: string, options: GitCheckoutOptions): Promise<GitResult<void>> {
     const isBulkOperation = !options.paths || options.force
-    if (isBulkOperation) fileWatcherService.pause()
+    const watcherToken = isBulkOperation ? fileWatcherService.pause() : null
     try {
       if (this.useSystemGit) {
         const args = ['checkout']
@@ -1161,13 +1161,13 @@ class GitService {
     } catch (error) {
       return { success: false, error: String(error) }
     } finally {
-      if (isBulkOperation) fileWatcherService.resume()
+      if (watcherToken) fileWatcherService.resume(watcherToken)
     }
   }
 
   /** 合并分支 */
   async merge(repoPath: string, options: GitMergeOptions): Promise<GitResult<void>> {
-    fileWatcherService.pause()
+    const watcherToken = fileWatcherService.pause()
     try {
       if (this.useSystemGit) {
         const args = ['merge', options.branch]
@@ -1192,7 +1192,7 @@ class GitService {
     } catch (error) {
       return { success: false, error: String(error) }
     } finally {
-      fileWatcherService.resume()
+      fileWatcherService.resume(watcherToken)
     }
   }
 

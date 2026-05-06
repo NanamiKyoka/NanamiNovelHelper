@@ -136,7 +136,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   // 创建编辑器实例
   const editor = useEditor({
     extensions: getExtensions(),
-    content: getCurrentContent(),
+    content: '',
     editable: !readonly,
     editorProps: {
       attributes: {

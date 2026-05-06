@@ -592,7 +592,7 @@ backup/
     const showHiddenFiles = globalSettingsService.getShowHiddenFiles()
     const hiddenItems = projectSettingsService.getHiddenItems()
     const expandedFolders = projectSettingsService.getExpandedFolders()
-    const tree = fileService.getFileTree(
+    const tree = await fileService.getFileTree(
       showHiddenFiles,
       { field: 'name', order: 'asc' },
       hiddenItems
