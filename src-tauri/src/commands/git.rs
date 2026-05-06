@@ -153,6 +153,16 @@ pub fn git_delete_branch(
 }
 
 #[tauri::command]
+pub fn git_rename_branch(
+    repo_path: String,
+    old_name: String,
+    new_name: String,
+    git_service: State<'_, GitService>,
+) -> AppResult<serde_json::Value> {
+    git_service.rename_branch(&repo_path, &old_name, &new_name)
+}
+
+#[tauri::command]
 pub fn git_checkout(
     repo_path: String,
     target: String,

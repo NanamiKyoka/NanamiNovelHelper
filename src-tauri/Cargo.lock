@@ -2190,6 +2190,7 @@ dependencies = [
  "notify",
  "open",
  "pathdiff",
+ "percent-encoding",
  "portable-pty",
  "regex",
  "reqwest 0.12.28",

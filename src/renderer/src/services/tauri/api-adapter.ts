@@ -95,10 +95,13 @@ export const tauriElectronApi = {
       invoke('vocabulary_update_entry', { id, updates }),
     deleteEntry: (id: string) => invoke('vocabulary_delete_entry', { id }),
     createLinkedFile: (_entry: unknown) => Promise.resolve(null),
-    linkFile: (_entryId: string, _filePath: string) => Promise.resolve(),
-    unlinkFile: (_entryId: string) => Promise.resolve(),
-    getSettings: () => Promise.resolve({ autoCreateVocabularyFile: true }),
-    updateSettings: (_settings: Record<string, unknown>) => Promise.resolve()
+    linkFile: (entryId: string, filePath: string) =>
+      invoke('vocabulary_update_entry', { id: entryId, updates: { linkedFilePath: filePath } }),
+    unlinkFile: (entryId: string) =>
+      invoke('vocabulary_update_entry', { id: entryId, updates: { linkedFilePath: null } }),
+    getSettings: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).vocabulary as Record<string, unknown> ?? { autoCreateVocabularyFile: true }),
+    updateSettings: (settings: Record<string, unknown>) =>
+      invoke('settings_update_project', { settings: { vocabulary: settings } }),
   },
 
   sensitive: {
@@ -375,13 +378,13 @@ export const tauriElectronApi = {
     mkdir: (path: string, recursive?: boolean) => invoke('file_mkdir', { path, recursive: recursive ?? false }),
     delete: (path: string) => invoke('file_delete', { path }),
     rename: (oldPath: string, newPath: string) => invoke('file_rename', { oldPath, newPath }),
-    copy: (_source: string, _destination: string, _overwrite?: boolean) => Promise.resolve(),
-    list: (_path: string, _options?: Record<string, unknown>) => Promise.resolve([]),
+    copy: (source: string, destination: string, overwrite?: boolean) => invoke('file_copy', { source, destination, overwrite: overwrite ?? false }),
+    list: (path: string, options?: Record<string, unknown>) => invoke('file_list', { path, options }),
     getTree: (includeHidden?: boolean) => invoke('file_get_tree', { includeHidden: includeHidden ?? false }),
-    getInfo: (_path: string) => Promise.resolve({}),
+    getInfo: (path: string) => invoke('file_get_info', { path }),
     showSaveDialog: (options?: { title?: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }) =>
       save({ title: options?.title, defaultPath: options?.defaultPath, filters: options?.filters }),
-    exportTxt: (_filePath: string, _content: string) => Promise.resolve(false)
+    exportTxt: (filePath: string, content: string) => invoke('file_export_txt', { filePath, content })
   },
 
   image: {
@@ -389,7 +392,14 @@ export const tauriElectronApi = {
       invoke('upload_image_from_base64', { base64Data, originalName: 'image.png' }),
     uploadFromFile: (filePath: string, _config?: Record<string, unknown>) =>
       invoke('upload_image_from_file', { filePath, originalName: filePath.split(/[\\/]/).pop() || 'image.png' }),
-    selectAndUpload: (_config?: Record<string, unknown>) => Promise.resolve(null),
+    selectAndUpload: async (_config?: Record<string, unknown>) => {
+      const filePath = await open({
+        multiple: false,
+        filters: [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] }]
+      })
+      if (!filePath) return null
+      return invoke('upload_image_from_file', { filePath, originalName: filePath.split(/[\\/]/).pop() || 'image.png' })
+    },
     delete: (imagePath: string) => invoke('delete_image', { imagePath }),
     readAsBase64: (imagePath: string) => invoke('read_image_as_base64', { imagePath }),
     exists: (imagePath: string) => invoke('image_exists', { imagePath }),
@@ -428,15 +438,23 @@ export const tauriElectronApi = {
   },
 
   terminalWindow: {
-    create: () => Promise.resolve(false),
-    isOpen: () => Promise.resolve(false),
-    close: () => {},
-    show: () => {},
-    minimize: () => {},
-    maximize: () => {},
-    isMaximized: () => Promise.resolve(false),
-    onOpened: (_callback: () => void) => {},
-    onClosed: (_callback: () => void) => {},
+    create: () => invoke('terminal_window_create'),
+    isOpen: () => invoke('terminal_window_is_open'),
+    close: () => invoke('terminal_window_close'),
+    show: () => invoke('terminal_window_show'),
+    minimize: () => invoke('terminal_window_minimize'),
+    maximize: () => invoke('terminal_window_maximize'),
+    isMaximized: () => invoke('terminal_window_is_maximized'),
+    onOpened: (callback: () => void) => {
+      let unlisten: UnlistenFn | null = null
+      listen('terminal-window:opened', () => { callback() }).then(fn => { unlisten = fn })
+      return () => { unlisten?.() }
+    },
+    onClosed: (callback: () => void) => {
+      let unlisten: UnlistenFn | null = null
+      listen('terminal-window:closed', () => { callback() }).then(fn => { unlisten = fn })
+      return () => { unlisten?.() }
+    },
     removeOpenedListener: () => {},
     removeClosedListener: () => {}
   },
@@ -462,7 +480,8 @@ export const tauriElectronApi = {
       invoke('git_create_branch', { repoPath, name, startPoint }),
     branchDelete: (repoPath: string, name: string, force?: boolean) =>
       invoke('git_delete_branch', { repoPath, name, force }),
-    branchRename: (_repoPath: string, _oldName: string, _newName: string) => Promise.resolve(),
+    branchRename: (repoPath: string, oldName: string, newName: string) =>
+      invoke('git_rename_branch', { repoPath, oldName, newName }),
     checkout: (repoPath: string, options: Record<string, unknown>) =>
       invoke('git_checkout', { repoPath, target: options.target, createBranch: options.createBranch, force: options.force, paths: options.paths }),
     merge: (repoPath: string, options: Record<string, unknown>) =>
@@ -576,15 +595,15 @@ export const tauriElectronApi = {
   dynamicSkill: {
     getList: () => invoke('skill_list'),
     get: (skillId: string) => invoke('skill_get', { id: skillId }),
-    reload: () => Promise.resolve(),
+    reload: () => invoke('skill_reload'),
     getTools: (skillId: string) => invoke('skill_get', { id: skillId }).then((s: Record<string, unknown> | null) => (s?.tools as unknown[]) ?? []),
     execute: (skillId: string, toolId: string, parameters: Record<string, unknown>, context: Record<string, unknown>) =>
       invoke('skill_execute', { skillId, toolId, parameters, context }),
     cancel: (executionId: string) => invoke('skill_cancel', { executionId }),
-    getWhitelist: () => Promise.resolve([]),
-    addToWhitelist: (_skillId: string, _skillName: string, _skillPath: string) => Promise.resolve(),
-    removeFromWhitelist: (_skillId: string) => Promise.resolve(),
-    isTrusted: (_skillId: string, _skillPath: string) => Promise.resolve(false),
+    getWhitelist: () => invoke('skill_get_whitelist'),
+    addToWhitelist: (skillId: string, skillName: string, skillPath: string) => invoke('skill_add_to_whitelist', { skillId, skillName, skillPath }),
+    removeFromWhitelist: (skillId: string) => invoke('skill_remove_from_whitelist', { skillId }),
+    isTrusted: (skillId: string, skillPath: string) => invoke('skill_is_trusted', { skillId, skillPath }),
     create: (options: Record<string, unknown>) => invoke('skill_create', { skill: options }),
     update: (skillId: string, options: Record<string, unknown>) => invoke('skill_update', { id: skillId, updates: options }),
     delete: (skillId: string) => invoke('skill_delete', { id: skillId }),

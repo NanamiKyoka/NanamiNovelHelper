@@ -85,3 +85,44 @@ pub fn skill_check_python(
 ) -> serde_json::Value {
     skill_service.check_python()
 }
+
+#[tauri::command]
+pub fn skill_reload(
+    skill_service: State<'_, DynamicSkillService>,
+) -> AppResult<Vec<serde_json::Value>> {
+    skill_service.reload_skills()
+}
+
+#[tauri::command]
+pub fn skill_get_whitelist(
+    skill_service: State<'_, DynamicSkillService>,
+) -> AppResult<serde_json::Value> {
+    skill_service.get_whitelist()
+}
+
+#[tauri::command]
+pub fn skill_add_to_whitelist(
+    skill_id: String,
+    skill_name: String,
+    skill_path: String,
+    skill_service: State<'_, DynamicSkillService>,
+) -> AppResult<()> {
+    skill_service.add_to_whitelist(skill_id, skill_name, skill_path)
+}
+
+#[tauri::command]
+pub fn skill_remove_from_whitelist(
+    skill_id: String,
+    skill_service: State<'_, DynamicSkillService>,
+) -> AppResult<()> {
+    skill_service.remove_from_whitelist(skill_id)
+}
+
+#[tauri::command]
+pub fn skill_is_trusted(
+    skill_id: String,
+    skill_path: String,
+    skill_service: State<'_, DynamicSkillService>,
+) -> AppResult<bool> {
+    skill_service.is_trusted(skill_id, skill_path)
+}

@@ -635,6 +635,16 @@ impl GitService {
         Ok(serde_json::json!({ "success": true }))
     }
 
+    pub fn rename_branch(
+        &self,
+        repo_path: &str,
+        old_name: &str,
+        new_name: &str,
+    ) -> AppResult<serde_json::Value> {
+        Self::exec_git(repo_path, &["branch", "-m", old_name, new_name])?;
+        Ok(serde_json::json!({ "success": true }))
+    }
+
     pub fn checkout(
         &self,
         repo_path: &str,

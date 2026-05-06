@@ -46,6 +46,42 @@ pub async fn file_rename(
 }
 
 #[tauri::command]
+pub async fn file_copy(
+    source: String,
+    destination: String,
+    overwrite: Option<bool>,
+    service: State<'_, FileService>,
+) -> AppResult<()> {
+    service.copy(source, destination, overwrite.unwrap_or(false)).await
+}
+
+#[tauri::command]
+pub async fn file_list(
+    path: String,
+    options: Option<serde_json::Value>,
+    service: State<'_, FileService>,
+) -> AppResult<Vec<FileNode>> {
+    service.list_dir(path, options).await
+}
+
+#[tauri::command]
+pub async fn file_get_info(
+    path: String,
+    service: State<'_, FileService>,
+) -> AppResult<serde_json::Value> {
+    service.get_file_info(path).await
+}
+
+#[tauri::command]
+pub async fn file_export_txt(
+    file_path: String,
+    content: String,
+    service: State<'_, FileService>,
+) -> AppResult<bool> {
+    service.export_txt(file_path, content).await
+}
+
+#[tauri::command]
 pub async fn file_get_tree(
     include_hidden: bool,
     service: State<'_, FileService>,

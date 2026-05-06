@@ -389,6 +389,124 @@ impl DynamicSkillService {
             }
         }
     }
+
+    fn get_whitelist_path() -> AppResult<PathBuf> {
+        let project_path = Self::get_project_path()?;
+        Ok(project_state::get_data_dir(&project_path).join("ai-assistant").join("skill-whitelist.json"))
+    }
+
+    fn load_whitelist() -> AppResult<serde_json::Value> {
+        let path = Self::get_whitelist_path()?;
+        if !path.exists() {
+            return Ok(serde_json::json!({
+                "entries": [],
+                "updatedAt": chrono::Utc::now().to_rfc3339()
+            }));
+        }
+        let content = fs::read_to_string(&path).unwrap_or_default();
+        serde_json::from_str(&content).map_err(|e| {
+            AppError::OperationFailed(format!("解析白名单配置失败: {}", e))
+        })
+    }
+
+    fn save_whitelist(config: &serde_json::Value) -> AppResult<()> {
+        let path = Self::get_whitelist_path()?;
+        if let Some(parent) = path.parent() {
+            ensure_dir(parent)?;
+        }
+        let mut config = config.clone();
+        if let Some(obj) = config.as_object_mut() {
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(chrono::Utc::now().to_rfc3339()));
+        }
+        fs::write(&path, serde_json::to_string_pretty(&config)?)
+            .map_err(|e| AppError::OperationFailed(format!("保存白名单失败: {}", e)))
+    }
+
+    fn calculate_path_hash(dir_path: &std::path::Path) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+
+        fn hash_dir(dir: &std::path::Path, hasher: &mut DefaultHasher) {
+            if !dir.exists() {
+                return;
+            }
+            let mut entries: Vec<_> = fs::read_dir(dir)
+                .filter_map(|e| e.ok())
+                .collect();
+            entries.sort_by_key(|e| e.file_name());
+
+            for entry in entries {
+                let name = entry.file_name().to_string_lossy().to_string();
+                name.hash(hasher);
+                let path = entry.path();
+                if path.is_dir() {
+                    hash_dir(&path, hasher);
+                } else if let Ok(content) = fs::read(&path) {
+                    content.hash(hasher);
+                }
+            }
+        }
+
+        hash_dir(dir_path, &mut hasher);
+        format!("{:016x}", hasher.finish())
+    }
+
+    pub fn get_whitelist(&self) -> AppResult<serde_json::Value> {
+        let whitelist = Self::load_whitelist()?;
+        Ok(whitelist.get("entries").cloned().unwrap_or(serde_json::json!([])))
+    }
+
+    pub fn add_to_whitelist(&self, skill_id: String, skill_name: String, skill_path: String) -> AppResult<()> {
+        let mut whitelist = Self::load_whitelist()?;
+        let entries = whitelist
+            .get_mut("entries")
+            .and_then(|e| e.as_array_mut())
+            .ok_or_else(|| AppError::OperationFailed("白名单格式错误".to_string()))?;
+
+        let path_hash = Self::calculate_path_hash(std::path::Path::new(&skill_path));
+        let entry = serde_json::json!({
+            "skillId": skill_id,
+            "skillName": skill_name,
+            "addedAt": chrono::Utc::now().to_rfc3339(),
+            "pathHash": path_hash
+        });
+
+        if let Some(idx) = entries.iter().position(|e| e.get("skillId").and_then(|v| v.as_str()) == Some(&skill_id)) {
+            entries[idx] = entry;
+        } else {
+            entries.push(entry);
+        }
+
+        Self::save_whitelist(&whitelist)
+    }
+
+    pub fn remove_from_whitelist(&self, skill_id: String) -> AppResult<()> {
+        let mut whitelist = Self::load_whitelist()?;
+        if let Some(entries) = whitelist.get_mut("entries").and_then(|e| e.as_array_mut()) {
+            entries.retain(|e| e.get("skillId").and_then(|v| v.as_str()) != Some(&skill_id));
+        }
+        Self::save_whitelist(&whitelist)
+    }
+
+    pub fn is_trusted(&self, skill_id: String, skill_path: String) -> AppResult<bool> {
+        let whitelist = Self::load_whitelist()?;
+        let entries = whitelist.get("entries").and_then(|e| e.as_array()).unwrap_or(&Vec::new());
+
+        let entry = entries.iter().find(|e| e.get("skillId").and_then(|v| v.as_str()) == Some(&skill_id));
+        if let Some(entry) = entry {
+            let stored_hash = entry.get("pathHash").and_then(|v| v.as_str()).unwrap_or("");
+            let current_hash = Self::calculate_path_hash(std::path::Path::new(&skill_path));
+            Ok(stored_hash == current_hash)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub fn reload_skills(&self) -> AppResult<Vec<serde_json::Value>> {
+        self.list_skills()
+    }
 }
 
 impl Default for DynamicSkillService {

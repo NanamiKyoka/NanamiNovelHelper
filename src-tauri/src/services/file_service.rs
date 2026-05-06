@@ -118,6 +118,97 @@ impl FileService {
         })
     }
 
+    pub async fn copy(&self, source: String, destination: String, overwrite: bool) -> AppResult<()> {
+        let absolute_source = Self::safe_resolve_path(&source)?;
+        let absolute_dest = Self::safe_resolve_path(&destination)?;
+        if !absolute_source.exists() {
+            return Err(AppError::FileNotFound(source));
+        }
+        if absolute_dest.exists() && !overwrite {
+            return Err(AppError::OperationFailed(format!("目标路径已存在: {}", destination)));
+        }
+        if let Some(parent) = absolute_dest.parent() {
+            ensure_dir(parent)?;
+        }
+        if absolute_source.is_dir() {
+            Self::copy_dir_recursive(&absolute_source, &absolute_dest)?;
+        } else {
+            fs::copy(&absolute_source, &absolute_dest).map_err(|e| {
+                AppError::OperationFailed(format!("复制文件失败: {}", e))
+            })?;
+        }
+        Ok(())
+    }
+
+    fn copy_dir_recursive(src: &Path, dst: &Path) -> AppResult<()> {
+        fs::create_dir_all(dst).map_err(|e| AppError::OperationFailed(format!("创建目录失败: {}", e)))?;
+        for entry in fs::read_dir(src).map_err(|e| AppError::OperationFailed(format!("读取目录失败: {}", e)))? {
+            let entry = entry.map_err(|e| AppError::OperationFailed(format!("读取条目失败: {}", e)))?;
+            let src_path = entry.path();
+            let dst_path = dst.join(entry.file_name());
+            if src_path.is_dir() {
+                Self::copy_dir_recursive(&src_path, &dst_path)?;
+            } else {
+                fs::copy(&src_path, &dst_path).map_err(|e| AppError::OperationFailed(format!("复制文件失败: {}", e)))?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn list_dir(&self, path: String, options: Option<serde_json::Value>) -> AppResult<Vec<FileNode>> {
+        let absolute_path = Self::safe_resolve_path(&path)?;
+        if !absolute_path.exists() || !absolute_path.is_dir() {
+            return Ok(vec![]);
+        }
+        let include_hidden = options
+            .as_ref()
+            .and_then(|o| o.get("includeHidden"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let project_path = Self::get_project_path()?;
+        let project_root = PathBuf::from(&project_path);
+        Self::scan_directory(&absolute_path, &project_root, false, include_hidden)
+    }
+
+    pub async fn get_file_info(&self, path: String) -> AppResult<serde_json::Value> {
+        let absolute_path = Self::safe_resolve_path(&path)?;
+        if !absolute_path.exists() {
+            return Err(AppError::FileNotFound(path));
+        }
+        let metadata = fs::metadata(&absolute_path).map_err(|e| {
+            AppError::OperationFailed(format!("读取文件信息失败: {}", e))
+        })?;
+        let modified_at = metadata.modified().ok().map(|t| {
+            let datetime: chrono::DateTime<chrono::Utc> = t.into();
+            datetime.to_rfc3339()
+        });
+        let created_at = metadata.created().ok().map(|t| {
+            let datetime: chrono::DateTime<chrono::Utc> = t.into();
+            datetime.to_rfc3339()
+        });
+        Ok(serde_json::json!({
+            "name": absolute_path.file_name().map(|n| n.to_string_lossy().to_string()),
+            "path": path,
+            "isDirectory": metadata.is_dir(),
+            "size": metadata.len(),
+            "extension": absolute_path.extension().map(|e| e.to_string_lossy().to_string()),
+            "modifiedAt": modified_at,
+            "createdAt": created_at,
+            "readOnly": metadata.permissions().readonly()
+        }))
+    }
+
+    pub async fn export_txt(&self, file_path: String, content: String) -> AppResult<bool> {
+        let absolute_path = Self::safe_resolve_path(&file_path)?;
+        if let Some(parent) = absolute_path.parent() {
+            ensure_dir(parent)?;
+        }
+        fs::write(&absolute_path, content).map_err(|e| {
+            AppError::OperationFailed(format!("导出文件失败: {}", e))
+        })?;
+        Ok(true)
+    }
+
     pub async fn get_file_tree(&self, include_hidden: bool) -> AppResult<Vec<FileNode>> {
         let project_path = Self::get_project_path()?;
         let root = PathBuf::from(&project_path);
