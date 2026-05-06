@@ -203,3 +203,13 @@ pub fn git_set_config(
 ) -> AppResult<serde_json::Value> {
     git_service.set_config(&repo_path, &key, &value)
 }
+
+#[tauri::command]
+pub fn git_set_mode(mode: String, git_service: State<'_, GitService>) {
+    git_service.set_mode(mode)
+}
+
+#[tauri::command]
+pub fn git_get_mode(git_service: State<'_, GitService>) -> String {
+    git_service.get_mode()
+}

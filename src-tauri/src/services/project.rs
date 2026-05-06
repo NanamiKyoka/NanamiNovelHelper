@@ -254,6 +254,76 @@ impl ProjectService {
             file_tree: None,
         })
     }
+
+    pub fn get_project_stats(&self, project_path: &str) -> AppResult<serde_json::Value> {
+        let root = PathBuf::from(project_path);
+        if !root.exists() {
+            return Err(AppError::FileNotFound(project_path.to_string()));
+        }
+
+        let mut total_files = 0u64;
+        let mut total_words = 0u64;
+        let mut file_types: std::collections::HashMap<String, u64> = std::collections::HashMap::new();
+
+        fn scan_dir(dir: &std::path::Path, total_files: &mut u64, total_words: &mut u64, file_types: &mut std::collections::HashMap<String, u64>) {
+            if let Ok(entries) = fs::read_dir(dir) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    if name.starts_with('.') {
+                        continue;
+                    }
+                    let path = entry.path();
+                    if path.is_dir() {
+                        scan_dir(&path, total_files, total_words, file_types);
+                    } else if name.ends_with(".novel") {
+                        *total_files += 1;
+                        let ext = path.extension().map(|e| e.to_string_lossy().to_string()).unwrap_or_default();
+                        *file_types.entry(ext).or_insert(0) += 1;
+                        if let Ok(content) = fs::read_to_string(&path) {
+                            let text = regex::Regex::new(r"(?s)^---\n.*?\n---\n")
+                                .ok()
+                                .and_then(|re| re.replace(&content, "").parse::<String>().ok())
+                                .unwrap_or(content);
+                            *total_words += count_words(&text);
+                        }
+                    }
+                }
+            }
+        }
+
+        fn count_words(text: &str) -> u64 {
+            let clean: String = text.chars().filter(|c| !c.is_whitespace()).collect();
+            let cjk_count = clean.chars().filter(|c| {
+                ('\u{4e00}'..='\u{9fa5}').contains(c) ||
+                ('\u{3040}'..='\u{309f}').contains(c) ||
+                ('\u{30a0}'..='\u{30ff}').contains(c) ||
+                ('\u{ac00}'..='\u{d7af}').contains(c)
+            }).count() as u64;
+            let non_cjk: String = clean.chars().map(|c| {
+                if ('\u{4e00}'..='\u{9fa5}').contains(&c) ||
+                   ('\u{3040}'..='\u{309f}').contains(&c) ||
+                   ('\u{30a0}'..='\u{30ff}').contains(&c) ||
+                   ('\u{ac00}'..='\u{d7af}').contains(&c) {
+                    ' '
+                } else {
+                    c
+                }
+            }).collect();
+            let word_count = regex::Regex::new(r"[a-zA-Z0-9]+")
+                .ok()
+                .map(|re| re.find_iter(&non_cjk).count() as u64)
+                .unwrap_or(0);
+            cjk_count + word_count
+        }
+
+        scan_dir(&root, &mut total_files, &mut total_words, &mut file_types);
+
+        Ok(serde_json::json!({
+            "totalFiles": total_files,
+            "totalWords": total_words,
+            "fileTypes": file_types
+        }))
+    }
 }
 
 impl Default for ProjectService {

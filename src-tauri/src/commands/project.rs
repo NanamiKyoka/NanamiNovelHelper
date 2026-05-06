@@ -66,3 +66,11 @@ pub fn clear_recent_projects(
 ) -> AppResult<()> {
     project_service.clear_recent_projects()
 }
+
+#[tauri::command]
+pub fn get_project_stats(
+    path: String,
+    project_service: State<ProjectService>,
+) -> AppResult<serde_json::Value> {
+    project_service.get_project_stats(&path)
+}

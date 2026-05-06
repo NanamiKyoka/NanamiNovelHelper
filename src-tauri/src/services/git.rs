@@ -2,12 +2,17 @@ use crate::error::{AppError, AppResult};
 use crate::services::project_state;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::Mutex;
 
-pub struct GitService;
+pub struct GitService {
+    mode: Mutex<String>,
+}
 
 impl GitService {
     pub fn new() -> Self {
-        Self
+        Self {
+            mode: Mutex::new("auto".to_string()),
+        }
     }
 
     fn get_project_path() -> AppResult<String> {
@@ -705,6 +710,16 @@ impl GitService {
     ) -> AppResult<serde_json::Value> {
         Self::exec_git(repo_path, &["config", key, value])?;
         Ok(serde_json::json!({ "success": true }))
+    }
+
+    pub fn set_mode(&self, mode: String) {
+        if let Ok(mut m) = self.mode.lock() {
+            *m = mode;
+        }
+    }
+
+    pub fn get_mode(&self) -> String {
+        self.mode.lock().map(|m| m.clone()).unwrap_or_else(|_| "auto".to_string())
     }
 }
 

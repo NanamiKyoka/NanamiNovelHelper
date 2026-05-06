@@ -254,6 +254,27 @@ impl BackupService {
         Ok(filename)
     }
 
+    pub fn import_backup_from_file(&self, import_path: String) -> AppResult<String> {
+        let project_path = Self::get_project_path()?;
+        let backup_dir = Self::get_backup_dir(&project_path);
+        ensure_dir(&backup_dir)?;
+
+        let source = std::path::Path::new(&import_path);
+        if !source.exists() {
+            return Err(AppError::FileNotFound(import_path));
+        }
+
+        let timestamp = generate_timestamp();
+        let filename = format!("backup_imported_{}.json", timestamp);
+        let backup_path = backup_dir.join(&filename);
+
+        fs::copy(source, &backup_path).map_err(|e| {
+            AppError::OperationFailed(format!("导入备份文件失败: {}", e))
+        })?;
+
+        Ok(filename)
+    }
+
     fn cleanup_old_backups(&self, backup_dir: &std::path::Path) -> AppResult<()> {
         let max_count = 10;
 

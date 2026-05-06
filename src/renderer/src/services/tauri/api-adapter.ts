@@ -70,7 +70,7 @@ export const tauriElectronApi = {
     showOpenDialog: () => open({ directory: true, title: '打开项目' }).then(p => p || null),
     showCreateDialog: () => open({ directory: true, title: '创建项目' }).then(p => p || null),
     isValid: (path: string) => invoke('file_exists', { path: `${path}/.novelhelper/data/project.json` }),
-    getStats: (_path: string) => Promise.resolve({}),
+    getStats: (path: string) => invoke('get_project_stats', { path }),
     getInitData: () => invoke('get_init_data')
   },
 
@@ -94,7 +94,7 @@ export const tauriElectronApi = {
     updateEntry: (id: string, updates: Record<string, unknown>) =>
       invoke('vocabulary_update_entry', { id, updates }),
     deleteEntry: (id: string) => invoke('vocabulary_delete_entry', { id }),
-    createLinkedFile: (_entry: unknown) => Promise.resolve(null),
+    createLinkedFile: (entry: Record<string, unknown>) => invoke('vocabulary_create_linked_file', { entry }),
     linkFile: (entryId: string, filePath: string) =>
       invoke('vocabulary_update_entry', { id: entryId, updates: { linkedFilePath: filePath } }),
     unlinkFile: (entryId: string) =>
@@ -189,7 +189,15 @@ export const tauriElectronApi = {
     restore: (filename: string) => invoke('restore_backup', { filename }),
     delete: (filename: string) => invoke('delete_backup', { filename }),
     export: (filename: string) => invoke('export_backup', { filename }),
-    import: () => Promise.resolve(null)
+    import: () => {
+      return open({
+        filters: [{ name: '备份文件', extensions: ['json', 'nhbak'] }],
+        multiple: false
+      }).then(filePath => {
+        if (!filePath) return null
+        return invoke('import_backup_from_file', { importPath: filePath })
+      })
+    }
   },
 
   relationship: {
@@ -246,28 +254,38 @@ export const tauriElectronApi = {
       invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { nodes: { [nodeId]: updates } } }),
     deleteNode: (timelineId: string, nodeId: string) =>
       invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { $pull: { nodes: { id: nodeId } } } }),
-    batchDeleteNodes: (_timelineId: string, _nodeIds: string[]) => Promise.resolve(0),
-    moveNode: (_timelineId: string, _nodeId: string, _newOrder: number) => Promise.resolve(null),
-    batchMoveNodes: (_timelineId: string, _nodeIds: string[], _targetOrder: number) => Promise.resolve(null),
+    batchDeleteNodes: (timelineId: string, nodeIds: string[]) =>
+      invoke('graph_batch_delete_nodes', { subDir: 'timelines', id: timelineId, nodeIds }),
+    moveNode: (timelineId: string, nodeId: string, newOrder: number) =>
+      invoke('graph_move_node', { subDir: 'timelines', id: timelineId, nodeId, newOrder }),
+    batchMoveNodes: (timelineId: string, nodeIds: string[], targetOrder: number) =>
+      invoke('graph_batch_move_nodes', { subDir: 'timelines', id: timelineId, nodeIds, targetOrder }),
     updateNodes: (timelineId: string, nodes: unknown[]) =>
       invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { nodes } }),
-    createBranch: (_parentTimelineId: string, _branchFromNodeId: string, _name?: string) => Promise.resolve(null),
-    mergeBranch: (_branchTimelineId: string, _targetTimelineId: string, _targetNodeId?: string) => Promise.resolve(false),
-    getBranches: (_parentTimelineId: string) => Promise.resolve([]),
-    getBranchSourceNode: (_timelineId: string) => Promise.resolve(null),
+    createBranch: (parentTimelineId: string, branchFromNodeId: string, name?: string) =>
+      invoke('timeline_create_branch', { parentTimelineId, branchFromNodeId, name }),
+    mergeBranch: (branchTimelineId: string, targetTimelineId: string, targetNodeId?: string) =>
+      invoke('timeline_merge_branch', { branchTimelineId, targetTimelineId, targetNodeId }),
+    getBranches: (parentTimelineId: string) =>
+      invoke('timeline_get_branches', { parentTimelineId }),
+    getBranchSourceNode: (timelineId: string) =>
+      invoke('timeline_get_branch_source_node', { timelineId }),
     saveThumbnail: (timelineId: string, dataUrl: string) =>
       invoke('graph_save_thumbnail', { subDir: 'timelines', id: timelineId, dataUrl }),
     getThumbnailPath: (timelineId: string) =>
       invoke('graph_get_thumbnail_path', { subDir: 'timelines', id: timelineId }),
     export: (timelineId: string) => invoke('graph_export', { subDir: 'timelines', id: timelineId }),
-    exportMarkdown: (_timelineId: string) => Promise.resolve(null),
+    exportMarkdown: (timelineId: string) =>
+      invoke('graph_export_markdown', { subDir: 'timelines', id: timelineId }),
     import: (jsonContent: string) => invoke('graph_import', { subDir: 'timelines', jsonContent }),
     showExportDialog: (timelineName: string) =>
       save({ defaultPath: `${timelineName}.json5`, filters: [{ name: 'JSON5', extensions: ['json5'] }] }),
     showImportDialog: () =>
       open({ filters: [{ name: 'JSON5', extensions: ['json5'] }], multiple: false }),
-    saveExportFile: (_filePath: string, _content: string) => Promise.resolve(false),
-    readImportFile: (_filePath: string) => Promise.resolve(null),
+    saveExportFile: (filePath: string, content: string) =>
+      invoke('file_write', { path: filePath, content }).then(() => true),
+    readImportFile: (filePath: string) =>
+      invoke('file_read', { path: filePath }),
     reorder: (timelineIds: string[]) =>
       invoke('graph_reorder', { subDir: 'timelines', ids: timelineIds })
   },
@@ -285,9 +303,12 @@ export const tauriElectronApi = {
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { events: { [eventId]: updates } } }),
     deleteEvent: (chartId: string, eventId: string) =>
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $pull: { events: { id: eventId } } } }),
-    batchDeleteEvents: (_chartId: string, _eventIds: string[]) => Promise.resolve(0),
-    moveEvent: (_chartId: string, _eventId: string, _newOrder: number) => Promise.resolve(null),
-    updateEventTime: (_chartId: string, _eventId: string, _cellStart: number, _cellEnd: number) => Promise.resolve(null),
+    batchDeleteEvents: (chartId: string, eventIds: string[]) =>
+      invoke('graph_batch_delete_nodes', { subDir: 'sequence-charts', id: chartId, nodeIds: eventIds }),
+    moveEvent: (chartId: string, eventId: string, newOrder: number) =>
+      invoke('graph_move_node', { subDir: 'sequence-charts', id: chartId, nodeId: eventId, newOrder }),
+    updateEventTime: (chartId: string, eventId: string, cellStart: number, cellEnd: number) =>
+      invoke('sequence_chart_update_event_time', { chartId, eventId, cellStart, cellEnd }),
     updateEvents: (chartId: string, events: unknown[]) =>
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { events } }),
     getEventTypes: (chartId: string) =>
@@ -303,14 +324,17 @@ export const tauriElectronApi = {
     getThumbnailPath: (chartId: string) =>
       invoke('graph_get_thumbnail_path', { subDir: 'sequence-charts', id: chartId }),
     export: (chartId: string) => invoke('graph_export', { subDir: 'sequence-charts', id: chartId }),
-    exportMarkdown: (_chartId: string) => Promise.resolve(null),
+    exportMarkdown: (chartId: string) =>
+      invoke('graph_export_markdown', { subDir: 'sequence-charts', id: chartId }),
     import: (jsonContent: string) => invoke('graph_import', { subDir: 'sequence-charts', jsonContent }),
     showExportDialog: (chartName: string) =>
       save({ defaultPath: `${chartName}.json5`, filters: [{ name: 'JSON5', extensions: ['json5'] }] }),
     showImportDialog: () =>
       open({ filters: [{ name: 'JSON5', extensions: ['json5'] }], multiple: false }),
-    saveExportFile: (_filePath: string, _content: string) => Promise.resolve(false),
-    readImportFile: (_filePath: string) => Promise.resolve(null),
+    saveExportFile: (filePath: string, content: string) =>
+      invoke('file_write', { path: filePath, content }).then(() => true),
+    readImportFile: (filePath: string) =>
+      invoke('file_read', { path: filePath }),
     reorderCharts: (chartIds: string[]) =>
       invoke('graph_reorder', { subDir: 'sequence-charts', ids: chartIds })
   },
@@ -414,7 +438,8 @@ export const tauriElectronApi = {
     destroy: (id: string) => invoke('terminal_kill', { id }),
     list: () => invoke('terminal_list'),
     getShells: () => invoke('terminal_get_shells'),
-    setCwd: (_id: string, _cwd: string) => Promise.resolve(null),
+    setCwd: (id: string, cwd: string) =>
+      invoke('terminal_destroy', { id }).then(() => invoke('terminal_create', { options: { cwd } })),
     onData: (id: string, callback: (data: string) => void) => {
       let unlisten: UnlistenFn | null = null
       listen<Record<string, unknown>>('terminal:data', (event) => {
@@ -488,8 +513,8 @@ export const tauriElectronApi = {
       invoke('git_merge', { repoPath, branch: options.branch, allowUnrelatedHistories: options.allowUnrelatedHistories, message: options.message }),
     configGet: (repoPath: string, key: string) => invoke('git_get_config', { repoPath, key }),
     configSet: (repoPath: string, key: string, value: string) => invoke('git_set_config', { repoPath, key, value }),
-    setMode: (_mode: string) => Promise.resolve(),
-    getMode: () => Promise.resolve('auto'),
+    setMode: (mode: string) => invoke('git_set_mode', { mode }),
+    getMode: () => invoke('git_get_mode'),
     getCommitFiles: (repoPath: string, commitHash: string) =>
       invoke('git_get_commit_files', { repoPath, commitHash }),
     getCommitFileDiff: (repoPath: string, commitHash: string, filepath: string) =>

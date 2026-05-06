@@ -135,3 +135,11 @@ pub fn sensitive_import_words(
     service.save_sensitive_words(existing)?;
     Ok(count)
 }
+
+#[tauri::command]
+pub fn vocabulary_create_linked_file(
+    entry: serde_json::Value,
+    service: State<VocabularyService>,
+) -> AppResult<serde_json::Value> {
+    service.create_linked_file(entry)
+}

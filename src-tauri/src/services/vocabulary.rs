@@ -252,6 +252,42 @@ impl VocabularyService {
         }
     }
 }
+    pub fn create_linked_file(&self, entry: serde_json::Value) -> AppResult<serde_json::Value> {
+        let project_path = project_state::get_project_path().ok_or(AppError::ProjectNotOpen)?;
+        let data_dir = project_state::get_data_dir(&project_path);
+        let detail_dir = data_dir.join("vocabulary").join("detail");
+        ensure_dir(&detail_dir)?;
+
+        let entry_id = entry.get("id").and_then(|v| v.as_str()).unwrap_or("");
+        let type_name = entry.get("typeName").and_then(|v| v.as_str()).unwrap_or("unknown");
+        let entry_name = entry.get("name").and_then(|v| v.as_str()).unwrap_or("untitled");
+        let description = entry.get("description").and_then(|v| v.as_str()).unwrap_or("");
+        let created_at = entry.get("createdAt").and_then(|v| v.as_str()).unwrap_or("");
+
+        let safe_type_name: String = type_name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
+        let safe_entry_name: String = entry_name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
+        let file_name = format!("{}_{}.novel", safe_type_name, safe_entry_name);
+        let file_path = detail_dir.join(&file_name);
+
+        let content = format!(
+            "---\nid: {}\ntype: {}\nname: {}\ncreatedAt: {}\nupdatedAt: {}\n---\n\n# {}\n\n{}\n",
+            entry_id, type_name, entry_name, created_at, generate_timestamp(), entry_name, description
+        );
+
+        fs::write(&file_path, &content).map_err(|e| {
+            AppError::OperationFailed(format!("创建关联文件失败: {}", e))
+        })?;
+
+        let relative_path = file_path.strip_prefix(std::path::Path::new(&project_path))
+            .unwrap_or(&file_path)
+            .to_string_lossy()
+            .to_string();
+
+        self.update_vocabulary_entry(entry_id.to_string(), serde_json::json!({ "linkedFilePath": relative_path }))?;
+
+        Ok(serde_json::json!({ "path": relative_path }))
+    }
+}
 
 impl Default for VocabularyService {
     fn default() -> Self {

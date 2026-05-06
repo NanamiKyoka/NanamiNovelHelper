@@ -228,6 +228,261 @@ impl GraphService {
         }
         Ok(true)
     }
+
+    pub fn batch_delete_nodes(&self, sub_dir: &str, id: &str, node_ids: Vec<String>) -> AppResult<u64> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, sub_dir, id);
+        if !path.exists() {
+            return Err(AppError::FileNotFound(id.to_string()));
+        }
+        let mut item = read_json5_file::<serde_json::Value>(&path)?;
+        let mut deleted = 0u64;
+        if let Some(nodes) = item.get_mut("nodes").and_then(|n| n.as_array_mut()) {
+            let before = nodes.len();
+            nodes.retain(|n| {
+                n.get("id").and_then(|v| v.as_str()).map(|s| !node_ids.iter().any(|nid| nid == s)).unwrap_or(true)
+            });
+            deleted = (before - nodes.len()) as u64;
+            for (i, node) in nodes.iter_mut().enumerate() {
+                if let Some(obj) = node.as_object_mut() {
+                    obj.insert("order".to_string(), serde_json::Value::Number((i as i32).into()));
+                }
+            }
+        }
+        if let Some(obj) = item.as_object_mut() {
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+        }
+        write_json5_file(&path, &item)?;
+        Ok(deleted)
+    }
+
+    pub fn move_node(&self, sub_dir: &str, id: &str, node_id: &str, new_order: i32) -> AppResult<Option<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, sub_dir, id);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let mut item = read_json5_file::<serde_json::Value>(&path)?;
+        if let Some(nodes) = item.get_mut("nodes").and_then(|n| n.as_array_mut()) {
+            let pos = nodes.iter().position(|n| n.get("id").and_then(|v| v.as_str()) == Some(node_id));
+            if let Some(pos) = pos {
+                let node = nodes.remove(pos);
+                let insert_pos = (new_order as usize).min(nodes.len());
+                nodes.insert(insert_pos, node);
+                for (i, n) in nodes.iter_mut().enumerate() {
+                    if let Some(obj) = n.as_object_mut() {
+                        obj.insert("order".to_string(), serde_json::Value::Number((i as i32).into()));
+                    }
+                }
+            }
+        }
+        if let Some(obj) = item.as_object_mut() {
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+        }
+        write_json5_file(&path, &item)?;
+        Ok(item.get("nodes").cloned())
+    }
+
+    pub fn batch_move_nodes(&self, sub_dir: &str, id: &str, node_ids: Vec<String>, target_order: i32) -> AppResult<Option<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, sub_dir, id);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let mut item = read_json5_file::<serde_json::Value>(&path)?;
+        if let Some(nodes) = item.get_mut("nodes").and_then(|n| n.as_array_mut()) {
+            let mut moved: Vec<serde_json::Value> = Vec::new();
+            let ids_set: Vec<&str> = node_ids.iter().map(|s| s.as_str()).collect();
+            let mut remaining: Vec<serde_json::Value> = Vec::new();
+            for n in nodes.drain(..) {
+                if n.get("id").and_then(|v| v.as_str()).map(|s| ids_set.contains(&s)).unwrap_or(false) {
+                    moved.push(n);
+                } else {
+                    remaining.push(n);
+                }
+            }
+            let insert_pos = (target_order as usize).min(remaining.len());
+            let mut result = remaining;
+            result.splice(insert_pos..insert_pos, moved);
+            *nodes = result;
+            for (i, n) in nodes.iter_mut().enumerate() {
+                if let Some(obj) = n.as_object_mut() {
+                    obj.insert("order".to_string(), serde_json::Value::Number((i as i32).into()));
+                }
+            }
+        }
+        if let Some(obj) = item.as_object_mut() {
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+        }
+        write_json5_file(&path, &item)?;
+        Ok(item.get("nodes").cloned())
+    }
+
+    pub fn create_branch(&self, parent_timeline_id: &str, branch_from_node_id: &str, name: Option<String>) -> AppResult<serde_json::Value> {
+        let project_path = Self::get_project_path()?;
+        let parent_path = Self::get_item_path(&project_path, "timelines", parent_timeline_id);
+        if !parent_path.exists() {
+            return Err(AppError::FileNotFound(parent_timeline_id.to_string()));
+        }
+        let parent = read_json5_file::<serde_json::Value>(&parent_path)?;
+        let parent_nodes = parent.get("nodes").and_then(|n| n.as_array()).cloned().unwrap_or_default();
+        let branch_point = parent_nodes.iter().position(|n| n.get("id").and_then(|v| v.as_str()) == Some(branch_from_node_id));
+        let branch_nodes = if let Some(pos) = branch_point {
+            parent_nodes[..=pos].to_vec()
+        } else {
+            parent_nodes.clone()
+        };
+        let branch_id = generate_id();
+        let branch_name = name.unwrap_or_else(|| format!("{}-分支", parent.get("name").and_then(|v| v.as_str()).unwrap_or("时间线")));
+        let branch = serde_json::json!({
+            "id": branch_id,
+            "name": branch_name,
+            "nodes": branch_nodes,
+            "nodeCount": branch_nodes.len(),
+            "parentTimelineId": parent_timeline_id,
+            "branchFromNodeId": branch_from_node_id,
+            "isBranch": true,
+            "createdAt": generate_timestamp(),
+            "updatedAt": generate_timestamp(),
+            "order": 0
+        });
+        let branch_path = Self::get_item_path(&project_path, "timelines", &branch_id);
+        write_json5_file(&branch_path, &branch)?;
+        Ok(branch)
+    }
+
+    pub fn merge_branch(&self, branch_timeline_id: &str, target_timeline_id: &str, target_node_id: Option<String>) -> AppResult<bool> {
+        let project_path = Self::get_project_path()?;
+        let branch_path = Self::get_item_path(&project_path, "timelines", branch_timeline_id);
+        let target_path = Self::get_item_path(&project_path, "timelines", target_timeline_id);
+        if !branch_path.exists() || !target_path.exists() {
+            return Ok(false);
+        }
+        let branch = read_json5_file::<serde_json::Value>(&branch_path)?;
+        let mut target = read_json5_file::<serde_json::Value>(&target_path)?;
+        let branch_nodes = branch.get("nodes").and_then(|n| n.as_array()).cloned().unwrap_or_default();
+        if let Some(target_nodes) = target.get_mut("nodes").and_then(|n| n.as_array_mut()) {
+            if let Some(ref nid) = target_node_id {
+                let pos = target_nodes.iter().position(|n| n.get("id").and_then(|v| v.as_str()) == Some(nid.as_str()));
+                if let Some(pos) = pos {
+                    let start_order = target_nodes.len();
+                    for (i, node) in branch_nodes.into_iter().enumerate() {
+                        let mut n = node;
+                        if let Some(obj) = n.as_object_mut() {
+                            obj.insert("order".to_string(), serde_json::Value::Number(((start_order + i) as i32).into()));
+                        }
+                        target_nodes.insert(pos + 1 + i, n);
+                    }
+                }
+            } else {
+                let start_order = target_nodes.len();
+                for (i, node) in branch_nodes.into_iter().enumerate() {
+                    let mut n = node;
+                    if let Some(obj) = n.as_object_mut() {
+                        obj.insert("order".to_string(), serde_json::Value::Number(((start_order + i) as i32).into()));
+                    }
+                    target_nodes.push(n);
+                }
+            }
+            if let Some(obj) = target.as_object_mut() {
+                obj.insert("nodeCount".to_string(), serde_json::Value::Number((target_nodes.len() as i32).into()));
+                obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+            }
+        }
+        write_json5_file(&target_path, &target)?;
+        Ok(true)
+    }
+
+    pub fn get_branches(&self, parent_timeline_id: &str) -> AppResult<Vec<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let dir = Self::get_data_dir(&project_path, "timelines");
+        if !dir.exists() {
+            return Ok(Vec::new());
+        }
+        let mut branches = Vec::new();
+        for entry in fs::read_dir(&dir).map_err(|e| AppError::OperationFailed(format!("读取目录失败: {}", e)))? {
+            let entry = entry.map_err(|e| AppError::OperationFailed(format!("读取条目失败: {}", e)))?;
+            let path = entry.path();
+            if path.extension().map(|e| e == "json5").unwrap_or(false) {
+                if let Ok(item) = read_json5_file::<serde_json::Value>(&path) {
+                    if item.get("parentTimelineId").and_then(|v| v.as_str()) == Some(parent_timeline_id) {
+                        branches.push(item);
+                    }
+                }
+            }
+        }
+        Ok(branches)
+    }
+
+    pub fn get_branch_source_node(&self, timeline_id: &str) -> AppResult<Option<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, "timelines", timeline_id);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let item = read_json5_file::<serde_json::Value>(&path)?;
+        let branch_from_node_id = item.get("branchFromNodeId").and_then(|v| v.as_str());
+        if let Some(node_id) = branch_from_node_id {
+            if let Some(nodes) = item.get("nodes").and_then(|n| n.as_array()) {
+                return Ok(nodes.iter().find(|n| n.get("id").and_then(|v| v.as_str()) == Some(node_id)).cloned());
+            }
+        }
+        Ok(None)
+    }
+
+    pub fn update_event_time(&self, chart_id: &str, event_id: &str, cell_start: i64, cell_end: i64) -> AppResult<Option<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, "sequence-charts", chart_id);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let mut item = read_json5_file::<serde_json::Value>(&path)?;
+        if let Some(events) = item.get_mut("events").and_then(|e| e.as_array_mut()) {
+            for event in events.iter_mut() {
+                if event.get("id").and_then(|v| v.as_str()) == Some(event_id) {
+                    if let Some(obj) = event.as_object_mut() {
+                        obj.insert("cellStart".to_string(), serde_json::Value::Number(cell_start.into()));
+                        obj.insert("cellEnd".to_string(), serde_json::Value::Number(cell_end.into()));
+                    }
+                    break;
+                }
+            }
+        }
+        if let Some(obj) = item.as_object_mut() {
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+        }
+        write_json5_file(&path, &item)?;
+        Ok(item.get("events").and_then(|e| e.as_array()).and_then(|a| a.iter().find(|e| e.get("id").and_then(|v| v.as_str()) == Some(event_id)).cloned()))
+    }
+
+    pub fn export_markdown(&self, sub_dir: &str, id: &str) -> AppResult<Option<String>> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_item_path(&project_path, sub_dir, id);
+        if !path.exists() {
+            return Ok(None);
+        }
+        let item = read_json5_file::<serde_json::Value>(&path)?;
+        let name = item.get("name").and_then(|v| v.as_str()).unwrap_or("未命名");
+        let mut md = format!("# {}\n\n", name);
+        if sub_dir == "timelines" {
+            if let Some(nodes) = item.get("nodes").and_then(|n| n.as_array()) {
+                for node in nodes {
+                    let node_name = node.get("name").and_then(|v| v.as_str()).unwrap_or("未命名节点");
+                    let node_desc = node.get("description").and_then(|v| v.as_str()).unwrap_or("");
+                    md.push_str(&format!("## {}\n\n{}\n\n", node_name, node_desc));
+                }
+            }
+        } else if sub_dir == "sequence-charts" {
+            if let Some(events) = item.get("events").and_then(|e| e.as_array()) {
+                for event in events {
+                    let event_name = event.get("name").and_then(|v| v.as_str()).unwrap_or("未命名事件");
+                    let event_desc = event.get("description").and_then(|v| v.as_str()).unwrap_or("");
+                    md.push_str(&format!("### {}\n\n{}\n\n", event_name, event_desc));
+                }
+            }
+        }
+        Ok(Some(md))
+    }
 }
 
 impl Default for GraphService {

@@ -47,3 +47,11 @@ pub fn import_backup(
 ) -> AppResult<String> {
     backup_service.import_backup(base64_data)
 }
+
+#[tauri::command]
+pub fn import_backup_from_file(
+    import_path: String,
+    backup_service: State<'_, BackupService>,
+) -> AppResult<String> {
+    backup_service.import_backup_from_file(import_path)
+}
