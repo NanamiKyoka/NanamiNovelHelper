@@ -25,3 +25,29 @@ pub fn search_content(
         max_results,
     )
 }
+
+#[tauri::command]
+pub fn search_replace(
+    file_path: String,
+    search_query: String,
+    replace_text: String,
+    case_sensitive: Option<bool>,
+    whole_word: Option<bool>,
+    use_regex: Option<bool>,
+    replace_all: Option<bool>,
+    line: Option<usize>,
+    column: Option<usize>,
+    search_service: State<'_, SearchService>,
+) -> AppResult<serde_json::Value> {
+    search_service.replace(
+        &file_path,
+        &search_query,
+        &replace_text,
+        case_sensitive.unwrap_or(false),
+        whole_word.unwrap_or(false),
+        use_regex.unwrap_or(false),
+        replace_all.unwrap_or(false),
+        line,
+        column,
+    )
+}

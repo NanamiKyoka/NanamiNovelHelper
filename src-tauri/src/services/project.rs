@@ -1,10 +1,13 @@
 use crate::error::{AppError, AppResult};
+use crate::models::RecentProject;
 use crate::services::project_state;
 use crate::utils::{ensure_dir, file_exists, read_json_file, write_json_file};
+use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
 const PROJECT_FILE: &str = "project.json";
+const MAX_RECENT_PROJECTS: usize = 10;
 
 pub struct ProjectService {
     current_project: Mutex<Option<crate::models::Project>>,
@@ -15,6 +18,105 @@ impl ProjectService {
         Self {
             current_project: Mutex::new(None),
         }
+    }
+
+    fn get_app_data_dir() -> PathBuf {
+        let base = dirs::data_dir().unwrap_or_else(|| PathBuf::from("."));
+        base.join("NanamiNovelHelper")
+    }
+
+    fn get_recent_projects_file() -> PathBuf {
+        Self::get_app_data_dir().join("recent-projects.json")
+    }
+
+    fn load_recent_projects() -> Vec<RecentProject> {
+        let file = Self::get_recent_projects_file();
+        if !file.exists() {
+            return Vec::new();
+        }
+        read_json_file::<Vec<RecentProject>>(&file).unwrap_or_default()
+    }
+
+    fn save_recent_projects(recent: &[RecentProject]) -> AppResult<()> {
+        let file = Self::get_recent_projects_file();
+        let dir = file.parent().unwrap_or(&file);
+        ensure_dir(dir)?;
+        write_json_file(&file, recent)
+    }
+
+    pub fn get_recent_projects(&self) -> Vec<RecentProject> {
+        let recent = Self::load_recent_projects();
+        recent
+            .into_iter()
+            .filter(|item| PathBuf::from(&item.path).exists())
+            .collect()
+    }
+
+    pub fn add_recent_project(&self, project: &crate::models::Project) -> AppResult<()> {
+        let mut recent = Self::load_recent_projects();
+        recent.retain(|item| item.path != project.path);
+
+        let now = chrono::Utc::now().to_rfc3339();
+        recent.insert(
+            0,
+            RecentProject {
+                id: project.id.clone(),
+                name: project.name.clone(),
+                path: project.path.clone(),
+                description: project.description.clone(),
+                cover: project.cover.clone(),
+                last_opened_at: now,
+            },
+        );
+
+        if recent.len() > MAX_RECENT_PROJECTS {
+            recent.truncate(MAX_RECENT_PROJECTS);
+        }
+
+        Self::save_recent_projects(&recent)
+    }
+
+    pub fn remove_recent_project(&self, path: &str) -> AppResult<()> {
+        let mut recent = Self::load_recent_projects();
+        recent.retain(|item| item.path != path);
+        Self::save_recent_projects(&recent)
+    }
+
+    pub fn clear_recent_projects(&self) -> AppResult<()> {
+        Self::save_recent_projects(&[])
+    }
+
+    pub fn update_project_info(&self, info: serde_json::Value) -> AppResult<crate::models::Project> {
+        let mut current = self.current_project.lock().unwrap();
+        let project = current
+            .as_mut()
+            .ok_or(AppError::ProjectNotOpen)?;
+
+        if let Some(name) = info.get("name").and_then(|v| v.as_str()) {
+            project.name = name.to_string();
+        }
+        if let Some(description) = info.get("description").and_then(|v| v.as_str()) {
+            project.description = Some(description.to_string());
+        }
+        if let Some(author) = info.get("author").and_then(|v| v.as_str()) {
+            project.author = Some(author.to_string());
+        }
+        if let Some(cover) = info.get("cover").and_then(|v| v.as_str()) {
+            project.cover = Some(cover.to_string());
+        }
+        if let Some(tags) = info.get("tags").and_then(|v| v.as_array()) {
+            project.tags = tags
+                .iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect();
+        }
+
+        project.updated_at = chrono::Utc::now().to_rfc3339();
+
+        let project_file = Self::get_project_file_path(&project.path);
+        write_json_file(&project_file, &*project)?;
+
+        Ok(project.clone())
     }
 
     pub fn get_data_dir(project_path: &str) -> PathBuf {

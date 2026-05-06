@@ -6,9 +6,9 @@ mod utils;
 
 use commands::*;
 use services::{
-    AiAssistantService, BackupService, DynamicSkillService, FileService, GitService,
-    GraphService, ImageService, ProjectService, SearchService, SettingsService, TerminalService,
-    VocabularyService,
+    AiApiService, AiAssistantService, BackupService, DynamicSkillService, FileService,
+    FileWatcherService, GitService, GraphService, ImageService, ProjectService, SearchService,
+    SecureStorageService, SettingsService, TerminalService, VocabularyService,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -18,6 +18,51 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_os::init())
+        .register_uri_scheme_protocol("local", |_app, request| {
+            let uri = request.uri().to_string();
+            let path_part = uri.strip_prefix("local://file/").unwrap_or("");
+            let file_path = percent_encoding::percent_decode_str(path_part)
+                .decode_utf8_lossy()
+                .to_string();
+            let file_path = file_path.replace('/', "\\");
+
+            let project_path = services::project_state::get_project_path();
+            if let Some(ref proj) = project_path {
+                let proj_normalized = proj.replace('/', "\\");
+                if !file_path.starts_with(&*proj_normalized) {
+                    return tauri::http::Response::builder()
+                        .status(403)
+                        .body("Forbidden".as_bytes().to_vec())
+                        .unwrap();
+                }
+            }
+
+            match std::fs::read(&file_path) {
+                Ok(data) => {
+                    let ext = std::path::Path::new(&file_path)
+                        .extension()
+                        .and_then(|e| e.to_str())
+                        .unwrap_or("png")
+                        .to_lowercase();
+                    let mime = match ext.as_str() {
+                        "jpg" | "jpeg" => "image/jpeg",
+                        "gif" => "image/gif",
+                        "webp" => "image/webp",
+                        "svg" => "image/svg+xml",
+                        _ => "image/png",
+                    };
+                    tauri::http::Response::builder()
+                        .status(200)
+                        .header("Content-Type", mime)
+                        .body(data)
+                        .unwrap()
+                }
+                Err(_) => tauri::http::Response::builder()
+                    .status(404)
+                    .body("Not Found".as_bytes().to_vec())
+                    .unwrap(),
+            }
+        })
         .manage(ProjectService::new())
         .manage(VocabularyService::new())
         .manage(SettingsService::new())
@@ -28,8 +73,11 @@ pub fn run() {
         .manage(BackupService::new())
         .manage(GitService::new())
         .manage(TerminalService::new())
+        .manage(AiApiService::new())
         .manage(AiAssistantService::new())
         .manage(DynamicSkillService::new())
+        .manage(FileWatcherService::new())
+        .manage(SecureStorageService::new())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -46,6 +94,10 @@ pub fn run() {
             close_project,
             get_current_project,
             get_init_data,
+            update_project_info,
+            get_recent_projects,
+            remove_recent_project,
+            clear_recent_projects,
             vocabulary_load_types,
             vocabulary_save_types,
             vocabulary_add_type,
@@ -86,6 +138,7 @@ pub fn run() {
             graph_import,
             graph_reorder,
             search_content,
+            search_replace,
             upload_image_from_base64,
             upload_image_from_file,
             delete_image,
@@ -144,6 +197,18 @@ pub fn run() {
             skill_delete,
             skill_get_instructions,
             skill_update_instructions,
+            skill_execute,
+            skill_cancel,
+            skill_check_python,
+            ai_call_api,
+            ai_call_api_stream,
+            ai_test_connection,
+            ai_get_available_models,
+            secure_is_encryption_available,
+            secure_get_api_key,
+            secure_set_api_key,
+            secure_delete_api_key,
+            secure_get_api_key_names,
             window_minimize,
             window_maximize,
             window_close,

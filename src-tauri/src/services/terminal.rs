@@ -1,24 +1,34 @@
 use crate::error::{AppError, AppResult};
 use crate::services::project_state;
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::io::{BufRead, BufReader, Read, Write};
+use std::sync::{Arc, Mutex};
 
-pub struct TerminalService {
-    instances: Mutex<HashMap<String, TerminalInstance>>,
+struct PtyInstance {
+    writer: Box<dyn Write + Send>,
+    child: Box<dyn portable_pty::Child + Send>,
+    exited: Arc<Mutex<bool>>,
+    exit_code: Arc<Mutex<Option<i32>>>,
 }
 
-struct TerminalInstance {
+pub struct TerminalService {
+    instances: Mutex<HashMap<String, PtyInstance>>,
+    metas: Mutex<HashMap<String, TerminalMeta>>,
+}
+
+struct TerminalMeta {
     id: String,
     name: String,
     cwd: String,
-    exited: bool,
-    exit_code: Option<i32>,
+    pid: u32,
 }
 
 impl TerminalService {
     pub fn new() -> Self {
         Self {
             instances: Mutex::new(HashMap::new()),
+            metas: Mutex::new(HashMap::new()),
         }
     }
 
@@ -93,7 +103,8 @@ impl TerminalService {
         &self,
         name: Option<String>,
         cwd: Option<String>,
-        _shell_path: Option<String>,
+        shell_path: Option<String>,
+        app: &tauri::AppHandle,
     ) -> AppResult<serde_json::Value> {
         let project_path = Self::get_project_path().ok();
         let working_dir = cwd.or(project_path).unwrap_or_default();
@@ -101,40 +112,152 @@ impl TerminalService {
         let id = crate::utils::generate_id();
         let term_name = name.unwrap_or_else(|| "Terminal".to_string());
 
-        let instance = TerminalInstance {
-            id: id.clone(),
-            name: term_name.clone(),
-            cwd: working_dir.clone(),
-            exited: false,
-            exit_code: None,
-        };
+        let pty_system = native_pty_system();
+
+        let pair = pty_system
+            .openpty(PtySize {
+                rows: 24,
+                cols: 80,
+                pixel_width: 0,
+                pixel_height: 0,
+            })
+            .map_err(|e| AppError::OperationFailed(format!("创建 PTY 失败: {}", e)))?;
+
+        let shell = shell_path.unwrap_or_else(|| {
+            if cfg!(target_os = "windows") {
+                r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe".to_string()
+            } else {
+                "/bin/bash".to_string()
+            }
+        });
+
+        let mut cmd = CommandBuilder::new(&shell);
+        if !working_dir.is_empty() {
+            cmd.cwd(&working_dir);
+        }
+
+        let child = pair
+            .slave
+            .spawn_command(cmd)
+            .map_err(|e| AppError::OperationFailed(format!("启动 Shell 失败: {}", e)))?;
+
+        drop(pair.slave);
+
+        let reader = pair
+            .master
+            .try_clone_reader()
+            .map_err(|e| AppError::OperationFailed(format!("获取 PTY 读取器失败: {}", e)))?;
+
+        let writer = pair
+            .master
+            .take_writer()
+            .map_err(|e| AppError::OperationFailed(format!("获取 PTY 写入器失败: {}", e)))?;
+
+        let pid = child.process_id().unwrap_or(0);
+
+        let exited = Arc::new(Mutex::new(false));
+        let exit_code = Arc::new(Mutex::new(None::<i32>));
+
+        let exited_clone = exited.clone();
+        let exit_code_clone = exit_code.clone();
+        let term_id = id.clone();
+        let app_clone = app.clone();
+
+        std::thread::spawn(move || {
+            let exit_status = child.wait();
+            if let Ok(status) = exit_status {
+                if let Ok(mut ec) = exit_code_clone.lock() {
+                    *ec = status.exit_code();
+                }
+            }
+            if let Ok(mut ex) = exited_clone.lock() {
+                *ex = true;
+            }
+            let _ = app_clone.emit("terminal:exit", serde_json::json!({
+                "id": term_id,
+                "exitCode": exit_status.ok().map(|s| s.exit_code())
+            }));
+        });
+
+        let term_id_for_reader = id.clone();
+        let app_for_reader = app.clone();
+        std::thread::spawn(move || {
+            let mut reader = BufReader::new(reader);
+            let mut buf = [0u8; 4096];
+            loop {
+                match reader.read(&mut buf) {
+                    Ok(0) => break,
+                    Ok(n) => {
+                        let data = String::from_utf8_lossy(&buf[..n]);
+                        let _ = app_for_reader.emit(
+                            "terminal:data",
+                            serde_json::json!({
+                                "id": term_id_for_reader,
+                                "data": data.to_string()
+                            }),
+                        );
+                    }
+                    Err(_) => break,
+                }
+            }
+        });
 
         {
             let mut instances = self.instances.lock().unwrap();
-            instances.insert(id.clone(), instance);
+            instances.insert(
+                id.clone(),
+                PtyInstance {
+                    writer,
+                    child: Box::new(DummyChild),
+                    exited,
+                    exit_code,
+                },
+            );
+        }
+
+        {
+            let mut metas = self.metas.lock().unwrap();
+            metas.insert(
+                id.clone(),
+                TerminalMeta {
+                    id: id.clone(),
+                    name: term_name.clone(),
+                    cwd: working_dir.clone(),
+                    pid,
+                },
+            );
         }
 
         Ok(serde_json::json!({
             "id": id,
             "name": term_name,
-            "pid": 0,
+            "pid": pid,
             "cwd": working_dir,
             "exited": false
         }))
     }
 
     pub fn list(&self) -> AppResult<Vec<serde_json::Value>> {
+        let metas = self.metas.lock().unwrap();
         let instances = self.instances.lock().unwrap();
-        let result: Vec<serde_json::Value> = instances
+        let result: Vec<serde_json::Value> = metas
             .values()
-            .map(|inst| {
+            .map(|meta| {
+                let (exited, exit_code) = instances
+                    .get(&meta.id)
+                    .map(|inst| {
+                        let ex = *inst.exited.lock().unwrap();
+                        let ec = *inst.exit_code.lock().unwrap();
+                        (ex, ec)
+                    })
+                    .unwrap_or((true, None));
                 serde_json::json!({
-                    "id": inst.id,
-                    "name": inst.name,
-                    "pid": 0,
-                    "cwd": inst.cwd,
-                    "exited": inst.exited,
-                    "exitCode": inst.exit_code
+                    "id": meta.id,
+                    "name": meta.name,
+                    "pid": meta.pid,
+                    "cwd": meta.cwd,
+                    "exited": exited,
+                    "exitCode": exit_code
                 })
             })
             .collect();
@@ -143,16 +266,23 @@ impl TerminalService {
 
     pub fn kill(&self, id: &str) -> AppResult<bool> {
         let mut instances = self.instances.lock().unwrap();
-        if let Some(inst) = instances.get_mut(id) {
-            inst.exited = true;
-            inst.exit_code = Some(0);
+        if let Some(inst) = instances.remove(id) {
+            let _ = inst.writer;
+            let mut ex = inst.exited.lock().unwrap();
+            *ex = true;
+            let mut ec = inst.exit_code.lock().unwrap();
+            *ec = Some(0);
+            drop(instances);
+
+            let mut metas = self.metas.lock().unwrap();
+            metas.remove(id);
             Ok(true)
         } else {
             Ok(false)
         }
     }
 
-    pub fn resize(&self, id: &str, _cols: u16, _rows: u16) -> AppResult<()> {
+    pub fn resize(&self, id: &str, cols: u16, rows: u16) -> AppResult<()> {
         let instances = self.instances.lock().unwrap();
         if instances.contains_key(id) {
             Ok(())
@@ -161,13 +291,36 @@ impl TerminalService {
         }
     }
 
-    pub fn write(&self, id: &str, _data: &str) -> AppResult<()> {
-        let instances = self.instances.lock().unwrap();
-        if instances.contains_key(id) {
+    pub fn write(&self, id: &str, data: &str) -> AppResult<()> {
+        let mut instances = self.instances.lock().unwrap();
+        if let Some(inst) = instances.get_mut(id) {
+            inst.writer
+                .write_all(data.as_bytes())
+                .map_err(|e| AppError::OperationFailed(format!("写入终端失败: {}", e)))?;
+            inst.writer
+                .flush()
+                .map_err(|e| AppError::OperationFailed(format!("刷新终端失败: {}", e)))?;
             Ok(())
         } else {
             Err(AppError::InvalidParam(format!("终端实例 {} 不存在", id)))
         }
+    }
+}
+
+struct DummyChild;
+
+impl portable_pty::Child for DummyChild {
+    fn process_id(&self) -> Option<u32> {
+        None
+    }
+    fn wait(&mut self) -> Result<portable_pty::ExitStatus, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(portable_pty::ExitStatus::with_exit_code(0))
+    }
+    fn try_wait(&mut self) -> Result<Option<portable_pty::ExitStatus>, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(None)
+    }
+    fn force_kill(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        Ok(())
     }
 }
 

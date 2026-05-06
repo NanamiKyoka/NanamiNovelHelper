@@ -217,6 +217,79 @@ impl SearchService {
     }
 }
 
+    pub fn replace(
+        &self,
+        file_path: &str,
+        search_query: &str,
+        replace_text: &str,
+        case_sensitive: bool,
+        whole_word: bool,
+        use_regex: bool,
+        replace_all: bool,
+        line: Option<usize>,
+        column: Option<usize>,
+    ) -> AppResult<serde_json::Value> {
+        let project_path = Self::get_project_path()?;
+        let full_path = PathBuf::from(&project_path).join(file_path);
+
+        if !full_path.exists() {
+            return Err(AppError::FileNotFound(file_path.to_string()));
+        }
+
+        let content = fs::read_to_string(&full_path)
+            .map_err(|e| AppError::OperationFailed(format!("读取文件失败: {}", e)))?;
+
+        let regex_pattern = if use_regex {
+            search_query.to_string()
+        } else if whole_word {
+            format!(r"\b{}\b", regex::escape(search_query))
+        } else {
+            regex::escape(search_query)
+        };
+
+        let re = regex::RegexBuilder::new(&regex_pattern)
+            .case_insensitive(!case_sensitive)
+            .build()
+            .map_err(|e| AppError::InvalidParam(format!("正则表达式无效: {}", e)))?;
+
+        let (new_content, replace_count) = if replace_all {
+            let count = re.find_iter(&content).count();
+            let new = re.replace_all(&content, replace_text).to_string();
+            (new, count)
+        } else if let (Some(target_line), Some(_target_col)) = (line, column) {
+            let mut count = 0;
+            let mut new_lines = Vec::new();
+            for (i, l) in content.lines().enumerate() {
+                if i + 1 == target_line {
+                    if let Some(mat) = re.find(l).next() {
+                        let mut new_line = l.to_string();
+                        new_line.replace_range(mat.range(), replace_text);
+                        new_lines.push(new_line);
+                        count = 1;
+                    } else {
+                        new_lines.push(l.to_string());
+                    }
+                } else {
+                    new_lines.push(l.to_string());
+                }
+            }
+            (new_lines.join("\n"), count)
+        } else {
+            let count = re.find_iter(&content).count();
+            let new = re.replace_all(&content, replace_text).to_string();
+            (new, count)
+        };
+
+        fs::write(&full_path, &new_content)
+            .map_err(|e| AppError::OperationFailed(format!("写入文件失败: {}", e)))?;
+
+        Ok(serde_json::json!({
+            "success": true,
+            "replaceCount": replace_count
+        }))
+    }
+}
+
 impl Default for SearchService {
     fn default() -> Self {
         Self::new()

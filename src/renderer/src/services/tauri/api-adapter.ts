@@ -41,7 +41,19 @@ export const tauriElectronApi = {
       return () => { unlisten?.() }
     },
     removeFullScreenListener: () => {},
-    onFileChange: (_callback: (event: { type: string; path: string }) => void) => {},
+    onFileChange: (callback: (event: { type: string; path: string }) => void) => {
+      let unlisten: UnlistenFn | null = null
+      listen<Record<string, unknown>>('file-change', (event) => {
+        const payload = event.payload
+        if (payload && typeof payload === 'object' && 'changes' in payload) {
+          const changes = (payload as { changes: Array<{ type: string; path: string }> }).changes
+          for (const change of changes) {
+            callback({ type: change.type, path: change.path })
+          }
+        }
+      }).then(fn => { unlisten = fn })
+      return () => { unlisten?.() }
+    },
     removeFileChangeListener: () => {}
   },
 
@@ -51,10 +63,10 @@ export const tauriElectronApi = {
     open: (path: string) => invoke('open_project', { path }),
     close: () => invoke('close_project'),
     getCurrent: () => invoke('get_current_project'),
-    updateInfo: (_info: Record<string, unknown>) => Promise.resolve(),
-    getRecent: () => Promise.resolve([]),
-    removeRecent: (_path: string) => Promise.resolve(),
-    clearRecent: () => Promise.resolve(),
+    updateInfo: (info: Record<string, unknown>) => invoke('update_project_info', { info }),
+    getRecent: () => invoke('get_recent_projects'),
+    removeRecent: (path: string) => invoke('remove_recent_project', { path }),
+    clearRecent: () => invoke('clear_recent_projects'),
     showOpenDialog: () => open({ directory: true, title: '打开项目' }).then(p => p || null),
     showCreateDialog: () => open({ directory: true, title: '创建项目' }).then(p => p || null),
     isValid: (path: string) => invoke('file_exists', { path: `${path}/.novelhelper/data/project.json` }),
@@ -139,11 +151,11 @@ export const tauriElectronApi = {
       getShowHiddenFiles: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.showHiddenFiles as boolean),
       setShowHiddenFiles: (showHiddenFiles: boolean) =>
         invoke('settings_update_global', { settings: { layout: { showHiddenFiles } } }),
-      getApiKey: (_keyName: string) => Promise.resolve(null),
-      setApiKey: (_keyName: string, _value: string) => Promise.resolve(),
-      deleteApiKey: (_keyName: string) => Promise.resolve(),
-      getApiKeyNames: () => Promise.resolve([]),
-      isEncryptionAvailable: () => Promise.resolve(false)
+      getApiKey: (keyName: string) => invoke('secure_get_api_key', { keyName }),
+      setApiKey: (keyName: string, value: string) => invoke('secure_set_api_key', { keyName, value }),
+      deleteApiKey: (keyName: string) => invoke('secure_delete_api_key', { keyName }),
+      getApiKeyNames: () => invoke('secure_get_api_key_names'),
+      isEncryptionAvailable: () => invoke('secure_is_encryption_available')
     },
     project: {
       getAll: () => invoke('settings_get_project'),
@@ -395,15 +407,19 @@ export const tauriElectronApi = {
     setCwd: (_id: string, _cwd: string) => Promise.resolve(null),
     onData: (id: string, callback: (data: string) => void) => {
       let unlisten: UnlistenFn | null = null
-      listen<string>(`terminal-data-${id}`, (event) => {
-        callback(event.payload)
+      listen<Record<string, unknown>>('terminal:data', (event) => {
+        if (event.payload.id === id && typeof event.payload.data === 'string') {
+          callback(event.payload.data as string)
+        }
       }).then(fn => { unlisten = fn })
       return () => { unlisten?.() }
     },
     onExit: (id: string, callback: (exitCode: number) => void) => {
       let unlisten: UnlistenFn | null = null
-      listen<number>(`terminal-exit-${id}`, (event) => {
-        callback(event.payload)
+      listen<Record<string, unknown>>('terminal:exit', (event) => {
+        if (event.payload.id === id) {
+          callback((event.payload.exitCode as number) ?? 0)
+        }
       }).then(fn => { unlisten = fn })
       return () => { unlisten?.() }
     },
@@ -464,29 +480,97 @@ export const tauriElectronApi = {
   search: {
     search: (options: Record<string, unknown>) =>
       invoke('search_content', { query: options.query, caseSensitive: options.caseSensitive, useRegex: options.useRegex, filePattern: options.filePattern, maxResults: options.maxResults }),
-    replace: (_filePath: string, _searchQuery: string, _replaceText: string, _options?: Record<string, unknown>) => Promise.resolve()
+    replace: (filePath: string, searchQuery: string, replaceText: string, options?: Record<string, unknown>) =>
+      invoke('search_replace', {
+        filePath,
+        searchQuery,
+        replaceText,
+        caseSensitive: options?.caseSensitive,
+        wholeWord: options?.wholeWord,
+        useRegex: options?.useRegex,
+        replaceAll: options?.replaceAll,
+        line: options?.line,
+        column: options?.column
+      })
   },
 
   aiAssistant: {
     listTemplates: () => invoke('ai_list_templates'),
+    getTemplateList: () => invoke('ai_list_templates'),
+    getTemplates: () => invoke('ai_list_templates'),
     getTemplate: (id: string) => invoke('ai_get_template', { id }),
     createTemplate: (template: Record<string, unknown>) => invoke('ai_create_template', { template }),
     updateTemplate: (id: string, updates: Record<string, unknown>) => invoke('ai_update_template', { id, updates }),
+    saveTemplate: (template: Record<string, unknown>) =>
+      template.id
+        ? invoke('ai_update_template', { id: template.id as string, updates: template })
+        : invoke('ai_create_template', { template }),
     deleteTemplate: (id: string) => invoke('ai_delete_template', { id }),
+    copyTemplateToProject: async (id: string) => {
+      const template = await invoke<Record<string, unknown>>('ai_get_template', { id })
+      if (template) {
+        const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = template
+        return invoke('ai_create_template', { template: { ...rest, name: `${template.name} (副本)` } })
+      }
+      return null
+    },
+    exportTemplate: async (id: string) => {
+      const template = await invoke<Record<string, unknown>>('ai_get_template', { id })
+      return template ? JSON.stringify(template, null, 2) : null
+    },
+    importTemplate: async (json5Content: string) => {
+      const parsed = JSON.parse(json5Content)
+      const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = parsed
+      return invoke('ai_create_template', { template: rest })
+    },
     listWorkflows: () => invoke('ai_list_workflows'),
+    getWorkflowList: () => invoke('ai_list_workflows'),
+    getWorkflows: () => invoke('ai_list_workflows'),
     getWorkflow: (id: string) => invoke('ai_get_workflow', { id }),
     createWorkflow: (workflow: Record<string, unknown>) => invoke('ai_create_workflow', { workflow }),
     updateWorkflow: (id: string, updates: Record<string, unknown>) => invoke('ai_update_workflow', { id, updates }),
+    saveWorkflow: (workflow: Record<string, unknown>) =>
+      workflow.id
+        ? invoke('ai_update_workflow', { id: workflow.id as string, updates: workflow })
+        : invoke('ai_create_workflow', { workflow }),
     deleteWorkflow: (id: string) => invoke('ai_delete_workflow', { id }),
+    exportWorkflow: async (id: string) => {
+      const workflow = await invoke<Record<string, unknown>>('ai_get_workflow', { id })
+      return workflow ? JSON.stringify(workflow, null, 2) : null
+    },
+    importWorkflow: async (json5Content: string) => {
+      const parsed = JSON.parse(json5Content)
+      const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = parsed
+      return invoke('ai_create_workflow', { workflow: rest })
+    },
     saveExecution: (execution: Record<string, unknown>) => invoke('ai_save_execution', { execution }),
+    createExecution: (_workflowId: string, _workflowName: string) =>
+      invoke('ai_save_execution', { execution: { workflowId: _workflowId, workflowName: _workflowName, status: 'running', stepOutputs: {}, startedAt: new Date().toISOString() } }),
+    getExecution: async (id: string) => {
+      const executions = await invoke<Record<string, unknown>[]>('ai_list_executions')
+      return executions.find(e => e.id === id) || null
+    },
+    updateExecution: (id: string, updates: Record<string, unknown>) =>
+      invoke('ai_save_execution', { execution: { id, ...updates } }),
+    getExecutionHistory: () => invoke('ai_list_executions'),
     listExecutions: () => invoke('ai_list_executions'),
     deleteExecution: (id: string) => invoke('ai_delete_execution', { id }),
-    callApi: (_prompt: string, _options?: Record<string, unknown>) => Promise.resolve(''),
-    callApiStream: (_prompt: string, _options?: Record<string, unknown>) => Promise.resolve(),
-    onStreamChunk: (_callback: (chunk: Record<string, unknown>) => void) => {},
+    callApi: (prompt: string, options?: Record<string, unknown>) =>
+      invoke('ai_call_api', { prompt, options }),
+    callApiStream: (prompt: string, options?: Record<string, unknown>) =>
+      invoke('ai_call_api_stream', { prompt, options }),
+    onStreamChunk: (callback: (chunk: Record<string, unknown>) => void) => {
+      let unlisten: UnlistenFn | null = null
+      listen<Record<string, unknown>>('aiAssistant:streamChunk', (event) => {
+        callback(event.payload)
+      }).then(fn => { unlisten = fn })
+      return () => { unlisten?.() }
+    },
     removeStreamChunkListener: () => {},
-    testApiConnection: (_provider: string) => Promise.resolve(false),
-    getAvailableModels: (_provider: string) => Promise.resolve([])
+    testApiConnection: (provider: string) =>
+      invoke('ai_test_connection', { provider }).then((r: Record<string, unknown>) => r.success as boolean),
+    getAvailableModels: (provider: string) =>
+      invoke('ai_get_available_models', { provider })
   },
 
   dynamicSkill: {
@@ -494,8 +578,9 @@ export const tauriElectronApi = {
     get: (skillId: string) => invoke('skill_get', { id: skillId }),
     reload: () => Promise.resolve(),
     getTools: (skillId: string) => invoke('skill_get', { id: skillId }).then((s: Record<string, unknown> | null) => (s?.tools as unknown[]) ?? []),
-    execute: (_skillId: string, _toolId: string, _parameters: Record<string, unknown>, _context: Record<string, unknown>) => Promise.resolve(null),
-    cancel: (_executionId: string) => Promise.resolve(),
+    execute: (skillId: string, toolId: string, parameters: Record<string, unknown>, context: Record<string, unknown>) =>
+      invoke('skill_execute', { skillId, toolId, parameters, context }),
+    cancel: (executionId: string) => invoke('skill_cancel', { executionId }),
     getWhitelist: () => Promise.resolve([]),
     addToWhitelist: (_skillId: string, _skillName: string, _skillPath: string) => Promise.resolve(),
     removeFromWhitelist: (_skillId: string) => Promise.resolve(),
@@ -503,8 +588,14 @@ export const tauriElectronApi = {
     create: (options: Record<string, unknown>) => invoke('skill_create', { skill: options }),
     update: (skillId: string, options: Record<string, unknown>) => invoke('skill_update', { id: skillId, updates: options }),
     delete: (skillId: string) => invoke('skill_delete', { id: skillId }),
-    checkPython: () => Promise.resolve(null),
-    onExecutionOutput: (_callback: (data: Record<string, unknown>) => void) => {},
+    checkPython: () => invoke('skill_check_python'),
+    onExecutionOutput: (callback: (data: Record<string, unknown>) => void) => {
+      let unlisten: UnlistenFn | null = null
+      listen<Record<string, unknown>>('skill:executionOutput', (event) => {
+        callback(event.payload)
+      }).then(fn => { unlisten = fn })
+      return () => { unlisten?.() }
+    },
     removeExecutionOutputListener: () => {}
   },
 

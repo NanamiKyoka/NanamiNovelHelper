@@ -5,6 +5,14 @@ pub struct Project {
     pub id: String,
     pub name: String,
     pub path: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub author: Option<String>,
+    #[serde(default)]
+    pub cover: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
     #[serde(rename = "createdAt")]
     pub created_at: String,
     #[serde(rename = "updatedAt")]
@@ -18,10 +26,27 @@ impl Project {
             id: uuid::Uuid::new_v4().to_string(),
             name,
             path,
+            description: None,
+            author: None,
+            cover: None,
+            tags: Vec::new(),
             created_at: now.clone(),
             updated_at: now,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecentProject {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub cover: Option<String>,
+    #[serde(rename = "lastOpenedAt")]
+    pub last_opened_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

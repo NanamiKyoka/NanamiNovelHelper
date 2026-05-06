@@ -1,6 +1,6 @@
 use crate::error::AppResult;
 use crate::services::terminal::TerminalService;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub fn terminal_get_shells(
@@ -14,9 +14,10 @@ pub fn terminal_create(
     name: Option<String>,
     cwd: Option<String>,
     shell_path: Option<String>,
+    app: AppHandle,
     terminal_service: State<'_, TerminalService>,
 ) -> AppResult<serde_json::Value> {
-    terminal_service.create(name, cwd, shell_path)
+    terminal_service.create(name, cwd, shell_path, &app)
 }
 
 #[tauri::command]
