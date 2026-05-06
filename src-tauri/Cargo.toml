@@ -1,0 +1,46 @@
+[package]
+name = "nanami-novel-helper"
+version = "0.1.0"
+description = "NanamiNovelHelper - 面向小说创作者的专业写作辅助工具"
+authors = ["NanamiNovelHelper Team"]
+license = "MPL-2.0"
+repository = "https://github.com/NanamiKyoka/nanami-novel-helper"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "nanami_novel_helper_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-os = "2"
+tokio = { version = "1", features = ["full"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+anyhow = "1"
+dirs = "6"
+json5 = "0.4"
+base64 = "0.22"
+open = "5"
+pathdiff = "0.2"
+regex = "1"
+flate2 = "1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

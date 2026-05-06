@@ -6,7 +6,10 @@ import App from './App'
 import { useThemeStore } from '@stores/themeStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { applyPrimaryColorToRoot } from '@utils/theme'
+import { initTauriApi } from '@services/tauri/init'
 import './styles/global.css'
+
+initTauriApi()
 
 // 主题提供者组件
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {

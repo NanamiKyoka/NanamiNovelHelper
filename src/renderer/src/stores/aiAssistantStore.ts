@@ -126,12 +126,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   loadTemplates: async () => {
     set({ isLoading: true, error: null })
     try {
-      const [templateList, templates] = await Promise.all([
-        window.electron.aiAssistant.getTemplateList(),
-        window.electron.aiAssistant.getTemplates()
-      ])
+      const templates = await window.electron.aiAssistant.listTemplates()
       set({
-        templateList,
+        templateList: templates.map((t: Record<string, unknown>) => ({ id: t.id, name: t.name, description: t.description, category: t.category })),
         templates,
         templatesLoaded: true,
         isLoading: false,
@@ -156,7 +153,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   saveTemplate: async template => {
     try {
-      const saved = await window.electron.aiAssistant.saveTemplate(template)
+      const saved = template.id
+        ? await window.electron.aiAssistant.updateTemplate(template.id, template)
+        : await window.electron.aiAssistant.createTemplate(template)
       set(state => {
         const existingIndex = state.templates.findIndex(t => t.id === saved.id)
         const newTemplates =
@@ -168,9 +167,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
           currentTemplate: saved
         }
       })
-      // 重新加载列表
-      const templateList = await window.electron.aiAssistant.getTemplateList()
-      set({ templateList })
+      const templateList = await window.electron.aiAssistant.listTemplates()
+      set({ templateList: templateList.map((t: Record<string, unknown>) => ({ id: t.id, name: t.name, description: t.description, category: t.category })) })
       return saved
     } catch (error) {
       console.error('Failed to save template:', error)
@@ -180,14 +178,12 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   deleteTemplate: async (id: string) => {
     try {
-      const success = await window.electron.aiAssistant.deleteTemplate(id)
-      if (success) {
-        set(state => ({
-          templates: state.templates.filter(t => t.id !== id),
-          templateList: state.templateList.filter(t => t.id !== id),
-          currentTemplate: state.currentTemplate?.id === id ? null : state.currentTemplate
-        }))
-      }
+      await window.electron.aiAssistant.deleteTemplate(id)
+      set(state => ({
+        templates: state.templates.filter(t => t.id !== id),
+        templateList: state.templateList.filter(t => t.id !== id),
+        currentTemplate: state.currentTemplate?.id === id ? null : state.currentTemplate
+      }))
     } catch (error) {
       console.error('Failed to delete template:', error)
       throw error
@@ -196,16 +192,14 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   copyTemplateToProject: async (id: string) => {
     try {
-      const template = await window.electron.aiAssistant.copyTemplateToProject(id)
+      const template = await window.electron.aiAssistant.getTemplate(id)
       if (template) {
-        set(state => {
-          const existingIndex = state.templates.findIndex(t => t.id === id)
-          const newTemplates =
-            existingIndex >= 0
-              ? state.templates.map(t => (t.id === id ? template : t))
-              : [...state.templates, template]
-          return { templates: newTemplates, currentTemplate: template }
-        })
+        const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = template as Record<string, unknown>
+        const newTemplate = await window.electron.aiAssistant.createTemplate({ ...rest, name: `${(template as Record<string, unknown>).name} (副本)` })
+        set(state => ({
+          templates: [...state.templates, newTemplate],
+          currentTemplate: newTemplate
+        }))
       }
     } catch (error) {
       console.error('Failed to copy template to project:', error)
@@ -215,7 +209,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   exportTemplate: async (id: string) => {
     try {
-      return await window.electron.aiAssistant.exportTemplate(id)
+      const template = await window.electron.aiAssistant.getTemplate(id)
+      return template ? JSON.stringify(template, null, 2) : null
     } catch (error) {
       console.error('Failed to export template:', error)
       throw error
@@ -224,14 +219,15 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   importTemplate: async (json5Content: string) => {
     try {
-      const template = await window.electron.aiAssistant.importTemplate(json5Content)
+      const parsed = JSON.parse(json5Content)
+      const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = parsed
+      const template = await window.electron.aiAssistant.createTemplate(rest)
       if (template) {
         set(state => ({
           templates: [...state.templates, template]
         }))
-        // 重新加载列表
-        const templateList = await window.electron.aiAssistant.getTemplateList()
-        set({ templateList })
+        const templateList = await window.electron.aiAssistant.listTemplates()
+        set({ templateList: templateList.map((t: Record<string, unknown>) => ({ id: t.id, name: t.name, description: t.description, category: t.category })) })
       }
       return template
     } catch (error) {
@@ -244,12 +240,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   loadWorkflows: async () => {
     set({ isLoading: true, error: null })
     try {
-      const [workflowList, workflows] = await Promise.all([
-        window.electron.aiAssistant.getWorkflowList(),
-        window.electron.aiAssistant.getWorkflows()
-      ])
+      const workflows = await window.electron.aiAssistant.listWorkflows()
       set({
-        workflowList,
+        workflowList: workflows.map((w: Record<string, unknown>) => ({ id: w.id, name: w.name, description: w.description })),
         workflows,
         workflowsLoaded: true,
         isLoading: false,
@@ -274,7 +267,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   saveWorkflow: async workflow => {
     try {
-      const saved = await window.electron.aiAssistant.saveWorkflow(workflow)
+      const saved = workflow.id
+        ? await window.electron.aiAssistant.updateWorkflow(workflow.id, workflow)
+        : await window.electron.aiAssistant.createWorkflow(workflow)
       set(state => {
         const existingIndex = state.workflows.findIndex(w => w.id === saved.id)
         const newWorkflows =
@@ -286,9 +281,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
           currentWorkflow: saved
         }
       })
-      // 重新加载列表
-      const workflowList = await window.electron.aiAssistant.getWorkflowList()
-      set({ workflowList })
+      const workflowList = await window.electron.aiAssistant.listWorkflows()
+      set({ workflowList: workflowList.map((w: Record<string, unknown>) => ({ id: w.id, name: w.name, description: w.description })) })
       return saved
     } catch (error) {
       console.error('Failed to save workflow:', error)
@@ -298,14 +292,12 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   deleteWorkflow: async (id: string) => {
     try {
-      const success = await window.electron.aiAssistant.deleteWorkflow(id)
-      if (success) {
-        set(state => ({
-          workflows: state.workflows.filter(w => w.id !== id),
-          workflowList: state.workflowList.filter(w => w.id !== id),
-          currentWorkflow: state.currentWorkflow?.id === id ? null : state.currentWorkflow
-        }))
-      }
+      await window.electron.aiAssistant.deleteWorkflow(id)
+      set(state => ({
+        workflows: state.workflows.filter(w => w.id !== id),
+        workflowList: state.workflowList.filter(w => w.id !== id),
+        currentWorkflow: state.currentWorkflow?.id === id ? null : state.currentWorkflow
+      }))
     } catch (error) {
       console.error('Failed to delete workflow:', error)
       throw error
@@ -314,7 +306,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   exportWorkflow: async (id: string) => {
     try {
-      return await window.electron.aiAssistant.exportWorkflow(id)
+      const workflow = await window.electron.aiAssistant.getWorkflow(id)
+      return workflow ? JSON.stringify(workflow, null, 2) : null
     } catch (error) {
       console.error('Failed to export workflow:', error)
       throw error
@@ -323,14 +316,15 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   importWorkflow: async (json5Content: string) => {
     try {
-      const workflow = await window.electron.aiAssistant.importWorkflow(json5Content)
+      const parsed = JSON.parse(json5Content)
+      const { id: _oldId, createdAt: _ca, updatedAt: _ua, ...rest } = parsed
+      const workflow = await window.electron.aiAssistant.createWorkflow(rest)
       if (workflow) {
         set(state => ({
           workflows: [...state.workflows, workflow]
         }))
-        // 重新加载列表
-        const workflowList = await window.electron.aiAssistant.getWorkflowList()
-        set({ workflowList })
+        const workflowList = await window.electron.aiAssistant.listWorkflows()
+        set({ workflowList: workflowList.map((w: Record<string, unknown>) => ({ id: w.id, name: w.name, description: w.description })) })
       }
       return workflow
     } catch (error) {
@@ -348,7 +342,12 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
     set({ isExecuting: true, error: null })
     try {
-      const execution = await window.electron.aiAssistant.createExecution(workflowId, workflow.name)
+      const execution = await window.electron.aiAssistant.saveExecution({
+        workflowId,
+        workflowName: workflow.name,
+        status: 'running',
+        startedAt: new Date().toISOString()
+      })
       set({ currentExecution: execution })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '启动工作流失败'
@@ -360,8 +359,9 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   getExecution: async (id: string) => {
     try {
-      const execution = await window.electron.aiAssistant.getExecution(id)
-      set({ currentExecution: execution })
+      const executions = await window.electron.aiAssistant.listExecutions()
+      const execution = executions.find((e: Record<string, unknown>) => e.id === id)
+      set({ currentExecution: execution || null })
     } catch (error) {
       console.error('Failed to get execution:', error)
       throw error
@@ -370,7 +370,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   updateExecution: async (id: string, updates: Partial<WorkflowExecution>) => {
     try {
-      const execution = await window.electron.aiAssistant.updateExecution(id, updates)
+      const execution = await window.electron.aiAssistant.saveExecution({ id, ...updates })
       if (execution) {
         set({ currentExecution: execution })
       }
@@ -386,9 +386,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
     try {
       const stepOutputs = { ...execution.stepOutputs, [stepId]: output }
-      const updated = await window.electron.aiAssistant.updateExecution(execution.id, {
-        stepOutputs
-      })
+      const updated = await window.electron.aiAssistant.saveExecution({ id: execution.id, stepOutputs })
       if (updated) {
         set({ currentExecution: updated })
       }
@@ -403,7 +401,8 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     if (!execution) return
 
     try {
-      const updated = await window.electron.aiAssistant.updateExecution(execution.id, {
+      const updated = await window.electron.aiAssistant.saveExecution({
+        id: execution.id,
         status: 'cancelled',
         completedAt: new Date().toISOString()
       })
@@ -418,7 +417,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   loadExecutionHistory: async () => {
     try {
-      const history = await window.electron.aiAssistant.getExecutionHistory()
+      const history = await window.electron.aiAssistant.listExecutions()
       set({ executionHistory: history })
     } catch (error) {
       console.error('Failed to load execution history:', error)
@@ -427,13 +426,11 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
 
   deleteExecution: async (id: string) => {
     try {
-      const success = await window.electron.aiAssistant.deleteExecution(id)
-      if (success) {
-        set(state => ({
-          executionHistory: state.executionHistory.filter(e => e.id !== id),
-          currentExecution: state.currentExecution?.id === id ? null : state.currentExecution
-        }))
-      }
+      await window.electron.aiAssistant.deleteExecution(id)
+      set(state => ({
+        executionHistory: state.executionHistory.filter(e => e.id !== id),
+        currentExecution: state.currentExecution?.id === id ? null : state.currentExecution
+      }))
     } catch (error) {
       console.error('Failed to delete execution:', error)
       throw error

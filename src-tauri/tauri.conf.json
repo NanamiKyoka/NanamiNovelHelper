@@ -1,0 +1,54 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "NanamiNovelHelper",
+  "version": "0.1.0",
+  "identifier": "com.nanami-novel-helper.app",
+  "build": {
+    "frontendDist": "../out/renderer",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev:web",
+    "beforeBuildCommand": "npm run build:web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "NanamiNovelHelper",
+        "label": "main",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "NanamiNovelHelper Team",
+    "homepage": "https://github.com/nanami-novel-helper",
+    "shortDescription": "面向小说创作者的专业写作辅助工具",
+    "longDescription": "NanamiNovelHelper 是一款面向小说创作者的专业写作辅助工具，支持项目管理、词汇管理、关系图、时间线等功能。",
+    "category": "Utility",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  },
+  "plugins": {}
+}
