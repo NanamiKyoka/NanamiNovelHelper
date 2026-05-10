@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 图片上传组件
  * 支持文件选择、拖拽、粘贴上传
  */
@@ -55,7 +55,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
     // 如果是文件路径，读取为 Base64
     const loadPreview = async (): Promise<void> => {
       try {
-        const base64 = await window.electron.image.readAsBase64(value)
+        const base64 = await window.api.image.readAsBase64(value)
         setPreviewUrl(base64)
       } catch (error) {
         console.error('Failed to load image preview:', error)
@@ -93,7 +93,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
           const base64 = e.target?.result as string
           try {
             // 上传到主进程处理（压缩、保存）
-            const result = await window.electron.image.uploadFromBase64(base64, {
+            const result = await window.api.image.uploadFromBase64(base64, {
               maxSize: finalConfig.maxSize,
               allowedFormats: finalConfig.allowedFormats,
               maxWidth: finalConfig.maxWidth,
@@ -190,7 +190,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
   const handleDelete = async (): Promise<void> => {
     if (value && !value.startsWith('data:')) {
       try {
-        await window.electron.image.delete(value)
+        await window.api.image.delete(value)
       } catch (error) {
         console.error('Failed to delete image:', error)
       }
@@ -203,7 +203,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
     if (disabled) return
     setLoading(true)
     try {
-      const result = await window.electron.image.selectAndUpload({
+      const result = await window.api.image.selectAndUpload({
         maxSize: finalConfig.maxSize,
         allowedFormats: finalConfig.allowedFormats,
         maxWidth: finalConfig.maxWidth,

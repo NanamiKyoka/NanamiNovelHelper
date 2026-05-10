@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VSCode 风格编辑器标签页组件
  */
 
@@ -155,7 +155,7 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
         }
 
         const baseName = tab.name.replace(/\.[^.]+$/, '')
-        const filePath = await window.electron.file.showSaveDialog({
+        const filePath = await window.api.file.showSaveDialog({
           title: '导出为纯文本',
           defaultPath: `${baseName}.txt`,
           filters: [
@@ -167,7 +167,7 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
         if (!filePath) return
 
         const plainText = stripHtmlTags(content)
-        const success = await window.electron.file.exportTxt(filePath, plainText)
+        const success = await window.api.file.exportTxt(filePath, plainText)
 
         if (success) {
           message.success('导出成功')

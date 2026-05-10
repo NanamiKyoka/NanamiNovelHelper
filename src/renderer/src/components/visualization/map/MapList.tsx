@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 地图列表组件
  * 展示所有地图，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -300,7 +300,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
   // 加载更多地图（当点击导入按钮时）
   const handleImportClick = useCallback(async () => {
     try {
-      const filePath = await window.electron.map.showImportDialog()
+      const filePath = await window.api.map.showImportDialog()
       if (filePath) {
         const importedMap = await importMap(filePath)
         if (importedMap) {

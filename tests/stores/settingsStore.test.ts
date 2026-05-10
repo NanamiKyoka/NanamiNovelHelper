@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 
-const mockElectronApi = {
+const mockApi = {
   settings: {
     project: {
       update: vi.fn().mockImplementation((updates: Record<string, unknown>) => {
@@ -17,7 +17,7 @@ const mockElectronApi = {
   }
 }
 
-vi.stubGlobal('electron', mockElectronApi)
+vi.stubGlobal('api', mockApi)
 
 describe('自定义板块添加功能', () => {
   beforeEach(() => {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 关系图状态管理
  */
 
@@ -84,7 +84,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const graphs = await window.electron.relationship.getList()
+      const graphs = await window.api.relationship.getList()
       set({ graphs, isLoading: false })
     } catch (error) {
       const errorMessage = handleError(error, { fallbackMessage: '加载关系图列表失败' })
@@ -95,7 +95,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   loadGraph: async (graphId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const graph = await window.electron.relationship.get(graphId)
+      const graph = await window.api.relationship.get(graphId)
       set({ currentGraph: graph, isLoading: false })
     } catch (error) {
       const errorMessage = handleError(error, { fallbackMessage: '加载关系图失败' })
@@ -106,7 +106,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   createGraph: async (options: CreateRelationshipGraphOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const graph = await window.electron.relationship.create(options)
+      const graph = await window.api.relationship.create(options)
       set(state => ({
         graphs: [
           ...state.graphs,
@@ -137,7 +137,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
 
   updateGraph: async (graphId: string, updates: UpdateRelationshipGraphOptions) => {
     try {
-      const updatedGraph = await window.electron.relationship.update(graphId, updates)
+      const updatedGraph = await window.api.relationship.update(graphId, updates)
       if (updatedGraph) {
         set(state => ({
           graphs: state.graphs.map(g =>
@@ -167,7 +167,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
 
   deleteGraph: async (graphId: string) => {
     try {
-      const success = await window.electron.relationship.delete(graphId)
+      const success = await window.api.relationship.delete(graphId)
       if (success) {
         set(state => ({
           graphs: state.graphs.filter(g => g.id !== graphId),
@@ -190,7 +190,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return null
 
     try {
-      const newNode = await window.electron.relationship.addNode(currentGraph.id, node)
+      const newNode = await window.api.relationship.addNode(currentGraph.id, node)
       if (newNode) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -216,7 +216,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.relationship.updateNode(
+      const updatedNode = await window.api.relationship.updateNode(
         currentGraph.id,
         nodeId,
         updates
@@ -243,7 +243,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const success = await window.electron.relationship.deleteNode(currentGraph.id, nodeId)
+      const success = await window.api.relationship.deleteNode(currentGraph.id, nodeId)
       if (success) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -271,7 +271,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return null
 
     try {
-      const newEdge = await window.electron.relationship.addEdge(currentGraph.id, edge)
+      const newEdge = await window.api.relationship.addEdge(currentGraph.id, edge)
       if (newEdge) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -297,7 +297,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedEdge = await window.electron.relationship.updateEdge(
+      const updatedEdge = await window.api.relationship.updateEdge(
         currentGraph.id,
         edgeId,
         updates
@@ -324,7 +324,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const success = await window.electron.relationship.deleteEdge(currentGraph.id, edgeId)
+      const success = await window.api.relationship.deleteEdge(currentGraph.id, edgeId)
       if (success) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -359,7 +359,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return null
 
     try {
-      const newType = await window.electron.relationship.addRelationType(currentGraph.id, type)
+      const newType = await window.api.relationship.addRelationType(currentGraph.id, type)
       if (newType) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -384,7 +384,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedType = await window.electron.relationship.updateRelationType(
+      const updatedType = await window.api.relationship.updateRelationType(
         currentGraph.id,
         typeId,
         updates
@@ -413,7 +413,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const success = await window.electron.relationship.deleteRelationType(currentGraph.id, typeId)
+      const success = await window.api.relationship.deleteRelationType(currentGraph.id, typeId)
       if (success) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -439,7 +439,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const thumbnailPath = await window.electron.relationship.saveThumbnail(
+      const thumbnailPath = await window.api.relationship.saveThumbnail(
         currentGraph.id,
         dataUrl
       )
@@ -461,7 +461,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   // 导入导出
   exportGraph: async (graphId: string) => {
     try {
-      return await window.electron.relationship.export(graphId)
+      return await window.api.relationship.export(graphId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出关系图失败'
       console.error('Failed to export relationship graph:', error)
@@ -472,7 +472,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
 
   importGraph: async (jsonContent: string) => {
     try {
-      const graph = await window.electron.relationship.import(jsonContent)
+      const graph = await window.api.relationship.import(jsonContent)
       if (graph) {
         set(state => ({
           graphs: [
@@ -535,7 +535,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   // 重新排序关系图
   reorderGraphs: async (graphIds: string[]): Promise<boolean> => {
     try {
-      const success = await window.electron.relationship.reorderGraphs(graphIds)
+      const success = await window.api.relationship.reorderGraphs(graphIds)
       if (success) {
         // 按新顺序更新本地状态
         set(state => {

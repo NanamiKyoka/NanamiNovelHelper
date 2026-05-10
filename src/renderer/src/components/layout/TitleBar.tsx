@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import {
   MinusOutlined,
   FullscreenOutlined,
@@ -13,30 +13,30 @@ function TitleBar(): JSX.Element {
 
   useEffect(() => {
     // 监听最大化状态变化
-    window.electron?.window?.onMaximizeChange?.(maximized => {
+    window.api?.window?.onMaximizeChange?.(maximized => {
       setIsMaximized(maximized)
     })
 
     // 初始状态
-    window.electron?.window?.isMaximized?.().then(maximized => {
+    window.api?.window?.isMaximized?.().then(maximized => {
       setIsMaximized(maximized)
     })
 
     return () => {
-      window.electron?.window?.removeMaximizeListener?.()
+      window.api?.window?.removeMaximizeListener?.()
     }
   }, [])
 
   const handleMinimize = () => {
-    window.electron?.window?.minimize?.()
+    window.api?.window?.minimize?.()
   }
 
   const handleMaximize = () => {
-    window.electron?.window?.maximize?.()
+    window.api?.window?.maximize?.()
   }
 
   const handleClose = () => {
-    window.electron?.window?.close?.()
+    window.api?.window?.close?.()
   }
 
   return (

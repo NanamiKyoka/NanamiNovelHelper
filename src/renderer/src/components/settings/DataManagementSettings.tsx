@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 数据管理设置组件
  */
 
@@ -79,7 +79,7 @@ export function DataManagementSettings(): JSX.Element {
           ),
           onOk: async () => {
             try {
-              await window.electron.settings.global.update(data.settings)
+              await window.api.settings.global.update(data.settings)
               message.success('设置已导入，部分设置需要重启应用生效')
             } catch (_error) {
               message.error('导入失败')

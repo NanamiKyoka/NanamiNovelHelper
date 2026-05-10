@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 时间线状态管理
  */
 
@@ -110,7 +110,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const timelines = await window.electron.timeline.getList()
+      const timelines = await window.api.timeline.getList()
       set({ timelines, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载时间线列表失败'
@@ -122,7 +122,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   loadTimeline: async (timelineId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const timeline = await window.electron.timeline.get(timelineId)
+      const timeline = await window.api.timeline.get(timelineId)
       set({ currentTimeline: timeline, isLoading: false, selectedNodeIds: [] })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载时间线失败'
@@ -134,7 +134,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   createTimeline: async (options: CreateTimelineOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const timeline = await window.electron.timeline.create(options)
+      const timeline = await window.api.timeline.create(options)
       set(state => ({
         timelines: [
           {
@@ -164,7 +164,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
   updateTimeline: async (timelineId: string, updates: UpdateTimelineOptions) => {
     try {
-      const updatedTimeline = await window.electron.timeline.update(timelineId, updates)
+      const updatedTimeline = await window.api.timeline.update(timelineId, updates)
       if (updatedTimeline) {
         set(state => ({
           timelines: state.timelines.map(t =>
@@ -194,7 +194,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
   deleteTimeline: async (timelineId: string) => {
     try {
-      const success = await window.electron.timeline.delete(timelineId)
+      const success = await window.api.timeline.delete(timelineId)
       if (success) {
         set(state => ({
           timelines: state.timelines.filter(t => t.id !== timelineId),
@@ -218,7 +218,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     if (!currentTimeline) return null
 
     try {
-      const newNode = await window.electron.timeline.addNode(currentTimeline.id, node)
+      const newNode = await window.api.timeline.addNode(currentTimeline.id, node)
       if (newNode) {
         // 记录历史
         get().pushHistory({
@@ -255,7 +255,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNode = (currentTimeline.nodes || []).find(n => n.id === nodeId)
 
     try {
-      const updatedNode = await window.electron.timeline.updateNode(
+      const updatedNode = await window.api.timeline.updateNode(
         currentTimeline.id,
         nodeId,
         updates
@@ -294,7 +294,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNode = (currentTimeline.nodes || []).find(n => n.id === nodeId)
 
     try {
-      const success = await window.electron.timeline.deleteNode(currentTimeline.id, nodeId)
+      const success = await window.api.timeline.deleteNode(currentTimeline.id, nodeId)
       if (success) {
         // 记录历史
         get().pushHistory({
@@ -330,7 +330,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNodes = (currentTimeline.nodes || []).filter(n => nodeIds.includes(n.id))
 
     try {
-      const deletedCount = await window.electron.timeline.batchDeleteNodes(
+      const deletedCount = await window.api.timeline.batchDeleteNodes(
         currentTimeline.id,
         nodeIds
       )
@@ -372,7 +372,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldOrder = oldNode?.order ?? 0
 
     try {
-      const updatedNodes = await window.electron.timeline.moveNode(
+      const updatedNodes = await window.api.timeline.moveNode(
         currentTimeline.id,
         nodeId,
         newOrder
@@ -411,7 +411,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNodes = (currentTimeline.nodes || []).filter(n => nodeIds.includes(n.id))
 
     try {
-      const updatedNodes = await window.electron.timeline.batchMoveNodes(
+      const updatedNodes = await window.api.timeline.batchMoveNodes(
         currentTimeline.id,
         nodeIds,
         targetOrder
@@ -450,7 +450,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const oldNodes = [...currentTimeline.nodes]
 
     try {
-      const updatedTimeline = await window.electron.timeline.updateNodes(currentTimeline.id, nodes)
+      const updatedTimeline = await window.api.timeline.updateNodes(currentTimeline.id, nodes)
       if (updatedTimeline) {
         // 记录历史
         get().pushHistory({
@@ -481,7 +481,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 分支管理
   createBranch: async (parentTimelineId: string, branchFromNodeId: string, name?: string) => {
     try {
-      const branchTimeline = await window.electron.timeline.createBranch(
+      const branchTimeline = await window.api.timeline.createBranch(
         parentTimelineId,
         branchFromNodeId,
         name
@@ -540,7 +540,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     targetNodeId?: string
   ) => {
     try {
-      const success = await window.electron.timeline.mergeBranch(
+      const success = await window.api.timeline.mergeBranch(
         branchTimelineId,
         targetTimelineId,
         targetNodeId
@@ -573,7 +573,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
   getBranches: async (parentTimelineId: string) => {
     try {
-      return await window.electron.timeline.getBranches(parentTimelineId)
+      return await window.api.timeline.getBranches(parentTimelineId)
     } catch (error) {
       console.error('Failed to get branches:', error)
       return []
@@ -612,7 +612,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 撤销创建 = 删除节点
         if (action.afterData) {
           const node = action.afterData as TimelineNode
-          window.electron.timeline.deleteNode(currentTimeline.id, node.id)
+          window.api.timeline.deleteNode(currentTimeline.id, node.id)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -629,7 +629,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 撤销删除 = 重新添加节点
         if (action.beforeData) {
           const node = action.beforeData as TimelineNode
-          window.electron.timeline.addNode(currentTimeline.id, {
+          window.api.timeline.addNode(currentTimeline.id, {
             title: node.title,
             description: node.description,
             timeInfo: node.timeInfo,
@@ -653,7 +653,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 撤销更新 = 恢复旧数据
         if (action.beforeData) {
           const node = action.beforeData as TimelineNode
-          window.electron.timeline.updateNode(currentTimeline.id, node.id, node)
+          window.api.timeline.updateNode(currentTimeline.id, node.id, node)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -669,7 +669,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 撤销移动 = 恢复旧顺序
         if (action.beforeData && 'nodes' in action.beforeData) {
           const nodes = action.beforeData as TimelineNode[]
-          window.electron.timeline.updateNodes(currentTimeline.id, nodes)
+          window.api.timeline.updateNodes(currentTimeline.id, nodes)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -686,7 +686,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         if (action.beforeData) {
           const nodes = action.beforeData as TimelineNode[]
           nodes.forEach(node => {
-            window.electron.timeline.addNode(currentTimeline.id, {
+            window.api.timeline.addNode(currentTimeline.id, {
               title: node.title,
               description: node.description,
               timeInfo: node.timeInfo,
@@ -717,7 +717,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 重做创建
         if (action.afterData) {
           const node = action.afterData as TimelineNode
-          window.electron.timeline.addNode(currentTimeline.id, {
+          window.api.timeline.addNode(currentTimeline.id, {
             title: node.title,
             description: node.description,
             timeInfo: node.timeInfo,
@@ -733,7 +733,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 重做删除
         if (action.beforeData) {
           const node = action.beforeData as TimelineNode
-          window.electron.timeline.deleteNode(currentTimeline.id, node.id)
+          window.api.timeline.deleteNode(currentTimeline.id, node.id)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -750,7 +750,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 重做更新
         if (action.afterData) {
           const node = action.afterData as TimelineNode
-          window.electron.timeline.updateNode(currentTimeline.id, node.id, node)
+          window.api.timeline.updateNode(currentTimeline.id, node.id, node)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -766,7 +766,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
         // 重做移动
         if (action.afterData && 'nodes' in action.afterData) {
           const nodes = action.afterData as TimelineNode[]
-          window.electron.timeline.updateNodes(currentTimeline.id, nodes)
+          window.api.timeline.updateNodes(currentTimeline.id, nodes)
           set(state => ({
             currentTimeline: state.currentTimeline
               ? {
@@ -831,7 +831,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     if (!currentTimeline) return
 
     try {
-      const thumbnailPath = await window.electron.timeline.saveThumbnail(
+      const thumbnailPath = await window.api.timeline.saveThumbnail(
         currentTimeline.id,
         dataUrl
       )
@@ -853,7 +853,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 导入导出
   exportTimeline: async (timelineId: string) => {
     try {
-      return await window.electron.timeline.export(timelineId)
+      return await window.api.timeline.export(timelineId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出时间线失败'
       console.error('Failed to export timeline:', error)
@@ -864,7 +864,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
   exportTimelineAsMarkdown: async (timelineId: string) => {
     try {
-      return await window.electron.timeline.exportMarkdown(timelineId)
+      return await window.api.timeline.exportMarkdown(timelineId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出时间线为 Markdown 失败'
       console.error('Failed to export timeline as markdown:', error)
@@ -875,7 +875,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
 
   importTimeline: async (jsonContent: string) => {
     try {
-      const timeline = await window.electron.timeline.import(jsonContent)
+      const timeline = await window.api.timeline.import(jsonContent)
       if (timeline) {
         set(state => ({
           timelines: [
@@ -944,7 +944,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 重新排序时间线列表
   reorderTimelines: async (timelineIds: string[]) => {
     try {
-      const success = await window.electron.timeline.reorder(timelineIds)
+      const success = await window.api.timeline.reorder(timelineIds)
       if (success) {
         // 更新本地状态顺序
         set(state => ({

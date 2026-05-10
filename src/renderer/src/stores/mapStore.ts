@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 地图编辑器状态管理
  *
  * 功能：
@@ -291,7 +291,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const rawMaps = await window.electron.map.getList()
+      const rawMaps = await window.api.map.getList()
       const maps = (rawMaps as Record<string, unknown>[]).map(normalizeMapMeta)
       set({ maps, isLoading: false })
     } catch (error) {
@@ -303,7 +303,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   loadMap: async (mapId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const rawMap = await window.electron.map.get(mapId)
+      const rawMap = await window.api.map.get(mapId)
       const map = normalizeMapData(rawMap as Record<string, unknown>)
       set({
         currentMap: map,
@@ -344,7 +344,7 @@ export const useMapStore = create<MapState>((set, get) => ({
         chunkCount: 0,
         connectionCount: 0
       }
-      const rawNewMap = await window.electron.map.create(createData)
+      const rawNewMap = await window.api.map.create(createData)
       const newMap = normalizeMapData(rawNewMap as Record<string, unknown>)
       await get().loadList()
       set({ isLoading: false })
@@ -359,7 +359,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   updateMap: async (mapId: string, updates: UpdateMapOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const rawUpdatedMap = await window.electron.map.update(mapId, updates)
+      const rawUpdatedMap = await window.api.map.update(mapId, updates)
       if (rawUpdatedMap) {
         const updatedMap = normalizeMapData(rawUpdatedMap as Record<string, unknown>)
         set({ currentMap: updatedMap })
@@ -375,7 +375,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   deleteMap: async (mapId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const success = await window.electron.map.delete(mapId)
+      const success = await window.api.map.delete(mapId)
       if (success) {
         if (get().currentMap?.id === mapId) {
           set({ currentMap: null })
@@ -1199,7 +1199,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (!currentMap) return
 
     try {
-      await window.electron.map.update(currentMap.id, {
+      await window.api.map.update(currentMap.id, {
         data: currentMap.data,
         updatedAt: new Date().toISOString()
       })
@@ -1263,7 +1263,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   reorderMaps: async (mapIds: string[]) => {
     try {
-      const success = await window.electron.map.reorder(mapIds)
+      const success = await window.api.map.reorder(mapIds)
       if (success) {
         const reorderedMaps = mapIds
           .map(id => get().maps.find(m => m.id === id))
@@ -1282,7 +1282,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (!currentMap) return
 
     try {
-      await window.electron.map.update(currentMap.id, { thumbnail: dataUrl })
+      await window.api.map.update(currentMap.id, { thumbnail: dataUrl })
       set({
         currentMap: {
           ...currentMap,
@@ -1297,7 +1297,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   exportMap: async (mapId: string) => {
     try {
-      const map = await window.electron.map.get(mapId)
+      const map = await window.api.map.get(mapId)
       if (map) {
         return JSON.stringify(map, null, 2)
       }
@@ -1327,7 +1327,7 @@ export const useMapStore = create<MapState>((set, get) => ({
         connectionCount: mapData.data?.connections?.length || 0
       }
 
-      const rawNewMap = await window.electron.map.create(createData)
+      const rawNewMap = await window.api.map.create(createData)
       const newMap = normalizeMapData(rawNewMap as Record<string, unknown>)
       await get().loadList()
       return newMap

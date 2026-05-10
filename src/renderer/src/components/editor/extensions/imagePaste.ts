@@ -1,4 +1,4 @@
-import { Extension } from '@tiptap/core'
+﻿import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { TextSelection } from '@tiptap/pm/state'
 
@@ -140,7 +140,7 @@ export async function uploadImageOriginal(file: File): Promise<string | null> {
       }
 
       try {
-        const result = await window.electron.image.uploadFromBase64(base64, {
+        const result = await window.api.image.uploadFromBase64(base64, {
           maxSize: 10 * 1024 * 1024,
           allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
           maxWidth: 4096,
@@ -149,7 +149,7 @@ export async function uploadImageOriginal(file: File): Promise<string | null> {
         })
 
         if (result) {
-          const storedBase64 = await window.electron.image.readAsBase64(result.path)
+          const storedBase64 = await window.api.image.readAsBase64(result.path)
           resolve(storedBase64)
         } else {
           resolve(base64)

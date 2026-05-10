@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 时间线列表组件
  * 展示所有时间线，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -229,14 +229,14 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   const handleExport = useCallback(
     async (timeline: TimelineMeta, format: 'json' | 'markdown' = 'json') => {
       try {
-        const filePath = await window.electron.timeline.showExportDialog(timeline.name, format)
+        const filePath = await window.api.timeline.showExportDialog(timeline.name, format)
         if (filePath) {
           const content =
             format === 'markdown'
               ? await exportTimelineAsMarkdown(timeline.id)
               : await exportTimeline(timeline.id)
           if (content) {
-            await window.electron.timeline.saveExportFile(filePath, content)
+            await window.api.timeline.saveExportFile(filePath, content)
             message.success('导出成功')
           }
         }
@@ -250,9 +250,9 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
 
   const handleImport = async () => {
     try {
-      const filePath = await window.electron.timeline.showImportDialog()
+      const filePath = await window.api.timeline.showImportDialog()
       if (filePath) {
-        const content = await window.electron.timeline.readImportFile(filePath)
+        const content = await window.api.timeline.readImportFile(filePath)
         if (content) {
           const timeline = await importTimeline(content)
           if (timeline) {

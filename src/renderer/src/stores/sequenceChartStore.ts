@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 事序图状态管理
  */
 
@@ -161,7 +161,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const charts = await window.electron.sequenceChart.getList()
+      const charts = await window.api.sequenceChart.getList()
       set({ charts, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载事序图列表失败'
@@ -173,7 +173,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   loadChart: async (chartId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const chart = await window.electron.sequenceChart.get(chartId)
+      const chart = await window.api.sequenceChart.get(chartId)
       set({ currentChart: chart, isLoading: false, selectedEventIds: [], editingEventId: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载事序图失败'
@@ -185,7 +185,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   createChart: async (options: CreateSequenceChartOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const chart = await window.electron.sequenceChart.create(options)
+      const chart = await window.api.sequenceChart.create(options)
       set(state => ({
         charts: [
           {
@@ -216,7 +216,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   updateChart: async (chartId: string, updates: UpdateSequenceChartOptions) => {
     try {
-      const updatedChart = await window.electron.sequenceChart.update(chartId, updates)
+      const updatedChart = await window.api.sequenceChart.update(chartId, updates)
       if (updatedChart) {
         set(state => ({
           charts: state.charts.map(c =>
@@ -246,7 +246,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   deleteChart: async (chartId: string) => {
     try {
-      const success = await window.electron.sequenceChart.delete(chartId)
+      const success = await window.api.sequenceChart.delete(chartId)
       if (success) {
         set(state => ({
           charts: state.charts.filter(c => c.id !== chartId),
@@ -276,7 +276,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         ? Math.max(...events.map(e => e.order ?? 0))
         : -1
       const newOrder = maxOrder + 1
-      const newEvent = await window.electron.sequenceChart.addEvent(currentChart.id, {
+      const newEvent = await window.api.sequenceChart.addEvent(currentChart.id, {
         ...event,
         order: newOrder
       })
@@ -317,7 +317,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
     try {
       get()._pushHistory()
-      const updatedEvent = await window.electron.sequenceChart.updateEvent(
+      const updatedEvent = await window.api.sequenceChart.updateEvent(
         currentChart.id,
         eventId,
         updates
@@ -345,7 +345,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
     try {
       get()._pushHistory()
-      const success = await window.electron.sequenceChart.deleteEvent(currentChart.id, eventId)
+      const success = await window.api.sequenceChart.deleteEvent(currentChart.id, eventId)
       if (success) {
         set(state => ({
           currentChart: state.currentChart
@@ -371,7 +371,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
     try {
       get()._pushHistory()
-      const deletedCount = await window.electron.sequenceChart.batchDeleteEvents(
+      const deletedCount = await window.api.sequenceChart.batchDeleteEvents(
         currentChart.id,
         eventIds
       )
@@ -401,7 +401,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedEvents = await window.electron.sequenceChart.moveEvent(
+      const updatedEvents = await window.api.sequenceChart.moveEvent(
         currentChart.id,
         eventId,
         newOrder
@@ -428,7 +428,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedEvent = await window.electron.sequenceChart.updateEventTime(
+      const updatedEvent = await window.api.sequenceChart.updateEventTime(
         currentChart.id,
         eventId,
         cellStart,
@@ -467,7 +467,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedChart = await window.electron.sequenceChart.updateEvents(currentChart.id, events)
+      const updatedChart = await window.api.sequenceChart.updateEvents(currentChart.id, events)
       if (updatedChart) {
         set({ currentChart: updatedChart })
       }
@@ -492,7 +492,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return null
 
     try {
-      const newType = await window.electron.sequenceChart.addEventType(currentChart.id, type)
+      const newType = await window.api.sequenceChart.addEventType(currentChart.id, type)
       if (newType) {
         set(state => ({
           currentChart: state.currentChart
@@ -517,7 +517,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedType = await window.electron.sequenceChart.updateEventType(
+      const updatedType = await window.api.sequenceChart.updateEventType(
         currentChart.id,
         typeId,
         updates
@@ -546,7 +546,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const success = await window.electron.sequenceChart.deleteEventType(currentChart.id, typeId)
+      const success = await window.api.sequenceChart.deleteEventType(currentChart.id, typeId)
       if (success) {
         set(state => ({
           currentChart: state.currentChart
@@ -690,7 +690,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const thumbnailPath = await window.electron.sequenceChart.saveThumbnail(
+      const thumbnailPath = await window.api.sequenceChart.saveThumbnail(
         currentChart.id,
         dataUrl
       )
@@ -712,7 +712,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 导入导出
   exportChart: async (chartId: string) => {
     try {
-      return await window.electron.sequenceChart.export(chartId)
+      return await window.api.sequenceChart.export(chartId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出事序图失败'
       console.error('Failed to export sequence chart:', error)
@@ -723,7 +723,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   exportChartAsMarkdown: async (chartId: string) => {
     try {
-      return await window.electron.sequenceChart.exportMarkdown(chartId)
+      return await window.api.sequenceChart.exportMarkdown(chartId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出事序图为 Markdown 失败'
       console.error('Failed to export sequence chart as markdown:', error)
@@ -734,7 +734,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
   importChart: async (jsonContent: string) => {
     try {
-      const chart = await window.electron.sequenceChart.import(jsonContent)
+      const chart = await window.api.sequenceChart.import(jsonContent)
       if (chart) {
         set(state => ({
           charts: [
@@ -769,7 +769,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     if (!currentChart) return
 
     try {
-      const updatedChart = await window.electron.sequenceChart.update(currentChart.id, {
+      const updatedChart = await window.api.sequenceChart.update(currentChart.id, {
         axisConfig: config
       })
       if (updatedChart) {
@@ -851,7 +851,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 重新排序事序图
   reorderCharts: async (chartIds: string[]) => {
     try {
-      const success = await window.electron.sequenceChart.reorderCharts(chartIds)
+      const success = await window.api.sequenceChart.reorderCharts(chartIds)
       if (success) {
         set(state => {
           const reorderedCharts = chartIds

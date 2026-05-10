@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 模板编辑器组件（全屏模式）
  */
 
@@ -170,7 +170,7 @@ function TemplateEditor({
 
   useEffect(() => {
     if (apiConfig.provider) {
-      window.electron.aiAssistant.getAvailableModels(apiConfig.provider).then(models => {
+      window.api.aiAssistant.getAvailableModels(apiConfig.provider).then(models => {
         setAvailableModels(models)
       })
     } else {

@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type { VocabularyType, VocabularyEntry, VocabularySettings } from '@shared/vocabulary'
 
 interface VocabularyState {
@@ -67,7 +67,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
   loadTypes: async () => {
     set({ isLoading: true, error: null })
     try {
-      const types = await window.electron.vocabulary.loadTypes()
+      const types = await window.api.vocabulary.loadTypes()
       set({ types: types || [], isLoading: false, isLoaded: true, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载词汇类型失败'
@@ -78,7 +78,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   saveTypes: async (types: VocabularyType[]) => {
     try {
-      await window.electron.vocabulary.saveTypes(types)
+      await window.api.vocabulary.saveTypes(types)
       set({ types })
     } catch (error) {
       console.error('Failed to save vocabulary types:', error)
@@ -88,7 +88,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   addType: async type => {
     try {
-      const newType = await window.electron.vocabulary.addType(type)
+      const newType = await window.api.vocabulary.addType(type)
       set(state => ({ types: [...state.types, newType] }))
       return newType
     } catch (error) {
@@ -99,7 +99,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   updateType: async (id, updates) => {
     try {
-      const updated = await window.electron.vocabulary.updateType(id, updates)
+      const updated = await window.api.vocabulary.updateType(id, updates)
       if (updated) {
         set(state => ({
           types: state.types.map(t => (t.id === id ? updated : t))
@@ -113,7 +113,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   deleteType: async id => {
     try {
-      const success = await window.electron.vocabulary.deleteType(id)
+      const success = await window.api.vocabulary.deleteType(id)
       if (success) {
         set(state => ({
           types: state.types.filter(t => t.id !== id),
@@ -144,7 +144,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
     set({ types: reorderedTypes })
 
     try {
-      await window.electron.vocabulary.saveTypes(reorderedTypes)
+      await window.api.vocabulary.saveTypes(reorderedTypes)
     } catch (error) {
       console.error('Failed to reorder vocabulary types:', error)
       // 回滚到原始状态
@@ -157,7 +157,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
   loadEntries: async (typeId?: string) => {
     set({ isLoading: true, error: null })
     try {
-      const entries = await window.electron.vocabulary.loadEntries(typeId)
+      const entries = await window.api.vocabulary.loadEntries(typeId)
       const safeEntries = entries || []
       if (typeId) {
         set(state => ({
@@ -178,7 +178,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   saveEntries: async (typeId, entries) => {
     try {
-      await window.electron.vocabulary.saveEntries(typeId, entries)
+      await window.api.vocabulary.saveEntries(typeId, entries)
       set(state => ({
         entries: [...state.entries.filter(e => e.typeId !== typeId), ...entries]
       }))
@@ -190,7 +190,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   addEntry: async entry => {
     try {
-      const newEntry = await window.electron.vocabulary.addEntry(entry)
+      const newEntry = await window.api.vocabulary.addEntry(entry)
       set(state => ({ entries: [...state.entries, newEntry] }))
       return newEntry
     } catch (error) {
@@ -201,7 +201,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   updateEntry: async (id, updates) => {
     try {
-      const updated = await window.electron.vocabulary.updateEntry(id, updates)
+      const updated = await window.api.vocabulary.updateEntry(id, updates)
       if (updated) {
         set(state => ({
           entries: state.entries.map(e => (e.id === id ? updated : e))
@@ -215,7 +215,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   deleteEntry: async id => {
     try {
-      const success = await window.electron.vocabulary.deleteEntry(id)
+      const success = await window.api.vocabulary.deleteEntry(id)
       if (success) {
         set(state => ({
           entries: state.entries.filter(e => e.id !== id)
@@ -247,7 +247,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
     }))
 
     try {
-      await window.electron.vocabulary.saveEntries(typeId, reorderedEntries)
+      await window.api.vocabulary.saveEntries(typeId, reorderedEntries)
     } catch (error) {
       console.error('Failed to reorder vocabulary entries:', error)
       // 回滚到原始状态
@@ -261,7 +261,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
   // 关联文件操作
   createLinkedFile: async entry => {
     try {
-      const filePath = await window.electron.vocabulary.createLinkedFile(entry)
+      const filePath = await window.api.vocabulary.createLinkedFile(entry)
       if (filePath) {
         set(state => ({
           entries: state.entries.map(e =>
@@ -278,7 +278,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   linkFile: async (entryId, filePath) => {
     try {
-      const success = await window.electron.vocabulary.linkFile(entryId, filePath)
+      const success = await window.api.vocabulary.linkFile(entryId, filePath)
       if (success) {
         set(state => ({
           entries: state.entries.map(e =>
@@ -294,7 +294,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   unlinkFile: async entryId => {
     try {
-      const success = await window.electron.vocabulary.unlinkFile(entryId)
+      const success = await window.api.vocabulary.unlinkFile(entryId)
       if (success) {
         set(state => ({
           entries: state.entries.map(e =>
@@ -311,7 +311,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
   // 设置操作
   loadSettings: async () => {
     try {
-      const settings = await window.electron.vocabulary.getSettings()
+      const settings = await window.api.vocabulary.getSettings()
       set({ settings })
     } catch (error) {
       console.error('Failed to load vocabulary settings:', error)
@@ -320,7 +320,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
 
   updateSettings: async settings => {
     try {
-      await window.electron.vocabulary.updateSettings(settings)
+      await window.api.vocabulary.updateSettings(settings)
       set(state => ({ settings: { ...state.settings, ...settings } }))
     } catch (error) {
       console.error('Failed to update vocabulary settings:', error)

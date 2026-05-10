@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Git 面板主组件
  */
 
@@ -58,7 +58,7 @@ function GitPanel(): JSX.Element {
 
     setIniting(true)
     try {
-      const result = await window.electron.git.init({
+      const result = await window.api.git.init({
         path: currentProject.path,
         defaultBranch: 'main',
         initialCommit: '初始化项目'

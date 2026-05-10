@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 搜索面板组件
  * 类似 VSCode 的侧边栏搜索功能
  */
@@ -69,7 +69,7 @@ function SearchPanel(): JSX.Element {
     setExpandedFiles(new Set())
 
     try {
-      const result: SearchResult = await window.electron.search.search({
+      const result: SearchResult = await window.api.search.search({
         query: searchText,
         caseSensitive,
         wholeWord,
@@ -144,7 +144,7 @@ function SearchPanel(): JSX.Element {
       const replacedFiles: string[] = []
 
       for (const file of results) {
-        const result = await window.electron.search.replace(
+        const result = await window.api.search.replace(
           file.filePath,
           searchText,
           replaceText,

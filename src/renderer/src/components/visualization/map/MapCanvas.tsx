@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Application, Container, Graphics, Text, FederatedPointerEvent, Color } from 'pixi.js'
-// 导入 unsafe-eval 支持以解决 Electron 环境下的 CSP 限制
+// 导入 unsafe-eval 支持以解决 Tauri 环境下的 CSP 限制
 import 'pixi.js/unsafe-eval'
 import { useMapStore } from '@renderer/stores/mapStore'
 import { useThemeStore } from '@renderer/stores/themeStore'

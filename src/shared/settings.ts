@@ -1,7 +1,7 @@
 /**
  * 设置类型定义（共享）
  *
- * 全局设置（跨项目共享，存 electron-store）和项目设置（跟随项目，存 .novelhelper/settings.json5）
+ * 全局设置（跨项目共享，存 Tauri Store）和项目设置（跟随项目，存 .novelhelper/settings.json5）
  * 所有设置项都有默认值，避免 undefined 导致运行时错误
  */
 
@@ -157,7 +157,7 @@ export const DEFAULT_GLOBAL_LAYOUT_SETTINGS: GlobalLayoutSettings = {
 
 /**
  * 全局设置
- * 存储在 electron-store，路径：
+ * 存储在 Tauri Store，路径：
  * - Windows: %APPDATA%/nanami-novel-helper/
  * - macOS: ~/Library/Application Support/nanami-novel-helper/
  * - Linux: ~/.config/nanami-novel-helper/

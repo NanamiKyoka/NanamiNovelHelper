@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type {
   FileNodeData,
   FlattenedNode,
@@ -232,7 +232,7 @@ function debouncedSaveExpandedFolders(expandedKeys: Set<string>) {
     clearTimeout(saveExpandedFoldersTimer)
   }
   saveExpandedFoldersTimer = setTimeout(() => {
-    window.electron.settings.project.setExpandedFolders(Array.from(expandedKeys))
+    window.api.settings.project.setExpandedFolders(Array.from(expandedKeys))
     saveExpandedFoldersTimer = null
   }, 500)
 }
@@ -264,11 +264,11 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       const { sortOptions } = get()
       set({ loading: true, error: null })
       try {
-        const showHiddenFiles = await window.electron.settings.global.getShowHiddenFiles()
-        const hiddenItems = await window.electron.settings.project.getHiddenItems()
-        const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+        const showHiddenFiles = await window.api.settings.global.getShowHiddenFiles()
+        const hiddenItems = await window.api.settings.project.getHiddenItems()
+        const tree = await window.api.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
 
-        const savedExpandedFolders = await window.electron.settings.project.getExpandedFolders()
+        const savedExpandedFolders = await window.api.settings.project.getExpandedFolders()
 
         let expandedKeys: Set<string>
         if (savedExpandedFolders === null) {
@@ -299,9 +299,9 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
         do {
           needsTreeRefresh = false
           const { sortOptions } = get()
-          const showHiddenFiles = await window.electron.settings.global.getShowHiddenFiles()
-          const hiddenItems = await window.electron.settings.project.getHiddenItems()
-          const tree = await window.electron.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+          const showHiddenFiles = await window.api.settings.global.getShowHiddenFiles()
+          const hiddenItems = await window.api.settings.project.getHiddenItems()
+          const tree = await window.api.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
           set(state => ({
             roots: tree,
             loading: false,
@@ -414,7 +414,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       pathParts[pathParts.length - 1] = newName.trim()
       const newPath = pathParts.join('/')
 
-      await window.electron.file.rename(node.path, newPath)
+      await window.api.file.rename(node.path, newPath)
       set({ editingKey: null, editingName: '' })
       await refreshTree()
 
@@ -456,9 +456,9 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       const newPath = parentPath ? `${parentPath}/${name.trim()}` : name.trim()
 
       if (newItemType === 'folder') {
-        await window.electron.file.mkdir(newPath, true)
+        await window.api.file.mkdir(newPath, true)
       } else {
-        await window.electron.file.write(newPath, '', { createParentDir: true })
+        await window.api.file.write(newPath, '', { createParentDir: true })
       }
       set({ newItemParent: undefined, newItemName: '' })
       await refreshTree()
@@ -474,7 +474,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       const deletedPaths = nodes.map(n => n.path)
 
       for (const node of nodes) {
-        await window.electron.file.delete(node.path, {
+        await window.api.file.delete(node.path, {
           recursive: true,
           useTrash: !permanent
         })
@@ -512,9 +512,9 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
         const destination = targetPath ? `${targetPath}/${node.name}` : node.name
 
         if (clipboard.operation === 'copy') {
-          await window.electron.file.copy(node.path, destination, false)
+          await window.api.file.copy(node.path, destination, false)
         } else {
-          await window.electron.file.rename(node.path, destination)
+          await window.api.file.rename(node.path, destination)
         }
       }
 
@@ -581,7 +581,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
 
     updateGitStatus: (changes: { path: string; statusShort: string; staged: boolean }[]) => {
       const newStatus = new Map<string, string>()
-      const isWindows = window.electron.platform === 'windows'
+      const isWindows = window.api.platform === 'windows'
       const normalizePath = (p: string) => (isWindows ? p.replace(/\//g, '\\') : p)
 
       const statusPriority: Record<string, number> = {

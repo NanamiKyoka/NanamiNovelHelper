@@ -1,14 +1,14 @@
-import { tauriElectronApi } from './api-adapter'
+import { tauriApi } from './api-adapter'
 
 declare global {
   interface Window {
-    electron: typeof tauriElectronApi
+    api: typeof tauriApi
     __TAURI_INTERNALS__: unknown
   }
 }
 
 export function initTauriApi(): void {
-  if (!window.electron) {
-    window.electron = tauriElectronApi
+  if (!window.api) {
+    window.api = tauriApi
   }
 }

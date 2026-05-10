@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { ConfigProvider, theme as antTheme, App as AntApp, Spin } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
@@ -38,7 +38,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
   // 设置标题栏高度 CSS 变量（用于全屏模式）
   useEffect(() => {
     const root = document.documentElement
-    const titlebarHeight = window.electron?.platform === 'macos' ? '0px' : '32px'
+    const titlebarHeight = window.api?.platform === 'macos' ? '0px' : '32px'
     root.style.setProperty('--titlebar-height', titlebarHeight)
   }, [])
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 组织架构图列表组件
  * 展示所有组织架构图，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -252,11 +252,11 @@ function OrganizationGraphList({
   // 导出组织架构图
   const handleExport = async (graph: OrganizationGraphMeta) => {
     try {
-      const filePath = await window.electron.organization.showExportDialog(graph.name)
+      const filePath = await window.api.organization.showExportDialog(graph.name)
       if (filePath) {
         const content = await exportGraph(graph.id)
         if (content) {
-          await window.electron.file.write(filePath, content, { encoding: 'utf-8' })
+          await window.api.file.write(filePath, content, { encoding: 'utf-8' })
           message.success('导出成功')
         }
       }
@@ -269,9 +269,9 @@ function OrganizationGraphList({
   // 导入组织架构图
   const handleImport = async () => {
     try {
-      const filePath = await window.electron.organization.showImportDialog()
+      const filePath = await window.api.organization.showImportDialog()
       if (filePath) {
-        const content = await window.electron.file.read(filePath, 'utf-8')
+        const content = await window.api.file.read(filePath, 'utf-8')
         const graph = await importGraph(content)
         if (graph) {
           message.success('导入成功')

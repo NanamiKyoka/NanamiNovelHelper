@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 项目操作 Hook
  *
  * 统一管理项目相关的跨 Store 操作，解耦 Store 间的直接依赖
@@ -172,11 +172,11 @@ export function useProjectActions() {
         }
 
         // 打开项目（主进程初始化）
-        const project = await window.electron.project.open(path)
+        const project = await window.api.project.open(path)
         setCurrentProject(project)
 
         // 获取聚合初始化数据
-        const initData: ProjectInitData = await window.electron.project.getInitData()
+        const initData: ProjectInitData = await window.api.project.getInitData()
 
         // 分发数据到各个 Store
         dispatchInitData(initData)
@@ -218,14 +218,14 @@ export function useProjectActions() {
 
       try {
         // 创建项目
-        const project = await window.electron.project.create(options)
+        const project = await window.api.project.create(options)
 
         // 创建后打开项目
-        const openedProject = await window.electron.project.open(project.path)
+        const openedProject = await window.api.project.open(project.path)
         setCurrentProject(openedProject)
 
         // 获取聚合初始化数据
-        const initData: ProjectInitData = await window.electron.project.getInitData()
+        const initData: ProjectInitData = await window.api.project.getInitData()
 
         // 分发数据到各个 Store
         dispatchInitData(initData)
@@ -257,7 +257,7 @@ export function useProjectActions() {
     clearError()
 
     try {
-      await window.electron.project.close()
+      await window.api.project.close()
 
       // 清除当前项目
       setCurrentProject(null)

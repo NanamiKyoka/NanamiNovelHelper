@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 徽章配置状态管理
  * 管理右侧徽章的显示顺序（全局设置）
  */
@@ -26,7 +26,7 @@ export const useBadgeConfigStore = create<BadgeConfigState>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const badgeOrder = await window.electron.settings.global.getBadgeOrder()
+      const badgeOrder = await window.api.settings.global.getBadgeOrder()
 
       if (badgeOrder && Array.isArray(badgeOrder) && badgeOrder.length > 0) {
         const validOrder = badgeOrder.filter(b => DEFAULT_BADGE_ORDER.includes(b))
@@ -44,7 +44,7 @@ export const useBadgeConfigStore = create<BadgeConfigState>((set, get) => ({
 
   saveConfig: async (order: BadgeType[]) => {
     try {
-      await window.electron.settings.global.updateBadgeOrder(order)
+      await window.api.settings.global.updateBadgeOrder(order)
       set({ badgeOrder: order })
     } catch (error) {
       console.error('保存徽章配置失败:', error)

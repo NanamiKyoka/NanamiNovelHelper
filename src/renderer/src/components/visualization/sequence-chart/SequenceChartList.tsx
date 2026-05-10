@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 事序图列表组件
  * 展示所有事序图，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -253,14 +253,14 @@ function SequenceChartList({
   const handleExport = useCallback(
     async (chart: SequenceChartMeta, format: 'json' | 'markdown' = 'json') => {
       try {
-        const filePath = await window.electron.sequenceChart.showExportDialog(chart.name, format)
+        const filePath = await window.api.sequenceChart.showExportDialog(chart.name, format)
         if (filePath) {
           const content =
             format === 'markdown'
               ? await exportChartAsMarkdown(chart.id)
               : await exportChart(chart.id)
           if (content) {
-            await window.electron.sequenceChart.saveExportFile(filePath, content)
+            await window.api.sequenceChart.saveExportFile(filePath, content)
             message.success('导出成功')
           }
         }
@@ -274,9 +274,9 @@ function SequenceChartList({
 
   const handleImport = async () => {
     try {
-      const filePath = await window.electron.sequenceChart.showImportDialog()
+      const filePath = await window.api.sequenceChart.showImportDialog()
       if (filePath) {
-        const content = await window.electron.sequenceChart.readImportFile(filePath)
+        const content = await window.api.sequenceChart.readImportFile(filePath)
         if (content) {
           const chart = await importChart(content)
           if (chart) {

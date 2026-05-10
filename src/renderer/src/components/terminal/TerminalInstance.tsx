@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 终端实例组件
  * 封装 xterm.js，处理单个终端的渲染和交互
  */
@@ -71,20 +71,20 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
 
     // 通知主进程调整 PTY 尺寸
     const { cols, rows } = terminal
-    window.electron.terminal.resize(id, cols, rows)
+    window.api.terminal.resize(id, cols, rows)
 
     // 监听用户输入
     const onDataDisposable = terminal.onData(data => {
-      window.electron.terminal.write(id, data)
+      window.api.terminal.write(id, data)
     })
 
     // 监听终端输出
-    const removeDataListener = window.electron.terminal.onData(id, data => {
+    const removeDataListener = window.api.terminal.onData(id, data => {
       terminal.write(data)
     })
 
     // 监听终端退出
-    const removeExitListener = window.electron.terminal.onExit(id, exitCode => {
+    const removeExitListener = window.api.terminal.onExit(id, exitCode => {
       terminal.writeln(`\r\n\x1b[33m进程已退出，退出码: ${exitCode}\x1b[0m`)
       terminal.writeln('\x1b[90m按 Enter 键关闭终端\x1b[0m')
 
@@ -128,7 +128,7 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
       if (fitAddonRef.current && terminalRef.current) {
         fitAddonRef.current.fit()
         const { cols, rows } = terminalRef.current
-        window.electron.terminal.resize(id, cols, rows)
+        window.api.terminal.resize(id, cols, rows)
       }
     }
 
@@ -141,7 +141,7 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
     if (fitAddonRef.current && terminalRef.current) {
       fitAddonRef.current.fit()
       const { cols, rows } = terminalRef.current
-      window.electron.terminal.resize(id, cols, rows)
+      window.api.terminal.resize(id, cols, rows)
     }
   }, [id])
 

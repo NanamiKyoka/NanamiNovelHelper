@@ -1,4 +1,4 @@
-import { Link as TiptapLink } from '@tiptap/extension-link'
+﻿import { Link as TiptapLink } from '@tiptap/extension-link'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { EditorView } from '@tiptap/pm/view'
 import { Editor } from '@tiptap/core'
@@ -96,7 +96,7 @@ export const SmartLink = TiptapLink.extend<LinkOptions>({
 
           switch (linkType) {
             case 'external':
-              window.electron.shell.openExternal(href)
+              window.api.shell.openExternal(href)
               break
 
             case 'heading': {

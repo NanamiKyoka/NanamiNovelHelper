@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 错误处理工具
  *
  * 统一的错误处理机制，确保错误信息一致性和可追踪性
@@ -321,7 +321,7 @@ export function showErrorWithRecovery(error: unknown, fallbackMessage = '操作�
  *
  * @example
  * const [project, error] = await tryAsync(
- *   () => window.electron.project.open(path),
+ *   () => window.api.project.open(path),
  *   { fallbackMessage: '打开项目失败' }
  * )
  *

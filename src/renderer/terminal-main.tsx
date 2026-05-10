@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 终端独立窗口入口
  */
 
@@ -10,7 +10,10 @@ import { TerminalWindowApp } from './terminal/TerminalWindowApp'
 import { useThemeStore } from '@stores/themeStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useTerminalStore } from '@stores/terminalStore'
+import { initTauriApi } from '@services/tauri/init'
 import '@renderer/styles/global.css'
+
+initTauriApi()
 
 // 主题提供者组件
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
@@ -50,46 +53,40 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
   )
 }
 
-// 初始化项目
-const initProject = async () => {
-  try {
-    const project = await window.electron.project.getCurrent()
-    if (project) {
-      useProjectStore.setState({ currentProject: project })
-    }
-  } catch (error) {
-    console.error('Failed to load project:', error)
-  }
-}
-
-// 初始化终端
-const initTerminals = async () => {
-  try {
-    const terminals = await window.electron.terminal.list()
-    useTerminalStore.setState({
-      terminals,
-      activeTerminalId: terminals.length > 0 ? terminals[0].id : null,
-      isPanelVisible: true
-    })
-
-    // 如果没有终端，创建一个
-    if (terminals.length === 0) {
-      const cwd = useProjectStore.getState().currentProject?.path
-      await useTerminalStore.getState().createTerminal({ cwd })
-    }
-  } catch (error) {
-    console.error('Failed to load terminals:', error)
-  }
-
-  // 加载可用 Shell
-  useTerminalStore.getState().loadAvailableShells()
-}
-
-// 初始化
-initProject()
-initTerminals()
-
 function TerminalWindow() {
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const project = await window.api.project.getCurrent()
+        if (project) {
+          useProjectStore.setState({ currentProject: project })
+        }
+      } catch (error) {
+        console.error('Failed to load project:', error)
+      }
+
+      try {
+        const terminals = await window.api.terminal.list()
+        useTerminalStore.setState({
+          terminals,
+          activeTerminalId: terminals.length > 0 ? terminals[0].id : null,
+          isPanelVisible: true
+        })
+
+        if (terminals.length === 0) {
+          const cwd = useProjectStore.getState().currentProject?.path
+          useTerminalStore.getState().createTerminal({ cwd })
+        }
+      } catch (error) {
+        console.error('Failed to load terminals:', error)
+      }
+
+      useTerminalStore.getState().loadAvailableShells()
+    }
+
+    init()
+  }, [])
+
   return (
     <ThemeProvider>
       <TerminalWindowApp />

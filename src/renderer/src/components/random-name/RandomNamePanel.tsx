@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+﻿import { useState, useCallback, useMemo } from 'react'
 import {
   Popover,
   Button,
@@ -152,7 +152,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
     }
 
     try {
-      const result = await window.electron.aiAssistant.callApi(prompt, {
+      const result = await window.api.aiAssistant.callApi(prompt, {
         systemPrompt:
           '你是一个专业的起名助手。请按照用户的要求生成名字。重要：只输出名字列表，每行一个，不要添加任何解释或序号。',
         temperature: 0.8,

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+﻿import { useState, useRef, useEffect, useCallback } from 'react'
 import { App } from 'antd'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
@@ -47,7 +47,7 @@ function MenuBar(): JSX.Element {
   const handleCheckUpdate = useCallback(async () => {
     message.info('正在检查更新...')
     try {
-      const result = await window.electron?.updater?.checkForUpdates?.()
+      const result = await window.api?.updater?.checkForUpdates?.()
       if (result) {
         message.success('发现新版本，正在下载...')
       } else {

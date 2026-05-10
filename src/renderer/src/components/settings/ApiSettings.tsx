@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI/API 设置组件
  */
 
@@ -312,7 +312,7 @@ export function ApiSettings(): JSX.Element {
   const handleTestConnection = async (id: string) => {
     setTestStates(prev => ({ ...prev, [id]: 'testing' }))
     try {
-      const result = await window.electron.aiAssistant.testApiConnection(id)
+      const result = await window.api.aiAssistant.testApiConnection(id)
       if (result.success) {
         setTestStates(prev => ({ ...prev, [id]: 'success' }))
         message.success(`${PRESET_PROVIDERS.find(p => p.id === id)?.name || id} 连接成功`)

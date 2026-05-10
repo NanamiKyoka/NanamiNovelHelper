@@ -1,4 +1,4 @@
-import { Modal, Typography, Space, Divider, Button } from 'antd'
+﻿import { Modal, Typography, Space, Divider, Button } from 'antd'
 import { GithubOutlined, HeartFilled } from '@ant-design/icons'
 import { useUIStore } from '@stores/uiStore'
 
@@ -14,7 +14,7 @@ export function AboutModal(): JSX.Element {
   const closeAboutModal = useUIStore(state => state.closeAboutModal)
 
   const handleOpenGithub = () => {
-    window.electron?.shell?.openExternal?.(GITHUB_URL)
+    window.api?.shell?.openExternal?.(GITHUB_URL)
   }
 
   return (

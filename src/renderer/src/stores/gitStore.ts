@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { useProjectStore } from './projectStore'
 import { useEditorStore } from './editorStore'
 import { useFileTreeStore } from './fileTreeStore'
@@ -351,12 +351,12 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ loading: true, error: null })
 
       try {
-        const modeResult = await window.electron.git.getMode()
+        const modeResult = await window.api.git.getMode()
         if (modeResult) {
           set({ mode: modeResult.mode, useSystemGit: modeResult.useSystemGit })
         }
 
-        const isRepo = await window.electron.git.isRepo(project.path)
+        const isRepo = await window.api.git.isRepo(project.path)
 
         if (!isRepo) {
           set({ initialized: true, isRepo: false, repository: null, loading: false })
@@ -364,7 +364,7 @@ export const useGitStore = create<GitState>((set, get) => {
           return
         }
 
-        const statusResult = await window.electron.git.status(project.path)
+        const statusResult = await window.api.git.status(project.path)
         if (statusResult.success && statusResult.data) {
           set({
             initialized: true,
@@ -395,7 +395,7 @@ export const useGitStore = create<GitState>((set, get) => {
         set({ loading: true, error: null })
 
         try {
-          const statusResult = await window.electron.git.status(project.path)
+          const statusResult = await window.api.git.status(project.path)
           if (statusResult.success && statusResult.data) {
             set({
               repository: statusResult.data,
@@ -424,7 +424,7 @@ export const useGitStore = create<GitState>((set, get) => {
       const project = useProjectStore.getState().currentProject
       if (!project?.path) return false
 
-      const isRepo = await window.electron.git.isRepo(project.path)
+      const isRepo = await window.api.git.isRepo(project.path)
       set({ isRepo })
       return isRepo
     },
@@ -437,7 +437,7 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ logOptions })
 
       try {
-        const result = await window.electron.git.log(project.path, logOptions)
+        const result = await window.api.git.log(project.path, logOptions)
         if (result.success && result.data) {
           set({ commits: result.data })
         }
@@ -454,7 +454,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Commit, async () => {
-          const result = await window.electron.git.commit(project.path, options)
+          const result = await window.api.git.commit(project.path, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -478,7 +478,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Reset, async () => {
-          const result = await window.electron.git.reset(project.path, options)
+          const result = await window.api.git.reset(project.path, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -500,7 +500,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Add, async () => {
-          const result = await window.electron.git.add(project.path, filepaths)
+          const result = await window.api.git.add(project.path, filepaths)
           if (!result.success) {
             set({ error: result.error || '添加失败' })
           }
@@ -527,7 +527,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Add, async () => {
-          const result = await window.electron.git.restoreStaged(project.path, filepaths)
+          const result = await window.api.git.restoreStaged(project.path, filepaths)
           if (!result.success) {
             set({ error: result.error || '撤销暂存失败' })
           }
@@ -545,7 +545,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Restore, async () => {
-          const result = await window.electron.git.restore(project.path, filepaths, source)
+          const result = await window.api.git.restore(project.path, filepaths, source)
           if (!result.success) {
             set({ error: result.error || '恢复失败' })
           }
@@ -563,7 +563,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Diff, async () => {
-          const result = await window.electron.git.diff(project.path, filepath, staged)
+          const result = await window.api.git.diff(project.path, filepath, staged)
           if (result.success && result.data) {
             set({ currentDiff: result.data })
             return result.data
@@ -592,7 +592,7 @@ export const useGitStore = create<GitState>((set, get) => {
       if (!project?.path) return
 
       try {
-        const result = await window.electron.git.branchList(project.path)
+        const result = await window.api.git.branchList(project.path)
         if (result.success && result.data) {
           set({ branches: result.data })
         }
@@ -607,7 +607,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Branch, async () => {
-          const result = await window.electron.git.branchCreate(project.path, name, startPoint)
+          const result = await window.api.git.branchCreate(project.path, name, startPoint)
           if (result.success) {
             await get().getBranches()
             return true
@@ -627,7 +627,7 @@ export const useGitStore = create<GitState>((set, get) => {
       if (!project?.path) return false
 
       try {
-        const result = await window.electron.git.branchDelete(project.path, name, force)
+        const result = await window.api.git.branchDelete(project.path, name, force)
         if (result.success) {
           await get().getBranches()
           return true
@@ -649,7 +649,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Checkout, async () => {
-          const result = await window.electron.git.checkout(project.path, options)
+          const result = await window.api.git.checkout(project.path, options)
           if (result.success) {
             await get().getBranches()
             await get().getLog()
@@ -674,7 +674,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
       try {
         return await runOperation(Operations.Merge, async () => {
-          const result = await window.electron.git.merge(project.path, options)
+          const result = await window.api.git.merge(project.path, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -692,9 +692,9 @@ export const useGitStore = create<GitState>((set, get) => {
 
     setMode: async (mode: GitMode) => {
       try {
-        const result = await window.electron.git.setMode(mode)
+        const result = await window.api.git.setMode(mode)
         if (result.success) {
-          const modeResult = await window.electron.git.getMode()
+          const modeResult = await window.api.git.getMode()
           if (modeResult) {
             set({ mode: modeResult.mode, useSystemGit: modeResult.useSystemGit })
           }
@@ -752,7 +752,7 @@ export const useGitStore = create<GitState>((set, get) => {
       set({ commitDetail: { commit, files: [], loading: true } })
 
       try {
-        const result = await window.electron.git.getCommitFiles(project.path, commit.hash)
+        const result = await window.api.git.getCommitFiles(project.path, commit.hash)
         if (result.success && result.data) {
           set({ commitDetail: { commit, files: result.data, loading: false } })
         } else {
@@ -771,7 +771,7 @@ export const useGitStore = create<GitState>((set, get) => {
       if (!project?.path) return null
 
       try {
-        const result = await window.electron.git.getCommitFileDiff(
+        const result = await window.api.git.getCommitFileDiff(
           project.path,
           commitHash,
           filepath

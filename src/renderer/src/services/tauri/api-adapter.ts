@@ -26,15 +26,15 @@ function getPlatform(): string {
   } catch {
     if (typeof navigator !== 'undefined') {
       const ua = navigator.userAgent.toLowerCase()
-      if (ua.includes('win')) return 'win32'
-      if (ua.includes('mac')) return 'darwin'
+      if (ua.includes('win')) return 'windows'
+      if (ua.includes('mac')) return 'macos'
       if (ua.includes('linux')) return 'linux'
     }
     return 'unknown'
   }
 }
 
-export const tauriElectronApi = {
+export const tauriApi = {
   window: {
     minimize: () => invoke('window_minimize'),
     maximize: () => invoke('window_maximize'),

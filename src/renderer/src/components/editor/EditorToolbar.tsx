@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 编辑器工具栏组件
  * 提供文本格式化和编辑工具
  */
@@ -146,7 +146,7 @@ export function EditorToolbar({
       if (!prompt) return null
 
       try {
-        const result = await window.electron.aiAssistant.callApi(prompt.user, {
+        const result = await window.api.aiAssistant.callApi(prompt.user, {
           systemPrompt: prompt.system,
           temperature: 0.7,
           maxTokens: 2000
@@ -337,7 +337,7 @@ export function EditorToolbar({
 
     setImageLoading(true)
     try {
-      const result = await window.electron.image.selectAndUpload({
+      const result = await window.api.image.selectAndUpload({
         maxSize: 10 * 1024 * 1024,
         allowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         maxWidth: 4096,
@@ -346,7 +346,7 @@ export function EditorToolbar({
       })
 
       if (result) {
-        const base64 = await window.electron.image.readAsBase64(result.path)
+        const base64 = await window.api.image.readAsBase64(result.path)
         editor.chain().focus().setImage({ src: base64, alt: result.originalName }).run()
         message.success('图片插入成功')
       }

@@ -1,6 +1,6 @@
 /**
  * 设置状态管理
- * 全局设置存 electron-store，项目设置存 .novelhelper/settings.json5
+ * 全局设置存 Tauri Store，项目设置存 .novelhelper/settings.json5
  */
 
 import { create } from 'zustand'
@@ -84,7 +84,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   initGlobalSettings: async () => {
     set({ isLoading: true })
     try {
-      const settings = await window.electron.settings.global.getAll()
+      const settings = await window.api.settings.global.getAll()
       set({
         globalSettings: settings && typeof settings === 'object' ? { ...DEFAULT_GLOBAL_SETTINGS, ...settings } : DEFAULT_GLOBAL_SETTINGS,
         isInitialized: true,
@@ -98,7 +98,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   updateGlobalSettings: async updates => {
     try {
-      const settings = await window.electron.settings.global.update(updates)
+      const settings = await window.api.settings.global.update(updates)
       set({ globalSettings: settings })
     } catch (error) {
       console.error('Failed to update global settings:', error)
@@ -108,7 +108,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   resetGlobalSettings: async () => {
     try {
-      const settings = await window.electron.settings.global.reset()
+      const settings = await window.api.settings.global.reset()
       set({ globalSettings: settings })
     } catch (error) {
       console.error('Failed to reset global settings:', error)
@@ -147,13 +147,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setLanguage: async language => {
-    await window.electron.settings.global.setLanguage(language)
+    await window.api.settings.global.setLanguage(language)
     const { globalSettings } = get()
     set({ globalSettings: { ...globalSettings, language } })
   },
 
   setSidebarWidth: async sidebarWidth => {
-    await window.electron.settings.global.setSidebarWidth(sidebarWidth)
+    await window.api.settings.global.setSidebarWidth(sidebarWidth)
     const { globalSettings } = get()
     set({ globalSettings: { ...globalSettings, sidebarWidth } })
   },
@@ -165,7 +165,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   // 全局布局设置
   updateLayoutSettings: async layout => {
     try {
-      const newLayout = await window.electron.settings.global.updateLayout(layout)
+      const newLayout = await window.api.settings.global.updateLayout(layout)
       const { globalSettings } = get()
       set({ globalSettings: { ...globalSettings, layout: newLayout } })
     } catch (error) {
@@ -177,7 +177,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateBadgeVisibility: async updates => {
     try {
       const newBadgeVisibility =
-        await window.electron.settings.global.updateBadgeVisibility(updates)
+        await window.api.settings.global.updateBadgeVisibility(updates)
       const { globalSettings } = get()
       set({
         globalSettings: {
@@ -194,7 +194,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateSidebarBadgeVisibility: async updates => {
     try {
       const newSidebarBadgeVisibility =
-        await window.electron.settings.global.updateSidebarBadgeVisibility(updates)
+        await window.api.settings.global.updateSidebarBadgeVisibility(updates)
       const { globalSettings } = get()
       set({
         globalSettings: {
@@ -210,7 +210,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   updateSidebarBadgeOrder: async order => {
     try {
-      const newOrder = await window.electron.settings.global.updateSidebarBadgeOrder(order)
+      const newOrder = await window.api.settings.global.updateSidebarBadgeOrder(order)
       const { globalSettings } = get()
       set({
         globalSettings: {
@@ -226,7 +226,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setShowHiddenFiles: async show => {
     try {
-      await window.electron.settings.global.setShowHiddenFiles(show)
+      await window.api.settings.global.setShowHiddenFiles(show)
       const { globalSettings } = get()
       set({
         globalSettings: {
@@ -243,7 +243,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   initProjectSettings: async () => {
     set({ isLoading: true })
     try {
-      const settings = await window.electron.settings.project.getAll()
+      const settings = await window.api.settings.project.getAll()
       const mergedSettings = settings && typeof settings === 'object' 
         ? { 
             ...DEFAULT_PROJECT_SETTINGS, 
@@ -277,7 +277,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updateProjectSettings: async updates => {
     try {
       const { projectSettings } = get()
-      const settings = await window.electron.settings.project.update(updates)
+      const settings = await window.api.settings.project.update(updates)
       
       const mergedSettings = {
         ...DEFAULT_PROJECT_SETTINGS,
@@ -296,7 +296,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   resetProjectSettings: async () => {
     try {
-      const settings = await window.electron.settings.project.reset()
+      const settings = await window.api.settings.project.reset()
       set({ projectSettings: settings })
     } catch (error) {
       console.error('Failed to reset project settings:', error)
@@ -361,39 +361,39 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   getApiKey: async keyName => {
-    return await window.electron.settings.global.getApiKey(keyName)
+    return await window.api.settings.global.getApiKey(keyName)
   },
 
   setApiKey: async (keyName, value) => {
-    await window.electron.settings.global.setApiKey(keyName, value)
+    await window.api.settings.global.setApiKey(keyName, value)
   },
 
   deleteApiKey: async keyName => {
-    await window.electron.settings.global.deleteApiKey(keyName)
+    await window.api.settings.global.deleteApiKey(keyName)
   },
 
   createBackup: async () => {
-    return await window.electron.backup.create()
+    return await window.api.backup.create()
   },
 
   listBackups: async () => {
-    return await window.electron.backup.list()
+    return await window.api.backup.list()
   },
 
   restoreBackup: async filename => {
-    return await window.electron.backup.restore(filename)
+    return await window.api.backup.restore(filename)
   },
 
   deleteBackup: async filename => {
-    return await window.electron.backup.delete(filename)
+    return await window.api.backup.delete(filename)
   },
 
   exportBackup: async filename => {
-    return await window.electron.backup.export(filename)
+    return await window.api.backup.export(filename)
   },
 
   importBackup: async () => {
-    return await window.electron.backup.import()
+    return await window.api.backup.import()
   },
 
   getResolvedThemeMode: () => {

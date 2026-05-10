@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 动态 SKILL 管理面板
  */
 
@@ -112,8 +112,8 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
     setLoading(true)
     try {
       const [skillList, whitelistData] = await Promise.all([
-        window.electron.dynamicSkill.getList(),
-        window.electron.dynamicSkill.getWhitelist()
+        window.api.dynamicSkill.getList(),
+        window.api.dynamicSkill.getWhitelist()
       ])
       setSkills(skillList)
       setWhitelist(whitelistData)
@@ -130,7 +130,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   }, [loadSkills])
 
   useEffect(() => {
-    window.electron.dynamicSkill.checkPython().then(result => {
+    window.api.dynamicSkill.checkPython().then(result => {
       setPythonStatus({ checked: true, ...result })
     })
   }, [])
@@ -139,7 +139,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   const handleReload = async () => {
     setLoading(true)
     try {
-      await window.electron.dynamicSkill.reload()
+      await window.api.dynamicSkill.reload()
       await loadSkills()
       message.success('SKILL 列表已刷新')
     } catch (error) {
@@ -339,7 +339,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
         timeout: tool.timeout
       }))
 
-      await window.electron.dynamicSkill.update(skillId, {
+      await window.api.dynamicSkill.update(skillId, {
         name: editData.name,
         description: editData.description,
         version: editData.version,
@@ -364,7 +364,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
   // 删除 SKILL
   const handleDelete = async (skill: DynamicSkill) => {
     try {
-      await window.electron.dynamicSkill.delete(skill.id)
+      await window.api.dynamicSkill.delete(skill.id)
       message.success('SKILL 已移至回收站')
       if (selectedSkill?.id === skill.id) {
         setSelectedSkill(null)

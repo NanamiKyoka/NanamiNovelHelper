@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+﻿﻿import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { Layout, theme, Button, Tooltip, Spin } from 'antd'
 import {
   TagOutlined,
@@ -183,10 +183,10 @@ function App(): JSX.Element {
       }
     }
 
-    window.electron?.window.onFileChange(handleFileChange)
+    window.api?.window.onFileChange(handleFileChange)
 
     return () => {
-      window.electron?.window.removeFileChangeListener()
+      window.api?.window.removeFileChangeListener()
     }
   }, [currentProject])
 
@@ -469,7 +469,7 @@ function App(): JSX.Element {
   if (!currentProject) {
     return (
       <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
-        {window.electron?.platform !== 'darwin' && <TitleBar />}
+        {window.api?.platform !== 'macos' && <TitleBar />}
         <div className={styles.mainLayout}>
           <Content
             className={styles.mainContent}
@@ -501,7 +501,7 @@ function App(): JSX.Element {
   return (
     <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
       {/* 自定义标题栏 - 仅在 Windows/Linux 显示 */}
-      {window.electron?.platform !== 'darwin' && <TitleBar />}
+      {window.api?.platform !== 'macos' && <TitleBar />}
 
       {/* 主布局区域 */}
       <div className={styles.mainLayout}>

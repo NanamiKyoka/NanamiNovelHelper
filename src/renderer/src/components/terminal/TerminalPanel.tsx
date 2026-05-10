@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 终端面板组件
  * 右侧面板，极简风格
  */
@@ -39,21 +39,21 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
 
   // 检查终端窗口状态
   useEffect(() => {
-    window.electron.terminalWindow.isOpen().then(isOpen => {
+    window.api.terminalWindow.isOpen().then(isOpen => {
       setIsTerminalWindowOpen(isOpen)
     })
 
     // 监听终端窗口打开/关闭
-    window.electron.terminalWindow.onOpened(() => {
+    window.api.terminalWindow.onOpened(() => {
       setIsTerminalWindowOpen(true)
     })
-    window.electron.terminalWindow.onClosed(() => {
+    window.api.terminalWindow.onClosed(() => {
       setIsTerminalWindowOpen(false)
     })
 
     return () => {
-      window.electron.terminalWindow.removeOpenedListener()
-      window.electron.terminalWindow.removeClosedListener()
+      window.api.terminalWindow.removeOpenedListener()
+      window.api.terminalWindow.removeClosedListener()
     }
   }, [])
 
@@ -90,7 +90,7 @@ export function TerminalPanel({ onClose }: TerminalPanelProps) {
 
   // 弹出终端窗口
   const handlePopOut = useCallback(() => {
-    window.electron.terminalWindow.create()
+    window.api.terminalWindow.create()
     onClose?.()
   }, [onClose])
 

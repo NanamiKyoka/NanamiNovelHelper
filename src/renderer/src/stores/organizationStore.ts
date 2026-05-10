@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 组织架构图状态管理
  */
 
@@ -65,7 +65,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const graphs = await window.electron.organization.getList()
+      const graphs = await window.api.organization.getList()
       set({ graphs, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载组织架构图列表失败'
@@ -77,7 +77,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   loadGraph: async (graphId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const graph = await window.electron.organization.get(graphId)
+      const graph = await window.api.organization.get(graphId)
       set({ currentGraph: graph, isLoading: false })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载组织架构图失败'
@@ -89,7 +89,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   createGraph: async (options: CreateOrganizationGraphOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const graph = await window.electron.organization.create(options)
+      const graph = await window.api.organization.create(options)
       set(state => ({
         graphs: [
           ...state.graphs,
@@ -119,7 +119,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   updateGraph: async (graphId: string, updates: UpdateOrganizationGraphOptions) => {
     try {
-      const updatedGraph = await window.electron.organization.update(graphId, updates)
+      const updatedGraph = await window.api.organization.update(graphId, updates)
       if (updatedGraph) {
         set(state => ({
           graphs: state.graphs.map(g =>
@@ -148,7 +148,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   deleteGraph: async (graphId: string) => {
     try {
-      const success = await window.electron.organization.delete(graphId)
+      const success = await window.api.organization.delete(graphId)
       if (success) {
         set(state => ({
           graphs: state.graphs.filter(g => g.id !== graphId),
@@ -172,7 +172,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return null
 
     try {
-      const newNode = await window.electron.organization.addNode(currentGraph.id, options)
+      const newNode = await window.api.organization.addNode(currentGraph.id, options)
       if (newNode) {
         set(state => ({
           currentGraph: state.currentGraph
@@ -198,7 +198,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.organization.updateNode(
+      const updatedNode = await window.api.organization.updateNode(
         currentGraph.id,
         nodeId,
         updates
@@ -225,7 +225,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const success = await window.electron.organization.deleteNode(currentGraph.id, nodeId)
+      const success = await window.api.organization.deleteNode(currentGraph.id, nodeId)
       if (success) {
         // 获取要删除的节点及其所有后代节点
         const descendants = get().getDescendants(nodeId)
@@ -253,7 +253,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const updatedNode = await window.electron.organization.moveNode(
+      const updatedNode = await window.api.organization.moveNode(
         currentGraph.id,
         nodeId,
         newParentId
@@ -281,7 +281,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return
 
     try {
-      const thumbnailPath = await window.electron.organization.saveThumbnail(
+      const thumbnailPath = await window.api.organization.saveThumbnail(
         currentGraph.id,
         dataUrl
       )
@@ -303,7 +303,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   // 导入导出
   exportGraph: async (graphId: string) => {
     try {
-      return await window.electron.organization.export(graphId)
+      return await window.api.organization.export(graphId)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '导出组织架构图失败'
       console.error('Failed to export organization graph:', error)
@@ -314,7 +314,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
   importGraph: async (jsonContent: string) => {
     try {
-      const graph = await window.electron.organization.import(jsonContent)
+      const graph = await window.api.organization.import(jsonContent)
       if (graph) {
         set(state => ({
           graphs: [
@@ -411,7 +411,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   // 排序
   reorderGraphs: async (graphIds: string[]) => {
     try {
-      const success = await window.electron.organization.reorderGraphs(graphIds)
+      const success = await window.api.organization.reorderGraphs(graphIds)
       if (success) {
         // 更新本地状态中的排序
         set(state => ({

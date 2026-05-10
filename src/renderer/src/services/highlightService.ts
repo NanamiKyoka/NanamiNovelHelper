@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 词汇高亮服务
  * 管理词汇模式、配置和高亮自动机
  */
@@ -102,7 +102,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   loadConfig: async () => {
     set({ loading: true, error: null })
     try {
-      const config = await window.electron.highlight.loadConfig()
+      const config = await window.api.highlight.loadConfig()
       const mergedConfig = deepMerge(DEFAULT_HIGHLIGHT_CONFIG, (config && typeof config === 'object') ? config : {})
       set({
         config: mergedConfig,
@@ -126,7 +126,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   saveConfig: async config => {
     try {
       const newConfig = { ...get().config, ...config }
-      await window.electron.highlight.saveConfig(newConfig)
+      await window.api.highlight.saveConfig(newConfig)
       set({ config: newConfig })
     } catch (error) {
       console.error('Failed to save highlight config:', error)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
@@ -394,9 +394,9 @@ export function MarkdownEditor({
       const { relativePath, currentFilePath } = event.detail
 
       try {
-        const dirPath = await window.electron.path.dirname(currentFilePath)
-        const targetPath = await window.electron.path.join([dirPath, relativePath])
-        const fileName = await window.electron.path.basename(targetPath)
+        const dirPath = await window.api.path.dirname(currentFilePath)
+        const targetPath = await window.api.path.join([dirPath, relativePath])
+        const fileName = await window.api.path.basename(targetPath)
         const openFile = useEditorStore.getState().openFile
         await openFile(targetPath, fileName)
       } catch (error) {

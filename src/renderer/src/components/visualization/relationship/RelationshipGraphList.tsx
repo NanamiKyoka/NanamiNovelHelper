@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 关系图列表组件
  * 展示所有关系图，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -259,11 +259,11 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   // 导出关系图
   const handleExport = async (graph: RelationshipGraphMeta) => {
     try {
-      const filePath = await window.electron.relationship.showExportDialog(graph.name)
+      const filePath = await window.api.relationship.showExportDialog(graph.name)
       if (filePath) {
         const content = await exportGraph(graph.id)
         if (content) {
-          await window.electron.file.write(filePath, content, { encoding: 'utf-8' })
+          await window.api.file.write(filePath, content, { encoding: 'utf-8' })
           message.success('导出成功')
         }
       }
@@ -276,9 +276,9 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   // 导入关系图
   const handleImport = async () => {
     try {
-      const filePath = await window.electron.relationship.showImportDialog()
+      const filePath = await window.api.relationship.showImportDialog()
       if (filePath) {
-        const content = await window.electron.file.read(filePath, 'utf-8')
+        const content = await window.api.file.read(filePath, 'utf-8')
         const graph = await importGraph(content)
         if (graph) {
           message.success('导入成功')

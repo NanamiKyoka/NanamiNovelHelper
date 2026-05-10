@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import type { SensitiveWord } from '@shared/sensitive'
 
 interface SensitiveState {
@@ -40,7 +40,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
   loadWords: async () => {
     set({ isLoading: true, error: null })
     try {
-      const words = await window.electron.sensitive.loadWords()
+      const words = await window.api.sensitive.loadWords()
       set({ words: words || [], isLoading: false, isLoaded: true, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载敏感词失败'
@@ -51,7 +51,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
 
   saveWords: async (words: SensitiveWord[]) => {
     try {
-      await window.electron.sensitive.saveWords(words)
+      await window.api.sensitive.saveWords(words)
       set({ words })
     } catch (error) {
       console.error('Failed to save sensitive words:', error)
@@ -61,7 +61,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
 
   addWord: async word => {
     try {
-      const newWord = await window.electron.sensitive.addWord(word)
+      const newWord = await window.api.sensitive.addWord(word)
       set(state => ({ words: [...state.words, newWord] }))
       return newWord
     } catch (error) {
@@ -72,7 +72,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
 
   updateWord: async (id, updates) => {
     try {
-      const updated = await window.electron.sensitive.updateWord(id, updates)
+      const updated = await window.api.sensitive.updateWord(id, updates)
       if (updated) {
         set(state => ({
           words: state.words.map(w => (w.id === id ? updated : w))
@@ -86,7 +86,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
 
   deleteWord: async id => {
     try {
-      const success = await window.electron.sensitive.deleteWord(id)
+      const success = await window.api.sensitive.deleteWord(id)
       if (success) {
         set(state => ({
           words: state.words.filter(w => w.id !== id)
@@ -100,7 +100,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
 
   importWords: async words => {
     try {
-      const imported = await window.electron.sensitive.importWords(words)
+      const imported = await window.api.sensitive.importWords(words)
       // 重新加载所有敏感词
       await get().loadWords()
       return imported
@@ -172,7 +172,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
         if (!word) throw new Error(`敏感词 ${id} 不存在`)
         return { ...word, order: index, updatedAt: new Date().toISOString() }
       })
-      await window.electron.sensitive.saveWords(reorderedWords)
+      await window.api.sensitive.saveWords(reorderedWords)
       set({ words: reorderedWords })
     } catch (error) {
       console.error('Failed to reorder sensitive words:', error)

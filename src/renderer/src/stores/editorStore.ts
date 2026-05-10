@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { Sequencer, Limiter } from '@shared/async'
@@ -463,7 +463,7 @@ export const useEditorStore = create<EditorState>()(
         loadFileContent: async (path: string) => {
           set({ isLoading: true })
           try {
-            const content = await fileReadLimiter.queue(() => window.electron.file.read(path))
+            const content = await fileReadLimiter.queue(() => window.api.file.read(path))
             const fileContent: EditorFileContent = {
               path,
               content,
@@ -489,7 +489,7 @@ export const useEditorStore = create<EditorState>()(
         saveFileContent: async (path: string, content: string) => {
           set({ isSaving: true })
           try {
-            await window.electron.file.write(path, content)
+            await window.api.file.write(path, content)
 
             set(state => {
               state.fileContents.set(path, {
@@ -667,7 +667,7 @@ export const useEditorStore = create<EditorState>()(
             const results = await Promise.allSettled(
               tabsToRefresh.map(tab =>
                 fileReadLimiter.queue(async () => {
-                  const content = await window.electron.file.read(tab.path)
+                  const content = await window.api.file.read(tab.path)
                   return { path: tab.path, content }
                 })
               )
@@ -720,7 +720,7 @@ export const useEditorStore = create<EditorState>()(
             const results = await Promise.allSettled(
               pathsToRefresh.map(filePath =>
                 fileReadLimiter.queue(async () => {
-                  const content = await window.electron.file.read(filePath)
+                  const content = await window.api.file.read(filePath)
                   return { path: filePath, content }
                 })
               )
@@ -795,7 +795,7 @@ export const useEditorStore = create<EditorState>()(
           if (state.tabs.length === 0) return
 
           const checkPromises = state.tabs.map(async tab => {
-            const exists = await window.electron.file.exists(tab.path)
+            const exists = await window.api.file.exists(tab.path)
             return { tab, exists }
           })
 

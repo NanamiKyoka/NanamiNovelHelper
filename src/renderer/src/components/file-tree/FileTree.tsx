@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 文件树组件 - VSCode 风格
  * 支持：虚拟滚动、右键菜单、拖拽、键盘导航、内联重命名
  */
@@ -611,14 +611,14 @@ function FileTree(): JSX.Element {
   const handleExportNovel = useCallback(
     async (node: (typeof flattenedNodes)[0]['node']) => {
       try {
-        const content = await window.electron.file.read(node.path)
+        const content = await window.api.file.read(node.path)
         if (!content) {
           message.warning('文件内容为空')
           return
         }
 
         const baseName = node.name.replace(/\.[^.]+$/, '')
-        const filePath = await window.electron.file.showSaveDialog({
+        const filePath = await window.api.file.showSaveDialog({
           title: '导出为纯文本',
           defaultPath: `${baseName}.txt`,
           filters: [
@@ -630,7 +630,7 @@ function FileTree(): JSX.Element {
         if (!filePath) return
 
         const plainText = stripHtmlTags(content)
-        const success = await window.electron.file.exportTxt(filePath, plainText)
+        const success = await window.api.file.exportTxt(filePath, plainText)
 
         if (success) {
           message.success('导出成功')

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 终端状态管理
  */
 
@@ -66,7 +66,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
       // 如果没有指定 cwd，使用当前项目路径
       const cwd = options?.cwd ?? getCurrentProjectPath()
 
-      const terminal = await window.electron.terminal.create({
+      const terminal = await window.api.terminal.create({
         cwd,
         name: options?.name,
         shellPath: options?.shellPath
@@ -90,7 +90,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   // 销毁终端
   destroyTerminal: async (id: string) => {
     try {
-      await window.electron.terminal.destroy(id)
+      await window.api.terminal.destroy(id)
       set(state => {
         const newTerminals = state.terminals.filter(t => t.id !== id)
         const newActiveId =
@@ -152,7 +152,7 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   // 加载可用 Shell
   loadAvailableShells: async () => {
     try {
-      const shells = await window.electron.terminal.getShells()
+      const shells = await window.api.terminal.getShells()
       set({ availableShells: shells })
     } catch (error) {
       console.error('加载 Shell 列表失败:', error)

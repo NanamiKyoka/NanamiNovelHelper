@@ -4,7 +4,7 @@ import { useSettingsStore } from '@renderer/stores/settingsStore'
 import type { CustomChunkType } from '@shared/settings'
 
 describe('自定义板块完整流程测试', () => {
-  const mockElectronApi = {
+  const mockApi = {
     settings: {
       project: {
         update: vi.fn()
@@ -15,7 +15,7 @@ describe('自定义板块完整流程测试', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    vi.stubGlobal('electron', mockElectronApi)
+    vi.stubGlobal('api', mockApi)
     
     useSettingsStore.setState({
       projectSettings: {
@@ -47,7 +47,7 @@ describe('自定义板块完整流程测试', () => {
   it('应该正确处理自定义板块添加的完整流程', async () => {
     const { result } = renderHook(() => useSettingsStore())
 
-    mockElectronApi.settings.project.update.mockImplementation((updates: Record<string, unknown>) => {
+    mockApi.settings.project.update.mockImplementation((updates: Record<string, unknown>) => {
       const currentSettings = useSettingsStore.getState().projectSettings
       const newSettings = {
         ...currentSettings,
@@ -80,7 +80,7 @@ describe('自定义板块完整流程测试', () => {
   it('应该正确处理多个自定义板块的添加', async () => {
     const { result } = renderHook(() => useSettingsStore())
 
-    mockElectronApi.settings.project.update.mockImplementation((updates: Record<string, unknown>) => {
+    mockApi.settings.project.update.mockImplementation((updates: Record<string, unknown>) => {
       const currentSettings = useSettingsStore.getState().projectSettings
       const newSettings = {
         ...currentSettings,
@@ -118,7 +118,7 @@ describe('自定义板块完整流程测试', () => {
   it('应该正确处理后端返回不完整数据的情况', async () => {
     const { result } = renderHook(() => useSettingsStore())
 
-    mockElectronApi.settings.project.update.mockResolvedValue({
+    mockApi.settings.project.update.mockResolvedValue({
       editor: {
         fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif',
         fontSize: 16,
@@ -156,7 +156,7 @@ describe('自定义板块完整流程测试', () => {
   it('应该正确处理后端返回空数组的情况', async () => {
     const { result } = renderHook(() => useSettingsStore())
 
-    mockElectronApi.settings.project.update.mockResolvedValue({
+    mockApi.settings.project.update.mockResolvedValue({
       editor: {
         fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif',
         fontSize: 16,
@@ -195,7 +195,7 @@ describe('自定义板块完整流程测试', () => {
   it('应该正确处理后端 API 调用失败的情况', async () => {
     const { result } = renderHook(() => useSettingsStore())
 
-    mockElectronApi.settings.project.update.mockRejectedValue(new Error('API 调用失败'))
+    mockApi.settings.project.update.mockRejectedValue(new Error('API 调用失败'))
 
     await expect(async () => {
       await act(async () => {
@@ -209,3 +209,4 @@ describe('自定义板块完整流程测试', () => {
     }).rejects.toThrow('API 调用失败')
   })
 })
+

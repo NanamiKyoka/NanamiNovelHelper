@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 项目状态管理
  *
  * 注意：createProject、openProject、closeProject 方法仅管理项目自身的状态
@@ -48,8 +48,8 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   createProject: async (options: CreateProjectOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const project = await window.electron.project.create(options)
-      const openedProject = await window.electron.project.open(project.path)
+      const project = await window.api.project.create(options)
+      const openedProject = await window.api.project.open(project.path)
       set({ currentProject: openedProject, isLoading: false })
       get().loadRecentProjects()
       return openedProject
@@ -64,7 +64,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   openProject: async (path: string) => {
     set({ isLoading: true, error: null })
     try {
-      const project = await window.electron.project.open(path)
+      const project = await window.api.project.open(path)
       set({ currentProject: project, isLoading: false })
       get().loadRecentProjects()
       return project
@@ -79,7 +79,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   closeProject: async () => {
     set({ isLoading: true, error: null })
     try {
-      await window.electron.project.close()
+      await window.api.project.close()
       set({ currentProject: null, isLoading: false })
     } catch (error) {
       const errorMessage = handleError(error, { fallbackMessage: '关闭项目失败' })
@@ -92,7 +92,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   updateProjectInfo: async (info: Partial<Project>) => {
     set({ isLoading: true, error: null })
     try {
-      const project = await window.electron.project.updateInfo(info)
+      const project = await window.api.project.updateInfo(info)
       set({ currentProject: project, isLoading: false })
       get().loadRecentProjects()
     } catch (error) {
@@ -105,7 +105,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 加载最近项目列表
   loadRecentProjects: async () => {
     try {
-      const recent = await window.electron.project.getRecent()
+      const recent = await window.api.project.getRecent()
       set({ recentProjects: recent })
     } catch (error) {
       handleError(error, { fallbackMessage: '加载最近项目失败' })
@@ -115,8 +115,8 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 从最近项目列表移除
   removeRecentProject: async (path: string) => {
     try {
-      await window.electron.project.removeRecent(path)
-      const recent = await window.electron.project.getRecent()
+      await window.api.project.removeRecent(path)
+      const recent = await window.api.project.getRecent()
       set({ recentProjects: recent })
     } catch (error) {
       handleError(error, { fallbackMessage: '移除最近项目失败' })
@@ -126,7 +126,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 清空最近项目列表
   clearRecentProjects: async () => {
     try {
-      await window.electron.project.clearRecent()
+      await window.api.project.clearRecent()
       set({ recentProjects: [] })
     } catch (error) {
       handleError(error, { fallbackMessage: '清空最近项目失败' })
@@ -135,12 +135,12 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
 
   // 显示打开项目对话框
   showOpenDialog: async () => {
-    return window.electron.project.showOpenDialog()
+    return window.api.project.showOpenDialog()
   },
 
   // 显示创建项目对话框
   showCreateDialog: async () => {
-    return window.electron.project.showCreateDialog()
+    return window.api.project.showCreateDialog()
   },
 
   // 设置加载状态

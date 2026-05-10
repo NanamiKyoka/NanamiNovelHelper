@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 终端独立窗口应用组件
  */
 
@@ -110,15 +110,15 @@ export function TerminalWindowApp() {
 
   // 窗口控制
   const handleMinimize = () => {
-    window.electron.terminalWindow.minimize()
+    window.api.terminalWindow.minimize()
   }
 
   const handleMaximize = () => {
-    window.electron.terminalWindow.maximize()
+    window.api.terminalWindow.maximize()
   }
 
   const handleClose = () => {
-    window.electron.terminalWindow.close()
+    window.api.terminalWindow.close()
   }
 
   // 当前活动终端

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 项目文件显示设置组件
  * 管理项目特定的文件显示规则（隐藏指定项目）
  */
@@ -21,7 +21,7 @@ function FileDisplaySettings(): JSX.Element {
 
   useEffect(() => {
     if (currentProject) {
-      window.electron.settings.project.getHiddenItems().then(items => setHiddenItems(items || []))
+      window.api.settings.project.getHiddenItems().then(items => setHiddenItems(items || []))
     }
   }, [currentProject])
 
@@ -36,7 +36,7 @@ function FileDisplaySettings(): JSX.Element {
 
     try {
       const newItems = [...hiddenItems, item]
-      await window.electron.settings.project.setHiddenItems(newItems)
+      await window.api.settings.project.setHiddenItems(newItems)
       setHiddenItems(newItems)
       setNewHiddenItem('')
       refreshTree()
@@ -49,7 +49,7 @@ function FileDisplaySettings(): JSX.Element {
   const handleRemoveHiddenItem = async (item: string) => {
     try {
       const newItems = hiddenItems.filter(i => i !== item)
-      await window.electron.settings.project.setHiddenItems(newItems)
+      await window.api.settings.project.setHiddenItems(newItems)
       setHiddenItems(newItems)
       refreshTree()
     } catch (_error) {
