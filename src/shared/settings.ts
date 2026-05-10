@@ -241,6 +241,7 @@ export interface ProjectSettings {
   backup: ProjectBackupSettings
   expandedFolders: string[] | null
   hiddenItems: string[]
+  customChunkTypes: CustomChunkType[]
 }
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
@@ -249,7 +250,8 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
   autoCreateVocabularyFile: false,
   backup: DEFAULT_PROJECT_BACKUP_SETTINGS,
   expandedFolders: null,
-  hiddenItems: []
+  hiddenItems: [],
+  customChunkTypes: []
 }
 
 // ============ 备份信息 ============
@@ -258,6 +260,18 @@ export interface BackupInfo {
   filename: string
   createdAt: string
   size: number
+}
+
+// ============ 自定义板块类型 ============
+
+export interface CustomChunkType {
+  id: string
+  name: string
+  icon: string
+  color: string
+  description: string
+  createdAt: string
+  updatedAt: string
 }
 
 // ============ 预设颜色 ============

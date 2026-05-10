@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
 import { Button, Tooltip, Modal, App } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -19,7 +19,6 @@ import { ChunkGallery } from './ChunkGallery'
 import { ElementGallery } from './ElementGallery'
 import { Breadcrumb } from './Breadcrumb'
 import { EditModal } from './EditModal'
-import type { ChunkType } from '@renderer/types/map'
 import { pixelToHex } from '@renderer/types/map'
 import styles from './MapFullscreen.module.css'
 
@@ -43,7 +42,6 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const loadMap = useMapStore(state => state.loadMap)
   const enterChunk = useMapStore(state => state.enterChunk)
   const enterElement = useMapStore(state => state.enterElement)
-  const addChunk = useMapStore(state => state.addChunk)
   const selectedChunkId = useMapStore(state => state.selectedChunkId)
   const selectedElementId = useMapStore(state => state.selectedElementId)
   const selectedConnectionId = useMapStore(state => state.selectedConnectionId)
@@ -52,8 +50,6 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const deleteConnection = useMapStore(state => state.deleteConnection)
   const exportMap = useMapStore(state => state.exportMap)
   const importMap = useMapStore(state => state.importMap)
-  const isHexOccupied = useMapStore(state => state.isHexOccupied)
-  const findNearestEmptyHex = useMapStore(state => state.findNearestEmptyHex)
   const getChunkById = useMapStore(state => state.getChunkById)
   const getElementById = useMapStore(state => state.getElementById)
   const panX = useMapStore(state => state.panX)
@@ -89,6 +85,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   const [editingItem, setEditingItem] = useState<{ type: 'chunk' | 'element'; id: string } | null>(
     null
   )
+  const canvasAreaRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const loadMapData = async () => {
@@ -101,6 +98,15 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
 
   const isWorldView = viewStack.length === 1
   const currentLevel = viewStack[viewStack.length - 1]
+
+  const getCenterHex = useCallback((): { q: number; r: number } | null => {
+    const el = canvasAreaRef.current
+    if (!el) return null
+    const rect = el.getBoundingClientRect()
+    const centerX = (rect.width / 2 - panX) / zoom
+    const centerY = (rect.height / 2 - panY) / zoom
+    return pixelToHex({ x: centerX, y: centerY })
+  }, [panX, panY, zoom])
 
   const handleSave = useCallback(async () => {
     await saveCurrentMap()
@@ -120,43 +126,6 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     },
     [enterElement]
   )
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      const chunkType = e.dataTransfer.getData('chunkType') as ChunkType
-      if (!chunkType) return
-
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = (e.clientX - rect.left - panX) / zoom
-      const y = (e.clientY - rect.top - panY) / zoom
-
-      const hexPosition = pixelToHex({ x, y })
-
-      if (isHexOccupied(hexPosition)) {
-        const nearestEmpty = findNearestEmptyHex(hexPosition)
-        if (nearestEmpty) {
-          addChunk({
-            chunkType,
-            hexPosition: nearestEmpty
-          })
-        } else {
-          message.warning('没有可用的空位')
-        }
-      } else {
-        addChunk({
-          chunkType,
-          hexPosition
-        })
-      }
-    },
-    [addChunk, isHexOccupied, findNearestEmptyHex, panX, panY, zoom, message]
-  )
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'copy'
-  }, [])
 
   const handleDelete = useCallback(() => {
     if (selectedChunkId) {
@@ -305,7 +274,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
   }
 
   return (
-    <div className={styles.mapFullscreen} onDrop={handleDrop} onDragOver={handleDragOver}>
+    <div className={styles.mapFullscreen}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <Button className={styles.backButton} icon={<ArrowLeftOutlined />} onClick={onBack}>
@@ -388,7 +357,10 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
       <Breadcrumb />
 
       <div className={styles.mainArea}>
-        <div className={styles.canvasArea}>
+        <div
+          ref={canvasAreaRef}
+          className={styles.canvasArea}
+        >
           {isWorldView ? (
             <WorldCanvas onChunkDoubleClick={handleChunkDoubleClick} onChunkEdit={handleEdit} />
           ) : (
@@ -399,15 +371,15 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
           )}
         </div>
 
-        {isWorldView ? <ChunkGallery onChunkDrop={() => {}} /> : <ElementGallery />}
+        {isWorldView ? <ChunkGallery getCenterHex={getCenterHex} /> : <ElementGallery />}
       </div>
 
       <div className={styles.statusBar}>
         <div className={styles.statusLeft}>
           <span className={styles.statusItem}>工具: {toolInfo.name}</span>
           <span className={styles.statusItem}>视图: {currentLevel.name}</span>
-          <span className={styles.statusItem}>板块: {currentMap.data.chunks.length || 0}</span>
-          <span className={styles.statusItem}>连接: {currentMap.data.connections.length || 0}</span>
+          <span className={styles.statusItem}>板块: {currentMap.data?.chunks?.length || 0}</span>
+          <span className={styles.statusItem}>连接: {currentMap.data?.connections?.length || 0}</span>
         </div>
         <div className={styles.statusRight}>
           {operationHint ? (

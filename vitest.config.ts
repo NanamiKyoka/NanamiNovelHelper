@@ -31,8 +31,7 @@ export default defineConfig({
         'src/shared/logger.ts',
         'src/shared/async.ts',
         'src/shared/constants/relationTypes.ts',
-        'src/shared/constants/colors.ts',
-        'src/main/utils/validation.ts'
+        'src/shared/constants/colors.ts'
       ],
       exclude: ['node_modules/', 'out/', 'reference/', '**/*.d.ts', '**/*.config.*'],
       thresholds: {

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Input, message } from 'antd'
+import { useState, useMemo, useCallback } from 'react'
+import { Input, App } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import * as Icons from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
@@ -15,6 +15,7 @@ const ELEMENT_CATEGORIES: Record<string, ElementType[]> = {
 }
 
 export function ElementGallery() {
+  const { message } = App.useApp()
   const [searchText, setSearchText] = useState('')
 
   const viewStack = useMapStore(state => state.viewStack)
@@ -46,28 +47,31 @@ export function ElementGallery() {
     return filtered
   }, [searchText])
 
-  const handleAddElement = (elementType: ElementType) => {
-    if (!parentChunkId) {
-      message.warning('无法确定父级板块')
-      return
-    }
+  const handleAddElement = useCallback(
+    (elementType: ElementType) => {
+      if (!parentChunkId) {
+        message.warning('无法确定父级板块')
+        return
+      }
 
-    const config = ELEMENT_TYPE_CONFIG[elementType]
+      const config = ELEMENT_TYPE_CONFIG[elementType]
 
-    const hexPosition = findNearestEmptyHexForElement(parentChunkId, parentElementId)
+      const hexPosition = findNearestEmptyHexForElement(parentChunkId, parentElementId)
 
-    if (!hexPosition) {
-      message.warning('没有可用的空位')
-      return
-    }
+      if (!hexPosition) {
+        message.warning('没有可用的空位')
+        return
+      }
 
-    addElement(parentChunkId, parentElementId, {
-      elementType,
-      hexPosition
-    })
+      addElement(parentChunkId, parentElementId, {
+        elementType,
+        hexPosition
+      })
 
-    message.success(`已添加${config.label}`)
-  }
+      message.success(`已添加${config.label}`)
+    },
+    [parentChunkId, parentElementId, addElement, findNearestEmptyHexForElement, message]
+  )
 
   return (
     <div className={styles.elementGallery}>

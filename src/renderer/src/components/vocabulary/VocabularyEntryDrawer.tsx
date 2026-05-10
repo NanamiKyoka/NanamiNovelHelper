@@ -110,7 +110,7 @@ const VocabularyEntryDrawer: React.FC<VocabularyEntryDrawerProps> = ({
           <ColorPicker format="hex" />
         </Form.Item>
 
-        {currentTypeDefinition?.fields
+        {(currentTypeDefinition?.fields || [])
           .filter(f => f.id !== 'name')
           .sort((a, b) => a.order - b.order)
           .map(field => (

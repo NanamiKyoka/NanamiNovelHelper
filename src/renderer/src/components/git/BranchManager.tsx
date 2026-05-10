@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Empty, Modal, Input, Space, Tag, Tooltip, Dropdown, message, Spin } from 'antd'
+import { Button, Empty, Modal, Input, Space, Tag, Tooltip, Dropdown, App, Spin } from 'antd'
 import {
   PlusOutlined,
   BranchesOutlined,
@@ -22,6 +22,7 @@ import styles from './GitPanel.module.css'
 const { confirm } = Modal
 
 function BranchManager(): JSX.Element {
+  const { message } = App.useApp()
   const {
     branches,
     loading,

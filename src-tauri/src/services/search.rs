@@ -215,7 +215,6 @@ impl SearchService {
 
         Ok(())
     }
-}
 
     pub fn replace(
         &self,
@@ -261,7 +260,7 @@ impl SearchService {
             let mut new_lines = Vec::new();
             for (i, l) in content.lines().enumerate() {
                 if i + 1 == target_line {
-                    if let Some(mat) = re.find(l).next() {
+                    if let Some(mat) = re.find(l) {
                         let mut new_line = l.to_string();
                         new_line.replace_range(mat.range(), replace_text);
                         new_lines.push(new_line);

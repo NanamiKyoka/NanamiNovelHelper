@@ -1,5 +1,6 @@
 import { Extension } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { TextSelection } from '@tiptap/pm/state'
 
 export interface ImagePasteOptions {
   maxSize: number
@@ -63,15 +64,14 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
                 continue
               }
 
+              const pos = view.state.selection.from
+
               options.onUpload(file).then(result => {
-                if (result) {
-                  view.dispatch(
-                    view.state.tr.replaceSelectionWith(
-                      view.state.schema.nodes.image.create({
-                        src: result
-                      })
-                    )
-                  )
+                if (result && !view.isDestroyed) {
+                  const node = view.state.schema.nodes.image.create({ src: result })
+                  const tr = view.state.tr.insert(pos, node)
+                  tr.setSelection(TextSelection.near(tr.doc.resolve(pos + node.nodeSize)))
+                  view.dispatch(tr)
                 }
               })
             }
@@ -96,6 +96,9 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
 
             event.preventDefault()
 
+            const dropPos = view.posAtCoords({ left: event.clientX, top: event.clientY })
+            const pos = dropPos ? dropPos.pos : view.state.selection.from
+
             for (const file of imageFiles) {
               const ext = file.name.split('.').pop()?.toLowerCase() || ''
               if (!options.allowedFormats.includes(ext)) {
@@ -109,14 +112,11 @@ export const ImagePaste = Extension.create<ImagePasteOptions>({
               }
 
               options.onUpload(file).then(result => {
-                if (result) {
-                  view.dispatch(
-                    view.state.tr.replaceSelectionWith(
-                      view.state.schema.nodes.image.create({
-                        src: result
-                      })
-                    )
-                  )
+                if (result && !view.isDestroyed) {
+                  const node = view.state.schema.nodes.image.create({ src: result })
+                  const tr = view.state.tr.insert(pos, node)
+                  tr.setSelection(TextSelection.near(tr.doc.resolve(pos + node.nodeSize)))
+                  view.dispatch(tr)
                 }
               })
             }

@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react'
-import { Modal, List, Button, Empty, message, Typography, Popconfirm, Tooltip } from 'antd'
+import { Modal, List, Button, Empty, App, Typography, Popconfirm, Tooltip } from 'antd'
 import {
   FolderOpenOutlined,
   DeleteOutlined,
@@ -28,6 +28,7 @@ interface OpenProjectModalProps {
 }
 
 function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps): JSX.Element {
+  const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
   const [openingPath, setOpeningPath] = useState<string | null>(null)
 
@@ -74,7 +75,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
         setOpeningPath(null)
       }
     },
-    [openProject, onSuccess]
+    [openProject, onSuccess, message]
   )
 
   // 移除最近项目
@@ -88,7 +89,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
         message.error('移除失败')
       }
     },
-    [removeRecentProject]
+    [removeRecentProject, message]
   )
 
   return (
@@ -157,7 +158,7 @@ function OpenProjectModal({ open, onCancel, onSuccess }: OpenProjectModalProps):
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {dayjs(item.lastOpened).fromNow()}
+                    {dayjs(item.lastOpenedAt).fromNow()}
                   </Text>
                   <Popconfirm
                     title="从列表中移除？"

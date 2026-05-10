@@ -18,6 +18,15 @@
   padding: 24px;
 }
 
+.errorBar {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--color-error-bg);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  gap: 8px;
+}
+
 .error {
   gap: 16px;
 }

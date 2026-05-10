@@ -286,7 +286,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             const storeState = useHighlightService.getState()
             const patterns = storeState.patterns
             const automaton = storeState.automaton
-            const enabled = storeState.config?.scope.enabled ?? true
+            const enabled = storeState.config?.scope?.enabled ?? true
 
             if (!enabled || !globalEnabled || patterns.length === 0) {
               return DecorationSet.empty

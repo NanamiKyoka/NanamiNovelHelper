@@ -10,6 +10,7 @@ use services::{
     FileWatcherService, GitService, GraphService, ImageService, ProjectService, SearchService,
     SecureStorageService, SettingsService, TerminalService, VocabularyService,
 };
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -79,6 +80,8 @@ pub fn run() {
         .manage(FileWatcherService::new())
         .manage(SecureStorageService::new())
         .setup(|app| {
+            let file_watcher = app.state::<FileWatcherService>();
+            file_watcher.set_app(app.handle().clone());
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
@@ -251,7 +254,11 @@ pub fn run() {
             path_basename,
             path_dirname,
             path_join,
-            path_relative
+            path_relative,
+            file_watcher_start,
+            file_watcher_stop,
+            file_watcher_is_watching,
+            file_watcher_get_watched_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

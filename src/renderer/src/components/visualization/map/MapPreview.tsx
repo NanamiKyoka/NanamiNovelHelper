@@ -117,16 +117,15 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
         <div className={styles.previewContainer}>
           {/* 地图预览 */}
           <div className={styles.preview}>
-            {currentMap.data?.elements?.length > 0 ? (
+            {currentMap.data?.chunks?.length > 0 ? (
               <div className={styles.previewCanvas}>
                 <canvas
-                  width={currentMap.data.canvasWidth || 800}
-                  height={currentMap.data.canvasHeight || 600}
+                  width={currentMap.data?.canvasWidth || 800}
+                  height={currentMap.data?.canvasHeight || 600}
                   style={{
-                    backgroundColor: currentMap.data.backgroundColor || '#ffffff'
+                    backgroundColor: currentMap.data?.backgroundColor || '#ffffff'
                   }}
                 />
-                {/* TODO: 渲染地图元素 */}
               </div>
             ) : (
               <div className={styles.previewEmpty}>
@@ -143,8 +142,8 @@ function MapPreview({ mapId, onClose, onEnterEditMode }: MapPreviewProps): JSX.E
               <Descriptions.Item label="画布尺寸">
                 {currentMap.data?.canvasWidth || 800} x {currentMap.data?.canvasHeight || 600}
               </Descriptions.Item>
-              <Descriptions.Item label="元素数量">
-                {currentMap.data?.elements?.length || 0}
+              <Descriptions.Item label="板块数量">
+                {currentMap.data?.chunks?.length || 0}
               </Descriptions.Item>
               <Descriptions.Item label="关联词汇类型">
                 {getLinkedVocabularyNames().length > 0 ? (

@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Input, Button, Modal, message, Tag, Space, Typography, Card } from 'antd'
+import { Table, Input, Button, Modal, App, Tag, Space, Typography, Card } from 'antd'
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons'
 import baseStyles from './SettingsBase.module.css'
 import styles from './ShortcutsSettings.module.css'
@@ -198,6 +198,7 @@ function saveShortcuts(shortcuts: ShortcutConfig[]): void {
 }
 
 export function ShortcutsSettings(): JSX.Element {
+  const { message } = App.useApp()
   const [shortcuts, setShortcuts] = useState<ShortcutConfig[]>(() => loadShortcuts())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -234,7 +235,7 @@ export function ShortcutsSettings(): JSX.Element {
     )
     setEditModalOpen(false)
     message.success(`快捷键「${currentEditKey}」已保存`)
-  }, [editingId, currentEditKey, shortcuts])
+  }, [editingId, currentEditKey, shortcuts, message])
 
   const handleReset = useCallback(
     (id: string) => {
@@ -244,7 +245,7 @@ export function ShortcutsSettings(): JSX.Element {
         message.success(`已重置为默认快捷键「${shortcut.defaultKey}」`)
       }
     },
-    [shortcuts]
+    [shortcuts, message]
   )
 
   const handleResetAll = useCallback(() => {
@@ -260,7 +261,7 @@ export function ShortcutsSettings(): JSX.Element {
         message.success('已重置所有快捷键为默认值')
       }
     })
-  }, [])
+  }, [message])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

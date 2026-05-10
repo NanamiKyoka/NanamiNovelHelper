@@ -508,7 +508,7 @@ function TimelinePreview({
             <Title level={5} style={{ margin: 0 }}>
               {currentTimeline.name}
             </Title>
-            {currentTimeline.branchInfo.type === 'branch' && (
+            {currentTimeline.branchInfo?.type === 'branch' && (
               <Tag color="blue" icon={<BranchesOutlined />}>
                 分支
               </Tag>

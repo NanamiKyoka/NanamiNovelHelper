@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { message } from 'antd'
+import { App } from 'antd'
 import type { VocabularyEntry, VocabularyType } from '@shared/vocabulary'
 
 interface UseVocabularyExportOptions {
@@ -13,6 +13,7 @@ export function useVocabularyExport({
   filteredEntries,
   selectedRowKeys
 }: UseVocabularyExportOptions) {
+  const { message } = App.useApp()
   const [exportModalOpen, setExportModalOpen] = useState(false)
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'markdown'>('json')
   const [exportScope, setExportScope] = useState<'all' | 'selected'>('all')
@@ -20,7 +21,7 @@ export function useVocabularyExport({
   const doExport = useCallback(
     (entries: VocabularyEntry[], format: 'json' | 'csv' | 'markdown'): void => {
       const typeName = currentTypeDefinition?.name || '词汇'
-      const fields = currentTypeDefinition?.fields.filter(f => f.id !== 'name') || []
+      const fields = currentTypeDefinition?.fields?.filter(f => f.id !== 'name') || []
 
       const prepareData = (entry: VocabularyEntry) => ({
         名称: entry.name,
@@ -107,7 +108,7 @@ export function useVocabularyExport({
 
       message.success(`成功导出 ${entries.length} 个词汇`)
     },
-    [currentTypeDefinition]
+    [currentTypeDefinition, message]
   )
 
   const handleBatchExport = useCallback((): void => {
@@ -123,7 +124,7 @@ export function useVocabularyExport({
     }
     setExportScope('all')
     setExportModalOpen(true)
-  }, [filteredEntries.length])
+  }, [filteredEntries.length, message])
 
   const confirmExport = useCallback((): void => {
     const entries =

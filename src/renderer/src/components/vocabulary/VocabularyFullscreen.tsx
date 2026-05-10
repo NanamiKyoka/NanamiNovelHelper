@@ -458,7 +458,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
       name: type.name + ' (副本)',
       icon: type.icon,
       color: type.color,
-      fields: type.fields.map(f => ({ ...f, id: uuidv4() })),
+      fields: (type.fields || []).map(f => ({ ...f, id: uuidv4() })),
       tableConfig: [...type.tableConfig],
       isBuiltIn: false,
       order: types.length
@@ -550,7 +550,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
         }
         // 检查是否匹配自定义字段
         if (!autoMapping[importField] && currentTypeDef) {
-          const matchedField = currentTypeDef.fields.find(
+          const matchedField = (currentTypeDef.fields || []).find(
             f => f.name.toLowerCase() === lowerField || f.id.toLowerCase() === lowerField
           )
           if (matchedField) {
@@ -1098,7 +1098,7 @@ function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Elemen
                       { value: 'description', label: '描述' },
                       { value: 'tags', label: '标签' },
                       { value: 'color', label: '颜色' },
-                      ...(currentTypeDef?.fields.map(f => ({
+                      ...((currentTypeDef?.fields || []).map(f => ({
                         value: `field_${f.id}`,
                         label: `字段: ${f.name}`
                       })) || [])

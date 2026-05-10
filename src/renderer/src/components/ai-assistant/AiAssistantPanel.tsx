@@ -120,7 +120,7 @@ function AiAssistantPanel(): JSX.Element {
       t =>
         t.name.toLowerCase().includes(lower) ||
         t.description?.toLowerCase().includes(lower) ||
-        t.tags.some(tag => tag.toLowerCase().includes(lower))
+        t.tags?.some(tag => tag.toLowerCase().includes(lower))
     )
   }, [templateList, searchText])
 
@@ -132,7 +132,7 @@ function AiAssistantPanel(): JSX.Element {
       w =>
         w.name.toLowerCase().includes(lower) ||
         w.description?.toLowerCase().includes(lower) ||
-        w.tags.some(tag => tag.toLowerCase().includes(lower))
+        w.tags?.some(tag => tag.toLowerCase().includes(lower))
     )
   }, [workflowList, searchText])
 
@@ -423,7 +423,7 @@ function AiAssistantPanel(): JSX.Element {
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {item.variableCount} 个变量
                   </Text>
-                  {item.tags.length > 0 && (
+                  {item.tags?.length > 0 && (
                     <div className={styles.tags}>
                       {item.tags.slice(0, 3).map(tag => (
                         <Tag key={tag} style={{ margin: 0, fontSize: 11 }}>

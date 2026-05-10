@@ -70,57 +70,81 @@ impl GitService {
             .map(|s| s.trim().to_string())
             .ok();
 
-        let status_output = Self::exec_git(repo_path, &["status", "--porcelain=v1", "-uall"])?;
+        let status_output = Self::exec_git(repo_path, &["status", "--porcelain=v1", "-z", "-uall"])?;
         let mut changes: Vec<serde_json::Value> = Vec::new();
         let mut staged_changes: Vec<serde_json::Value> = Vec::new();
 
-        for entry in status_output.split('\0').filter(|s| !s.is_empty()) {
+        let entries: Vec<&str> = status_output.split('\0').filter(|s| !s.is_empty()).collect();
+        let mut i = 0;
+
+        while i < entries.len() {
+            let entry = entries[i];
+
             if entry.len() < 3 {
+                i += 1;
                 continue;
             }
 
             let status_code = &entry[0..2];
-            let file_path = &entry[3..];
+            let file_path: String;
             let mut old_path: Option<String> = None;
 
-            let (status, short) = match status_code {
-                " M" | "M " | "MM" => ("modified", "M"),
-                " A" | "A " | "AM" => ("added", "A"),
-                " D" | "D " => ("deleted", "D"),
-                "R " => ("renamed", "R"),
-                "C " => ("copied", "C"),
-                "??" => ("untracked", "?"),
-                "!!" => ("ignored", "!"),
-                _ => continue,
-            };
+            let x = status_code.chars().next().unwrap_or(' ');
+            let y = status_code.chars().nth(1).unwrap_or(' ');
 
-            let staged = !status_code.starts_with(' ') && !status_code.starts_with('?');
-
-            let (additions, deletions) = if !file_path.is_empty() {
-                let numstat_args = if staged {
-                    vec!["diff", "--numstat", "--staged", "--", file_path]
-                } else {
-                    vec!["diff", "--numstat", "--", file_path]
-                };
-                match Self::exec_git(repo_path, &numstat_args) {
-                    Ok(numstat) => {
-                        let re = regex::Regex::new(r"^(\d+|-)\t(\d+|-)").unwrap();
-                        if let Some(caps) = re.captures(numstat.trim()) {
-                            let add = caps.get(1).map(|m| m.as_str()).unwrap_or("0");
-                            let del = caps.get(2).map(|m| m.as_str()).unwrap_or("0");
-                            (
-                                if add == "-" { 0 } else { add.parse::<u32>().unwrap_or(0) },
-                                if del == "-" { 0 } else { del.parse::<u32>().unwrap_or(0) },
-                            )
-                        } else {
-                            (0, 0)
-                        }
+            let (status, short) = match (x, y) {
+                ('?', '?') => ("untracked", "?"),
+                ('!', '!') => ("ignored", "!"),
+                ('R', _) | ('C', _) => {
+                    let st = if x == 'R' { "renamed" } else { "copied" };
+                    let sh = if x == 'R' { "R" } else { "C" };
+                    if i + 1 < entries.len() {
+                        old_path = Some(entry[3..].to_string());
+                        i += 1;
+                        file_path = entries[i].to_string();
+                    } else {
+                        file_path = entry[3..].to_string();
                     }
-                    Err(_) => (0, 0),
+                    let staged = x != ' ' && x != '?' && x != '!';
+                    let (additions, deletions) =
+                        Self::get_numstat(repo_path, &file_path, staged);
+                    let change = serde_json::json!({
+                        "path": file_path,
+                        "oldPath": old_path,
+                        "status": st,
+                        "statusShort": sh,
+                        "staged": staged,
+                        "additions": additions,
+                        "deletions": deletions
+                    });
+                    if staged {
+                        staged_changes.push(change);
+                    } else {
+                        changes.push(change);
+                    }
+                    i += 1;
+                    continue;
                 }
-            } else {
-                (0, 0)
+                ('D', 'D') => ("modified", "M"),
+                ('A', 'A') => ("added", "A"),
+                ('U', 'U') => ("modified", "U"),
+                (_, _) => {
+                    let (st, sh) = if y == 'D' || x == 'D' {
+                        ("deleted", "D")
+                    } else if x == 'A' || y == 'A' {
+                        ("added", "A")
+                    } else {
+                        ("modified", "M")
+                    };
+                    (st, sh)
+                }
             };
+
+            file_path = entry[3..].to_string();
+
+            let staged = x != ' ' && x != '?' && x != '!';
+
+            let (additions, deletions) = Self::get_numstat(repo_path, &file_path, staged);
 
             let change = serde_json::json!({
                 "path": file_path,
@@ -137,6 +161,8 @@ impl GitService {
             } else {
                 changes.push(change);
             }
+
+            i += 1;
         }
 
         let (ahead, behind) = match Self::exec_git(
@@ -234,7 +260,16 @@ impl GitService {
             args.push(&author_arg);
         }
 
-        let output = Self::exec_git(repo_path, &args)?;
+        let output = match Self::exec_git(repo_path, &args) {
+            Ok(out) => out,
+            Err(e) => {
+                let err_msg = format!("{}", e);
+                if err_msg.contains("does not have any commits yet") {
+                    return Ok(serde_json::json!({ "success": true, "data": [] }));
+                }
+                return Err(e);
+            }
+        };
         let mut commits = Vec::new();
         let lines: Vec<&str> = output.split('\n').collect();
 
@@ -381,12 +416,63 @@ impl GitService {
         Ok(serde_json::json!({ "success": true }))
     }
 
+    fn get_numstat(repo_path: &str, file_path: &str, staged: bool) -> (u32, u32) {
+        let numstat_args = if staged {
+            vec!["diff", "--numstat", "--staged", "--", file_path]
+        } else {
+            vec!["diff", "--numstat", "--", file_path]
+        };
+        match Self::exec_git(repo_path, &numstat_args) {
+            Ok(numstat) => {
+                let re = regex::Regex::new(r"^(\d+|-)\t(\d+|-)").unwrap();
+                if let Some(caps) = re.captures(numstat.trim()) {
+                    let add = caps.get(1).map(|m| m.as_str()).unwrap_or("0");
+                    let del = caps.get(2).map(|m| m.as_str()).unwrap_or("0");
+                    (
+                        if add == "-" { 0 } else { add.parse::<u32>().unwrap_or(0) },
+                        if del == "-" { 0 } else { del.parse::<u32>().unwrap_or(0) },
+                    )
+                } else {
+                    (0, 0)
+                }
+            }
+            Err(_) => (0, 0),
+        }
+    }
+
+    fn detect_file_status(repo_path: &str, filepath: &str, _staged: bool) -> (String, bool) {
+        let status_args = vec!["status", "--porcelain", "-z", "--", filepath];
+        if let Ok(output) = Self::exec_git(repo_path, &status_args) {
+            let entries: Vec<&str> = output.split('\0').filter(|s| !s.is_empty()).collect();
+            for entry in entries {
+                if entry.len() < 3 {
+                    continue;
+                }
+                let x = entry.chars().next().unwrap_or(' ');
+                let y = entry.chars().nth(1).unwrap_or(' ');
+                let status = match (x, y) {
+                    ('?', '?') => "untracked",
+                    ('!', '!') => "ignored",
+                    ('D', _) | (_, 'D') => "deleted",
+                    ('A', _) | (_, 'A') => "added",
+                    ('R', _) => "renamed",
+                    ('C', _) => "copied",
+                    _ => "modified",
+                };
+                return (status.to_string(), false);
+            }
+        }
+        ("modified".to_string(), false)
+    }
+
     pub fn get_diff(
         &self,
         repo_path: &str,
         filepath: &str,
         staged: bool,
     ) -> AppResult<serde_json::Value> {
+        let (status, binary) = Self::detect_file_status(repo_path, filepath, staged);
+
         let mut args = vec!["diff"];
         if staged {
             args.push("--staged");
@@ -394,15 +480,20 @@ impl GitService {
         args.push("--");
         args.push(filepath);
 
-        let output = Self::exec_git(repo_path, &args)?;
-        let (hunks, additions, deletions) = Self::parse_diff_output(&output);
+        let output = Self::exec_git(repo_path, &args);
+
+        let (hunks, additions, deletions) = match output {
+            Ok(ref out) if !out.trim().is_empty() => Self::parse_diff_output(out),
+            Ok(_) => (Vec::new(), 0u32, 0u32),
+            Err(_) => (Vec::new(), 0u32, 0u32),
+        };
 
         Ok(serde_json::json!({
             "success": true,
             "data": {
                 "path": filepath,
-                "status": "modified",
-                "binary": false,
+                "status": status,
+                "binary": binary,
                 "hunks": hunks,
                 "additions": additions,
                 "deletions": deletions
@@ -416,14 +507,33 @@ impl GitService {
         commit_hash: &str,
         filepath: &str,
     ) -> AppResult<serde_json::Value> {
-        let output = Self::exec_git(repo_path, &["show", "--format=", commit_hash, "--", filepath])?;
-        let (hunks, additions, deletions) = Self::parse_diff_output(&output);
+        let output = Self::exec_git(repo_path, &["show", "--format=", commit_hash, "--", filepath]);
+
+        let (hunks, additions, deletions) = match output {
+            Ok(ref out) if !out.trim().is_empty() => Self::parse_diff_output(out),
+            Ok(_) => (Vec::new(), 0u32, 0u32),
+            Err(_) => (Vec::new(), 0u32, 0u32),
+        };
+
+        let status_args = vec!["diff-tree", "--no-commit-id", "--name-status", "-r", commit_hash, "--", filepath];
+        let status = if let Ok(status_out) = Self::exec_git(repo_path, &status_args) {
+            let first_line = status_out.lines().next().unwrap_or("");
+            match first_line.chars().next().unwrap_or('M') {
+                'A' => "added",
+                'D' => "deleted",
+                'R' => "renamed",
+                'C' => "copied",
+                _ => "modified",
+            }
+        } else {
+            "modified"
+        };
 
         Ok(serde_json::json!({
             "success": true,
             "data": {
                 "path": filepath,
-                "status": "modified",
+                "status": status,
                 "binary": false,
                 "hunks": hunks,
                 "additions": additions,
@@ -455,12 +565,22 @@ impl GitService {
                 old_line = caps.get(1).unwrap().as_str().parse().unwrap_or(1);
                 new_line = caps.get(3).unwrap().as_str().parse().unwrap_or(1);
 
+                let old_lines: u32 = caps.get(2)
+                    .map(|m| m.as_str().parse().unwrap_or(1))
+                    .unwrap_or(1);
+                let new_lines: u32 = caps.get(4)
+                    .map(|m| m.as_str().parse().unwrap_or(1))
+                    .unwrap_or(1);
+                let header: &str = caps.get(5)
+                    .map(|m| m.as_str().trim())
+                    .unwrap_or("");
+
                 let mut hunk = serde_json::Map::new();
                 hunk.insert("oldStart".to_string(), serde_json::json!(old_line));
-                hunk.insert("oldLines".to_string(), serde_json::json!(caps.get(2).unwrap().as_str().parse::<u32>().unwrap_or(1)));
+                hunk.insert("oldLines".to_string(), serde_json::json!(old_lines));
                 hunk.insert("newStart".to_string(), serde_json::json!(new_line));
-                hunk.insert("newLines".to_string(), serde_json::json!(caps.get(4).unwrap().as_str().parse::<u32>().unwrap_or(1)));
-                hunk.insert("header".to_string(), serde_json::json!(caps.get(5).unwrap().as_str().trim()));
+                hunk.insert("newLines".to_string(), serde_json::json!(new_lines));
+                hunk.insert("header".to_string(), serde_json::json!(header));
 
                 current_hunk = Some(hunk);
                 continue;

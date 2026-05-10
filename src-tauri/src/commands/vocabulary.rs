@@ -22,9 +22,12 @@ pub fn vocabulary_add_type(
     color: String,
     is_built_in: bool,
     description: Option<String>,
+    icon: Option<String>,
+    fields: Option<Vec<serde_json::Value>>,
+    table_config: Option<Vec<serde_json::Value>>,
     service: State<VocabularyService>,
 ) -> AppResult<VocabularyType> {
-    service.add_vocabulary_type(name, color, is_built_in, description)
+    service.add_vocabulary_type(name, color, is_built_in, description, icon, fields, table_config)
 }
 
 #[tauri::command]
@@ -63,7 +66,7 @@ pub fn vocabulary_save_entries(
 
 #[tauri::command]
 pub fn vocabulary_add_entry(
-    entry: VocabularyEntry,
+    entry: serde_json::Value,
     service: State<VocabularyService>,
 ) -> AppResult<VocabularyEntry> {
     service.add_vocabulary_entry(entry)
@@ -101,7 +104,7 @@ pub fn sensitive_save_words(
 
 #[tauri::command]
 pub fn sensitive_add_word(
-    word: SensitiveWord,
+    word: serde_json::Value,
     service: State<VocabularyService>,
 ) -> AppResult<SensitiveWord> {
     service.add_sensitive_word(word)

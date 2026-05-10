@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Modal, Form, Input, Button, message } from 'antd'
+import { Modal, Form, Input, Button, App } from 'antd'
 import { FolderOpenOutlined } from '@ant-design/icons'
 import { useProjectActions } from '@hooks/useProjectActions'
 import type { CreateProjectOptions } from '@shared/project'
@@ -22,6 +22,7 @@ interface FormValues {
 }
 
 function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalProps): JSX.Element {
+  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
 
@@ -56,7 +57,7 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
         setLoading(false)
       }
     },
-    [createProject, form, onSuccess]
+    [createProject, form, onSuccess, message]
   )
 
   const handleCancel = useCallback(() => {

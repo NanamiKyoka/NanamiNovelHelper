@@ -15,6 +15,12 @@ function getMarkdownFromEditor(editor: {
   return editor.storage.markdown.getMarkdown()
 }
 
+function getPlainTextFromEditor(editor: {
+  state: { doc: { textBetween: (from: number, to: number, blockSeparator: string) => string }; doc: { content: { size: number } } }
+}): string {
+  return editor.state.doc.textBetween(0, editor.state.doc.content.size, '\n')
+}
+
 function plainTextToHtml(text: string): string {
   return text
     .split('\n')
@@ -113,7 +119,7 @@ export function MarkdownEditor({
     onUpdate: ({ editor }) => {
       if (isComposing) return
 
-      const content = plainText ? editor.getText() : getMarkdownFromEditor(editor)
+      const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
       const textContent = editor.getText()
       updateContent(content)
       onChange?.(content)
@@ -160,7 +166,7 @@ export function MarkdownEditor({
     const handleCompositionStart = () => setIsComposing(true)
     const handleCompositionEnd = () => {
       setIsComposing(false)
-      const content = plainText ? editor.getText() : getMarkdownFromEditor(editor)
+      const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
       const textContent = editor.getText()
       updateContent(content)
       onChange?.(content)

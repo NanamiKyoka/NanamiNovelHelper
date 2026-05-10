@@ -118,12 +118,12 @@ export interface CreateProjectOptions {
  * 最近项目记录
  */
 export interface RecentProject {
-  /** 项目路径 */
-  path: string
-  /** 项目名称 */
+  id: string
   name: string
-  /** 最后打开时间 (ISO 8601) */
-  lastOpened: string
+  path: string
+  description?: string
+  cover?: string
+  lastOpenedAt: string
 }
 
 /**

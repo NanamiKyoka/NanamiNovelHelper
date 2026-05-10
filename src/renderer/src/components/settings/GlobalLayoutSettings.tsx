@@ -4,7 +4,7 @@
  */
 
 import { useMemo } from 'react'
-import { Switch, message, Divider, Card } from 'antd'
+import { Switch, App, Divider, Card } from 'antd'
 import {
   TagOutlined,
   WarningOutlined,
@@ -91,6 +91,7 @@ const BADGE_CONFIG = [
 ]
 
 function GlobalLayoutSettings(): JSX.Element {
+  const { message } = App.useApp()
   const globalSettings = useSettingsStore(state => state.globalSettings)
   const updateBadgeVisibility = useSettingsStore(state => state.updateBadgeVisibility)
   const updateSidebarBadgeVisibility = useSettingsStore(state => state.updateSidebarBadgeVisibility)

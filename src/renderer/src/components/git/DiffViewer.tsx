@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react'
-import { Empty, Button, Tooltip, Segmented, message } from 'antd'
+import { Empty, Button, Tooltip, Segmented, App } from 'antd'
 import {
   CloseOutlined,
   CopyOutlined,
@@ -31,6 +31,7 @@ interface DiffViewerProps {
 }
 
 function DiffViewer({ diff, onClose }: DiffViewerProps): JSX.Element {
+  const { message } = App.useApp()
   const shouldDetectHtml =
     isRenderableFile(diff.path) ||
     diff.hunks.some(hunk => hunk.lines.some(line => isHtmlContent(line.content)))

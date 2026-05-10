@@ -87,9 +87,15 @@ pub struct VocabularyType {
     #[serde(flatten)]
     pub base: BaseEntity,
     pub name: String,
+    #[serde(default)]
+    pub icon: Option<String>,
     pub color: String,
     #[serde(rename = "isBuiltIn", default)]
     pub is_built_in: bool,
+    #[serde(default)]
+    pub fields: Vec<serde_json::Value>,
+    #[serde(rename = "tableConfig", default)]
+    pub table_config: Vec<serde_json::Value>,
     pub order: i32,
     #[serde(default)]
     pub description: Option<String>,
@@ -105,6 +111,12 @@ pub struct VocabularyEntry {
     #[serde(rename = "typeName")]
     pub type_name: String,
     pub order: i32,
+    #[serde(default)]
+    pub color: String,
+    #[serde(default)]
+    pub fields: serde_json::Value,
+    #[serde(default)]
+    pub starred: bool,
     #[serde(default)]
     pub description: Option<String>,
     #[serde(rename = "linkedFilePath", default)]

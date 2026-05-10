@@ -107,7 +107,7 @@ function SortableCard({
           <div className={styles.mapName}>{map.name}</div>
           {map.description && <div className={styles.mapDescription}>{map.description}</div>}
           <div className={styles.mapStats}>
-            <span className={styles.stat}>{map.elementCount} 元素</span>
+            <span className={styles.stat}>{map.chunkCount} 板块</span>
           </div>
         </div>
       </Card>
@@ -175,7 +175,9 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
   // 获取本地文件 URL
   const getLocalUrl = useCallback((filePath: string): string => {
     if (!filePath) return ''
-    return `file://${filePath.replace(/\\/g, '/')}`
+    const normalizedPath = filePath.replace(/\\/g, '/')
+    const encodedPath = encodeURIComponent(normalizedPath)
+    return `local://file/${encodedPath}`
   }, [])
 
   // 打开创建模态框

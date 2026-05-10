@@ -181,7 +181,7 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
               description={
                 <>
                   <h3>空的区域</h3>
-                  <p>从右侧面板添加元素</p>
+                  <p>从右侧面板点击添加元素</p>
                 </>
               }
             />

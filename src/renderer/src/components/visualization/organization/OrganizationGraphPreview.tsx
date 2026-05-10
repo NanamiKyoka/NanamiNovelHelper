@@ -385,11 +385,14 @@ function OrganizationGraphPreview({
         graph
           .render()
           .then(() => {
-            setGraphReady(true)
+            if (!graph.destroyed) {
+              setGraphReady(true)
+            }
           })
           .catch(error => {
-            console.error('Failed to render organization graph preview:', error)
-            // 预览模式下不显示错误提示，避免频繁打扰
+            if (!graph.destroyed) {
+              console.error('Failed to render organization graph preview:', error)
+            }
           })
       }
 

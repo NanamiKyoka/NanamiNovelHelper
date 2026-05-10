@@ -1,4 +1,4 @@
-export type RuntimeEnvironment = 'electron' | 'tauri' | 'web'
+export type RuntimeEnvironment = 'tauri' | 'web'
 
 let cachedEnv: RuntimeEnvironment | null = null
 
@@ -6,13 +6,9 @@ export function getRuntimeEnvironment(): RuntimeEnvironment {
   if (cachedEnv) return cachedEnv
 
   if (typeof window !== 'undefined') {
-    if (window.__TAURI__) {
+    if ('__TAURI_INTERNALS__' in window) {
       cachedEnv = 'tauri'
       return 'tauri'
-    }
-    if (window.electron) {
-      cachedEnv = 'electron'
-      return 'electron'
     }
   }
 
@@ -22,10 +18,6 @@ export function getRuntimeEnvironment(): RuntimeEnvironment {
 
 export function isTauri(): boolean {
   return getRuntimeEnvironment() === 'tauri'
-}
-
-export function isElectron(): boolean {
-  return getRuntimeEnvironment() === 'electron'
 }
 
 export function isWeb(): boolean {

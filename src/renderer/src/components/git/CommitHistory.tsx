@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Empty, Spin, Tag, Tooltip, Dropdown, Modal, Input, message } from 'antd'
+import { Button, Empty, Spin, Tag, Tooltip, Dropdown, Modal, Input, App } from 'antd'
 import {
   SyncOutlined,
   UserOutlined,
@@ -28,6 +28,7 @@ const { confirm } = Modal
 const { Search } = Input
 
 function CommitHistory(): JSX.Element {
+  const { message } = App.useApp()
   const { commits, loading, error, getLog, reset, checkout } = useGitStore()
 
   const [searchKeyword, setSearchKeyword] = useState('')

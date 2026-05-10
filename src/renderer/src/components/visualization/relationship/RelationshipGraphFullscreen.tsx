@@ -357,11 +357,15 @@ function RelationshipGraphFullscreen({
         graph
           .render()
           .then(() => {
-            setGraphReady(true)
+            if (!graph.destroyed) {
+              setGraphReady(true)
+            }
           })
           .catch(error => {
-            console.error('Failed to render relationship graph:', error)
-            message.error('关系图渲染失败，请刷新重试')
+            if (!graph.destroyed) {
+              console.error('Failed to render relationship graph:', error)
+              message.error('关系图渲染失败，请刷新重试')
+            }
           })
       }
 
@@ -437,7 +441,7 @@ function RelationshipGraphFullscreen({
       }
     })
 
-    const edges = currentGraph.edges.map(edge => {
+    const edges = (currentGraph.edges || []).map(edge => {
       const relationType = relationTypes.find(t => t.id === edge.relationTypeId)
       return {
         id: edge.id,
@@ -558,7 +562,7 @@ function RelationshipGraphFullscreen({
   }
 
   const handleAddEdge = () => {
-    if (!currentGraph?.nodes.length) {
+    if (!currentGraph?.nodes?.length) {
       message.warning('请先添加人物节点')
       return
     }
@@ -666,10 +670,10 @@ function RelationshipGraphFullscreen({
   }
 
   const selectedNode = selectedNodeId
-    ? currentGraph?.nodes.find(n => n.id === selectedNodeId)
+    ? currentGraph?.nodes?.find(n => n.id === selectedNodeId)
     : null
   const selectedEdge = selectedEdgeId
-    ? currentGraph?.edges.find(e => e.id === selectedEdgeId)
+    ? currentGraph?.edges?.find(e => e.id === selectedEdgeId)
     : null
 
   // 右键菜单项定义（精简版：只保留编辑和删除）
@@ -756,7 +760,7 @@ function RelationshipGraphFullscreen({
       icon: <HeartOutlined />,
       label: '添加关系',
       onClick: () => {
-        if (!currentGraph?.nodes.length) {
+        if (!currentGraph?.nodes?.length) {
           message.warning('请先添加人物节点')
           setContextMenu(prev => ({ ...prev, visible: false }))
           return
@@ -1004,7 +1008,7 @@ function RelationshipGraphFullscreen({
               value={edgeModal.edge?.source}
               onChange={v => setEdgeModal(prev => ({ ...prev, edge: { ...prev.edge, source: v } }))}
               placeholder="选择起点人物"
-              options={currentGraph?.nodes.map(n => ({ value: n.id, label: n.name }))}
+              options={currentGraph?.nodes?.map(n => ({ value: n.id, label: n.name }))}
             />
           </div>
 
@@ -1014,7 +1018,7 @@ function RelationshipGraphFullscreen({
               value={edgeModal.edge?.target}
               onChange={v => setEdgeModal(prev => ({ ...prev, edge: { ...prev.edge, target: v } }))}
               placeholder="选择终点人物"
-              options={currentGraph?.nodes.map(n => ({ value: n.id, label: n.name }))}
+              options={currentGraph?.nodes?.map(n => ({ value: n.id, label: n.name }))}
             />
           </div>
 

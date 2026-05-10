@@ -16,6 +16,27 @@ import type { VocabularyEntry, VocabularyType } from '@shared/vocabulary'
 import type { SensitiveWord } from '@shared/sensitive'
 import { DEFAULT_HIGHLIGHT_CONFIG } from '@shared/highlight'
 
+function deepMerge<T extends Record<string, unknown>>(base: T, overlay: Record<string, unknown>): T {
+  const result = { ...base } as Record<string, unknown>
+  for (const key of Object.keys(overlay)) {
+    const baseVal = result[key]
+    const overlayVal = overlay[key]
+    if (overlayVal == null) {
+      continue
+    }
+    if (
+      baseVal && overlayVal &&
+      typeof baseVal === 'object' && typeof overlayVal === 'object' &&
+      !Array.isArray(baseVal) && !Array.isArray(overlayVal)
+    ) {
+      result[key] = deepMerge(baseVal as Record<string, unknown>, overlayVal as Record<string, unknown>)
+    } else {
+      result[key] = overlayVal
+    }
+  }
+  return result as T
+}
+
 interface HighlightServiceState {
   /** 高亮配置 */
   config: HighlightConfig
@@ -62,7 +83,7 @@ interface HighlightServiceState {
     color: string | null
   }
   // 批量设置方法（用于聚合接口）
-  setConfig: (config: HighlightConfig) => void
+  setConfig: (config: HighlightConfig | null | undefined) => void
 }
 
 /**
@@ -82,7 +103,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
     set({ loading: true, error: null })
     try {
       const config = await window.electron.highlight.loadConfig()
-      const mergedConfig = { ...DEFAULT_HIGHLIGHT_CONFIG, ...config }
+      const mergedConfig = deepMerge(DEFAULT_HIGHLIGHT_CONFIG, (config && typeof config === 'object') ? config : {})
       set({
         config: mergedConfig,
         hoverCardConfig: mergedConfig.hoverCard || DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
@@ -140,11 +161,14 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
     const { config, automaton } = get()
     const patterns: HighlightPattern[] = []
     const typeMap = new Map(types.map(t => [t.id, t]))
+    const typeOverrides = config.typeOverrides || []
+    const entryOverrides = config.entryOverrides || []
+    const matchConfig = config.match || DEFAULT_HIGHLIGHT_CONFIG.match
 
     for (const entry of entries) {
       const type = typeMap.get(entry.typeId)
-      const typeOverride = config.typeOverrides.find(o => o.typeId === entry.typeId)
-      const entryOverride = config.entryOverrides.find(o => o.entryId === entry.id)
+      const typeOverride = typeOverrides.find(o => o.typeId === entry.typeId)
+      const entryOverride = entryOverrides.find(o => o.entryId === entry.id)
 
       if (typeOverride && !typeOverride.enabled) continue
       if (entryOverride && entryOverride.enabled === false) continue
@@ -164,9 +188,9 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
       })
     }
 
-    if (config.match.sensitiveWordHighlight) {
+    if (matchConfig.sensitiveWordHighlight) {
       for (const word of sensitiveWords) {
-        const color = config.match.sensitiveWordColors[word.severity] || '#f5222d'
+        const color = (matchConfig.sensitiveWordColors || {})[word.severity] || '#f5222d'
 
         patterns.push({
           id: word.id,
@@ -174,8 +198,8 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
           aliases: word.aliases || [],
           color,
           typeId: 'sensitive',
-          matchMode: config.match.matchMode,
-          caseSensitive: config.match.caseSensitive,
+          matchMode: matchConfig.matchMode,
+          caseSensitive: matchConfig.caseSensitive,
           isSensitive: true,
           severity: word.severity,
           priority: 100
@@ -217,7 +241,7 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
       automaton.addPatterns(patterns)
       automaton.build()
     } else {
-      const newAutomaton = createAhoCorasick(patterns, config.match.caseSensitive)
+      const newAutomaton = createAhoCorasick(patterns, (config.match || DEFAULT_HIGHLIGHT_CONFIG.match).caseSensitive)
       set({ automaton: newAutomaton })
     }
   },
@@ -230,53 +254,49 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   // 查找匹配
   findMatches: (text, filePath) => {
     const { automaton, config } = get()
+    const scopeConfig = config.scope || DEFAULT_HIGHLIGHT_CONFIG.scope
+    const matchConfig = config.match || DEFAULT_HIGHLIGHT_CONFIG.match
 
-    // 检查文件是否在范围内
     if (filePath && !get().isFileInScope(filePath)) {
       return []
     }
 
-    if (!automaton || !config.scope.enabled) {
+    if (!automaton || !scopeConfig.enabled) {
       return []
     }
 
     return automaton.searchHighlights(text, {
-      wholeWord: config.match.matchMode === 'wholeWord'
+      wholeWord: matchConfig.matchMode === 'wholeWord'
     })
   },
 
-  // 检查文件是否在范围内
   isFileInScope: filePath => {
     const { config } = get()
+    const scopeConfig = config.scope || DEFAULT_HIGHLIGHT_CONFIG.scope
 
-    if (!config.scope.enabled) return false
+    if (!scopeConfig.enabled) return false
 
-    // 统一路径分隔符为正斜杠，避免 Windows/Linux 差异
     const normalizedPath = filePath.replace(/\\/g, '/')
 
-    // 检查排除的扩展名
     const ext = normalizedPath.split('.').pop()?.toLowerCase()
-    if (ext && config.scope.excludeExtensions.includes(ext)) {
+    if (ext && (scopeConfig.excludeExtensions || []).includes(ext)) {
       return false
     }
 
-    // 检查排除的文件（统一分隔符后比较）
-    const normalizedExcludeFiles = config.scope.excludeFiles.map(f => f.replace(/\\/g, '/'))
+    const normalizedExcludeFiles = (scopeConfig.excludeFiles || []).map(f => f.replace(/\\/g, '/'))
     if (normalizedExcludeFiles.includes(normalizedPath)) {
       return false
     }
 
-    // 检查排除的目录（统一分隔符后比较）
-    const normalizedExcludeDirs = config.scope.excludeDirectories.map(d => d.replace(/\\/g, '/'))
+    const normalizedExcludeDirs = (scopeConfig.excludeDirectories || []).map(d => d.replace(/\\/g, '/'))
     for (const dir of normalizedExcludeDirs) {
       if (normalizedPath.startsWith(dir + '/')) {
         return false
       }
     }
 
-    // 如果有包含目录，检查是否在其中
-    if (config.scope.includeDirectories.length > 0) {
-      const normalizedIncludeDirs = config.scope.includeDirectories.map(d => d.replace(/\\/g, '/'))
+    if ((scopeConfig.includeDirectories || []).length > 0) {
+      const normalizedIncludeDirs = (scopeConfig.includeDirectories || []).map(d => d.replace(/\\/g, '/'))
       let inIncludeDir = false
       for (const dir of normalizedIncludeDirs) {
         if (normalizedPath.startsWith(dir + '/')) {
@@ -293,24 +313,26 @@ export const useHighlightService = create<HighlightServiceState>((set, get) => (
   // 获取词汇的有效配置
   getEffectivePattern: (entryId, typeId) => {
     const { config } = get()
+    const matchConfig = config.match || DEFAULT_HIGHLIGHT_CONFIG.match
 
-    const entryOverride = config.entryOverrides.find(o => o.entryId === entryId)
-    const typeOverride = config.typeOverrides.find(o => o.typeId === typeId)
+    const entryOverride = (config.entryOverrides || []).find(o => o.entryId === entryId)
+    const typeOverride = (config.typeOverrides || []).find(o => o.typeId === typeId)
 
     return {
       enabled: entryOverride?.enabled ?? typeOverride?.enabled ?? true,
-      matchMode: entryOverride?.matchMode ?? typeOverride?.matchMode ?? config.match.matchMode,
+      matchMode: entryOverride?.matchMode ?? typeOverride?.matchMode ?? matchConfig.matchMode,
       caseSensitive:
-        entryOverride?.caseSensitive ?? typeOverride?.caseSensitive ?? config.match.caseSensitive,
+        entryOverride?.caseSensitive ?? typeOverride?.caseSensitive ?? matchConfig.caseSensitive,
       color: entryOverride?.color ?? null
     }
   },
 
   // 批量设置配置（用于聚合接口）
-  setConfig: (config: HighlightConfig) => {
+  setConfig: (config: HighlightConfig | null | undefined) => {
+    const mergedConfig = config ? deepMerge(DEFAULT_HIGHLIGHT_CONFIG, config as Record<string, unknown>) : DEFAULT_HIGHLIGHT_CONFIG
     set({
-      config,
-      hoverCardConfig: config.hoverCard || DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
+      config: mergedConfig,
+      hoverCardConfig: mergedConfig.hoverCard || DEFAULT_HIGHLIGHT_CONFIG.hoverCard,
       initialized: true,
       loading: false,
       error: null

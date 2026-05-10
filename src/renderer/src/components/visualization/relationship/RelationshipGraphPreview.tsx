@@ -159,7 +159,9 @@ function RelationshipGraphPreview({
         graph
           .render()
           .then(() => {
-            setGraphReady(true)
+            if (!graph.destroyed) {
+              setGraphReady(true)
+            }
           })
           .catch(() => {
             // 忽略错误

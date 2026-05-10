@@ -206,7 +206,7 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
       modal.confirm({
         title: '确定要删除这个时间线吗？',
         content: `将删除「${timeline.name}」，删除后无法恢复。${
-          timeline.branchInfo.type === 'main'
+          timeline.branchInfo?.type === 'main'
             ? '\n注意：该时间线下的分支时间线不会被删除，但会失去关联。'
             : ''
         }`,
@@ -270,7 +270,7 @@ function TimelineList({ onSelectTimeline }: TimelineListProps): JSX.Element {
   }
 
   const getBranchTypeTag = (timeline: TimelineMeta) => {
-    if (timeline.branchInfo.type === 'branch') {
+    if (timeline.branchInfo?.type === 'branch') {
       return (
         <Tag color="blue" className={styles.branchTag}>
           <BranchesOutlined /> 分支

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { message } from 'antd'
+import { App } from 'antd'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
 import { useProjectActions } from '@hooks/useProjectActions'
@@ -22,6 +22,7 @@ interface MenuConfig {
 }
 
 function MenuBar(): JSX.Element {
+  const { message } = App.useApp()
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const menuBarRef = useRef<HTMLDivElement>(null)
 
@@ -55,7 +56,7 @@ function MenuBar(): JSX.Element {
     } catch {
       message.warning('检查更新失败，请稍后重试')
     }
-  }, [])
+  }, [message])
 
   const handleMenuItemClick = useCallback(
     async (_menuId: string, itemId: string, _label?: string) => {

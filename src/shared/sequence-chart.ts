@@ -203,6 +203,7 @@ export interface CreateSequenceEventOptions {
   characters?: SequenceCharacterRef[]
   chapter?: SequenceChapterRef
   location?: SequenceLocationRef
+  order?: number
 }
 
 /** 更新事件选项 */

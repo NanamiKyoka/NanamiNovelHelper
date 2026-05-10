@@ -91,15 +91,15 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
   // 检查当前文件是否应该被排除高亮
   const shouldHighlight = useMemo(() => {
-    if (!config?.scope.enabled) return false
+    if (!config?.scope?.enabled) return false
     if (!currentFilePath) return true
 
-    const excludeExtensions = config.scope.excludeExtensions || []
+    const excludeExtensions = config?.scope?.excludeExtensions || []
     if (excludeExtensions.length === 0) return true
 
     const ext = currentFilePath.split('.').pop()?.toLowerCase() || ''
     return !excludeExtensions.includes(ext)
-  }, [config?.scope.enabled, config?.scope.excludeExtensions, currentFilePath])
+  }, [config?.scope?.enabled, config?.scope?.excludeExtensions, currentFilePath])
 
   // 当词汇或配置变化时，更新高亮模式
   useEffect(() => {
@@ -123,7 +123,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   // 编辑器扩展 hook
   const { getExtensions } = useEditorExtensions({
     styleConfig: config?.style,
-    highlightEnabled: config?.scope.enabled ?? true,
+    highlightEnabled: config?.scope?.enabled ?? true,
     hoverCardConfig,
     onVocabularyClick: entryId => {
       console.warn('Clicked vocabulary:', entryId)

@@ -196,8 +196,8 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: [...state.currentGraph.nodes, newNode],
-                nodeCount: state.currentGraph.nodeCount + 1
+                nodes: [...(state.currentGraph.nodes || []), newNode],
+                nodeCount: (state.currentGraph.nodeCount || 0) + 1
               }
             : null
         }))
@@ -226,7 +226,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
+                nodes: (state.currentGraph.nodes || []).map(n => (n.id === nodeId ? updatedNode : n))
               }
             : null
         }))
@@ -249,11 +249,11 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.filter(n => n.id !== nodeId),
-                edges: state.currentGraph.edges.filter(
+                nodes: (state.currentGraph.nodes || []).filter(n => n.id !== nodeId),
+                edges: (state.currentGraph.edges || []).filter(
                   e => e.source !== nodeId && e.target !== nodeId
                 ),
-                nodeCount: state.currentGraph.nodeCount - 1
+                nodeCount: (state.currentGraph.nodeCount || 0) - 1
               }
             : null
         }))
@@ -307,7 +307,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                edges: state.currentGraph.edges.map(e => (e.id === edgeId ? updatedEdge : e))
+                edges: (state.currentGraph.edges || []).map(e => (e.id === edgeId ? updatedEdge : e))
               }
             : null
         }))
@@ -330,8 +330,8 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                edges: state.currentGraph.edges.filter(e => e.id !== edgeId),
-                edgeCount: state.currentGraph.edgeCount - 1
+                edges: (state.currentGraph.edges || []).filter(e => e.id !== edgeId),
+                edgeCount: (state.currentGraph.edgeCount || 0) - 1
               }
             : null
         }))
@@ -394,7 +394,7 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                customRelationTypes: state.currentGraph.customRelationTypes.map(t =>
+                customRelationTypes: (state.currentGraph.customRelationTypes || []).map(t =>
                   t.id === typeId ? updatedType : t
                 )
               }
@@ -505,12 +505,12 @@ export const useRelationshipStore = create<RelationshipState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.nodes.find(n => n.id === nodeId)
+    return currentGraph?.nodes?.find(n => n.id === nodeId)
   },
 
   getEdgeById: (edgeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.edges.find(e => e.id === edgeId)
+    return currentGraph?.edges?.find(e => e.id === edgeId)
   },
 
   getRelationTypeById: (typeId: string) => {

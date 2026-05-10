@@ -422,7 +422,7 @@ function VocabularyTypeSettings({
       name: type.name + ' (副本)',
       icon: type.icon,
       color: type.color,
-      fields: type.fields.map(f => ({ ...f, id: uuidv4() })),
+      fields: (type.fields || []).map(f => ({ ...f, id: uuidv4() })),
       tableConfig: [...type.tableConfig],
       isBuiltIn: false,
       order: types.length

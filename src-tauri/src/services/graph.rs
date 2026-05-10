@@ -67,7 +67,17 @@ impl GraphService {
             return Ok(None);
         }
         match read_json5_file::<serde_json::Value>(&path) {
-            Ok(item) => Ok(Some(item)),
+            Ok(mut item) => {
+                if let Some(obj) = item.as_object_mut() {
+                    if !obj.contains_key("nodes") {
+                        obj.insert("nodes".to_string(), serde_json::Value::Array(vec![]));
+                    }
+                    if !obj.contains_key("edges") {
+                        obj.insert("edges".to_string(), serde_json::Value::Array(vec![]));
+                    }
+                }
+                Ok(Some(item))
+            }
             Err(_) => Ok(None),
         }
     }
@@ -86,6 +96,18 @@ impl GraphService {
             obj.insert("createdAt".to_string(), serde_json::Value::String(now.clone()));
             obj.insert("updatedAt".to_string(), serde_json::Value::String(now));
             obj.insert("order".to_string(), serde_json::Value::Number(order.into()));
+            if !obj.contains_key("nodes") {
+                obj.insert("nodes".to_string(), serde_json::Value::Array(vec![]));
+            }
+            if !obj.contains_key("edges") {
+                obj.insert("edges".to_string(), serde_json::Value::Array(vec![]));
+            }
+            if !obj.contains_key("nodeCount") {
+                obj.insert("nodeCount".to_string(), serde_json::Value::Number(0.into()));
+            }
+            if !obj.contains_key("edgeCount") {
+                obj.insert("edgeCount".to_string(), serde_json::Value::Number(0.into()));
+            }
         }
 
         let path = Self::get_item_path(&project_path, sub_dir, &id);
@@ -161,7 +183,7 @@ impl GraphService {
         if item_path.exists() {
             if let Ok(mut item) = read_json5_file::<serde_json::Value>(&item_path) {
                 if let Some(obj) = item.as_object_mut() {
-                    obj.insert("thumbnail".to_string(), serde_json::Value::String(format!("{}.png", id)));
+                    obj.insert("thumbnail".to_string(), serde_json::Value::String(thumb_path.to_string_lossy().to_string()));
                 }
                 let _ = write_json5_file(&item_path, &item);
             }
@@ -384,10 +406,12 @@ impl GraphService {
                     target_nodes.push(n);
                 }
             }
-            if let Some(obj) = target.as_object_mut() {
-                obj.insert("nodeCount".to_string(), serde_json::Value::Number((target_nodes.len() as i32).into()));
-                obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
+        }
+        if let Some(obj) = target.as_object_mut() {
+            if let Some(nodes) = obj.get("nodes").and_then(|n| n.as_array()) {
+                obj.insert("nodeCount".to_string(), serde_json::Value::Number((nodes.len() as i32).into()));
             }
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(generate_timestamp()));
         }
         write_json5_file(&target_path, &target)?;
         Ok(true)
@@ -493,10 +517,47 @@ impl Default for GraphService {
 
 fn merge_json_value(base: &mut serde_json::Value, overlay: serde_json::Value) {
     match (base, overlay) {
-        (serde_json::Value::Object(base_map), serde_json::Value::Object(overlay_map)) => {
+        (serde_json::Value::Object(base_map), serde_json::Value::Object(mut overlay_map)) => {
+            if let Some(push_ops) = overlay_map.get("$push") {
+                if let serde_json::Value::Object(push_map) = push_ops {
+                    for (key, value) in push_map {
+                        if let Some(serde_json::Value::Array(arr)) = base_map.get_mut(key) {
+                            arr.push(value.clone());
+                        } else {
+                            base_map.insert(key.clone(), serde_json::Value::Array(vec![value.clone()]));
+                        }
+                    }
+                }
+                let _ = overlay_map.remove("$push");
+            }
+            if let Some(pull_ops) = overlay_map.get("$pull") {
+                if let serde_json::Value::Object(pull_map) = pull_ops {
+                    for (key, condition) in pull_map {
+                        if let Some(serde_json::Value::Array(arr)) = base_map.get_mut(key) {
+                            if let serde_json::Value::Object(cond_obj) = condition {
+                                if let Some(id_val) = cond_obj.get("id").and_then(|v| v.as_str()) {
+                                    arr.retain(|item| {
+                                        item.get("id").and_then(|v| v.as_str()) != Some(id_val)
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                let _ = overlay_map.remove("$pull");
+            }
             for (key, value) in overlay_map {
+                if key == "$push" || key == "$pull" {
+                    continue;
+                }
                 if let Some(base_value) = base_map.get_mut(&key) {
-                    merge_json_value(base_value, value);
+                    if let serde_json::Value::Array(arr) = base_value {
+                        if let serde_json::Value::Object(update_map) = &value {
+                            update_array_items_by_id(arr, update_map);
+                        }
+                    } else {
+                        merge_json_value(base_value, value);
+                    }
                 } else {
                     base_map.insert(key, value);
                 }
@@ -504,6 +565,14 @@ fn merge_json_value(base: &mut serde_json::Value, overlay: serde_json::Value) {
         }
         (base, overlay) => {
             *base = overlay;
+        }
+    }
+}
+
+fn update_array_items_by_id(arr: &mut Vec<serde_json::Value>, update_map: &serde_json::Map<String, serde_json::Value>) {
+    for (item_id, updates) in update_map {
+        if let Some(item) = arr.iter_mut().find(|i| i.get("id").and_then(|v| v.as_str()) == Some(item_id.as_str())) {
+            merge_json_value(item, updates.clone());
         }
     }
 }

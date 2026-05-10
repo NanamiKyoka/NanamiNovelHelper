@@ -139,7 +139,7 @@ export interface TimelineMeta {
   /** 缩略图文件名 */
   thumbnail?: string
   /** 分支信息 */
-  branchInfo: BranchInfo
+  branchInfo?: BranchInfo
   /** 节点数量 */
   nodeCount: number
   /** 标签（用于分类） */

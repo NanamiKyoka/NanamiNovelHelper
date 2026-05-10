@@ -271,22 +271,30 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
 
     try {
       get()._pushHistory()
-      const newEvent = await window.electron.sequenceChart.addEvent(currentChart.id, event)
+      const events = currentChart.events || []
+      const maxOrder = events.length > 0
+        ? Math.max(...events.map(e => e.order ?? 0))
+        : -1
+      const newOrder = maxOrder + 1
+      const newEvent = await window.electron.sequenceChart.addEvent(currentChart.id, {
+        ...event,
+        order: newOrder
+      })
       if (newEvent) {
         set(state => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: [...state.currentChart.events, newEvent],
-                eventCount: state.currentChart.eventCount + 1,
+                events: [...(state.currentChart.events || []), newEvent],
+                eventCount: (state.currentChart.eventCount || 0) + 1,
                 axisConfig:
-                  newEvent.timeInfo.cellEnd &&
-                  newEvent.timeInfo.cellEnd >= state.currentChart.axisConfig.initialCellCount - 10
+                  newEvent.timeInfo?.cellEnd &&
+                  newEvent.timeInfo.cellEnd >= (state.currentChart.axisConfig?.initialCellCount || 50) - 10
                     ? {
                         ...state.currentChart.axisConfig,
                         initialCellCount: Math.min(
                           newEvent.timeInfo.cellEnd + 50,
-                          state.currentChart.axisConfig.maxCellCount
+                          state.currentChart.axisConfig?.maxCellCount || 500
                         )
                       }
                     : state.currentChart.axisConfig
@@ -319,7 +327,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.map(e => (e.id === eventId ? updatedEvent : e))
+                events: (state.currentChart.events || []).map(e => (e.id === eventId ? updatedEvent : e))
               }
             : null
         }))
@@ -343,8 +351,8 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.filter(e => e.id !== eventId),
-                eventCount: state.currentChart.eventCount - 1
+                events: (state.currentChart.events || []).filter(e => e.id !== eventId),
+                eventCount: (state.currentChart.eventCount || 0) - 1
               }
             : null,
           selectedEventIds: state.selectedEventIds.filter(id => id !== eventId)
@@ -372,8 +380,8 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.filter(e => !eventIds.includes(e.id)),
-                eventCount: state.currentChart.eventCount - deletedCount
+                events: (state.currentChart.events || []).filter(e => !eventIds.includes(e.id)),
+                eventCount: (state.currentChart.eventCount || 0) - deletedCount
               }
             : null,
           selectedEventIds: []
@@ -431,15 +439,15 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                events: state.currentChart.events.map(e => (e.id === eventId ? updatedEvent : e)),
+                events: (state.currentChart.events || []).map(e => (e.id === eventId ? updatedEvent : e)),
                 // 自动扩展时间轴
                 axisConfig:
-                  cellEnd >= state.currentChart.axisConfig.initialCellCount - 10
+                  cellEnd >= (state.currentChart.axisConfig?.initialCellCount || 50) - 10
                     ? {
                         ...state.currentChart.axisConfig,
                         initialCellCount: Math.min(
                           cellEnd + 50,
-                          state.currentChart.axisConfig.maxCellCount
+                          state.currentChart.axisConfig?.maxCellCount || 500
                         )
                       }
                     : state.currentChart.axisConfig
@@ -519,7 +527,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                customEventTypes: state.currentChart.customEventTypes.map(t =>
+                customEventTypes: (state.currentChart.customEventTypes || []).map(t =>
                   t.id === typeId ? updatedType : t
                 )
               }
@@ -544,7 +552,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                customEventTypes: state.currentChart.customEventTypes.filter(t => t.id !== typeId)
+                customEventTypes: (state.currentChart.customEventTypes || []).filter(t => t.id !== typeId)
               }
             : null
         }))
@@ -595,7 +603,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     const { currentChart } = get()
     if (!currentChart) return
 
-    const event = currentChart.events.find(e => e.id === eventId)
+    const event = (currentChart.events || []).find(e => e.id === eventId)
     set({
       dragState: {
         isDragging: true,
@@ -603,8 +611,8 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
         eventId,
         startX,
         startY,
-        originalCellStart: event?.timeInfo.cellStart,
-        originalCellEnd: event?.timeInfo.cellEnd,
+        originalCellStart: event?.timeInfo?.cellStart,
+        originalCellEnd: event?.timeInfo?.cellEnd,
         originalOrder: event?.order
       }
     })
@@ -660,7 +668,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   selectAllEvents: () => {
     const { currentChart } = get()
     if (!currentChart) return
-    set({ selectedEventIds: currentChart.events.map(e => e.id) })
+    set({ selectedEventIds: (currentChart.events || []).map(e => e.id) })
   },
 
   clearSelection: () => {
@@ -769,10 +777,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
           currentChart: state.currentChart
             ? {
                 ...state.currentChart,
-                axisConfig: {
-                  ...state.currentChart.axisConfig,
-                  ...config
-                }
+                axisConfig: updatedChart.axisConfig
               }
             : null
         }))
@@ -788,8 +793,8 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
     const { currentChart } = get()
     if (!currentChart) return
 
-    if (newCellCount <= currentChart.axisConfig.initialCellCount) return
-    if (newCellCount > currentChart.axisConfig.maxCellCount) return
+    if (newCellCount <= (currentChart.axisConfig?.initialCellCount || 50)) return
+    if (newCellCount > (currentChart.axisConfig?.maxCellCount || 500)) return
 
     await get().updateAxisConfig({ initialCellCount: newCellCount })
   },
@@ -797,16 +802,16 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   // 辅助方法
   getEventById: (eventId: string) => {
     const { currentChart } = get()
-    return currentChart?.events.find(e => e.id === eventId)
+    return currentChart?.events?.find(e => e.id === eventId)
   },
 
   getEventsByCellRange: (cellStart: number, cellEnd: number) => {
     const { currentChart } = get()
     if (!currentChart) return []
 
-    return currentChart.events.filter(event => {
-      const start = event.timeInfo.cellStart || 0
-      const end = event.timeInfo.cellEnd || 0
+    return (currentChart.events || []).filter(event => {
+      const start = event.timeInfo?.cellStart || 0
+      const end = event.timeInfo?.cellEnd || 0
       return start <= cellEnd && end >= cellStart
     })
   },
@@ -871,7 +876,7 @@ export const useSequenceChartStore = create<SequenceChartState>((set, get) => ({
   _pushHistory: () => {
     const { currentChart, _history, _historyIndex, _maxHistorySize } = get()
     if (!currentChart) return
-    const snapshot = { events: JSON.parse(JSON.stringify(currentChart.events)) }
+    const snapshot = { events: JSON.parse(JSON.stringify(currentChart.events || [])) }
     const newHistory = _history.slice(0, _historyIndex + 1)
     newHistory.push(snapshot)
     if (newHistory.length > _maxHistorySize) {

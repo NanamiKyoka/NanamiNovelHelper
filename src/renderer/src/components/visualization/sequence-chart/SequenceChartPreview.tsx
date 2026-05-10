@@ -29,6 +29,7 @@ import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import type { SequenceEvent } from '@shared/sequence-chart'
 import { BUILT_IN_EVENT_TYPES } from '@shared/sequence-chart'
 import { getThemeColor } from '@utils/theme'
+import { safeNumberToString, safeNumber, safeSubtract, safeAdd } from '@utils/number'
 import styles from './SequenceChartPreview.module.css'
 
 const { Title, Text } = Typography
@@ -151,18 +152,19 @@ function SequenceChartPreview({
 
   // 计算时间轴范围
   const timeRange = useMemo(() => {
-    if (!currentChart?.events.length) {
+    if (!currentChart?.events?.length) {
       return { minCell: 1, maxCell: 50 }
     }
 
     let maxCell = 50
     currentChart.events.forEach(event => {
-      if (event.timeInfo.cellEnd > maxCell) {
-        maxCell = event.timeInfo.cellEnd
+      const cellEnd = safeNumber(event.timeInfo?.cellEnd, 0)
+      if (cellEnd > maxCell) {
+        maxCell = cellEnd
       }
     })
 
-    return { minCell: 1, maxCell: maxCell + 10 }
+    return { minCell: 1, maxCell: safeAdd(maxCell, 10, 60) }
   }, [currentChart])
 
   // 按 order 排序的事件（用于拖拽排序）
@@ -355,31 +357,31 @@ function SequenceChartPreview({
             <div className={styles.timelineHeader}>
               <div
                 className={styles.timelineLabels}
-                style={{ width: (timeRange.maxCell - timeRange.minCell + 1) * cellWidth }}
+                style={{ width: safeAdd(safeSubtract(timeRange.maxCell, timeRange.minCell), 1) * cellWidth }}
               >
-                {Array.from({ length: timeRange.maxCell - timeRange.minCell + 1 }, (_, i) => (
+                {Array.from({ length: safeAdd(safeSubtract(timeRange.maxCell, timeRange.minCell), 1) }, (_, i) => (
                   <div key={i} className={styles.timelineLabel} style={{ width: cellWidth }}>
-                    {timeRange.minCell + i}
+                    {safeAdd(timeRange.minCell, i)}
                   </div>
                 ))}
               </div>
             </div>
             <div
               className={styles.timelineGrid}
-              style={{ width: (timeRange.maxCell - timeRange.minCell + 1) * cellWidth }}
+              style={{ width: safeAdd(safeSubtract(timeRange.maxCell, timeRange.minCell), 1) * cellWidth }}
             >
               {/* 渲染事件行 */}
               {sortedEvents.map(event => {
                 const color = getEventColor(event)
-                const startCell = (event.timeInfo.cellStart || 1) - timeRange.minCell
-                const endCell = (event.timeInfo.cellEnd || 10) - timeRange.minCell
+                const startCell = safeSubtract(safeNumber(event.timeInfo?.cellStart, 1), timeRange.minCell)
+                const endCell = safeSubtract(safeNumber(event.timeInfo?.cellEnd, 10), timeRange.minCell)
                 const left = startCell * cellWidth
-                const width = (endCell - startCell + 1) * cellWidth
+                const width = safeAdd(safeSubtract(endCell, startCell), 1) * cellWidth
 
                 return (
                   <div key={event.id} className={styles.timelineRow}>
                     {/* 网格线 */}
-                    {Array.from({ length: timeRange.maxCell - timeRange.minCell + 1 }, (_, i) => (
+                    {Array.from({ length: safeAdd(safeSubtract(timeRange.maxCell, timeRange.minCell), 1) }, (_, i) => (
                       <div
                         key={i}
                         className={styles.timelineCell}
@@ -388,7 +390,7 @@ function SequenceChartPreview({
                     ))}
                     {/* 事件条 */}
                     <Tooltip
-                      title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})`}
+                      title={`${event.title} (${safeNumberToString(event.timeInfo?.cellStart)}-${safeNumberToString(event.timeInfo?.cellEnd)})`}
                     >
                       <div
                         className={styles.eventBar}
@@ -411,8 +413,8 @@ function SequenceChartPreview({
 
       {/* 底部统计 */}
       <div className={styles.statsBar}>
-        <span>事件数: {currentChart.events.length}</span>
-        <span>时间跨度: {timeRange.maxCell - timeRange.minCell + 1} 格</span>
+        <span>事件数: {currentChart.events?.length || 0}</span>
+        <span>时间跨度: {safeAdd(safeSubtract(timeRange.maxCell, timeRange.minCell), 1)} 格</span>
       </div>
     </div>
   )

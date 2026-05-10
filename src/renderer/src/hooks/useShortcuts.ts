@@ -68,7 +68,7 @@ function eventToKeyString(e: KeyboardEvent): string {
   if (e.metaKey) keys.push('meta')
 
   // 主键
-  const key = e.key.toLowerCase()
+  const key = (e.key || '').toLowerCase()
   if (!['control', 'shift', 'alt', 'meta'].includes(key)) {
     keys.push(key)
   }

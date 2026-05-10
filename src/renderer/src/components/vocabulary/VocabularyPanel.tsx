@@ -749,7 +749,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       form.resetFields()
 
       const defaultFields: Record<string, string | string[]> = {}
-      currentTypeDefinition?.fields.forEach(field => {
+      ;(currentTypeDefinition?.fields || []).forEach(field => {
         if (field.defaultValue) {
           defaultFields[field.id] = field.defaultValue
         } else if (field.type === 'tags') {
@@ -866,7 +866,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           linkedFilePath: undefined,
           fields: (() => {
             const defaultFields: Record<string, string | string[]> = {}
-            currentTypeDefinition?.fields.forEach(field => {
+            ;(currentTypeDefinition?.fields || []).forEach(field => {
               if (field.defaultValue) {
                 defaultFields[field.id] = field.defaultValue
               } else if (field.type === 'tags') {

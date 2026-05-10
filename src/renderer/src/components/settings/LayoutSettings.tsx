@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { message, Input, Button, Tag, Space, Card } from 'antd'
+import { App, Input, Button, Tag, Space, Card } from 'antd'
 import { InfoCircleOutlined, PlusOutlined, FolderOutlined, FileOutlined } from '@ant-design/icons'
 import { useProjectStore } from '@stores/projectStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
@@ -12,6 +12,7 @@ import baseStyles from './SettingsBase.module.css'
 import styles from './LayoutSettings.module.css'
 
 function FileDisplaySettings(): JSX.Element {
+  const { message } = App.useApp()
   const currentProject = useProjectStore(state => state.currentProject)
   const refreshTree = useFileTreeStore(state => state.refreshTree)
 
@@ -20,7 +21,7 @@ function FileDisplaySettings(): JSX.Element {
 
   useEffect(() => {
     if (currentProject) {
-      window.electron.settings.project.getHiddenItems().then(setHiddenItems)
+      window.electron.settings.project.getHiddenItems().then(items => setHiddenItems(items || []))
     }
   }, [currentProject])
 

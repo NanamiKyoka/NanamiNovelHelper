@@ -581,7 +581,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
 
     updateGitStatus: (changes: { path: string; statusShort: string; staged: boolean }[]) => {
       const newStatus = new Map<string, string>()
-      const isWindows = window.electron.platform === 'win32'
+      const isWindows = window.electron.platform === 'windows'
       const normalizePath = (p: string) => (isWindows ? p.replace(/\//g, '\\') : p)
 
       const statusPriority: Record<string, number> = {

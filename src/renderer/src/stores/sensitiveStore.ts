@@ -41,7 +41,7 @@ export const useSensitiveStore = create<SensitiveState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const words = await window.electron.sensitive.loadWords()
-      set({ words, isLoading: false, isLoaded: true, error: null })
+      set({ words: words || [], isLoading: false, isLoaded: true, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载敏感词失败'
       console.error('Failed to load sensitive words:', error)

@@ -664,6 +664,7 @@ export interface CreateMapOptions {
   canvasWidth?: number
   canvasHeight?: number
   backgroundColor?: string
+  linkedVocabularyTypes?: string[]
 }
 
 export interface UpdateMapOptions {
@@ -914,6 +915,77 @@ export function findBestEdges(
   }
 
   return null
+}
+
+export function normalizeMapData(raw: Record<string, unknown>): Map {
+  const defaultData = createDefaultMapData()
+
+  let data: MapData
+
+  if (raw.data && typeof raw.data === 'object') {
+    const rawData = raw.data as Record<string, unknown>
+    data = {
+      chunks: Array.isArray(rawData.chunks) ? rawData.chunks : defaultData.chunks,
+      connections: Array.isArray(rawData.connections)
+        ? rawData.connections
+        : defaultData.connections,
+      canvasWidth:
+        typeof rawData.canvasWidth === 'number' ? rawData.canvasWidth : defaultData.canvasWidth,
+      canvasHeight:
+        typeof rawData.canvasHeight === 'number' ? rawData.canvasHeight : defaultData.canvasHeight,
+      backgroundColor:
+        typeof rawData.backgroundColor === 'string'
+          ? rawData.backgroundColor
+          : defaultData.backgroundColor,
+      gridSize: typeof rawData.gridSize === 'number' ? rawData.gridSize : defaultData.gridSize,
+      showGrid: typeof rawData.showGrid === 'boolean' ? rawData.showGrid : defaultData.showGrid
+    }
+  } else {
+    data = {
+      ...defaultData,
+      chunks: Array.isArray(raw.nodes) ? raw.nodes : defaultData.chunks,
+      connections: Array.isArray(raw.edges) ? raw.edges : defaultData.connections
+    }
+  }
+
+  return {
+    id: (raw.id as string) || '',
+    name: (raw.name as string) || '',
+    description: raw.description as string | undefined,
+    thumbnail: raw.thumbnail as string | undefined,
+    chunkCount: data.chunks.length,
+    connectionCount: data.connections.length,
+    createdAt: (raw.createdAt as string) || '',
+    updatedAt: (raw.updatedAt as string) || '',
+    data
+  }
+}
+
+export function normalizeMapMeta(raw: Record<string, unknown>): MapMeta {
+  return {
+    id: (raw.id as string) || '',
+    name: (raw.name as string) || '',
+    description: raw.description as string | undefined,
+    thumbnail: raw.thumbnail as string | undefined,
+    chunkCount:
+      typeof raw.chunkCount === 'number'
+        ? raw.chunkCount
+        : Array.isArray(raw.data?.chunks)
+          ? (raw.data as Record<string, unknown[]>).chunks.length
+          : typeof raw.nodeCount === 'number'
+            ? raw.nodeCount
+            : 0,
+    connectionCount:
+      typeof raw.connectionCount === 'number'
+        ? raw.connectionCount
+        : Array.isArray(raw.data?.connections)
+          ? (raw.data as Record<string, unknown[]>).connections.length
+          : typeof raw.edgeCount === 'number'
+            ? raw.edgeCount
+            : 0,
+    createdAt: (raw.createdAt as string) || '',
+    updatedAt: (raw.updatedAt as string) || ''
+  }
 }
 
 function normalizeAngle(angle: number): number {

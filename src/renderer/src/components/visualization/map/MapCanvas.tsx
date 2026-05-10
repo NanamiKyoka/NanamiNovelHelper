@@ -450,7 +450,7 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
 
   // 当地图数据变化时重新渲染
   useEffect(() => {
-    if (!currentMap || !layersRef.current || !appRef.current) return
+    if (!currentMap?.data || !layersRef.current || !appRef.current) return
 
     const data = currentMap.data
 

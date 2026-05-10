@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react'
-import { Button, Modal, message, Typography, Alert, Popconfirm, Card } from 'antd'
+import { Button, Modal, App, Typography, Alert, Popconfirm, Card } from 'antd'
 import { DownloadOutlined, UploadOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons'
 import JSON5 from 'json5'
 import { useSettingsStore } from '@stores/settingsStore'
@@ -13,6 +13,7 @@ import styles from './DataManagementSettings.module.css'
 const { Text } = Typography
 
 export function DataManagementSettings(): JSX.Element {
+  const { message } = App.useApp()
   const { resetGlobalSettings, globalSettings } = useSettingsStore()
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)

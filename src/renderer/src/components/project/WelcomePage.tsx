@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useCallback } from 'react'
-import { Button, Card, Typography, List, Tooltip, Popconfirm, Space, message } from 'antd'
+import { Button, Card, Typography, List, Tooltip, Popconfirm, Space, App } from 'antd'
 import {
   PlusOutlined,
   FolderOpenOutlined,
@@ -27,6 +27,7 @@ dayjs.locale('zh-cn')
 const { Title, Text } = Typography
 
 function WelcomePage(): JSX.Element {
+  const { message } = App.useApp()
   const recentProjects = useProjectStore(state => state.recentProjects)
   const loadRecentProjects = useProjectStore(state => state.loadRecentProjects)
   const removeRecentProject = useProjectStore(state => state.removeRecentProject)
@@ -47,7 +48,7 @@ function WelcomePage(): JSX.Element {
       message.error(error)
       clearError()
     }
-  }, [error, clearError])
+  }, [error, clearError, message])
 
   // 快速打开最近项目
   const handleQuickOpen = useCallback(
@@ -149,7 +150,7 @@ function WelcomePage(): JSX.Element {
                   />
                   <Space>
                     <Text type="secondary" className={styles.timeText}>
-                      {dayjs(item.lastOpened).fromNow()}
+                      {dayjs(item.lastOpenedAt).fromNow()}
                     </Text>
                     <Popconfirm
                       title="从列表中移除？"

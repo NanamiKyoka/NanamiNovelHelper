@@ -330,12 +330,16 @@ function OrganizationGraphFullscreen({
         graph
           .render()
           .then(() => {
-            setGraphReady(true)
+            if (!graph.destroyed) {
+              setGraphReady(true)
+            }
           })
           .catch(error => {
-            console.error('Failed to render organization graph:', error)
-            message.error('组织图渲染失败，请刷新重试')
-            setGraphReady(false)
+            if (!graph.destroyed) {
+              console.error('Failed to render organization graph:', error)
+              message.error('组织图渲染失败，请刷新重试')
+              setGraphReady(false)
+            }
           })
       }, 100)
     },
@@ -483,7 +487,7 @@ function OrganizationGraphFullscreen({
   }
 
   const handleEditNode = (nodeId: string) => {
-    const node = currentGraph?.nodes.find(n => n.id === nodeId)
+    const node = currentGraph?.nodes?.find(n => n.id === nodeId)
     if (node) {
       setSelectFromVocabulary(false)
       setNodeModal({ visible: true, mode: 'edit', node: { ...node } })
@@ -572,7 +576,7 @@ function OrganizationGraphFullscreen({
   ]
 
   const selectedNode = selectedNodeId
-    ? currentGraph?.nodes.find(n => n.id === selectedNodeId)
+    ? currentGraph?.nodes?.find(n => n.id === selectedNodeId)
     : null
 
   if (isLoading) {

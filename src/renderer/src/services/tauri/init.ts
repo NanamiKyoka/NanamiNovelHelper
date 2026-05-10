@@ -7,12 +7,8 @@ declare global {
   }
 }
 
-export function isTauriEnvironment(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-}
-
 export function initTauriApi(): void {
-  if (isTauriEnvironment() && !window.electron) {
+  if (!window.electron) {
     window.electron = tauriElectronApi
   }
 }

@@ -58,5 +58,7 @@ export {
   findElementById,
   updateElementInTree,
   deleteElementFromTree,
-  getParentPath
+  getParentPath,
+  normalizeMapData,
+  normalizeMapMeta
 } from '../../../shared/map'

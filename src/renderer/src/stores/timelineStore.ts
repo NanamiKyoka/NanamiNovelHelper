@@ -233,8 +233,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: [...state.currentTimeline.nodes, newNode],
-                nodeCount: state.currentTimeline.nodeCount + 1
+                nodes: [...(state.currentTimeline.nodes || []), newNode],
+                nodeCount: (state.currentTimeline.nodeCount || 0) + 1
               }
             : null
         }))
@@ -252,7 +252,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
+    const oldNode = (currentTimeline.nodes || []).find(n => n.id === nodeId)
 
     try {
       const updatedNode = await window.electron.timeline.updateNode(
@@ -275,7 +275,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.map(n => (n.id === nodeId ? updatedNode : n))
+                nodes: (state.currentTimeline.nodes || []).map(n => (n.id === nodeId ? updatedNode : n))
               }
             : null
         }))
@@ -291,7 +291,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
+    const oldNode = (currentTimeline.nodes || []).find(n => n.id === nodeId)
 
     try {
       const success = await window.electron.timeline.deleteNode(currentTimeline.id, nodeId)
@@ -309,8 +309,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.filter(n => n.id !== nodeId),
-                nodeCount: state.currentTimeline.nodeCount - 1
+                nodes: (state.currentTimeline.nodes || []).filter(n => n.id !== nodeId),
+                nodeCount: (state.currentTimeline.nodeCount || 0) - 1
               }
             : null,
           selectedNodeIds: state.selectedNodeIds.filter(id => id !== nodeId)
@@ -327,7 +327,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return 0
 
-    const oldNodes = currentTimeline.nodes.filter(n => nodeIds.includes(n.id))
+    const oldNodes = (currentTimeline.nodes || []).filter(n => nodeIds.includes(n.id))
 
     try {
       const deletedCount = await window.electron.timeline.batchDeleteNodes(
@@ -348,8 +348,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
           currentTimeline: state.currentTimeline
             ? {
                 ...state.currentTimeline,
-                nodes: state.currentTimeline.nodes.filter(n => !nodeIds.includes(n.id)),
-                nodeCount: state.currentTimeline.nodeCount - deletedCount
+                nodes: (state.currentTimeline.nodes || []).filter(n => !nodeIds.includes(n.id)),
+                nodeCount: (state.currentTimeline.nodeCount || 0) - deletedCount
               }
             : null,
           selectedNodeIds: []
@@ -368,7 +368,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNode = currentTimeline.nodes.find(n => n.id === nodeId)
+    const oldNode = (currentTimeline.nodes || []).find(n => n.id === nodeId)
     const oldOrder = oldNode?.order ?? 0
 
     try {
@@ -408,7 +408,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
     const { currentTimeline } = get()
     if (!currentTimeline) return
 
-    const oldNodes = currentTimeline.nodes.filter(n => nodeIds.includes(n.id))
+    const oldNodes = (currentTimeline.nodes || []).filter(n => nodeIds.includes(n.id))
 
     try {
       const updatedNodes = await window.electron.timeline.batchMoveNodes(
@@ -511,7 +511,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map(n =>
+                  nodes: (state.currentTimeline.nodes || []).map(n =>
                     n.id === branchFromNodeId
                       ? {
                           ...n,
@@ -617,8 +617,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.filter(n => n.id !== node.id),
-                  nodeCount: state.currentTimeline.nodeCount - 1
+                  nodes: (state.currentTimeline.nodes || []).filter(n => n.id !== node.id),
+                  nodeCount: (state.currentTimeline.nodeCount || 0) - 1
                 }
               : null
           }))
@@ -641,8 +641,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: [...state.currentTimeline.nodes, node],
-                  nodeCount: state.currentTimeline.nodeCount + 1
+                  nodes: [...(state.currentTimeline.nodes || []), node],
+                  nodeCount: (state.currentTimeline.nodeCount || 0) + 1
                 }
               : null
           }))
@@ -658,7 +658,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map(n => (n.id === node.id ? node : n))
+                  nodes: (state.currentTimeline.nodes || []).map(n => (n.id === node.id ? node : n))
                 }
               : null
           }))
@@ -738,8 +738,8 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.filter(n => n.id !== node.id),
-                  nodeCount: state.currentTimeline.nodeCount - 1
+                  nodes: (state.currentTimeline.nodes || []).filter(n => n.id !== node.id),
+                  nodeCount: (state.currentTimeline.nodeCount || 0) - 1
                 }
               : null
           }))
@@ -755,7 +755,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
             currentTimeline: state.currentTimeline
               ? {
                   ...state.currentTimeline,
-                  nodes: state.currentTimeline.nodes.map(n => (n.id === node.id ? node : n))
+                  nodes: (state.currentTimeline.nodes || []).map(n => (n.id === node.id ? node : n))
                 }
               : null
           }))
@@ -818,7 +818,7 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   selectAllNodes: () => {
     const { currentTimeline } = get()
     if (!currentTimeline) return
-    set({ selectedNodeIds: currentTimeline.nodes.map(n => n.id) })
+    set({ selectedNodeIds: (currentTimeline.nodes || []).map(n => n.id) })
   },
 
   clearSelection: () => {
@@ -906,14 +906,14 @@ export const useTimelineStore = create<TimelineState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentTimeline } = get()
-    return currentTimeline?.nodes.find(n => n.id === nodeId)
+    return currentTimeline?.nodes?.find(n => n.id === nodeId)
   },
 
   getNodesByTimeRange: (startTime: string, endTime: string) => {
     const { currentTimeline } = get()
     if (!currentTimeline) return []
 
-    return currentTimeline.nodes.filter(node => {
+    return (currentTimeline.nodes || []).filter(node => {
       if (node.timeInfo.format === 'datetime' && node.timeInfo.datetime) {
         const nodeTime = new Date(node.timeInfo.datetime).getTime()
         const start = new Date(startTime).getTime()

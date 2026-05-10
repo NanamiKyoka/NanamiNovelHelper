@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { notification, message } from 'antd'
+import { App } from 'antd'
 import { AppError, AppErrorCode, extractErrorMessage } from '@utils/error'
 
 /** 错误分类 */
@@ -182,6 +182,7 @@ function detectSeverity(error: unknown, category: ErrorCategory): ErrorSeverity 
  * 统一错误处理 Hook
  */
 export function useErrorHandling() {
+  const { message, notification } = App.useApp()
   /**
    * 分析错误详情
    */
@@ -287,7 +288,7 @@ export function useErrorHandling() {
 
       return errorMessage
     },
-    [analyzeError]
+    [analyzeError, message, notification]
   )
 
   /**
@@ -347,7 +348,7 @@ export function useErrorHandling() {
         duration: 8
       })
     },
-    [analyzeError]
+    [analyzeError, notification]
   )
 
   /**

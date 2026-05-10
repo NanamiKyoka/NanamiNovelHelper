@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { Input, Button, Typography, Empty, Tag, Space, Tooltip, Spin, message } from 'antd'
+import { Input, Button, Typography, Empty, Tag, Space, Tooltip, Spin, App } from 'antd'
 import { SearchOutlined, ReloadOutlined, FileOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import styles from './SearchPanel.module.css'
@@ -36,6 +36,7 @@ interface SearchResult {
 }
 
 function SearchPanel(): JSX.Element {
+  const { message } = App.useApp()
   const [searchText, setSearchText] = useState('')
   const [replaceText, setReplaceText] = useState('')
   const [showReplace, setShowReplace] = useState(false)
@@ -92,7 +93,7 @@ function SearchPanel(): JSX.Element {
     } finally {
       setIsSearching(false)
     }
-  }, [searchText, caseSensitive, wholeWord, useRegex, filesToInclude, filesToExclude])
+  }, [searchText, caseSensitive, wholeWord, useRegex, filesToInclude, filesToExclude, message])
 
   // 处理键盘事件
   const handleKeyDown = useCallback(
@@ -118,7 +119,7 @@ function SearchPanel(): JSX.Element {
         message.error('打开文件失败')
       }
     },
-    [openFile, requestGoToPosition]
+    [openFile, requestGoToPosition, message]
   )
 
   // 切换文件展开/折叠
@@ -180,7 +181,8 @@ function SearchPanel(): JSX.Element {
     wholeWord,
     useRegex,
     handleSearch,
-    requestExternalRefresh
+    requestExternalRefresh,
+    message
   ])
 
   return (

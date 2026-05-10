@@ -178,8 +178,8 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: [...state.currentGraph.nodes, newNode],
-                nodeCount: state.currentGraph.nodeCount + 1
+                nodes: [...(state.currentGraph.nodes || []), newNode],
+                nodeCount: (state.currentGraph.nodeCount || 0) + 1
               }
             : null
         }))
@@ -208,7 +208,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
+                nodes: (state.currentGraph.nodes || []).map(n => (n.id === nodeId ? updatedNode : n))
               }
             : null
         }))
@@ -235,8 +235,8 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.filter(n => !idsToDelete.has(n.id)),
-                nodeCount: state.currentGraph.nodeCount - idsToDelete.size
+                nodes: (state.currentGraph.nodes || []).filter(n => !idsToDelete.has(n.id)),
+                nodeCount: (state.currentGraph.nodeCount || 0) - idsToDelete.size
               }
             : null
         }))
@@ -263,7 +263,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
           currentGraph: state.currentGraph
             ? {
                 ...state.currentGraph,
-                nodes: state.currentGraph.nodes.map(n => (n.id === nodeId ? updatedNode : n))
+                nodes: (state.currentGraph.nodes || []).map(n => (n.id === nodeId ? updatedNode : n))
               }
             : null
         }))
@@ -345,19 +345,19 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
   // 辅助方法
   getNodeById: (nodeId: string) => {
     const { currentGraph } = get()
-    return currentGraph?.nodes.find(n => n.id === nodeId)
+    return currentGraph?.nodes?.find(n => n.id === nodeId)
   },
 
   getRootNodes: () => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    return currentGraph.nodes.filter(n => !n.parentId).sort((a, b) => a.order - b.order)
+    return (currentGraph.nodes || []).filter(n => !n.parentId).sort((a, b) => a.order - b.order)
   },
 
   getChildren: (parentId: string) => {
     const { currentGraph } = get()
     if (!currentGraph) return []
-    return currentGraph.nodes.filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
+    return (currentGraph.nodes || []).filter(n => n.parentId === parentId).sort((a, b) => a.order - b.order)
   },
 
   getDescendants: (nodeId: string) => {
@@ -366,7 +366,7 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
 
     const descendants: OrganizationNode[] = []
     const collectDescendants = (id: string) => {
-      const children = currentGraph.nodes.filter(n => n.parentId === id)
+      const children = (currentGraph.nodes || []).filter(n => n.parentId === id)
       for (const child of children) {
         descendants.push(child)
         collectDescendants(child.id)
@@ -381,9 +381,9 @@ export const useOrganizationStore = create<OrganizationState>((set, get) => ({
     if (!currentGraph) return []
 
     const ancestors: OrganizationNode[] = []
-    let current = currentGraph.nodes.find(n => n.id === nodeId)
+    let current = (currentGraph.nodes || []).find(n => n.id === nodeId)
     while (current?.parentId) {
-      const parent = currentGraph.nodes.find(n => n.id === current!.parentId)
+      const parent = (currentGraph.nodes || []).find(n => n.id === current!.parentId)
       if (parent) {
         ancestors.push(parent)
         current = parent

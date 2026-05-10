@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { Dropdown, MenuProps, message } from 'antd'
+import { Dropdown, MenuProps, App } from 'antd'
 import {
   CopyOutlined,
   ScissorOutlined,
@@ -32,6 +32,7 @@ interface ContextMenuPosition {
 }
 
 export function EditorContextMenu({ editor, children }: EditorContextMenuProps) {
+  const { message } = App.useApp()
   const [position, setPosition] = useState<ContextMenuPosition | null>(null)
   const [selectedText, setSelectedText] = useState<string>('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -159,7 +160,7 @@ export function EditorContextMenu({ editor, children }: EditorContextMenuProps) 
           break
       }
     },
-    [editor, closeMenu, getSelectedText]
+    [editor, closeMenu, getSelectedText, message]
   )
 
   // 构建菜单项

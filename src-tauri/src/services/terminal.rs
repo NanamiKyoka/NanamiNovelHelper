@@ -1,13 +1,13 @@
 use crate::error::{AppError, AppResult};
 use crate::services::project_state;
-use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
+use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::sync::{Arc, Mutex};
+use tauri::Emitter;
 
 struct PtyInstance {
     writer: Box<dyn Write + Send>,
-    child: Box<dyn portable_pty::Child + Send>,
     exited: Arc<Mutex<bool>>,
     exit_code: Arc<Mutex<Option<i32>>>,
 }
@@ -136,7 +136,7 @@ impl TerminalService {
             cmd.cwd(&working_dir);
         }
 
-        let child = pair
+        let mut child = pair
             .slave
             .spawn_command(cmd)
             .map_err(|e| AppError::OperationFailed(format!("启动 Shell 失败: {}", e)))?;
@@ -165,17 +165,18 @@ impl TerminalService {
 
         std::thread::spawn(move || {
             let exit_status = child.wait();
-            if let Ok(status) = exit_status {
+            if let Ok(ref status) = exit_status {
                 if let Ok(mut ec) = exit_code_clone.lock() {
-                    *ec = status.exit_code();
+                    *ec = Some(status.exit_code() as i32);
                 }
             }
             if let Ok(mut ex) = exited_clone.lock() {
                 *ex = true;
             }
+            let exit_code_val = exit_status.ok().map(|s| s.exit_code());
             let _ = app_clone.emit("terminal:exit", serde_json::json!({
                 "id": term_id,
-                "exitCode": exit_status.ok().map(|s| s.exit_code())
+                "exitCode": exit_code_val
             }));
         });
 
@@ -208,7 +209,6 @@ impl TerminalService {
                 id.clone(),
                 PtyInstance {
                     writer,
-                    child: Box::new(DummyChild),
                     exited,
                     exit_code,
                 },
@@ -282,7 +282,7 @@ impl TerminalService {
         }
     }
 
-    pub fn resize(&self, id: &str, cols: u16, rows: u16) -> AppResult<()> {
+    pub fn resize(&self, id: &str, _cols: u16, _rows: u16) -> AppResult<()> {
         let instances = self.instances.lock().unwrap();
         if instances.contains_key(id) {
             Ok(())
@@ -304,23 +304,6 @@ impl TerminalService {
         } else {
             Err(AppError::InvalidParam(format!("终端实例 {} 不存在", id)))
         }
-    }
-}
-
-struct DummyChild;
-
-impl portable_pty::Child for DummyChild {
-    fn process_id(&self) -> Option<u32> {
-        None
-    }
-    fn wait(&mut self) -> Result<portable_pty::ExitStatus, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(portable_pty::ExitStatus::with_exit_code(0))
-    }
-    fn try_wait(&mut self) -> Result<Option<portable_pty::ExitStatus>, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(None)
-    }
-    fn force_kill(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Ok(())
     }
 }
 

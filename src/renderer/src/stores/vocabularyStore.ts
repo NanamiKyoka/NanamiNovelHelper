@@ -68,7 +68,7 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const types = await window.electron.vocabulary.loadTypes()
-      set({ types, isLoading: false, isLoaded: true, error: null })
+      set({ types: types || [], isLoading: false, isLoaded: true, error: null })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载词汇类型失败'
       console.error('Failed to load vocabulary types:', error)
@@ -158,16 +158,16 @@ export const useVocabularyStore = create<VocabularyState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const entries = await window.electron.vocabulary.loadEntries(typeId)
+      const safeEntries = entries || []
       if (typeId) {
-        // 只更新指定类型的条目
         set(state => ({
-          entries: [...state.entries.filter(e => e.typeId !== typeId), ...entries],
+          entries: [...state.entries.filter(e => e.typeId !== typeId), ...safeEntries],
           isLoading: false,
           entriesLoaded: true,
           error: null
         }))
       } else {
-        set({ entries, isLoading: false, entriesLoaded: true, error: null })
+        set({ entries: safeEntries, isLoading: false, entriesLoaded: true, error: null })
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '加载词汇条目失败'

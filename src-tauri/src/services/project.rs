@@ -155,6 +155,8 @@ impl ProjectService {
 
         project_state::set_project_path(Some(path));
 
+        let _ = self.add_recent_project(&project);
+
         Ok(project)
     }
 
@@ -170,6 +172,8 @@ impl ProjectService {
         *current = Some(project.clone());
 
         project_state::set_project_path(Some(path));
+
+        let _ = self.add_recent_project(&project);
 
         Ok(project)
     }

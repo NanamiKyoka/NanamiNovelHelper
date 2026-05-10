@@ -38,7 +38,7 @@ pub fn read_json_file<T: serde::de::DeserializeOwned>(path: &Path) -> AppResult<
     Ok(value)
 }
 
-pub fn write_json_file<T: serde::Serialize>(path: &Path, value: &T) -> AppResult<()> {
+pub fn write_json_file<T: serde::Serialize + ?Sized>(path: &Path, value: &T) -> AppResult<()> {
     if let Some(parent) = path.parent() {
         ensure_dir(parent)?;
     }

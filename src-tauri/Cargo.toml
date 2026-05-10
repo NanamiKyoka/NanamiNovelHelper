@@ -43,6 +43,7 @@ notify = { version = "7", features = ["macos_kqueue"] }
 portable-pty = "0.8"
 keyring = "3"
 percent-encoding = "2"
+image = { version = "0.25", features = ["jpeg", "png", "webp", "gif"] }
 
 [profile.release]
 panic = "abort"

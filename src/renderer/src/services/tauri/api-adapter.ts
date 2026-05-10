@@ -3,6 +3,23 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { platform } from '@tauri-apps/plugin-os'
 
+function generateId(): string {
+  return crypto.randomUUID()
+}
+
+function generateTimestamp(): string {
+  return new Date().toISOString()
+}
+
+function withBaseFields(item: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...item,
+    id: item.id || generateId(),
+    createdAt: item.createdAt || generateTimestamp(),
+    updatedAt: generateTimestamp()
+  }
+}
+
 function getPlatform(): string {
   try {
     return platform()
@@ -82,7 +99,10 @@ export const tauriElectronApi = {
         name: type.name,
         color: type.color,
         isBuiltIn: type.isBuiltIn ?? false,
-        description: type.description
+        description: type.description,
+        icon: type.icon,
+        fields: type.fields,
+        tableConfig: type.tableConfig
       }),
     updateType: (id: string, updates: Record<string, unknown>) =>
       invoke('vocabulary_update_type', { id, updates }),
@@ -124,10 +144,10 @@ export const tauriElectronApi = {
       getAll: () => invoke('settings_get_global'),
       update: (settings: Record<string, unknown>) => invoke('settings_update_global', { settings }),
       reset: () => invoke('settings_get_global'),
-      getTheme: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).theme as Record<string, unknown>),
+      getTheme: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).theme as Record<string, unknown> | undefined) ?? {}),
       updateTheme: (theme: Record<string, unknown>) =>
         invoke('settings_update_global', { settings: { theme } }),
-      getWindowState: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).window as Record<string, unknown>),
+      getWindowState: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).window as Record<string, unknown> | undefined) ?? {}),
       updateWindowState: (window: Record<string, unknown>) =>
         invoke('settings_update_global', { settings: { window } }),
       getLanguage: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).language as string),
@@ -136,24 +156,30 @@ export const tauriElectronApi = {
       getSidebarWidth: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).sidebarWidth as number),
       setSidebarWidth: (sidebarWidth: number) =>
         invoke('settings_update_global', { settings: { sidebarWidth } }),
-      getLayout: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).layout as Record<string, unknown>),
+      getLayout: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown> | undefined) ?? {}),
       updateLayout: (layout: Record<string, unknown>) =>
-        invoke('settings_update_global', { settings: { layout } }),
+        invoke('settings_update_global', { settings: { layout } })
+          .then((s: Record<string, unknown>) => (s as Record<string, unknown>).layout as Record<string, unknown>),
       getBadgeVisibility: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeVisibility as Record<string, unknown>),
       updateBadgeVisibility: (badgeVisibility: Record<string, unknown>) =>
-        invoke('settings_update_global', { settings: { layout: { badgeVisibility } } }),
+        invoke('settings_update_global', { settings: { layout: { badgeVisibility } } })
+          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeVisibility as Record<string, unknown>),
       getBadgeOrder: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeOrder as string[]),
       updateBadgeOrder: (badgeOrder: string[]) =>
-        invoke('settings_update_global', { settings: { layout: { badgeOrder } } }),
+        invoke('settings_update_global', { settings: { layout: { badgeOrder } } })
+          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeOrder as string[]),
       getSidebarBadgeVisibility: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeVisibility as Record<string, unknown>),
       updateSidebarBadgeVisibility: (sidebarBadgeVisibility: Record<string, unknown>) =>
-        invoke('settings_update_global', { settings: { layout: { sidebarBadgeVisibility } } }),
+        invoke('settings_update_global', { settings: { layout: { sidebarBadgeVisibility } } })
+          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeVisibility as Record<string, unknown>),
       getSidebarBadgeOrder: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeOrder as string[]),
       updateSidebarBadgeOrder: (sidebarBadgeOrder: string[]) =>
-        invoke('settings_update_global', { settings: { layout: { sidebarBadgeOrder } } }),
+        invoke('settings_update_global', { settings: { layout: { sidebarBadgeOrder } } })
+          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeOrder as string[]),
       getShowHiddenFiles: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.showHiddenFiles as boolean),
       setShowHiddenFiles: (showHiddenFiles: boolean) =>
-        invoke('settings_update_global', { settings: { layout: { showHiddenFiles } } }),
+        invoke('settings_update_global', { settings: { layout: { showHiddenFiles } } })
+          .then(() => showHiddenFiles),
       getApiKey: (keyName: string) => invoke('secure_get_api_key', { keyName }),
       setApiKey: (keyName: string, value: string) => invoke('secure_set_api_key', { keyName, value }),
       deleteApiKey: (keyName: string) => invoke('secure_delete_api_key', { keyName }),
@@ -165,19 +191,19 @@ export const tauriElectronApi = {
       update: (settings: Record<string, unknown>) => invoke('settings_update_project', { settings }),
       saveNow: () => Promise.resolve(),
       reset: () => invoke('settings_get_project'),
-      getEditor: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).editor as Record<string, unknown>),
+      getEditor: () => invoke('settings_get_project').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).editor as Record<string, unknown> | undefined) ?? {}),
       updateEditor: (editor: Record<string, unknown>) =>
         invoke('settings_update_project', { settings: { editor } }),
-      getHighlight: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).highlight as Record<string, unknown>),
+      getHighlight: () => invoke('settings_get_project').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).highlight as Record<string, unknown> | undefined) ?? {}),
       updateHighlight: (highlight: Record<string, unknown>) =>
         invoke('settings_update_project', { settings: { highlight } }),
-      getBackup: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).backup as Record<string, unknown>),
+      getBackup: () => invoke('settings_get_project').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).backup as Record<string, unknown> | undefined) ?? {}),
       updateBackup: (backup: Record<string, unknown>) =>
         invoke('settings_update_project', { settings: { backup } }),
-      getExpandedFolders: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).expandedFolders as string[]),
+      getExpandedFolders: () => invoke('settings_get_project').then((s: Record<string, unknown>) => { const v = (s as Record<string, unknown>).expandedFolders; return Array.isArray(v) ? v : null }),
       setExpandedFolders: (expandedFolders: string[]) =>
         invoke('settings_update_project', { settings: { expandedFolders } }),
-      getHiddenItems: () => invoke('settings_get_project').then((s: Record<string, unknown>) => (s as Record<string, unknown>).hiddenItems as string[]),
+      getHiddenItems: () => invoke('settings_get_project').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).hiddenItems as string[] | undefined) ?? []),
       setHiddenItems: (hiddenItems: string[]) =>
         invoke('settings_update_project', { settings: { hiddenItems } })
     }
@@ -207,24 +233,48 @@ export const tauriElectronApi = {
     update: (graphId: string, updates: Record<string, unknown>) =>
       invoke('graph_update', { subDir: 'relationships', id: graphId, updates }),
     delete: (graphId: string) => invoke('graph_delete', { subDir: 'relationships', id: graphId }),
-    addNode: (graphId: string, node: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { nodes: node } } }),
+    addNode: (graphId: string, node: Record<string, unknown>) => {
+      const nodeWithId = withBaseFields(node)
+      return invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { nodes: nodeWithId } } })
+        .then(() => nodeWithId)
+    },
     updateNode: (graphId: string, nodeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { nodes: { [nodeId]: updates } } }),
+      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { nodes: { [nodeId]: updates } } })
+        .then((graph: Record<string, unknown>) => {
+          const nodes = graph?.nodes as Array<Record<string, unknown>> | undefined
+          const updatedNode = nodes?.find(n => n.id === nodeId)
+          return updatedNode || { ...updates, id: nodeId }
+        }),
     deleteNode: (graphId: string, nodeId: string) =>
       invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $pull: { nodes: { id: nodeId } } } }),
-    addEdge: (graphId: string, edge: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { edges: edge } } }),
+    addEdge: (graphId: string, edge: Record<string, unknown>) => {
+      const edgeWithId = withBaseFields(edge)
+      return invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { edges: edgeWithId } } })
+        .then(() => edgeWithId)
+    },
     updateEdge: (graphId: string, edgeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { edges: { [edgeId]: updates } } }),
+      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { edges: { [edgeId]: updates } } })
+        .then((graph: Record<string, unknown>) => {
+          const edges = graph?.edges as Array<Record<string, unknown>> | undefined
+          const updatedEdge = edges?.find(e => e.id === edgeId)
+          return updatedEdge || { ...updates, id: edgeId }
+        }),
     deleteEdge: (graphId: string, edgeId: string) =>
       invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $pull: { edges: { id: edgeId } } } }),
     getRelationTypes: (graphId: string) =>
       invoke('graph_get', { subDir: 'relationships', id: graphId }).then((g: Record<string, unknown> | null) => g?.customRelationTypes as unknown[] ?? []),
-    addRelationType: (graphId: string, type: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { customRelationTypes: type } } }),
+    addRelationType: (graphId: string, type: Record<string, unknown>) => {
+      const typeWithId = withBaseFields(type)
+      return invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $push: { customRelationTypes: typeWithId } } })
+        .then(() => typeWithId)
+    },
     updateRelationType: (graphId: string, typeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { customRelationTypes: { [typeId]: updates } } }),
+      invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { customRelationTypes: { [typeId]: updates } } })
+        .then((graph: Record<string, unknown>) => {
+          const types = graph?.customRelationTypes as Array<Record<string, unknown>> | undefined
+          const updatedType = types?.find(t => t.id === typeId)
+          return updatedType || { ...updates, id: typeId }
+        }),
     deleteRelationType: (graphId: string, typeId: string) =>
       invoke('graph_update', { subDir: 'relationships', id: graphId, updates: { $pull: { customRelationTypes: { id: typeId } } } }),
     saveThumbnail: (graphId: string, dataUrl: string) =>
@@ -248,10 +298,18 @@ export const tauriElectronApi = {
     update: (timelineId: string, updates: Record<string, unknown>) =>
       invoke('graph_update', { subDir: 'timelines', id: timelineId, updates }),
     delete: (timelineId: string) => invoke('graph_delete', { subDir: 'timelines', id: timelineId }),
-    addNode: (timelineId: string, node: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { $push: { nodes: node } } }),
+    addNode: (timelineId: string, node: Record<string, unknown>) => {
+      const nodeWithId = withBaseFields(node)
+      return invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { $push: { nodes: nodeWithId } } })
+        .then(() => nodeWithId)
+    },
     updateNode: (timelineId: string, nodeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { nodes: { [nodeId]: updates } } }),
+      invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { nodes: { [nodeId]: updates } } })
+        .then((timeline: Record<string, unknown>) => {
+          const nodes = timeline?.nodes as Array<Record<string, unknown>> | undefined
+          const updatedNode = nodes?.find(n => n.id === nodeId)
+          return updatedNode || { ...updates, id: nodeId }
+        }),
     deleteNode: (timelineId: string, nodeId: string) =>
       invoke('graph_update', { subDir: 'timelines', id: timelineId, updates: { $pull: { nodes: { id: nodeId } } } }),
     batchDeleteNodes: (timelineId: string, nodeIds: string[]) =>
@@ -297,10 +355,18 @@ export const tauriElectronApi = {
     update: (chartId: string, updates: Record<string, unknown>) =>
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates }),
     delete: (chartId: string) => invoke('graph_delete', { subDir: 'sequence-charts', id: chartId }),
-    addEvent: (chartId: string, event: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $push: { events: event } } }),
+    addEvent: (chartId: string, event: Record<string, unknown>) => {
+      const eventWithId = withBaseFields(event)
+      return invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $push: { events: eventWithId } } })
+        .then(() => eventWithId)
+    },
     updateEvent: (chartId: string, eventId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { events: { [eventId]: updates } } }),
+      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { events: { [eventId]: updates } } })
+        .then((chart: Record<string, unknown>) => {
+          const events = chart?.events as Array<Record<string, unknown>> | undefined
+          const updatedEvent = events?.find(e => e.id === eventId)
+          return updatedEvent || { ...updates, id: eventId }
+        }),
     deleteEvent: (chartId: string, eventId: string) =>
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $pull: { events: { id: eventId } } } }),
     batchDeleteEvents: (chartId: string, eventIds: string[]) =>
@@ -313,10 +379,18 @@ export const tauriElectronApi = {
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { events } }),
     getEventTypes: (chartId: string) =>
       invoke('graph_get', { subDir: 'sequence-charts', id: chartId }).then((g: Record<string, unknown> | null) => g?.customEventTypes as unknown[] ?? []),
-    addEventType: (chartId: string, type: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $push: { customEventTypes: type } } }),
+    addEventType: (chartId: string, type: Record<string, unknown>) => {
+      const typeWithId = withBaseFields(type)
+      return invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $push: { customEventTypes: typeWithId } } })
+        .then(() => typeWithId)
+    },
     updateEventType: (chartId: string, typeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { customEventTypes: { [typeId]: updates } } }),
+      invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { customEventTypes: { [typeId]: updates } } })
+        .then((chart: Record<string, unknown>) => {
+          const types = chart?.customEventTypes as Array<Record<string, unknown>> | undefined
+          const updatedType = types?.find(t => t.id === typeId)
+          return updatedType || { ...updates, id: typeId }
+        }),
     deleteEventType: (chartId: string, typeId: string) =>
       invoke('graph_update', { subDir: 'sequence-charts', id: chartId, updates: { $pull: { customEventTypes: { id: typeId } } } }),
     saveThumbnail: (chartId: string, dataUrl: string) =>
@@ -346,10 +420,18 @@ export const tauriElectronApi = {
     update: (graphId: string, updates: Record<string, unknown>) =>
       invoke('graph_update', { subDir: 'organizations', id: graphId, updates }),
     delete: (graphId: string) => invoke('graph_delete', { subDir: 'organizations', id: graphId }),
-    addNode: (graphId: string, options: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'organizations', id: graphId, updates: { $push: { nodes: options } } }),
+    addNode: (graphId: string, options: Record<string, unknown>) => {
+      const nodeWithId = withBaseFields(options)
+      return invoke('graph_update', { subDir: 'organizations', id: graphId, updates: { $push: { nodes: nodeWithId } } })
+        .then(() => nodeWithId)
+    },
     updateNode: (graphId: string, nodeId: string, updates: Record<string, unknown>) =>
-      invoke('graph_update', { subDir: 'organizations', id: graphId, updates: { nodes: { [nodeId]: updates } } }),
+      invoke('graph_update', { subDir: 'organizations', id: graphId, updates: { nodes: { [nodeId]: updates } } })
+        .then((graph: Record<string, unknown>) => {
+          const nodes = graph?.nodes as Array<Record<string, unknown>> | undefined
+          const updatedNode = nodes?.find(n => n.id === nodeId)
+          return updatedNode || { ...updates, id: nodeId }
+        }),
     deleteNode: (graphId: string, nodeId: string) =>
       invoke('graph_update', { subDir: 'organizations', id: graphId, updates: { $pull: { nodes: { id: nodeId } } } }),
     moveNode: (graphId: string, nodeId: string, newParentId: string | undefined) =>

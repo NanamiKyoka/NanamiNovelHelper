@@ -434,7 +434,7 @@ function FileTree(): JSX.Element {
     async (targetKey: string | null) => {
       try {
         await paste(targetKey)
-        message.success(`已粘贴 ${clipboard?.nodes.length || 0} 个项目`)
+        message.success(`已粘贴 ${clipboard?.nodes?.length || 0} 个项目`)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '粘贴失败'
         message.error(errorMessage)

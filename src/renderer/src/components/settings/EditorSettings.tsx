@@ -3,7 +3,7 @@
  */
 
 import { useCallback } from 'react'
-import { Form, Select, Slider, message, Checkbox, Card } from 'antd'
+import { Form, Select, Slider, App, Checkbox, Card } from 'antd'
 import { useEditorStore } from '@stores/editorStore'
 import type { EditorSettings, StatusBarConfig } from '@types/editor'
 import baseStyles from './SettingsBase.module.css'
@@ -31,6 +31,7 @@ const AUTO_SAVE_OPTIONS = [
 ]
 
 export function EditorSettings() {
+  const { message } = App.useApp()
   const { settings, updateSettings, statusBarConfig, updateStatusBarConfig } = useEditorStore()
 
   const handleSettingChange = useCallback(
@@ -38,7 +39,7 @@ export function EditorSettings() {
       updateSettings({ [key]: value })
       message.success('设置已保存')
     },
-    [updateSettings]
+    [updateSettings, message]
   )
 
   const handleStatusBarConfigChange = useCallback(
@@ -46,7 +47,7 @@ export function EditorSettings() {
       updateStatusBarConfig({ [key]: value })
       message.success('状态栏设置已保存')
     },
-    [updateStatusBarConfig]
+    [updateStatusBarConfig, message]
   )
 
   return (

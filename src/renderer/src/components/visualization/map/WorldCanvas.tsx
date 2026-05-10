@@ -13,6 +13,7 @@ import {
   getHexEdgeCenter,
   HEX_SIZE
 } from '@renderer/types/map'
+import type { HexPoint } from '@renderer/types/map'
 import styles from './WorldCanvas.module.css'
 
 interface WorldCanvasProps {
@@ -58,10 +59,10 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const [draggingChunkId, setDraggingChunkId] = useState<string | null>(null)
   const [dragStartHex, setDragStartHex] = useState<HexPoint | null>(null)
 
-  const chunks = useMemo(() => currentMap?.data.chunks || [], [currentMap?.data.chunks])
+  const chunks = useMemo(() => currentMap?.data?.chunks || [], [currentMap?.data?.chunks])
   const connections = useMemo(
-    () => currentMap?.data.connections || [],
-    [currentMap?.data.connections]
+    () => currentMap?.data?.connections || [],
+    [currentMap?.data?.connections]
   )
 
   const handleChunkDrag = useCallback(
@@ -333,7 +334,7 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
               description={
                 <>
                   <h3>空的地图</h3>
-                  <p>从右侧图库拖拽板块到画布开始创建</p>
+                  <p>从右侧图库点击板块开始创建</p>
                 </>
               }
             />

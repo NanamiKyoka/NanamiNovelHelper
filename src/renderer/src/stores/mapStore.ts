@@ -37,12 +37,15 @@ import {
   createDefaultChunk,
   createDefaultElement,
   createDefaultConnection,
+  createDefaultMapData,
   getHexNeighbors,
   checkHexEdgeCompatibility,
   findBestEdges,
   findElementById,
   updateElementInTree,
-  deleteElementFromTree
+  deleteElementFromTree,
+  normalizeMapData,
+  normalizeMapMeta
 } from '@renderer/types/map'
 
 const handleError = createErrorHandler('[MapStore]')
@@ -204,6 +207,8 @@ interface MapState {
     parentChunkId: string,
     parentElementId: string | null
   ) => HexPoint | null
+  isElementHexOccupied: (hex: HexPoint) => boolean
+  findNearestEmptyHexForElementAt: (around: HexPoint) => HexPoint | null
 
   addConnection: (options: CreateConnectionOptions) => ChunkConnection | null
   connectChunks: (sourceChunkId: string, targetChunkId: string) => ChunkConnection | null
@@ -286,7 +291,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   loadList: async () => {
     set({ isLoading: true, error: null })
     try {
-      const maps = await window.electron.map.getList()
+      const rawMaps = await window.electron.map.getList()
+      const maps = (rawMaps as Record<string, unknown>[]).map(normalizeMapMeta)
       set({ maps, isLoading: false })
     } catch (error) {
       const message = handleError(error, { fallbackMessage: '加载地图列表失败' })
@@ -297,7 +303,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   loadMap: async (mapId: string) => {
     set({ isLoading: true, error: null })
     try {
-      const map = await window.electron.map.get(mapId)
+      const rawMap = await window.electron.map.get(mapId)
+      const map = normalizeMapData(rawMap as Record<string, unknown>)
       set({
         currentMap: map,
         isLoading: false,
@@ -323,7 +330,22 @@ export const useMapStore = create<MapState>((set, get) => ({
   createMap: async (options: CreateMapOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const newMap = await window.electron.map.create(options)
+      const defaultData = createDefaultMapData()
+      const createData: Record<string, unknown> = {
+        name: options.name,
+        description: options.description,
+        linkedVocabularyTypes: options.linkedVocabularyTypes,
+        data: {
+          ...defaultData,
+          canvasWidth: options.canvasWidth || defaultData.canvasWidth,
+          canvasHeight: options.canvasHeight || defaultData.canvasHeight,
+          backgroundColor: options.backgroundColor || defaultData.backgroundColor
+        },
+        chunkCount: 0,
+        connectionCount: 0
+      }
+      const rawNewMap = await window.electron.map.create(createData)
+      const newMap = normalizeMapData(rawNewMap as Record<string, unknown>)
       await get().loadList()
       set({ isLoading: false })
       return newMap
@@ -337,8 +359,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   updateMap: async (mapId: string, updates: UpdateMapOptions) => {
     set({ isLoading: true, error: null })
     try {
-      const updatedMap = await window.electron.map.update(mapId, updates)
-      if (updatedMap) {
+      const rawUpdatedMap = await window.electron.map.update(mapId, updates)
+      if (rawUpdatedMap) {
+        const updatedMap = normalizeMapData(rawUpdatedMap as Record<string, unknown>)
         set({ currentMap: updatedMap })
         await get().loadList()
       }
@@ -385,13 +408,13 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   addChunk: (options: CreateChunkOptions) => {
     const currentMap = get().currentMap
-    if (!currentMap) return null
+    if (!currentMap?.data) return null
 
     const beforeData = currentMap.data
     const chunk = createDefaultChunk(options)
     const newData: MapData = {
       ...currentMap.data,
-      chunks: [...currentMap.data.chunks, chunk]
+      chunks: [...(currentMap.data.chunks || []), chunk]
     }
 
     set({
@@ -686,11 +709,104 @@ export const useMapStore = create<MapState>((set, get) => ({
       return startHex
     }
 
-    for (let distance = 1; distance <= 10; distance++) {
-      const neighbors = getHexNeighbors(startHex)
-      for (const neighbor of neighbors) {
-        if (!occupiedHexes.has(`${neighbor.q},${neighbor.r}`)) {
-          return neighbor
+    const visited = new Set<string>()
+    visited.add(`${startHex.q},${startHex.r}`)
+    const queue: HexPoint[] = getHexNeighbors(startHex)
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      const key = `${current.q},${current.r}`
+
+      if (visited.has(key)) continue
+      visited.add(key)
+
+      if (!occupiedHexes.has(key)) {
+        return current
+      }
+
+      for (const neighbor of getHexNeighbors(current)) {
+        const neighborKey = `${neighbor.q},${neighbor.r}`
+        if (!visited.has(neighborKey)) {
+          queue.push(neighbor)
+        }
+      }
+    }
+
+    return null
+  },
+
+  isElementHexOccupied: (hex: HexPoint) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return false
+
+    const viewStack = get().viewStack
+    const currentLevel = viewStack[viewStack.length - 1]
+
+    const parentChunkId = viewStack.find(v => v.type === 'chunk')?.id
+    if (!parentChunkId) return false
+
+    const chunk = currentMap.data.chunks.find(c => c.id === parentChunkId)
+    if (!chunk) return false
+
+    let elements: MapElement[]
+    if (currentLevel.type === 'element') {
+      const parentElement = findElementById(chunk.children, currentLevel.id)
+      elements = parentElement?.children || []
+    } else {
+      elements = chunk.children
+    }
+
+    return elements.some(
+      e => e.hexPosition.q === hex.q && e.hexPosition.r === hex.r
+    )
+  },
+
+  findNearestEmptyHexForElementAt: (around: HexPoint) => {
+    const currentMap = get().currentMap
+    if (!currentMap) return null
+
+    const viewStack = get().viewStack
+    const currentLevel = viewStack[viewStack.length - 1]
+
+    const parentChunkId = viewStack.find(v => v.type === 'chunk')?.id
+    if (!parentChunkId) return null
+
+    const chunk = currentMap.data.chunks.find(c => c.id === parentChunkId)
+    if (!chunk) return null
+
+    let elements: MapElement[]
+    if (currentLevel.type === 'element') {
+      const parentElement = findElementById(chunk.children, currentLevel.id)
+      elements = parentElement?.children || []
+    } else {
+      elements = chunk.children
+    }
+
+    const occupiedHexes = new Set(elements.map(e => `${e.hexPosition.q},${e.hexPosition.r}`))
+
+    if (!occupiedHexes.has(`${around.q},${around.r}`)) {
+      return around
+    }
+
+    const visited = new Set<string>()
+    visited.add(`${around.q},${around.r}`)
+    const queue: HexPoint[] = getHexNeighbors(around)
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      const key = `${current.q},${current.r}`
+
+      if (visited.has(key)) continue
+      visited.add(key)
+
+      if (!occupiedHexes.has(key)) {
+        return current
+      }
+
+      for (const neighbor of getHexNeighbors(current)) {
+        const neighborKey = `${neighbor.q},${neighbor.r}`
+        if (!visited.has(neighborKey)) {
+          queue.push(neighbor)
         }
       }
     }
@@ -993,19 +1109,34 @@ export const useMapStore = create<MapState>((set, get) => ({
     const currentMap = get().currentMap
     if (!currentMap) return null
 
+    const chunks = currentMap.data?.chunks || []
     const occupiedHexes = new Set(
-      currentMap.data.chunks.map(c => `${c.hexPosition.q},${c.hexPosition.r}`)
+      chunks.map(c => `${c.hexPosition.q},${c.hexPosition.r}`)
     )
 
     if (!occupiedHexes.has(`${around.q},${around.r}`)) {
       return around
     }
 
-    for (let distance = 1; distance <= 10; distance++) {
-      const neighbors = getHexNeighbors(around)
-      for (const neighbor of neighbors) {
-        if (!occupiedHexes.has(`${neighbor.q},${neighbor.r}`)) {
-          return neighbor
+    const visited = new Set<string>()
+    visited.add(`${around.q},${around.r}`)
+    const queue: HexPoint[] = getHexNeighbors(around)
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      const key = `${current.q},${current.r}`
+
+      if (visited.has(key)) continue
+      visited.add(key)
+
+      if (!occupiedHexes.has(key)) {
+        return current
+      }
+
+      for (const neighbor of getHexNeighbors(current)) {
+        const neighborKey = `${neighbor.q},${neighbor.r}`
+        if (!visited.has(neighborKey)) {
+          queue.push(neighbor)
         }
       }
     }
@@ -1015,7 +1146,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   isHexOccupied: (hex: HexPoint) => {
     const currentMap = get().currentMap
-    if (!currentMap) return false
+    if (!currentMap?.data?.chunks) return false
 
     return currentMap.data.chunks.some(c => c.hexPosition.q === hex.q && c.hexPosition.r === hex.r)
   },
@@ -1083,13 +1214,13 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   getChunkById: (chunkId: string) => {
     const currentMap = get().currentMap
-    if (!currentMap) return undefined
+    if (!currentMap?.data?.chunks) return undefined
     return currentMap.data.chunks.find(c => c.id === chunkId)
   },
 
   getElementById: (elementId: string) => {
     const currentMap = get().currentMap
-    if (!currentMap) return null
+    if (!currentMap?.data?.chunks) return null
 
     for (const chunk of currentMap.data.chunks) {
       const element = findElementById(chunk.children, elementId)
@@ -1101,7 +1232,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   getConnectionById: (connectionId: string) => {
     const currentMap = get().currentMap
-    if (!currentMap) return undefined
+    if (!currentMap?.data?.connections) return undefined
     return currentMap.data.connections.find(c => c.id === connectionId)
   },
 
@@ -1180,22 +1311,25 @@ export const useMapStore = create<MapState>((set, get) => ({
   importMap: async (jsonContent: string) => {
     try {
       const mapData = JSON.parse(jsonContent)
-      const newMap = await window.electron.map.create({
+      const defaultData = createDefaultMapData()
+      const createData: Record<string, unknown> = {
         name: mapData.name,
         description: mapData.description,
-        canvasWidth: mapData.data?.canvasWidth,
-        canvasHeight: mapData.data?.canvasHeight,
-        backgroundColor: mapData.data?.backgroundColor
-      })
-
-      if (newMap && mapData.data) {
-        const updatedMap = await window.electron.map.update(newMap.id, {
-          data: mapData.data
-        })
-        await get().loadList()
-        return updatedMap
+        data: {
+          ...defaultData,
+          chunks: mapData.data?.chunks || [],
+          connections: mapData.data?.connections || [],
+          canvasWidth: mapData.data?.canvasWidth || defaultData.canvasWidth,
+          canvasHeight: mapData.data?.canvasHeight || defaultData.canvasHeight,
+          backgroundColor: mapData.data?.backgroundColor || defaultData.backgroundColor
+        },
+        chunkCount: mapData.data?.chunks?.length || 0,
+        connectionCount: mapData.data?.connections?.length || 0
       }
 
+      const rawNewMap = await window.electron.map.create(createData)
+      const newMap = normalizeMapData(rawNewMap as Record<string, unknown>)
+      await get().loadList()
       return newMap
     } catch (error) {
       handleError(error, { fallbackMessage: '导入地图失败' })

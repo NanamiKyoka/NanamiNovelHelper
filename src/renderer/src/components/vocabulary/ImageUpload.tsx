@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
-import { Button, message, Spin, Image } from 'antd'
+import { Button, App, Spin, Image } from 'antd'
 import { PictureOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ImageFieldConfig } from '@shared/vocabulary'
 import styles from './ImageUpload.module.css'
@@ -30,6 +30,7 @@ const DEFAULT_CONFIG: Required<ImageFieldConfig> = {
 }
 
 function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): JSX.Element {
+  const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [dragOver, setDragOver] = useState(false)
@@ -119,7 +120,7 @@ function ImageUpload({ value, onChange, config, disabled }: ImageUploadProps): J
         setLoading(false)
       }
     },
-    [disabled, finalConfig, onChange]
+    [disabled, finalConfig, onChange, message]
   )
 
   // 文件输入变化

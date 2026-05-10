@@ -1,5 +1,6 @@
 export * from './error'
 export * from './html'
 export * from './logger'
+export * from './number'
 export * from './randomName'
 export * from './theme'

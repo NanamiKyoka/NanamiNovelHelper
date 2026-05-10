@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState } from 'react'
-import { Button, Tooltip, Dropdown, Modal, message, Spin, Popover } from 'antd'
+import { Button, Tooltip, Dropdown, Modal, App, Spin, Popover } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   BoldOutlined,
@@ -97,6 +97,7 @@ export function EditorToolbar({
   onOpenSearch,
   fileType
 }: EditorToolbarProps) {
+  const { message } = App.useApp()
   const [, setHighlightColor] = useState('#fef3cd')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiPreviewVisible, setAiPreviewVisible] = useState(false)
@@ -162,7 +163,7 @@ export function EditorToolbar({
         return null
       }
     },
-    []
+    [message]
   )
 
   // 处理 AI 操作
@@ -201,7 +202,7 @@ export function EditorToolbar({
         setAiLoading(false)
       }
     },
-    [editor, callAiApi]
+    [editor, callAiApi, message]
   )
 
   // 应用 AI 结果到编辑器
@@ -224,7 +225,7 @@ export function EditorToolbar({
       setAiPreviewContent('')
       message.success('已应用到编辑器')
     },
-    [editor, aiPreviewContent]
+    [editor, aiPreviewContent, message]
   )
 
   // 一键排版
@@ -355,7 +356,7 @@ export function EditorToolbar({
     } finally {
       setImageLoading(false)
     }
-  }, [editor, imageLoading])
+  }, [editor, imageLoading, message])
 
   const [fontPopoverOpen, setFontPopoverOpen] = useState(false)
 

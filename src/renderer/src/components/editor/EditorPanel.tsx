@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react'
-import { Empty, message, Spin } from 'antd'
+import { Empty, App, Spin } from 'antd'
 import { EditorTabs } from './EditorTabs'
 import { NovelEditor } from './NovelEditor'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -14,6 +14,7 @@ import { useGitStore } from '@stores/gitStore'
 import styles from './EditorPanel.module.css'
 
 export function EditorPanel() {
+  const { message } = App.useApp()
   const { tabs, activeTabId, saveFileContent, isLoading, getCurrentContent, markDirty } =
     useEditorStore()
 
@@ -32,7 +33,7 @@ export function EditorPanel() {
       message.error('保存失败')
       console.error('Save error:', error)
     }
-  }, [activeTab, saveFileContent, getCurrentContent, markDirty])
+  }, [activeTab, saveFileContent, getCurrentContent, markDirty, message])
 
   const handleChange = useCallback(() => {
     if (activeTab && !activeTab.isDirty) {

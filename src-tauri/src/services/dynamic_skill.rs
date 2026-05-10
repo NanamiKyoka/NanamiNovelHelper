@@ -6,6 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Mutex;
+use tauri::{Emitter, Manager};
 use tokio::process::Command;
 
 pub struct DynamicSkillService {
@@ -273,11 +274,12 @@ impl DynamicSkillService {
         let app_handle = app.clone();
 
         let result = tokio::spawn(async move {
-            let mut procs = app_handle.state::<DynamicSkillService>().inner().running_processes.lock().unwrap();
-            let child = procs.get_mut(&exec_id);
-            if let Some(child) = child {
+            let child = {
+                let mut procs = app_handle.state::<DynamicSkillService>().inner().running_processes.lock().unwrap();
+                procs.remove(&exec_id)
+            };
+            if let Some(mut child) = child {
                 let output = child.wait_with_output().await;
-                drop(procs);
 
                 match output {
                     Ok(output) => {
@@ -432,7 +434,11 @@ impl DynamicSkillService {
             if !dir.exists() {
                 return;
             }
-            let mut entries: Vec<_> = fs::read_dir(dir)
+            let read_dir = match fs::read_dir(dir) {
+                Ok(rd) => rd,
+                Err(_) => return,
+            };
+            let mut entries: Vec<_> = read_dir
                 .filter_map(|e| e.ok())
                 .collect();
             entries.sort_by_key(|e| e.file_name());
@@ -492,7 +498,8 @@ impl DynamicSkillService {
 
     pub fn is_trusted(&self, skill_id: String, skill_path: String) -> AppResult<bool> {
         let whitelist = Self::load_whitelist()?;
-        let entries = whitelist.get("entries").and_then(|e| e.as_array()).unwrap_or(&Vec::new());
+        let empty_entries = Vec::new();
+        let entries = whitelist.get("entries").and_then(|e| e.as_array()).unwrap_or(&empty_entries);
 
         let entry = entries.iter().find(|e| e.get("skillId").and_then(|v| v.as_str()) == Some(&skill_id));
         if let Some(entry) = entry {

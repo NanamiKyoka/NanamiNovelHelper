@@ -1,6 +1,6 @@
 use crate::error::AppResult;
 use crate::models::*;
-use crate::services::ProjectService;
+use crate::services::{FileWatcherService, ProjectService};
 use tauri::State;
 
 #[tauri::command]
@@ -8,22 +8,30 @@ pub fn create_project(
     name: String,
     path: String,
     project_service: State<ProjectService>,
+    file_watcher_service: State<'_, FileWatcherService>,
 ) -> AppResult<Project> {
-    project_service.create_project(name, path)
+    let project = project_service.create_project(name, path.clone())?;
+    file_watcher_service.start(&path);
+    Ok(project)
 }
 
 #[tauri::command]
 pub fn open_project(
     path: String,
     project_service: State<ProjectService>,
+    file_watcher_service: State<'_, FileWatcherService>,
 ) -> AppResult<Project> {
-    project_service.open_project(path)
+    let project = project_service.open_project(path.clone())?;
+    file_watcher_service.start(&path);
+    Ok(project)
 }
 
 #[tauri::command]
 pub fn close_project(
     project_service: State<ProjectService>,
+    file_watcher_service: State<'_, FileWatcherService>,
 ) {
+    file_watcher_service.stop();
     project_service.close_project()
 }
 

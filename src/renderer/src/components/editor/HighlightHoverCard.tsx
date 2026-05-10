@@ -47,7 +47,7 @@ function formatFieldValue(value: string | string[] | undefined): string {
  */
 function getFieldDisplayName(fieldId: string, type: VocabularyType | undefined): string {
   if (!type) return fieldId
-  const field = type.fields.find(f => f.id === fieldId)
+  const field = (type.fields || []).find(f => f.id === fieldId)
   return field?.name || fieldId
 }
 
@@ -102,7 +102,7 @@ export function HighlightHoverCard({
     }
 
     // 默认显示该类型的所有自定义字段（排除内置的 name 和 type）
-    return vocabularyType.fields.filter(f => !['name', 'type'].includes(f.id)).map(f => f.id)
+    return (vocabularyType.fields || []).filter(f => !['name', 'type'].includes(f.id)).map(f => f.id)
   }, [vocabularyType, activeConfig.typeConfigs])
 
   // 调整位置，确保不超出视口

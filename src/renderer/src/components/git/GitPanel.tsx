@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Tabs, Modal, message, Dropdown, Empty, Spin, Typography } from 'antd'
+import { Button, Input, Tabs, Modal, App, Dropdown, Empty, Spin, Typography } from 'antd'
 import {
   BranchesOutlined,
   PlusOutlined,
@@ -25,6 +25,7 @@ const { TextArea } = Input
 const { Text } = Typography
 
 function GitPanel(): JSX.Element {
+  const { message } = App.useApp()
   const {
     initialized,
     isRepo,
@@ -172,21 +173,9 @@ function GitPanel(): JSX.Element {
     )
   }
 
-  // 错误状态
-  if (error) {
-    return (
-      <div className={styles.error}>
-        <Text type="danger">{error}</Text>
-        <Button onClick={handleRefresh} icon={<SyncOutlined />}>
-          重试
-        </Button>
-      </div>
-    )
-  }
-
   // 计算变更数量
-  const changesCount = repository?.changes.length || 0
-  const stagedCount = repository?.stagedChanges.length || 0
+  const changesCount = repository?.changes?.length || 0
+  const stagedCount = repository?.stagedChanges?.length || 0
   const totalChanges = changesCount + stagedCount
 
   return (
@@ -210,6 +199,16 @@ function GitPanel(): JSX.Element {
           </Dropdown>
         </div>
       </div>
+
+      {/* 错误提示条 */}
+      {error && (
+        <div className={styles.errorBar}>
+          <Text type="danger" style={{ flex: 1, fontSize: 12 }}>{error}</Text>
+          <Button size="small" type="link" onClick={() => useGitStore.getState().setError(null)}>
+            关闭
+          </Button>
+        </div>
+      )}
 
       {/* 提交区域 */}
       {viewMode === 'changes' && (

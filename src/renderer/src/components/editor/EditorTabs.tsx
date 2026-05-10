@@ -3,7 +3,7 @@
  */
 
 import { useRef, useCallback, useState } from 'react'
-import { Dropdown, MenuProps, message } from 'antd'
+import { Dropdown, MenuProps, App } from 'antd'
 import { CloseOutlined, CloseCircleFilled, ExportOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
@@ -40,6 +40,7 @@ interface EditorTabsProps {
 }
 
 export function EditorTabs({ onContextMenu }: EditorTabsProps) {
+  const { message } = App.useApp()
   const {
     tabs,
     activeTabId,
@@ -178,7 +179,7 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
         message.error('导出失败')
       }
     },
-    [getCurrentContent]
+    [getCurrentContent, message]
   )
 
   // 右键菜单项

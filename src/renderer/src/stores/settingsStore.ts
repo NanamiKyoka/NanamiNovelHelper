@@ -16,7 +16,8 @@ import type {
   BackupInfo,
   BadgeVisibility,
   SidebarBadgeVisibility,
-  GlobalLayoutSettings
+  GlobalLayoutSettings,
+  CustomChunkType
 } from '@shared/settings'
 import { DEFAULT_GLOBAL_SETTINGS, DEFAULT_PROJECT_SETTINGS } from '@shared/settings'
 import { getSystemTheme, onSystemThemeChange } from '@utils/theme'
@@ -53,6 +54,10 @@ interface SettingsState {
   updateEditorSettings: (settings: Partial<ProjectEditorSettings>) => Promise<void>
   updateHighlightSettings: (settings: Partial<ProjectHighlightSettings>) => Promise<void>
   updateBackupSettings: (settings: Partial<ProjectBackupSettings>) => Promise<void>
+  // 自定义板块类型
+  addCustomChunkType: (chunkType: Omit<CustomChunkType, 'id' | 'createdAt' | 'updatedAt'>) => Promise<CustomChunkType | null>
+  updateCustomChunkType: (id: string, updates: Partial<Omit<CustomChunkType, 'id' | 'createdAt'>>) => Promise<void>
+  deleteCustomChunkType: (id: string) => Promise<void>
   // API Key
   getApiKey: (keyName: string) => Promise<string | null>
   setApiKey: (keyName: string, value: string) => Promise<void>
@@ -80,7 +85,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ isLoading: true })
     try {
       const settings = await window.electron.settings.global.getAll()
-      set({ globalSettings: settings, isInitialized: true, isLoading: false })
+      set({
+        globalSettings: settings && typeof settings === 'object' ? { ...DEFAULT_GLOBAL_SETTINGS, ...settings } : DEFAULT_GLOBAL_SETTINGS,
+        isInitialized: true,
+        isLoading: false
+      })
     } catch (error) {
       console.error('Failed to init global settings:', error)
       set({ globalSettings: DEFAULT_GLOBAL_SETTINGS, isInitialized: true, isLoading: false })
@@ -235,7 +244,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ isLoading: true })
     try {
       const settings = await window.electron.settings.project.getAll()
-      set({ projectSettings: settings, hasProject: true, isLoading: false })
+      const mergedSettings = settings && typeof settings === 'object' 
+        ? { 
+            ...DEFAULT_PROJECT_SETTINGS, 
+            ...settings,
+            customChunkTypes: settings.customChunkTypes ?? DEFAULT_PROJECT_SETTINGS.customChunkTypes
+          } 
+        : DEFAULT_PROJECT_SETTINGS
+      set({
+        projectSettings: mergedSettings,
+        hasProject: true,
+        isLoading: false
+      })
     } catch (error) {
       console.error('Failed to init project settings:', error)
       set({ projectSettings: DEFAULT_PROJECT_SETTINGS, hasProject: true, isLoading: false })
@@ -248,13 +268,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   // 批量设置项目设置（用于聚合接口）
   setProjectSettings: (settings: ProjectSettings) => {
-    set({ projectSettings: settings, hasProject: true })
+    set({ 
+      projectSettings: settings || DEFAULT_PROJECT_SETTINGS, 
+      hasProject: true 
+    })
   },
 
   updateProjectSettings: async updates => {
     try {
+      const { projectSettings } = get()
       const settings = await window.electron.settings.project.update(updates)
-      set({ projectSettings: settings })
+      
+      const mergedSettings = {
+        ...DEFAULT_PROJECT_SETTINGS,
+        ...settings,
+        customChunkTypes: Array.isArray(settings.customChunkTypes) 
+          ? settings.customChunkTypes 
+          : projectSettings?.customChunkTypes ?? []
+      }
+      
+      set({ projectSettings: mergedSettings })
     } catch (error) {
       console.error('Failed to update project settings:', error)
       throw error
@@ -290,6 +323,41 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (!projectSettings) return
     const newBackup = { ...projectSettings.backup, ...updates }
     await get().updateProjectSettings({ backup: newBackup })
+  },
+
+  addCustomChunkType: async chunkTypeData => {
+    const { projectSettings } = get()
+    if (!projectSettings) return null
+
+    const now = new Date().toISOString()
+    const newChunkType: CustomChunkType = {
+      ...chunkTypeData,
+      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    const newCustomChunkTypes = [...projectSettings.customChunkTypes, newChunkType]
+    await get().updateProjectSettings({ customChunkTypes: newCustomChunkTypes })
+    return newChunkType
+  },
+
+  updateCustomChunkType: async (id, updates) => {
+    const { projectSettings } = get()
+    if (!projectSettings) return
+
+    const newCustomChunkTypes = projectSettings.customChunkTypes.map(ct =>
+      ct.id === id ? { ...ct, ...updates, updatedAt: new Date().toISOString() } : ct
+    )
+    await get().updateProjectSettings({ customChunkTypes: newCustomChunkTypes })
+  },
+
+  deleteCustomChunkType: async id => {
+    const { projectSettings } = get()
+    if (!projectSettings) return
+
+    const newCustomChunkTypes = projectSettings.customChunkTypes.filter(ct => ct.id !== id)
+    await get().updateProjectSettings({ customChunkTypes: newCustomChunkTypes })
   },
 
   getApiKey: async keyName => {

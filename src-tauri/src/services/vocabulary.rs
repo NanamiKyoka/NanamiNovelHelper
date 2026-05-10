@@ -44,7 +44,7 @@ impl VocabularyService {
         write_json5_file(&types_path, &types)
     }
 
-    pub fn add_vocabulary_type(&self, name: String, color: String, is_built_in: bool, description: Option<String>) -> AppResult<VocabularyType> {
+    pub fn add_vocabulary_type(&self, name: String, color: String, is_built_in: bool, description: Option<String>, icon: Option<String>, fields: Option<Vec<serde_json::Value>>, table_config: Option<Vec<serde_json::Value>>) -> AppResult<VocabularyType> {
         let mut types = self.load_vocabulary_types()?;
         let now = generate_timestamp();
         let new_type = VocabularyType {
@@ -54,8 +54,11 @@ impl VocabularyService {
                 updated_at: now,
             },
             name,
+            icon,
             color,
             is_built_in,
+            fields: fields.unwrap_or_default(),
+            table_config: table_config.unwrap_or_default(),
             order: types.len() as i32,
             description,
         };
@@ -72,8 +75,17 @@ impl VocabularyService {
             if let Some(name) = updates.get("name").and_then(|v| v.as_str()) {
                 types[idx].name = name.to_string();
             }
+            if let Some(icon) = updates.get("icon").and_then(|v| v.as_str()) {
+                types[idx].icon = Some(icon.to_string());
+            }
             if let Some(color) = updates.get("color").and_then(|v| v.as_str()) {
                 types[idx].color = color.to_string();
+            }
+            if let Some(fields) = updates.get("fields").and_then(|v| v.as_array()) {
+                types[idx].fields = fields.clone();
+            }
+            if let Some(table_config) = updates.get("tableConfig").and_then(|v| v.as_array()) {
+                types[idx].table_config = table_config.clone();
             }
             if let Some(desc) = updates.get("description").and_then(|v| v.as_str()) {
                 types[idx].description = Some(desc.to_string());
@@ -125,18 +137,34 @@ impl VocabularyService {
         write_json5_file(&entries_path, &entries)
     }
 
-    pub fn add_vocabulary_entry(&self, entry: VocabularyEntry) -> AppResult<VocabularyEntry> {
-        let type_id = entry.type_id.clone();
+    pub fn add_vocabulary_entry(&self, entry: serde_json::Value) -> AppResult<VocabularyEntry> {
+        let type_id = entry.get("typeId").and_then(|v| v.as_str()).unwrap_or("").to_string();
         let mut entries = self.load_vocabulary_entries(Some(type_id.clone()))?;
         let now = generate_timestamp();
+        let id = generate_id();
         let new_entry = VocabularyEntry {
             base: BaseEntity {
-                id: generate_id(),
+                id: id.clone(),
                 created_at: now.clone(),
-                updated_at: now,
+                updated_at: now.clone(),
             },
+            name: entry.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            type_id: type_id.clone(),
+            type_name: entry.get("typeName").and_then(|v| v.as_str()).unwrap_or("").to_string(),
             order: entries.len() as i32,
-            ..entry
+            color: entry.get("color").and_then(|v| v.as_str()).unwrap_or("").to_string(),
+            fields: entry.get("fields").cloned().unwrap_or(serde_json::Value::Object(serde_json::Map::new())),
+            starred: entry.get("starred").and_then(|v| v.as_bool()).unwrap_or(false),
+            description: entry.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            linked_file_path: entry.get("linkedFilePath").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            aliases: entry.get("aliases")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .unwrap_or_default(),
+            tags: entry.get("tags")
+                .and_then(|v| v.as_array())
+                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .unwrap_or_default(),
         };
         entries.push(new_entry.clone());
         self.save_vocabulary_entries(type_id, entries)?;
@@ -153,6 +181,21 @@ impl VocabularyService {
                 let now = generate_timestamp();
                 if let Some(name) = updates.get("name").and_then(|v| v.as_str()) {
                     entries[idx].name = name.to_string();
+                }
+                if let Some(color) = updates.get("color").and_then(|v| v.as_str()) {
+                    entries[idx].color = color.to_string();
+                }
+                if let Some(fields) = updates.get("fields") {
+                    entries[idx].fields = fields.clone();
+                }
+                if let Some(aliases) = updates.get("aliases").and_then(|v| v.as_array()) {
+                    entries[idx].aliases = aliases.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                }
+                if let Some(tags) = updates.get("tags").and_then(|v| v.as_array()) {
+                    entries[idx].tags = tags.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+                }
+                if let Some(starred) = updates.get("starred").and_then(|v| v.as_bool()) {
+                    entries[idx].starred = starred;
                 }
                 if let Some(desc) = updates.get("description").and_then(|v| v.as_str()) {
                     entries[idx].description = Some(desc.to_string());
@@ -202,17 +245,21 @@ impl VocabularyService {
         write_json5_file(&path, &words)
     }
 
-    pub fn add_sensitive_word(&self, word: SensitiveWord) -> AppResult<SensitiveWord> {
+    pub fn add_sensitive_word(&self, word: serde_json::Value) -> AppResult<SensitiveWord> {
         let mut words = self.load_sensitive_words()?;
         let now = generate_timestamp();
+        let id = generate_id();
         let new_word = SensitiveWord {
             base: BaseEntity {
-                id: generate_id(),
+                id: id.clone(),
                 created_at: now.clone(),
-                updated_at: now,
+                updated_at: now.clone(),
             },
+            name: word.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string(),
             order: words.len() as i32,
-            ..word
+            level: word.get("level").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            category: word.get("category").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            description: word.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
         };
         words.push(new_word.clone());
         self.save_sensitive_words(words)?;
@@ -231,6 +278,9 @@ impl VocabularyService {
             }
             if let Some(category) = updates.get("category").and_then(|v| v.as_str()) {
                 words[idx].category = Some(category.to_string());
+            }
+            if let Some(desc) = updates.get("description").and_then(|v| v.as_str()) {
+                words[idx].description = Some(desc.to_string());
             }
             words[idx].base.updated_at = now;
             let updated = words[idx].clone();
@@ -251,7 +301,7 @@ impl VocabularyService {
             Ok(false)
         }
     }
-}
+
     pub fn create_linked_file(&self, entry: serde_json::Value) -> AppResult<serde_json::Value> {
         let project_path = project_state::get_project_path().ok_or(AppError::ProjectNotOpen)?;
         let data_dir = project_state::get_data_dir(&project_path);

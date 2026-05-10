@@ -54,7 +54,7 @@ interface ProjectInitData {
     expandedFolders: string[] | null
     showHiddenFiles: boolean
     hiddenItems: string[]
-  }
+  } | null
 }
 
 /**
@@ -101,20 +101,22 @@ export function useProjectActions() {
    */
   const dispatchInitData = useCallback(
     (initData: ProjectInitData) => {
-      setProjectSettings(initData.settings)
-      setVocabularyData(initData.vocabularyTypes, initData.vocabularyEntries)
-      setSensitiveWords(initData.sensitiveWords)
-      setHighlightConfig(initData.highlightConfig)
-      setRelationshipGraphs(initData.relationshipGraphs)
-      setTimelines(initData.timelines)
-      setSequenceCharts(initData.sequenceCharts)
-      setOrganizationGraphs(initData.organizationGraphs)
-      setFileTreeData(
-        initData.fileTree.tree,
-        initData.fileTree.expandedFolders,
-        initData.fileTree.showHiddenFiles,
-        initData.fileTree.hiddenItems
-      )
+      setProjectSettings(initData.settings as ProjectSettings)
+      setVocabularyData(initData.vocabularyTypes || [], initData.vocabularyEntries || [])
+      setSensitiveWords(initData.sensitiveWords || [])
+      setHighlightConfig(initData.highlightConfig as HighlightConfig | null | undefined)
+      setRelationshipGraphs(initData.relationshipGraphs || [])
+      setTimelines(initData.timelines || [])
+      setSequenceCharts(initData.sequenceCharts || [])
+      setOrganizationGraphs(initData.organizationGraphs || [])
+      if (initData.fileTree) {
+        setFileTreeData(
+          initData.fileTree.tree || [],
+          initData.fileTree.expandedFolders,
+          initData.fileTree.showHiddenFiles,
+          initData.fileTree.hiddenItems || []
+        )
+      }
     },
     [
       setProjectSettings,

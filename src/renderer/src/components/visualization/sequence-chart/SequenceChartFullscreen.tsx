@@ -35,6 +35,7 @@ import { useUIStore } from '@stores/uiStore'
 import type { SequenceEvent } from '@shared/sequence-chart'
 import { CHART_PALETTE } from '@shared/constants/colors'
 import { DEFAULT_COLORS } from '@shared/constants/colors'
+import { safeNumberToString, safeNumber, safeSubtract, safeAdd } from '@utils/number'
 import styles from './SequenceChartFullscreen.module.css'
 
 const { TextArea } = Input
@@ -191,7 +192,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       const rect = e.currentTarget.getBoundingClientRect()
       const x = e.clientX - rect.left + (timelineBodyRef.current?.scrollLeft || 0)
       const cellIndex = Math.floor(x / cellWidth) + 1
-      const maxCell = currentChart?.axisConfig.initialCellCount || 50
+      const maxCell = currentChart?.axisConfig?.initialCellCount || 50
       if (cellIndex < 1 || cellIndex > maxCell) return
       setNewEventStart(cellIndex)
       setNewEventEnd(Math.min(cellIndex + 2, maxCell))
@@ -248,10 +249,11 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   // 扩展单元格
   const handleExpandCells = async () => {
     if (!currentChart) return
-    const currentCount = currentChart.axisConfig.initialCellCount
+    const currentCount = currentChart.axisConfig?.initialCellCount || 50
     const newTotal = currentCount + expandCellCount
-    if (newTotal > currentChart.axisConfig.maxCellCount) {
-      message.error(`超过最大限制 ${currentChart.axisConfig.maxCellCount}`)
+    const maxCellCount = currentChart.axisConfig?.maxCellCount || 500
+    if (newTotal > maxCellCount) {
+      message.error(`超过最大限制 ${maxCellCount}`)
       return
     }
     await updateAxisConfig({ initialCellCount: newTotal })
@@ -263,16 +265,16 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   // 标签编辑
   const handleLabelDoubleClick = useCallback(
     (position: number) => {
-      const existing = currentChart?.axisConfig.timeLabels?.find(l => l.position === position)
+      const existing = currentChart?.axisConfig?.timeLabels?.find(l => l.position === position)
       setEditingLabelPos(position)
       setEditingLabelText(existing?.label || '')
     },
-    [currentChart?.axisConfig.timeLabels]
+    [currentChart?.axisConfig?.timeLabels]
   )
 
   const handleLabelSave = useCallback(async () => {
     if (editingLabelPos === null || !currentChart) return
-    const existingLabels = currentChart.axisConfig.timeLabels || []
+    const existingLabels = currentChart.axisConfig?.timeLabels || []
     let newLabels: Array<{ position: number; label: string }>
     if (editingLabelText.trim() === '') {
       newLabels = existingLabels.filter(l => l.position !== editingLabelPos)
@@ -300,8 +302,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     setDragType(type)
     setDraggingEvent({ ...event })
     setDragStartX(e.clientX)
-    setOriginalStart(event.timeInfo.cellStart || 1)
-    setOriginalEnd(event.timeInfo.cellEnd || 10)
+    setOriginalStart(event.timeInfo?.cellStart || 1)
+    setOriginalEnd(event.timeInfo?.cellEnd || 10)
     setHasMoved(false)
   }, [])
 
@@ -315,7 +317,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       setHasMoved(true)
 
       const deltaCells = Math.round(deltaX / cellWidth)
-      const maxCell = currentChart?.axisConfig.initialCellCount || 100
+      const maxCell = currentChart?.axisConfig?.initialCellCount || 100
 
       let newStart = originalStart
       let newEnd = originalEnd
@@ -345,8 +347,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
 
     const handleMouseUp = async () => {
       if (draggingEvent && hasMoved) {
-        const newStart = draggingEvent.timeInfo.cellStart || 1
-        const newEnd = draggingEvent.timeInfo.cellEnd || 10
+        const newStart = draggingEvent.timeInfo?.cellStart || 1
+        const newEnd = draggingEvent.timeInfo?.cellEnd || 10
         if (newStart !== originalStart || newEnd !== originalEnd) {
           await updateEventTime(draggingEvent.id, newStart, newEnd)
           message.success(`事件调整为 ${newStart}-${newEnd}`)
@@ -379,8 +381,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   // 获取事件条样式
   const getEventBarStyle = useCallback(
     (event: SequenceEvent, lane: number = 0): React.CSSProperties => {
-      const start = event.timeInfo.cellStart || 1
-      const end = event.timeInfo.cellEnd || 10
+      const start = event.timeInfo?.cellStart || 1
+      const end = event.timeInfo?.cellEnd || 10
       const color = event.color || DEFAULT_COLORS.event
       return {
         left: `${(start - 1) * cellWidth}px`,
@@ -397,15 +399,15 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const eventLanes = useMemo(() => {
     if (!currentChart) return new Map<string, number>()
     const lanes = new Map<string, number>()
-    const sorted = [...currentChart.events].sort((a, b) => {
-      const aStart = a.timeInfo.cellStart || 1
-      const bStart = b.timeInfo.cellStart || 1
-      return aStart - bStart || (a.timeInfo.cellEnd || 1) - (b.timeInfo.cellEnd || 1)
+    const sorted = [...(currentChart.events || [])].sort((a, b) => {
+      const aStart = a.timeInfo?.cellStart || 1
+      const bStart = b.timeInfo?.cellStart || 1
+      return aStart - bStart || (a.timeInfo?.cellEnd || 1) - (b.timeInfo?.cellEnd || 1)
     })
     const laneEnds: number[] = []
 
     for (const event of sorted) {
-      const start = event.timeInfo.cellStart || 1
+      const start = event.timeInfo?.cellStart || 1
       let assignedLane = -1
       for (let i = 0; i < laneEnds.length; i++) {
         if (laneEnds[i] < start) {
@@ -418,7 +420,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
         laneEnds.push(0)
       }
       lanes.set(event.id, assignedLane)
-      laneEnds[assignedLane] = event.timeInfo.cellEnd || 1
+      laneEnds[assignedLane] = event.timeInfo?.cellEnd || 1
     }
 
     return lanes
@@ -466,7 +468,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       icon: <EditOutlined />,
       label: '编辑',
       onClick: () => {
-        const event = currentChart?.events.find(e => e.id === eventId)
+        const event = currentChart?.events?.find(e => e.id === eventId)
         if (event) {
           setEditingEvent(event)
           setEditModalVisible(true)
@@ -505,10 +507,10 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
 
   // 渲染时间轴标签（每格一个）
   const renderTimelineLabels = () => {
-    const cellCount = currentChart?.axisConfig.initialCellCount || 100
-    const timeLabels = currentChart?.axisConfig.timeLabels
+    const cellCount = currentChart?.axisConfig?.initialCellCount || 100
+    const timeLabels = currentChart?.axisConfig?.timeLabels
     return Array.from({ length: cellCount }, (_, i) => {
-      const position = i + 1
+      const position = safeNumber(i + 1, 1)
       const customLabel = timeLabels?.find(l => l.position === position)
       if (editingLabelPos === position) {
         return (
@@ -521,7 +523,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               onPressEnter={handleLabelSave}
               autoFocus
               style={{ width: cellWidth - 8, fontSize: 11 }}
-              placeholder={`${position}`}
+              placeholder={safeNumberToString(position)}
             />
           </div>
         )
@@ -533,7 +535,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             style={{ width: cellWidth, cursor: 'pointer' }}
             onDoubleClick={() => handleLabelDoubleClick(position)}
           >
-            {customLabel ? customLabel.label : position}
+            {customLabel ? customLabel.label : safeNumberToString(position)}
           </div>
         </Tooltip>
       )
@@ -542,7 +544,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
 
   // 渲染网格单元格
   const renderGridCells = () => {
-    const cellCount = currentChart?.axisConfig.initialCellCount || 100
+    const cellCount = currentChart?.axisConfig?.initialCellCount || 100
     return Array.from({ length: cellCount }, (_, i) => (
       <div
         key={i + 1}
@@ -618,7 +620,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
 
   const displayEvents = useMemo(() => {
     if (!currentChart) return []
-    return currentChart.events.map(e => (draggingEvent?.id === e.id ? draggingEvent : e))
+    return (currentChart.events || []).map(e => (draggingEvent?.id === e.id ? draggingEvent : e))
   }, [currentChart, draggingEvent])
 
   const filteredEvents = useMemo(() => {
@@ -638,10 +640,10 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
       for (let j = i + 1; j < events.length; j++) {
         const a = events[i]
         const b = events[j]
-        const aStart = a.timeInfo.cellStart
-        const aEnd = a.timeInfo.cellEnd
-        const bStart = b.timeInfo.cellStart
-        const bEnd = b.timeInfo.cellEnd
+        const aStart = a.timeInfo?.cellStart
+        const aEnd = a.timeInfo?.cellEnd
+        const bStart = b.timeInfo?.cellStart
+        const bEnd = b.timeInfo?.cellEnd
         if (aStart <= bEnd && bStart <= aEnd) {
           conflicts.add(a.id)
           conflicts.add(b.id)
@@ -714,7 +716,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
               <div className={styles.colProgress}>进度</div>
             </div>
             <div className={styles.leftContent} ref={leftContentRef}>
-              {currentChart.events.length === 0 ? (
+              {(currentChart.events || []).length === 0 ? (
                 <div className={styles.emptyEvents}>
                   <span>暂无事件</span>
                   <span>双击右侧网格或点击"添加事件"创建</span>
@@ -724,9 +726,9 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                   <span>未找到匹配事件</span>
                 </div>
               ) : (
-                filteredEvents.map(event => (
+                filteredEvents.map((event, index) => (
                   <div key={event.id} className={styles.eventRow}>
-                    <div className={styles.colIndex}>{event.order + 1}</div>
+                    <div className={styles.colIndex}>{safeNumber(event.order, index) + 1}</div>
                     <div className={styles.colIntro}>
                       <Tooltip title={event.title}>
                         <span className={styles.introText}>{event.title}</span>
@@ -778,7 +780,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                     style={{ height: `${40 + (eventLanes.get(event.id) || 0) * 20}px` }}
                   >
                     <Tooltip
-                      title={`${event.title} (${event.timeInfo.cellStart}-${event.timeInfo.cellEnd})${conflictEventIds.has(event.id) ? ' ⚠ 时间冲突' : ''}`}
+                      title={`${event.title} (${safeNumberToString(event.timeInfo?.cellStart)}-${safeNumberToString(event.timeInfo?.cellEnd)})${conflictEventIds.has(event.id) ? ' ⚠ 时间冲突' : ''}`}
                       placement="top"
                     >
                       <div
@@ -788,7 +790,7 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
                       >
                         {draggingEvent?.id === event.id && (
                           <div className={styles.dragHint}>
-                            {event.timeInfo.cellStart} → {event.timeInfo.cellEnd}
+                            {safeNumberToString(event.timeInfo?.cellStart)} → {safeNumberToString(event.timeInfo?.cellEnd)}
                           </div>
                         )}
                         {/* 左边缘拖拽手柄 */}
@@ -892,14 +894,14 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <InputNumber
               min={1}
-              max={currentChart.axisConfig.initialCellCount}
+              max={currentChart.axisConfig?.initialCellCount || 50}
               value={newEventStart}
               onChange={v => setNewEventStart(v || 1)}
             />
             <span>至</span>
             <InputNumber
               min={newEventStart}
-              max={currentChart.axisConfig.initialCellCount}
+              max={currentChart.axisConfig?.initialCellCount || 50}
               value={newEventEnd}
               onChange={v => setNewEventEnd(v || newEventStart)}
             />
@@ -959,8 +961,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             <div className={styles.formItem}>
               <label className={styles.formLabel}>时间范围</label>
               <div style={{ color: 'var(--text-secondary)' }}>
-                {editingEvent.timeInfo.cellStart} - {editingEvent.timeInfo.cellEnd}（共{' '}
-                {editingEvent.timeInfo.cellEnd! - editingEvent.timeInfo.cellStart! + 1} 格）
+                {safeNumberToString(editingEvent.timeInfo?.cellStart)} - {safeNumberToString(editingEvent.timeInfo?.cellEnd)}（共{' '}
+                {safeAdd(safeSubtract(editingEvent.timeInfo?.cellEnd, editingEvent.timeInfo?.cellStart), 1)} 格）
               </div>
               <div className={styles.formTip}>提示：在时间轴上拖动事件条边缘可调整时间范围</div>
             </div>
@@ -1018,8 +1020,8 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
             style={{ width: '100%' }}
           />
           <div className={styles.formTip}>
-            当前：{currentChart.axisConfig.initialCellCount} 格 → 扩展后：
-            {currentChart.axisConfig.initialCellCount + expandCellCount} 格
+            当前：{currentChart.axisConfig?.initialCellCount || 50} 格 → 扩展后：
+            {(currentChart.axisConfig?.initialCellCount || 50) + expandCellCount} 格
           </div>
         </div>
       </Modal>

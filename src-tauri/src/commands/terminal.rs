@@ -1,6 +1,6 @@
 use crate::error::AppResult;
 use crate::services::terminal::TerminalService;
-use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
 
 #[tauri::command]
 pub fn terminal_get_shells(

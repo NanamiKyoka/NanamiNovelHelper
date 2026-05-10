@@ -2,7 +2,6 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
-import eslintConfigPrettier from '@electron-toolkit/eslint-config-prettier'
 
 export default tseslint.config(
   js.configs.recommended,
@@ -44,13 +43,6 @@ export default tseslint.config(
     }
   },
   {
-    files: ['src/main/**/*', 'src/preload/**/*'],
-    rules: {
-      'no-console': 'off'
-    }
-  },
-  {
-    ignores: ['out/', 'dist/', 'node_modules/', 'reference/', '*.js', '*.mjs']
-  },
-  eslintConfigPrettier
+    ignores: ['out/', 'dist/', 'node_modules/', 'reference/', 'src-tauri/target/', '*.js', '*.mjs']
+  }
 )

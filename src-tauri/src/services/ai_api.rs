@@ -124,7 +124,7 @@ impl AiApiService {
 
     fn get_api_key(&self, key_name: &str) -> Option<String> {
         let settings = self.settings.lock().ok()?;
-        let global = settings.get_global().ok()?;
+        let global = settings.get_global_settings().ok()?;
         let keys = global.get("apiKeys").and_then(|v| v.as_object())?;
         keys.get(key_name).and_then(|v| v.as_str()).map(|s| s.to_string())
     }
@@ -181,10 +181,11 @@ impl AiApiService {
                         }
                     }
                 };
+                let custom_model = self.get_custom_model();
                 let model = options
                     .model
                     .as_deref()
-                    .or_else(|| self.get_custom_model().as_deref())
+                    .or_else(|| custom_model.as_deref())
                     .unwrap_or("gpt-4");
                 let mut opts = options.clone();
                 opts.model = Some(model.to_string());
@@ -454,10 +455,11 @@ impl AiApiService {
                         };
                     }
                 };
+                let custom_model = self.get_custom_model();
                 let model = options
                     .model
                     .as_deref()
-                    .or_else(|| self.get_custom_model().as_deref())
+                    .or_else(|| custom_model.as_deref())
                     .unwrap_or("gpt-4");
                 let mut opts = options.clone();
                 opts.model = Some(model.to_string());
@@ -550,8 +552,8 @@ impl AiApiService {
                     match chunk_result {
                         Ok(bytes) => {
                             buffer.push_str(&String::from_utf8_lossy(&bytes));
-                            let lines: Vec<&str> = buffer.split('\n').collect();
-                            buffer = lines.last().unwrap_or(&"").to_string();
+                            let lines: Vec<String> = buffer.split('\n').map(|s| s.to_string()).collect();
+                            buffer = lines.last().cloned().unwrap_or_default();
 
                             for line in &lines[..lines.len().saturating_sub(1)] {
                                 let trimmed = line.trim();
@@ -714,8 +716,8 @@ impl AiApiService {
                     match chunk_result {
                         Ok(bytes) => {
                             buffer.push_str(&String::from_utf8_lossy(&bytes));
-                            let lines: Vec<&str> = buffer.split('\n').collect();
-                            buffer = lines.last().unwrap_or(&"").to_string();
+                            let lines: Vec<String> = buffer.split('\n').map(|s| s.to_string()).collect();
+                            buffer = lines.last().cloned().unwrap_or_default();
 
                             for line in &lines[..lines.len().saturating_sub(1)] {
                                 let trimmed = line.trim();
