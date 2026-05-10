@@ -199,6 +199,7 @@ pub fn run() {
             terminal_kill,
             terminal_resize,
             terminal_write,
+            terminal_rename,
             terminal_window_create,
             terminal_window_is_open,
             terminal_window_close,

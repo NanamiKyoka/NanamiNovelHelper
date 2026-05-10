@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 终端实例组件
  * 封装 xterm.js，处理单个终端的渲染和交互
  */
@@ -7,6 +7,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { Terminal as XTerm } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
+import type { UnlistenFn } from '@tauri-apps/api/event'
 import '@xterm/xterm/css/xterm.css'
 import { useThemeStore } from '@stores/themeStore'
 import { useTerminalStore } from '@stores/terminalStore'
@@ -26,109 +27,155 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<XTerm | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
-  const cleanupRef = useRef<(() => void) | null>(null)
+  const unlistenDataRef = useRef<UnlistenFn | null>(null)
+  const unlistenExitRef = useRef<UnlistenFn | null>(null)
+  const onDataDisposableRef = useRef<{ dispose: () => void } | null>(null)
+  const isMountedRef = useRef(false)
   const isInitializedRef = useRef(false)
 
   const resolvedMode = useThemeStore(state => state.resolvedMode)
   const { destroyTerminal } = useTerminalStore()
 
-  // 判断是否为暗色主题
   const isDark = resolvedMode === 'dark'
-
   const isDarkRef = useRef(isDark)
   isDarkRef.current = isDark
 
-  // 初始化终端
   useEffect(() => {
-    if (!containerRef.current || isInitializedRef.current) return
-    isInitializedRef.current = true
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
-    // 创建终端实例
-    const terminal = new XTerm({
-      cursorBlink: true,
-      cursorStyle: 'block',
-      fontSize: 14,
-      fontFamily: 'Consolas, "Courier New", monospace',
-      lineHeight: 1.2,
-      theme: isDarkRef.current ? TERMINAL_THEMES.dark : TERMINAL_THEMES.light
-    })
+  useEffect(() => {
+    if (!containerRef.current) return
+    if (isInitializedRef.current) return
 
-    // 创建插件
-    const fitAddon = new FitAddon()
-    const webLinksAddon = new WebLinksAddon()
+    let canceled = false
 
-    // 加载插件
-    terminal.loadAddon(fitAddon)
-    terminal.loadAddon(webLinksAddon)
+    const init = async () => {
+      try {
+        unlistenDataRef.current = await window.api.terminal.onDataAsync(id, (data: string) => {
+          if (terminalRef.current && isMountedRef.current) {
+            terminalRef.current.write(data)
+          }
+        })
 
-    // 打开终端
-    terminal.open(containerRef.current)
-
-    // 自适应尺寸
-    fitAddon.fit()
-    fitAddonRef.current = fitAddon
-    terminalRef.current = terminal
-
-    // 通知主进程调整 PTY 尺寸
-    const { cols, rows } = terminal
-    window.api.terminal.resize(id, cols, rows)
-
-    // 监听用户输入
-    const onDataDisposable = terminal.onData(data => {
-      window.api.terminal.write(id, data)
-    })
-
-    // 监听终端输出
-    const removeDataListener = window.api.terminal.onData(id, data => {
-      terminal.write(data)
-    })
-
-    // 监听终端退出
-    const removeExitListener = window.api.terminal.onExit(id, exitCode => {
-      terminal.writeln(`\r\n\x1b[33m进程已退出，退出码: ${exitCode}\x1b[0m`)
-      terminal.writeln('\x1b[90m按 Enter 键关闭终端\x1b[0m')
-
-      // 监听 Enter 键关闭
-      const onEnterDisposable = terminal.onData(data => {
-        if (data === '\r') {
-          destroyTerminal(id)
-          onEnterDisposable.dispose()
+        if (canceled) {
+          unlistenDataRef.current()
+          return
         }
-      })
-    })
 
-    // 保存清理函数
-    cleanupRef.current = () => {
-      onDataDisposable.dispose()
-      removeDataListener()
-      removeExitListener()
+        unlistenExitRef.current = await window.api.terminal.onExitAsync(id, (exitCode: number) => {
+          if (terminalRef.current && isMountedRef.current) {
+            terminalRef.current.writeln(`\r\n\x1b[33m进程已退出，退出码: ${exitCode}\x1b[0m`)
+            terminalRef.current.writeln('\x1b[90m按 Enter 键关闭终端\x1b[0m')
+
+            const onEnterDisposable = terminalRef.current.onData(data => {
+              if (data === '\r') {
+                destroyTerminal(id)
+                onEnterDisposable.dispose()
+              }
+            })
+          }
+        })
+
+        if (canceled) {
+          unlistenDataRef.current()
+          unlistenExitRef.current?.()
+          return
+        }
+      } catch (_error) {
+        return
+      }
+
+      if (!isMountedRef.current || canceled) return
+
+      const terminal = new XTerm({
+        cursorBlink: true,
+        cursorStyle: 'block',
+        fontSize: 14,
+        fontFamily: 'Consolas, "Courier New", monospace',
+        lineHeight: 1.2,
+        theme: isDarkRef.current ? TERMINAL_THEMES.dark : TERMINAL_THEMES.light
+      })
+
+      const fitAddon = new FitAddon()
+      const webLinksAddon = new WebLinksAddon()
+
+      terminal.loadAddon(fitAddon)
+      terminal.loadAddon(webLinksAddon)
+
+      if (!isMountedRef.current || canceled || !containerRef.current) {
+        terminal.dispose()
+        return
+      }
+
+      try {
+        terminal.open(containerRef.current)
+      } catch (_error) {
+        terminal.dispose()
+        return
+      }
+
+      if (!isMountedRef.current || canceled) {
+        terminal.dispose()
+        return
+      }
+
+      fitAddon.fit()
+      fitAddonRef.current = fitAddon
+      terminalRef.current = terminal
+      isInitializedRef.current = true
+
+      const { cols, rows } = terminal
+
+      try {
+        await window.api.terminal.resize(id, cols, rows)
+      } catch (_err) {
+        // resize失败不影响终端使用
+      }
+
+      onDataDisposableRef.current = terminal.onData(data => {
+        window.api.terminal.write(id, data).catch(() => {})
+      })
     }
 
+    init()
+
     return () => {
-      if (cleanupRef.current) {
-        cleanupRef.current()
+      canceled = true
+
+      onDataDisposableRef.current?.dispose()
+      onDataDisposableRef.current = null
+
+      unlistenDataRef.current?.()
+      unlistenDataRef.current = null
+
+      unlistenExitRef.current?.()
+      unlistenExitRef.current = null
+
+      if (terminalRef.current) {
+        terminalRef.current.dispose()
+        terminalRef.current = null
       }
-      terminal.dispose()
-      terminalRef.current = null
       fitAddonRef.current = null
       isInitializedRef.current = false
     }
   }, [id, destroyTerminal])
 
-  // 主题变化时更新终端主题
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.options.theme = isDark ? TERMINAL_THEMES.dark : TERMINAL_THEMES.light
     }
   }, [isDark])
 
-  // 窗口大小变化时调整终端尺寸
   useEffect(() => {
     const handleResize = () => {
       if (fitAddonRef.current && terminalRef.current) {
         fitAddonRef.current.fit()
         const { cols, rows } = terminalRef.current
-        window.api.terminal.resize(id, cols, rows)
+        window.api.terminal.resize(id, cols, rows).catch(() => {})
       }
     }
 
@@ -136,16 +183,14 @@ export function TerminalInstance({ id, cwd: _cwd }: TerminalInstanceProps) {
     return () => window.removeEventListener('resize', handleResize)
   }, [id])
 
-  // 自适应尺寸的方法（供父组件调用）
   const fit = useCallback(() => {
     if (fitAddonRef.current && terminalRef.current) {
       fitAddonRef.current.fit()
       const { cols, rows } = terminalRef.current
-      window.api.terminal.resize(id, cols, rows)
+      window.api.terminal.resize(id, cols, rows).catch(() => {})
     }
   }, [id])
 
-  // 暴露 fit 方法
   useEffect(() => {
     if (containerRef.current) {
       ;(containerRef.current as TerminalContainerElement).fitTerminal = fit

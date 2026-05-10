@@ -1,12 +1,13 @@
 use crate::error::{AppError, AppResult};
 use crate::services::project_state;
-use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 
 struct PtyInstance {
+    master: Box<dyn MasterPty + Send>,
     writer: Box<dyn Write + Send>,
     exited: Arc<Mutex<bool>>,
     exit_code: Arc<Mutex<Option<i32>>>,
@@ -141,8 +142,6 @@ impl TerminalService {
             .spawn_command(cmd)
             .map_err(|e| AppError::OperationFailed(format!("启动 Shell 失败: {}", e)))?;
 
-        drop(pair.slave);
-
         let reader = pair
             .master
             .try_clone_reader()
@@ -152,6 +151,8 @@ impl TerminalService {
             .master
             .take_writer()
             .map_err(|e| AppError::OperationFailed(format!("获取 PTY 写入器失败: {}", e)))?;
+
+        let master = pair.master;
 
         let pid = child.process_id().unwrap_or(0);
 
@@ -183,10 +184,10 @@ impl TerminalService {
         let term_id_for_reader = id.clone();
         let app_for_reader = app.clone();
         std::thread::spawn(move || {
-            let mut reader = BufReader::new(reader);
+            let mut reader = reader;
             let mut buf = [0u8; 4096];
             loop {
-                match reader.read(&mut buf) {
+                match std::io::Read::read(&mut reader, &mut buf) {
                     Ok(0) => break,
                     Ok(n) => {
                         let data = String::from_utf8_lossy(&buf[..n]);
@@ -208,6 +209,7 @@ impl TerminalService {
             instances.insert(
                 id.clone(),
                 PtyInstance {
+                    master,
                     writer,
                     exited,
                     exit_code,
@@ -267,6 +269,7 @@ impl TerminalService {
     pub fn kill(&self, id: &str) -> AppResult<bool> {
         let mut instances = self.instances.lock().unwrap();
         if let Some(inst) = instances.remove(id) {
+            let _ = inst.master;
             let _ = inst.writer;
             let mut ex = inst.exited.lock().unwrap();
             *ex = true;
@@ -282,10 +285,17 @@ impl TerminalService {
         }
     }
 
-    pub fn resize(&self, id: &str, _cols: u16, _rows: u16) -> AppResult<()> {
-        let instances = self.instances.lock().unwrap();
-        if instances.contains_key(id) {
-            Ok(())
+    pub fn resize(&self, id: &str, cols: u16, rows: u16) -> AppResult<()> {
+        let mut instances = self.instances.lock().unwrap();
+        if let Some(inst) = instances.get_mut(id) {
+            inst.master
+                .resize(PtySize {
+                    rows,
+                    cols,
+                    pixel_width: 0,
+                    pixel_height: 0,
+                })
+                .map_err(|e| AppError::OperationFailed(format!("调整终端大小失败: {}", e)))
         } else {
             Err(AppError::InvalidParam(format!("终端实例 {} 不存在", id)))
         }
@@ -294,12 +304,34 @@ impl TerminalService {
     pub fn write(&self, id: &str, data: &str) -> AppResult<()> {
         let mut instances = self.instances.lock().unwrap();
         if let Some(inst) = instances.get_mut(id) {
+            let exited = *inst.exited.lock().unwrap();
+            if exited {
+                return Ok(())
+            }
+
             inst.writer
                 .write_all(data.as_bytes())
-                .map_err(|e| AppError::OperationFailed(format!("写入终端失败: {}", e)))?;
+                .map_err(|e| {
+                    if e.kind() == std::io::ErrorKind::BrokenPipe {
+                        if let Ok(mut ex) = inst.exited.lock() {
+                            *ex = true;
+                        }
+                    }
+                    AppError::OperationFailed(format!("写入终端失败: {}", e))
+                })?;
             inst.writer
                 .flush()
                 .map_err(|e| AppError::OperationFailed(format!("刷新终端失败: {}", e)))?;
+            Ok(())
+        } else {
+            Err(AppError::InvalidParam(format!("终端实例 {} 不存在", id)))
+        }
+    }
+
+    pub fn rename(&self, id: &str, name: &str) -> AppResult<()> {
+        let mut metas = self.metas.lock().unwrap();
+        if let Some(meta) = metas.get_mut(id) {
+            meta.name = name.to_string();
             Ok(())
         } else {
             Err(AppError::InvalidParam(format!("终端实例 {} 不存在", id)))

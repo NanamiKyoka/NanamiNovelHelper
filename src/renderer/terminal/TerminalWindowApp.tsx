@@ -1,9 +1,9 @@
-﻿/**
+/**
  * 终端独立窗口应用组件
  */
 
-import { useEffect, useRef, useCallback } from 'react'
-import { Button, Dropdown, Select, Tooltip } from 'antd'
+import { useEffect, useRef, useCallback, useState } from 'react'
+import { Button, Dropdown, Select, Tooltip, Input } from 'antd'
 import {
   PlusOutlined,
   CloseOutlined,
@@ -24,6 +24,9 @@ import styles from './TerminalWindowApp.module.css'
 export function TerminalWindowApp() {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalContainerRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const renameInputRef = useRef<HTMLInputElement>(null)
 
   const {
     terminals,
@@ -31,18 +34,17 @@ export function TerminalWindowApp() {
     availableShells,
     createTerminal,
     destroyTerminal,
+    renameTerminal,
     setActiveTerminal,
     loadAvailableShells
   } = useTerminalStore()
 
   const { currentProject } = useProjectStore()
 
-  // 加载可用 Shell
   useEffect(() => {
     loadAvailableShells()
   }, [loadAvailableShells])
 
-  // 窗口大小变化时调整终端
   useEffect(() => {
     const observer = new ResizeObserver(() => {
       terminals.forEach(t => {
@@ -60,7 +62,6 @@ export function TerminalWindowApp() {
     return () => observer.disconnect()
   }, [terminals])
 
-  // 切换终端
   const handleTerminalChange = (id: string) => {
     setActiveTerminal(id)
     setTimeout(() => {
@@ -71,7 +72,6 @@ export function TerminalWindowApp() {
     }, 100)
   }
 
-  // 创建新终端
   const handleCreateTerminal = useCallback(
     (shellPath?: string) => {
       const cwd = currentProject?.path
@@ -80,13 +80,37 @@ export function TerminalWindowApp() {
     [createTerminal, currentProject]
   )
 
-  // 关闭终端
   const handleCloseTerminal = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation()
     destroyTerminal(id)
   }
 
-  // Shell 选择菜单
+  const handleStartRename = useCallback((id: string, currentName: string) => {
+    setRenamingId(id)
+    setRenameValue(currentName)
+    setTimeout(() => {
+      renameInputRef.current?.select()
+    }, 0)
+  }, [])
+
+  const handleFinishRename = useCallback(() => {
+    if (renamingId && renameValue.trim()) {
+      renameTerminal(renamingId, renameValue.trim())
+    }
+    setRenamingId(null)
+  }, [renamingId, renameValue, renameTerminal])
+
+  const handleRenameKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleFinishRename()
+      } else if (e.key === 'Escape') {
+        setRenamingId(null)
+      }
+    },
+    [handleFinishRename]
+  )
+
   const shellMenuItems: MenuProps['items'] = availableShells.map(shell => ({
     key: shell.path,
     label: (
@@ -97,7 +121,6 @@ export function TerminalWindowApp() {
     onClick: () => handleCreateTerminal(shell.path)
   }))
 
-  // 创建终端菜单
   const createMenuItems: MenuProps['items'] = [
     {
       key: 'default',
@@ -108,7 +131,6 @@ export function TerminalWindowApp() {
     ...(shellMenuItems || [])
   ]
 
-  // 窗口控制
   const handleMinimize = () => {
     window.api.terminalWindow.minimize()
   }
@@ -121,12 +143,10 @@ export function TerminalWindowApp() {
     window.api.terminalWindow.close()
   }
 
-  // 当前活动终端
   const activeTerminal = terminals.find(t => t.id === activeTerminalId)
 
   return (
     <div className={styles.app}>
-      {/* 自定义标题栏 */}
       <div className={styles.titleBar}>
         <div className={styles.titleBarLeft}>
           <CodeOutlined className={styles.titleIcon} />
@@ -134,7 +154,6 @@ export function TerminalWindowApp() {
           {currentProject && <span className={styles.projectName}> - {currentProject.name}</span>}
         </div>
 
-        {/* 终端选择器 */}
         {terminals.length > 0 && (
           <div className={styles.terminalSelector}>
             {terminals.length > 1 ? (
@@ -163,15 +182,28 @@ export function TerminalWindowApp() {
                   )
                 }))}
               />
+            ) : renamingId === activeTerminal?.id ? (
+              <Input
+                ref={renameInputRef as never}
+                size="small"
+                value={renameValue}
+                onChange={e => setRenameValue(e.target.value)}
+                onBlur={handleFinishRename}
+                onKeyDown={handleRenameKeyDown}
+                className={styles.renameInput}
+              />
             ) : (
-              <span className={styles.singleTerminalName}>
+              <span
+                className={styles.singleTerminalName}
+                onDoubleClick={() => activeTerminal && handleStartRename(activeTerminal.id, activeTerminal.name)}
+                title="双击重命名"
+              >
                 {activeTerminal?.name || 'Terminal'}
               </span>
             )}
           </div>
         )}
 
-        {/* 操作按钮 */}
         <div className={styles.titleBarRight}>
           <Dropdown menu={{ items: createMenuItems }} trigger={['click']}>
             <Button
@@ -219,7 +251,6 @@ export function TerminalWindowApp() {
         </div>
       </div>
 
-      {/* 终端内容区 */}
       <div ref={containerRef} className={styles.content}>
         {terminals.length === 0 ? (
           <div className={styles.empty}>

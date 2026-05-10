@@ -1,4 +1,4 @@
-﻿﻿import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+﻿import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { Layout, theme, Button, Tooltip, Spin } from 'antd'
 import {
   TagOutlined,
@@ -131,6 +131,15 @@ function App(): JSX.Element {
       endLoading('project-init')
     }
   }, [projectLoading, startLoading, endLoading])
+
+  // 预加载终端模块（项目打开后空闲时触发，避免首次点击卡顿）
+  useEffect(() => {
+    if (!currentProject) return
+    const handle = requestIdleCallback(() => {
+      import('@components/terminal/TerminalPanel')
+    })
+    return () => cancelIdleCallback(handle)
+  }, [currentProject])
 
   // 文件变化监听（外部修改文件时刷新编辑器）
   useEffect(() => {

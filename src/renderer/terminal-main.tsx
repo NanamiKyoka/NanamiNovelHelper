@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 终端独立窗口入口
  */
 
@@ -15,23 +15,19 @@ import '@renderer/styles/global.css'
 
 initTauriApi()
 
-// 主题提供者组件
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const config = useThemeStore(state => state.config)
   const resolvedMode = useThemeStore(state => state.resolvedMode)
 
-  // 更新 CSS 变量和 body 类
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--font-size', `${config.fontSize}px`)
     root.style.setProperty('--font-family', config.fontFamily)
     root.style.setProperty('--primary-color', config.primaryColor)
 
-    // 更新 body 类
     document.body.classList.remove('light', 'dark')
     document.body.classList.add(resolvedMode)
 
-    // 更新 data 属性（用于 CSS 选择器）
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, config.primaryColor, resolvedMode])
 
@@ -61,8 +57,8 @@ function TerminalWindow() {
         if (project) {
           useProjectStore.setState({ currentProject: project })
         }
-      } catch (error) {
-        console.error('Failed to load project:', error)
+      } catch (_error) {
+        // 获取项目信息失败
       }
 
       try {
@@ -75,13 +71,17 @@ function TerminalWindow() {
 
         if (terminals.length === 0) {
           const cwd = useProjectStore.getState().currentProject?.path
-          useTerminalStore.getState().createTerminal({ cwd })
+          await useTerminalStore.getState().createTerminal({ cwd })
         }
-      } catch (error) {
-        console.error('Failed to load terminals:', error)
+      } catch (_error) {
+        // 加载终端列表失败
       }
 
-      useTerminalStore.getState().loadAvailableShells()
+      try {
+        await useTerminalStore.getState().loadAvailableShells()
+      } catch (_error) {
+        // 加载Shell列表失败
+      }
     }
 
     init()

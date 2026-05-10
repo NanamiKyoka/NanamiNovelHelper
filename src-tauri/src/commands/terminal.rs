@@ -55,6 +55,15 @@ pub fn terminal_write(
 }
 
 #[tauri::command]
+pub fn terminal_rename(
+    id: String,
+    name: String,
+    terminal_service: State<'_, TerminalService>,
+) -> AppResult<()> {
+    terminal_service.rename(&id, &name)
+}
+
+#[tauri::command]
 pub async fn terminal_window_create(app: AppHandle) -> AppResult<bool> {
     let existing = app.get_webview_window("terminal-window");
     if existing.is_some() {
@@ -74,8 +83,11 @@ pub async fn terminal_window_create(app: AppHandle) -> AppResult<bool> {
     .inner_size(800.0, 600.0)
     .min_inner_size(400.0, 300.0)
     .resizable(true)
+    .decorations(false)
     .build()
-    .map_err(|e| crate::error::AppError::OperationFailed(format!("创建终端窗口失败: {}", e)))?;
+    .map_err(|e| {
+        crate::error::AppError::OperationFailed(format!("创建终端窗口失败: {}", e))
+    })?;
 
     let app_clone = app.clone();
     window.on_window_event(move |event| {

@@ -518,6 +518,7 @@ export const tauriApi = {
     write: (id: string, data: string) => invoke('terminal_write', { id, data }),
     resize: (id: string, cols: number, rows: number) => invoke('terminal_resize', { id, cols, rows }),
     destroy: (id: string) => invoke('terminal_kill', { id }),
+    rename: (id: string, name: string) => invoke('terminal_rename', { id, name }),
     list: () => invoke('terminal_list'),
     getShells: () => invoke('terminal_get_shells'),
     setCwd: (id: string, cwd: string) =>
@@ -531,6 +532,14 @@ export const tauriApi = {
       }).then(fn => { unlisten = fn })
       return () => { unlisten?.() }
     },
+    onDataAsync: async (id: string, callback: (data: string) => void) => {
+      const unlisten = await listen<Record<string, unknown>>('terminal:data', (event) => {
+        if (event.payload.id === id && typeof event.payload.data === 'string') {
+          callback(event.payload.data as string)
+        }
+      })
+      return unlisten
+    },
     onExit: (id: string, callback: (exitCode: number) => void) => {
       let unlisten: UnlistenFn | null = null
       listen<Record<string, unknown>>('terminal:exit', (event) => {
@@ -539,6 +548,14 @@ export const tauriApi = {
         }
       }).then(fn => { unlisten = fn })
       return () => { unlisten?.() }
+    },
+    onExitAsync: async (id: string, callback: (exitCode: number) => void) => {
+      const unlisten = await listen<Record<string, unknown>>('terminal:exit', (event) => {
+        if (event.payload.id === id) {
+          callback((event.payload.exitCode as number) ?? 0)
+        }
+      })
+      return unlisten
     },
     removeDataListener: (_id: string) => {},
     removeExitListener: (_id: string) => {}

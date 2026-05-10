@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 终端状态管理
  */
 
@@ -21,7 +21,6 @@ interface ShellInfo {
 }
 
 interface TerminalState {
-  // 状态
   terminals: TerminalInstance[]
   activeTerminalId: string | null
   availableShells: ShellInfo[]
@@ -29,13 +28,13 @@ interface TerminalState {
   isLoading: boolean
   error: string | null
 
-  // Actions
   createTerminal: (options?: {
     cwd?: string
     name?: string
     shellPath?: string
   }) => Promise<TerminalInstance | null>
   destroyTerminal: (id: string) => Promise<void>
+  renameTerminal: (id: string, name: string) => Promise<void>
   setActiveTerminal: (id: string | null) => void
   togglePanel: () => void
   setPanelVisible: (visible: boolean) => void
@@ -45,13 +44,11 @@ interface TerminalState {
   setError: (error: string | null) => void
 }
 
-// 获取当前项目路径的辅助函数
 const getCurrentProjectPath = (): string | undefined => {
   return useProjectStore.getState().currentProject?.path
 }
 
 export const useTerminalStore = create<TerminalState>()((set, get) => ({
-  // 初始状态
   terminals: [],
   activeTerminalId: null,
   availableShells: [],
@@ -59,13 +56,10 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
   isLoading: false,
   error: null,
 
-  // 创建终端
   createTerminal: async (options?: { cwd?: string; name?: string; shellPath?: string }) => {
     set({ isLoading: true, error: null })
     try {
-      // 如果没有指定 cwd，使用当前项目路径
       const cwd = options?.cwd ?? getCurrentProjectPath()
-
       const terminal = await window.api.terminal.create({
         cwd,
         name: options?.name,
@@ -87,7 +81,6 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     }
   },
 
-  // 销毁终端
   destroyTerminal: async (id: string) => {
     try {
       await window.api.terminal.destroy(id)
@@ -112,17 +105,26 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     }
   },
 
-  // 设置活动终端
+  renameTerminal: async (id: string, name: string) => {
+    try {
+      await window.api.terminal.rename(id, name)
+      set(state => ({
+        terminals: state.terminals.map(t =>
+          t.id === id ? { ...t, name } : t
+        )
+      }))
+    } catch (_error) {
+      // 重命名失败
+    }
+  },
+
   setActiveTerminal: (id: string | null) => {
     set({ activeTerminalId: id })
   },
 
-  // 切换面板显示
   togglePanel: () => {
     const state = get()
-    // 如果要显示面板但没有终端，先创建一个
     if (!state.isPanelVisible && state.terminals.length === 0) {
-      // 使用当前项目路径创建终端
       const cwd = getCurrentProjectPath()
       get().createTerminal({ cwd })
     } else {
@@ -130,7 +132,6 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     }
   },
 
-  // 设置面板可见性
   setPanelVisible: (visible: boolean) => {
     const state = get()
     if (visible && state.terminals.length === 0) {
@@ -140,31 +141,29 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     set({ isPanelVisible: visible })
   },
 
-  // 设置面板高度
   setPanelHeight: (height: number) => {
-    // 限制高度范围
     const minHeight = 100
     const maxHeight = 600
     const clampedHeight = Math.min(Math.max(height, minHeight), maxHeight)
     set({ panelHeight: clampedHeight })
   },
 
-  // 加载可用 Shell
   loadAvailableShells: async () => {
+    const state = get()
+    if (state.availableShells.length > 0) return
+
     try {
       const shells = await window.api.terminal.getShells()
       set({ availableShells: shells })
-    } catch (error) {
-      console.error('加载 Shell 列表失败:', error)
+    } catch (_error) {
+      // Shell列表加载失败不影响终端使用
     }
   },
 
-  // 清空终端（退出码）
   clearTerminal: () => {
     set(state => {
       const activeTerminal = state.terminals.find(t => t.id === state.activeTerminalId)
       if (activeTerminal) {
-        // 标记为已退出
         return {
           terminals: state.terminals.map(t =>
             t.id === state.activeTerminalId ? { ...t, exited: true } : t
@@ -175,12 +174,10 @@ export const useTerminalStore = create<TerminalState>()((set, get) => ({
     })
   },
 
-  // 设置加载状态
   setLoading: (loading: boolean) => {
     set({ isLoading: loading })
   },
 
-  // 设置错误
   setError: (error: string | null) => {
     set({ error })
   }

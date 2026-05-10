@@ -59,6 +59,17 @@
 .singleTerminalName {
   font-size: 13px;
   color: var(--ant-color-text-secondary);
+  cursor: default;
+  user-select: none;
+}
+
+.singleTerminalName:hover {
+  color: var(--ant-color-text);
+}
+
+.renameInput {
+  width: 150px;
+  font-size: 13px;
 }
 
 .select :global(.ant-select-selector) {
