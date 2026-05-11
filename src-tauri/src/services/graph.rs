@@ -464,9 +464,9 @@ impl GraphService {
         if let Some(events) = item.get_mut("events").and_then(|e| e.as_array_mut()) {
             for event in events.iter_mut() {
                 if event.get("id").and_then(|v| v.as_str()) == Some(event_id) {
-                    if let Some(obj) = event.as_object_mut() {
-                        obj.insert("cellStart".to_string(), serde_json::Value::Number(cell_start.into()));
-                        obj.insert("cellEnd".to_string(), serde_json::Value::Number(cell_end.into()));
+                    if let Some(time_info) = event.get_mut("timeInfo").and_then(|t| t.as_object_mut()) {
+                        time_info.insert("cellStart".to_string(), serde_json::Value::Number(cell_start.into()));
+                        time_info.insert("cellEnd".to_string(), serde_json::Value::Number(cell_end.into()));
                     }
                     break;
                 }
@@ -554,6 +554,8 @@ fn merge_json_value(base: &mut serde_json::Value, overlay: serde_json::Value) {
                     if let serde_json::Value::Array(arr) = base_value {
                         if let serde_json::Value::Object(update_map) = &value {
                             update_array_items_by_id(arr, update_map);
+                        } else {
+                            *base_value = value;
                         }
                     } else {
                         merge_json_value(base_value, value);

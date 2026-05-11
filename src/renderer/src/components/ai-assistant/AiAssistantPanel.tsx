@@ -14,9 +14,8 @@ import {
   Typography,
   Tooltip,
   Popconfirm,
-  message,
-  Dropdown,
-  Modal
+  App,
+  Dropdown
 } from 'antd'
 import {
   PlusOutlined,
@@ -63,6 +62,7 @@ const CATEGORY_ICONS: Record<TemplateCategory, React.ReactNode> = {
 }
 
 function AiAssistantPanel(): JSX.Element {
+  const { message, modal } = App.useApp()
   const {
     templateList,
     workflowList,
@@ -328,7 +328,7 @@ function AiAssistantPanel(): JSX.Element {
               label: '删除',
               danger: true,
               onClick: () => {
-                Modal.confirm({
+                modal.confirm({
                   title: '确认删除',
                   content: item.isBuiltIn
                     ? '确定要删除这个内置模板吗？删除后可以通过重新导入恢复。'
@@ -477,7 +477,7 @@ function AiAssistantPanel(): JSX.Element {
               label: '删除',
               danger: true,
               onClick: () => {
-                Modal.confirm({
+                modal.confirm({
                   title: '确认删除',
                   content: item.isBuiltIn
                     ? '确定要删除这个内置工作流吗？删除后可以通过重新导入恢复。'

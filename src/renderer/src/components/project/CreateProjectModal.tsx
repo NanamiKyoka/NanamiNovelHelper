@@ -21,6 +21,26 @@ interface FormValues {
   author?: string
 }
 
+const validatePath = (_: unknown, value: string) => {
+  if (!value || value.trim() === '') {
+    return Promise.reject(new Error('请选择或输入项目保存位置'));
+  }
+  const invalidCharsRegex = /[<>"|?*]/;
+  if (invalidCharsRegex.test(value)) {
+    return Promise.reject(new Error('路径包含非法字符（如 < > " | ? * 等）'));
+  }
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+      return Promise.reject(new Error('路径包含非法的控制字符'));
+    }
+  }
+  if (value.length > 260) {
+    return Promise.reject(new Error('路径长度不能超过260个字符'));
+  }
+  return Promise.resolve();
+};
+
 function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalProps): JSX.Element {
   const { message } = App.useApp()
   const [form] = Form.useForm()
@@ -32,6 +52,7 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
     const path = await showCreateDialog()
     if (path) {
       form.setFieldValue('parentPath', path)
+      form.validateFields(['parentPath'])
     }
   }, [form, showCreateDialog])
 
@@ -93,15 +114,14 @@ function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalPro
         <Form.Item
           label="保存位置"
           required
-          rules={[{ required: true, message: '请选择项目保存位置' }]}
         >
           <div style={{ display: 'flex', gap: 8 }}>
             <Form.Item
               name="parentPath"
               noStyle
-              rules={[{ required: true, message: '请选择项目保存位置' }]}
+              rules={[{ validator: validatePath }]}
             >
-              <Input style={{ flex: 1 }} placeholder="选择项目保存位置" readOnly />
+              <Input style={{ flex: 1 }} placeholder="请选择或输入项目保存位置" />
             </Form.Item>
             <Button
               icon={<FolderOpenOutlined />}

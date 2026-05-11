@@ -12,7 +12,7 @@ import {
   Typography,
   Result,
   Spin,
-  message,
+  App,
   Tag,
   Divider,
   Tabs
@@ -146,6 +146,7 @@ function WorkflowExecutor({
   open,
   onClose
 }: WorkflowExecutorProps): JSX.Element {
+  const { message } = App.useApp()
   const {
     workflows,
     templates,

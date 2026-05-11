@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
-import { Layout, theme, Button, Tooltip, Spin } from 'antd'
+import { Layout, theme, Button, Tooltip, Spin, App as AntApp } from 'antd'
 import {
   TagOutlined,
   WarningOutlined,
@@ -77,6 +77,7 @@ type RightPanelKey =
   | null
 
 function App(): JSX.Element {
+  const { message } = AntApp.useApp()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<string>('files')
   const [rightPanelKey, setRightPanelKey] = useState<RightPanelKey>(null)
@@ -120,13 +121,10 @@ function App(): JSX.Element {
   // 错误提示
   useEffect(() => {
     if (error) {
-      // 动态导入 message 避免循环依赖
-      import('antd').then(({ message }) => {
-        message.error(error)
-      })
+      message.error(error)
       clearError()
     }
-  }, [error, clearError])
+  }, [error, clearError, message])
 
   // 项目加载状态同步到全局 Loading Store
   useEffect(() => {

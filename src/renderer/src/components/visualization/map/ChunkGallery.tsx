@@ -63,7 +63,7 @@ interface ChunkGalleryProps {
 }
 
 export function ChunkGallery({ getCenterHex }: ChunkGalleryProps) {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const [searchText, setSearchText] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [newChunkName, setNewChunkName] = useState('')
@@ -195,7 +195,7 @@ export function ChunkGallery({ getCenterHex }: ChunkGalleryProps) {
   const handleDeleteCustomChunk = useCallback(
     (id: string, e: React.MouseEvent) => {
       e.stopPropagation()
-      Modal.confirm({
+      modal.confirm({
         title: '确认删除',
         content: '确定要删除这个自定义板块类型吗？',
         okText: '删除',
@@ -207,7 +207,7 @@ export function ChunkGallery({ getCenterHex }: ChunkGalleryProps) {
         }
       })
     },
-    [deleteCustomChunkType, message]
+    [deleteCustomChunkType, message, modal]
   )
 
   return (

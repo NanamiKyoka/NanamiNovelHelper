@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Button, Empty, Spin, Modal, App } from 'antd'
+import { Button, Empty, Spin, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
@@ -22,7 +22,7 @@ interface WorldCanvasProps {
 }
 
 export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProps) {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
 
   const currentMap = useMapStore(state => state.currentMap)
   const zoom = useMapStore(state => state.zoom)
@@ -131,7 +131,7 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
   const handleChunkDelete = useCallback(
     (chunkId: string) => {
       const chunk = chunks.find(c => c.id === chunkId)
-      Modal.confirm({
+      modal.confirm({
         title: '确认删除',
         content: `确定要删除板块「${chunk?.name || ''}」吗？相关的连接也会被删除。`,
         okText: '删除',
@@ -143,7 +143,7 @@ export function WorldCanvas({ onChunkDoubleClick, onChunkEdit }: WorldCanvasProp
         }
       })
     },
-    [chunks, deleteChunk, message]
+    [chunks, deleteChunk, message, modal]
   )
 
   const handleChunkDuplicate = useCallback(

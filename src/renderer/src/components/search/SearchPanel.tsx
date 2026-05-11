@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 搜索面板组件
  * 类似 VSCode 的侧边栏搜索功能
  */
@@ -196,6 +196,7 @@ function SearchPanel(): JSX.Element {
             onChange={e => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
             prefix={<SearchOutlined className={styles.inputIcon} />}
+            size="small"
             suffix={
               <Space size={0}>
                 <Tooltip title="区分大小写">
@@ -260,6 +261,7 @@ function SearchPanel(): JSX.Element {
               placeholder="替换为..."
               value={replaceText}
               onChange={e => setReplaceText(e.target.value)}
+              size="small"
               className={styles.searchInput}
             />
             <Tooltip title="替换全部">
@@ -281,12 +283,14 @@ function SearchPanel(): JSX.Element {
               placeholder="要包含的文件 (例如: *.md, src/**)"
               value={filesToInclude}
               onChange={e => setFilesToInclude(e.target.value)}
+              size="small"
               className={styles.filterInput}
             />
             <Input
               placeholder="要排除的文件 (例如: node_modules/**)"
               value={filesToExclude}
               onChange={e => setFilesToExclude(e.target.value)}
+              size="small"
               className={styles.filterInput}
             />
           </div>

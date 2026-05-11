@@ -13,7 +13,7 @@ import {
   Space,
   Tag,
   Input,
-  message,
+  App,
   Card,
   Row,
   Col,
@@ -35,6 +35,7 @@ import styles from './HighlightSettings.module.css'
 const { Option } = Select
 
 export function HighlightSettings(): JSX.Element {
+  const { message } = App.useApp()
   const { config, saveConfig, loading, updateHoverCardConfig } = useHighlightService()
   const { types: vocabTypes } = useVocabularyStore()
   const currentProject = useProjectStore(state => state.currentProject)

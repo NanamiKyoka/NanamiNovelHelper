@@ -19,7 +19,7 @@ import {
   Form,
   Select,
   Popconfirm,
-  message
+  App
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -102,6 +102,7 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
 }
 
 function SensitiveWordFullscreen({ onBack }: SensitiveWordFullscreenProps): JSX.Element {
+  const { message } = App.useApp()
   const { words, loadWords, addWord, updateWord, deleteWord, reorderWords, isLoaded } =
     useSensitiveStore()
 

@@ -131,10 +131,12 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const [dragType, setDragType] = useState<DragType>(null)
   const [draggingEvent, setDraggingEvent] = useState<SequenceEvent | null>(null)
   const [eventSearchKeyword, setEventSearchKeyword] = useState('')
-  const [dragStartX, setDragStartX] = useState(0)
-  const [originalStart, setOriginalStart] = useState(1)
-  const [originalEnd, setOriginalEnd] = useState(10)
-  const [hasMoved, setHasMoved] = useState(false)
+  const dragStartXRef = useRef(0)
+  const originalStartRef = useRef(1)
+  const originalEndRef = useRef(10)
+  const hasMovedRef = useRef(false)
+  const draggingEventRef = useRef<SequenceEvent | null>(null)
+  const dragTypeRef = useRef<DragType>(null)
 
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -299,64 +301,67 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   const startDrag = useCallback((e: React.MouseEvent, event: SequenceEvent, type: DragType) => {
     e.preventDefault()
     e.stopPropagation()
+    dragTypeRef.current = type
     setDragType(type)
-    setDraggingEvent({ ...event })
-    setDragStartX(e.clientX)
-    setOriginalStart(event.timeInfo?.cellStart || 1)
-    setOriginalEnd(event.timeInfo?.cellEnd || 10)
-    setHasMoved(false)
+    const eventCopy = { ...event }
+    draggingEventRef.current = eventCopy
+    setDraggingEvent(eventCopy)
+    dragStartXRef.current = e.clientX
+    originalStartRef.current = event.timeInfo?.cellStart || 1
+    originalEndRef.current = event.timeInfo?.cellEnd || 10
+    hasMovedRef.current = false
   }, [])
 
   // 处理拖拽
   useEffect(() => {
-    if (!dragType || !draggingEvent) return
+    if (!dragType) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStartX
+      const deltaX = e.clientX - dragStartXRef.current
       if (Math.abs(deltaX) < 3) return
-      setHasMoved(true)
+      hasMovedRef.current = true
 
       const deltaCells = Math.round(deltaX / cellWidth)
       const maxCell = currentChart?.axisConfig?.initialCellCount || 100
 
-      let newStart = originalStart
-      let newEnd = originalEnd
+      let newStart = originalStartRef.current
+      let newEnd = originalEndRef.current
 
-      if (dragType === 'move') {
-        // 整体移动，保持时长不变
-        const duration = originalEnd - originalStart + 1
-        newStart = Math.max(1, Math.min(maxCell - duration + 1, originalStart + deltaCells))
+      if (dragTypeRef.current === 'move') {
+        const duration = originalEndRef.current - originalStartRef.current + 1
+        newStart = Math.max(1, Math.min(maxCell - duration + 1, originalStartRef.current + deltaCells))
         newEnd = newStart + duration - 1
-      } else if (dragType === 'resize-left') {
-        // 拖动左边缘，调整起始位置
-        newStart = Math.max(1, Math.min(originalEnd - 1, originalStart + deltaCells))
-      } else if (dragType === 'resize-right') {
-        // 拖动右边缘，调整结束位置
-        newEnd = Math.max(originalStart + 1, Math.min(maxCell, originalEnd + deltaCells))
+      } else if (dragTypeRef.current === 'resize-left') {
+        newStart = Math.max(1, Math.min(originalEndRef.current - 1, originalStartRef.current + deltaCells))
+      } else if (dragTypeRef.current === 'resize-right') {
+        newEnd = Math.max(originalStartRef.current + 1, Math.min(maxCell, originalEndRef.current + deltaCells))
       }
 
-      setDraggingEvent(prev =>
-        prev
-          ? {
-              ...prev,
-              timeInfo: { ...prev.timeInfo, cellStart: newStart, cellEnd: newEnd }
-            }
-          : null
-      )
+      const updated = draggingEventRef.current
+        ? {
+            ...draggingEventRef.current,
+            timeInfo: { ...draggingEventRef.current.timeInfo, cellStart: newStart, cellEnd: newEnd }
+          }
+        : null
+      draggingEventRef.current = updated
+      setDraggingEvent(updated)
     }
 
     const handleMouseUp = async () => {
-      if (draggingEvent && hasMoved) {
-        const newStart = draggingEvent.timeInfo?.cellStart || 1
-        const newEnd = draggingEvent.timeInfo?.cellEnd || 10
-        if (newStart !== originalStart || newEnd !== originalEnd) {
-          await updateEventTime(draggingEvent.id, newStart, newEnd)
+      const evt = draggingEventRef.current
+      if (evt && hasMovedRef.current) {
+        const newStart = evt.timeInfo?.cellStart || 1
+        const newEnd = evt.timeInfo?.cellEnd || 10
+        if (newStart !== originalStartRef.current || newEnd !== originalEndRef.current) {
+          await updateEventTime(evt.id, newStart, newEnd)
           message.success(`事件调整为 ${newStart}-${newEnd}`)
         }
       }
+      dragTypeRef.current = null
+      draggingEventRef.current = null
+      hasMovedRef.current = false
       setDragType(null)
       setDraggingEvent(null)
-      setHasMoved(false)
     }
 
     document.addEventListener('mousemove', handleMouseMove)
@@ -367,11 +372,6 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
     }
   }, [
     dragType,
-    draggingEvent,
-    dragStartX,
-    originalStart,
-    originalEnd,
-    hasMoved,
     currentChart,
     cellWidth,
     updateEventTime,

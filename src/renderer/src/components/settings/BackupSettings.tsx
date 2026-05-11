@@ -10,7 +10,7 @@ import {
   Button,
   Table,
   Space,
-  message,
+  App,
   Popconfirm,
   Empty,
   Typography,
@@ -42,6 +42,7 @@ const formatSize = (bytes: number): string => {
 }
 
 export function BackupSettings(): JSX.Element {
+  const { message } = App.useApp()
   const currentProject = useProjectStore(state => state.currentProject)
   const projectSettings = useSettingsStore(state => state.projectSettings)
   const updateBackupSettings = useSettingsStore(state => state.updateBackupSettings)

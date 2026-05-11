@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 模板编辑器组件（全屏模式）
  */
 
@@ -13,7 +13,7 @@ import {
   Typography,
   Card,
   Divider,
-  message,
+  App,
   Tooltip,
   Tag,
   Switch,
@@ -82,6 +82,7 @@ function TemplateEditor({
   onBack,
   onExecute: _onExecute
 }: TemplateEditorProps): JSX.Element {
+  const { message } = App.useApp()
   const {
     templates,
     currentTemplate,

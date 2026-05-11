@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI/API 设置组件
  */
 
@@ -7,7 +7,7 @@ import {
   Form,
   Input,
   Button,
-  message,
+  App,
   Card,
   Typography,
   Popconfirm,
@@ -133,6 +133,7 @@ const getUrlFormatExample = (format: ApiFormat): string => {
 }
 
 export function ApiSettings(): JSX.Element {
+  const { message } = App.useApp()
   const { getApiKey, setApiKey, deleteApiKey } = useSettingsStore()
   const [configs, setConfigs] = useState<ApiConfig[]>([])
   const [, setLoading] = useState<Record<string, boolean>>({})

@@ -7,7 +7,7 @@ import {
   Input,
   ColorPicker,
   Space,
-  message,
+  App,
   Popconfirm,
   Dropdown,
   Tooltip
@@ -208,6 +208,7 @@ function VocabularyTypeSettings({
   selectedTypeId: externalSelectedTypeId,
   onSelectedTypeIdChange
 }: VocabularyTypeSettingsProps): JSX.Element {
+  const { message } = App.useApp()
   const { types, loadTypes, addType, updateType, deleteType, reorderTypes, isLoaded } =
     useVocabularyStore()
 
@@ -296,7 +297,7 @@ function VocabularyTypeSettings({
 
       setActiveId(null)
     },
-    [sortedTypes, reorderTypes]
+    [sortedTypes, reorderTypes, message]
   )
 
   // 当前拖拽的类型

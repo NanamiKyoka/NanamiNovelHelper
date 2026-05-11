@@ -68,6 +68,7 @@
   min-height: 0;
   overflow: auto;
   padding: var(--spacing-1) 0;
+  outline: none;
 }
 
 .treeNode {

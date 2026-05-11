@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 地图编辑器状态管理
  *
  * 功能：
@@ -1282,14 +1282,16 @@ export const useMapStore = create<MapState>((set, get) => ({
     if (!currentMap) return
 
     try {
-      await window.api.map.update(currentMap.id, { thumbnail: dataUrl })
-      set({
-        currentMap: {
-          ...currentMap,
-          thumbnail: dataUrl
-        }
-      })
-      await get().loadList()
+      const thumbnailPath = await window.api.map.saveThumbnail(currentMap.id, dataUrl)
+      if (thumbnailPath) {
+        set({
+          currentMap: {
+            ...currentMap,
+            thumbnail: thumbnailPath
+          }
+        })
+        await get().loadList()
+      }
     } catch (error) {
       handleError(error, { fallbackMessage: '保存缩略图失败' })
     }

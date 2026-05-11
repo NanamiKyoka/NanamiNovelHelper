@@ -198,7 +198,7 @@ function saveShortcuts(shortcuts: ShortcutConfig[]): void {
 }
 
 export function ShortcutsSettings(): JSX.Element {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const [shortcuts, setShortcuts] = useState<ShortcutConfig[]>(() => loadShortcuts())
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -249,7 +249,7 @@ export function ShortcutsSettings(): JSX.Element {
   )
 
   const handleResetAll = useCallback(() => {
-    Modal.confirm({
+    modal.confirm({
       title: '重置所有快捷键',
       content: '确定要将所有快捷键重置为默认值吗？您的自定义设置将丢失。',
       okText: '确定重置',
@@ -261,7 +261,7 @@ export function ShortcutsSettings(): JSX.Element {
         message.success('已重置所有快捷键为默认值')
       }
     })
-  }, [message])
+  }, [message, modal])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

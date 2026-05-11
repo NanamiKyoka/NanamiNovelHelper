@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { Button, Empty, Spin, Modal, App } from 'antd'
+import { Button, Empty, Spin, App } from 'antd'
 import { ZoomInOutlined, ZoomOutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMapStore } from '@stores/mapStore'
 import { useThemeStore } from '@stores/themeStore'
@@ -14,7 +14,7 @@ interface InnerCanvasProps {
 }
 
 export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvasProps) {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
 
   const currentMap = useMapStore(state => state.currentMap)
   const getCurrentElements = useMapStore(state => state.getCurrentElements)
@@ -77,7 +77,7 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
   const handleElementDelete = useCallback(
     (elementId: string) => {
       const element = elements.find(e => e.id === elementId)
-      Modal.confirm({
+      modal.confirm({
         title: '确认删除',
         content: `确定要删除元素「${element?.name || ''}」吗？`,
         okText: '删除',
@@ -89,7 +89,7 @@ export function InnerCanvas({ onElementDoubleClick, onElementEdit }: InnerCanvas
         }
       })
     },
-    [elements, deleteElement, message]
+    [elements, deleteElement, message, modal]
   )
 
   const handleElementEdit = useCallback(

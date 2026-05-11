@@ -19,7 +19,7 @@ import {
   Modal,
   Form,
   ColorPicker,
-  message,
+  App,
   Upload,
   Progress,
   Alert,
@@ -213,6 +213,7 @@ interface VocabularyFullscreenProps {
 type CreateMode = 'template' | 'custom' | null
 
 function VocabularyFullscreen({ onBack }: VocabularyFullscreenProps): JSX.Element {
+  const { message } = App.useApp()
   const {
     types,
     entries,

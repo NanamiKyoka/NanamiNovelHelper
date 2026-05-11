@@ -1,11 +1,11 @@
-﻿import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   Popover,
   Button,
   Radio,
   Input,
   Select,
-  message,
+  App,
   Tooltip,
   Tabs,
   Typography,
@@ -99,6 +99,7 @@ Return only the names, one per line, without numbers or explanations.`,
 }
 
 function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.Element {
+  const { message } = App.useApp()
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<string>('cn')
   const [gender, setGender] = useState<'male' | 'female' | 'random'>('random')
@@ -215,7 +216,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
       setNames(result)
       setLoading(false)
     }, 100)
-  }, [useAi, generateNamesWithAi, selectedType, surname, gender, charCount, middleChar, suffix])
+  }, [useAi, generateNamesWithAi, selectedType, surname, gender, charCount, middleChar, suffix, message])
 
   // 随机姓氏
   const handleRandomSurname = useCallback(() => {
@@ -236,10 +237,9 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
         message.error('复制失败')
       }
     },
-    [onNameSelect]
+    [onNameSelect, message]
   )
 
-  // 初始化生成
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       setOpen(newOpen)

@@ -7,7 +7,7 @@ import {
   Input,
   Select,
   Space,
-  message,
+  App,
   Tag,
   Popconfirm,
   Empty,
@@ -88,6 +88,7 @@ function SortableRow({ 'data-row-key': id, ...props }: SortableRowProps): JSX.El
 }
 
 function SensitiveWordPanel({ readOnly = false }: SensitiveWordPanelProps): JSX.Element {
+  const { message } = App.useApp()
   const { words, loadWords, addWord, updateWord, deleteWord, reorderWords, isLoaded } =
     useSensitiveStore()
 

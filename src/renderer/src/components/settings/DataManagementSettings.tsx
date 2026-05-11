@@ -1,9 +1,9 @@
-﻿/**
+/**
  * 数据管理设置组件
  */
 
 import { useState } from 'react'
-import { Button, Modal, App, Typography, Alert, Popconfirm, Card } from 'antd'
+import { Button, App, Typography, Alert, Popconfirm, Card } from 'antd'
 import { DownloadOutlined, UploadOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons'
 import JSON5 from 'json5'
 import { useSettingsStore } from '@stores/settingsStore'
@@ -13,7 +13,7 @@ import styles from './DataManagementSettings.module.css'
 const { Text } = Typography
 
 export function DataManagementSettings(): JSX.Element {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const { resetGlobalSettings, globalSettings } = useSettingsStore()
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -63,7 +63,7 @@ export function DataManagementSettings(): JSX.Element {
           throw new Error('Invalid settings file')
         }
 
-        Modal.confirm({
+        modal.confirm({
           title: '确认导入设置',
           content: (
             <div>
@@ -106,7 +106,7 @@ export function DataManagementSettings(): JSX.Element {
   }
 
   const handleClearCache = () => {
-    Modal.confirm({
+    modal.confirm({
       title: '清除缓存',
       content: '确定要清除应用缓存吗？这不会影响您的项目和设置。',
       okText: '确定',

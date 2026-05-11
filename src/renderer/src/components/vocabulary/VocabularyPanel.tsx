@@ -14,13 +14,12 @@ import {
   Form,
   Input,
   Space,
-  message,
+  App,
   Tag,
   Popconfirm,
   Empty,
   Tabs,
   Dropdown,
-  Modal,
   Badge,
   Checkbox,
   Tooltip,
@@ -135,6 +134,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     }: VocabularyPanelProps,
     ref
   ) => {
+    const { message, modal } = App.useApp()
     const {
       types,
       entries,
@@ -312,7 +312,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
 
         setActiveId(null)
       },
-      [sortedEntries, currentType, reorderEntries]
+      [sortedEntries, currentType, reorderEntries, message]
     )
 
     // 当前拖拽的条目
@@ -327,7 +327,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           message.error('操作失败')
         }
       },
-      [updateEntry]
+      [updateEntry, message]
     )
 
     // 撤销删除
@@ -357,7 +357,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           message.error('撤销失败')
         }
       },
-      [deletedEntry, addEntry]
+      [deletedEntry, addEntry, message]
     )
 
     // 删除条目
@@ -401,7 +401,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           }
         })
       },
-      [readOnly, entries, undoMessageKey, deleteEntry, handleUndoDelete]
+      [readOnly, entries, undoMessageKey, deleteEntry, handleUndoDelete, message]
     )
 
     // 打开编辑抽屉
@@ -436,7 +436,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           message.error('打开文件失败')
         }
       },
-      [expandToPath, selectFile, openFile]
+      [expandToPath, selectFile, openFile, message]
     )
 
     // 根据配置生成表格列
@@ -995,7 +995,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
     const handleBatchDelete = (): void => {
       if (readOnly || selectedRowKeys.length === 0) return
 
-      Modal.confirm({
+      modal.confirm({
         title: '确认批量删除',
         content: `确定要删除选中的 ${selectedRowKeys.length} 个词汇吗？此操作不可撤销。`,
         okText: '删除',

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
-import { Button, Tooltip, Modal, App } from 'antd'
+import { Button, Tooltip, App } from 'antd'
 import {
   ArrowLeftOutlined,
   SaveOutlined,
@@ -28,7 +28,7 @@ interface MapFullscreenProps {
 }
 
 export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
 
   const currentMap = useMapStore(state => state.currentMap)
   const viewStack = useMapStore(state => state.viewStack)
@@ -129,7 +129,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
 
   const handleDelete = useCallback(() => {
     if (selectedChunkId) {
-      Modal.confirm({
+      modal.confirm({
         title: '确认删除',
         content: '确定要删除选中的板块吗？相关的连接也会被删除。',
         okText: '删除',
@@ -141,7 +141,7 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
         }
       })
     } else if (selectedElementId) {
-      Modal.confirm({
+      modal.confirm({
         title: '确认删除',
         content: '确定要删除选中的元素吗？',
         okText: '删除',
@@ -163,7 +163,8 @@ export function MapFullscreen({ mapId, onBack }: MapFullscreenProps) {
     deleteChunk,
     deleteElement,
     deleteConnection,
-    message
+    message,
+    modal
   ])
 
   useEffect(() => {

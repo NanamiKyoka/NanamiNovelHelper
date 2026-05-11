@@ -13,7 +13,7 @@ import {
   Typography,
   Card,
   Divider,
-  message,
+  App,
   Tooltip,
   Tag,
   Switch,
@@ -57,6 +57,7 @@ interface WorkflowEditorProps {
 }
 
 function WorkflowEditor({ workflowId, onBack }: WorkflowEditorProps): JSX.Element {
+  const { message } = App.useApp()
   const {
     workflows,
     currentWorkflow,

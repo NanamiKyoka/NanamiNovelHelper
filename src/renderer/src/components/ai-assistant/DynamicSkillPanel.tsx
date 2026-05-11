@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 动态 SKILL 管理面板
  */
 
@@ -10,7 +10,7 @@ import {
   Typography,
   Card,
   Divider,
-  message,
+  App,
   Tag,
   Empty,
   Table,
@@ -92,6 +92,7 @@ interface SkillEditData {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
 function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
+  const { message } = App.useApp()
   const [skills, setSkills] = useState<DynamicSkill[]>([])
   const [whitelist, setWhitelist] = useState<SkillWhitelistEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -123,7 +124,7 @@ function DynamicSkillPanel({ onBack }: DynamicSkillPanelProps): JSX.Element {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [message])
 
   useEffect(() => {
     loadSkills()

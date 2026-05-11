@@ -9,7 +9,7 @@ import {
   Form,
   Space,
   Popconfirm,
-  message,
+  App,
   Empty,
   InputNumber
 } from 'antd'
@@ -87,6 +87,7 @@ function FieldDefinitionEditor({
   onChange,
   readOnly = false
 }: FieldDefinitionEditorProps): JSX.Element {
+  const { message } = App.useApp()
   const [editingField, setEditingField] = useState<FieldDefinition | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm()
@@ -143,7 +144,7 @@ function FieldDefinitionEditor({
 
       setActiveId(null)
     },
-    [sortedFields, onChange]
+    [sortedFields, onChange, message]
   )
 
   // 当前拖拽的字段

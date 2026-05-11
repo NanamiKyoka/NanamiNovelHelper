@@ -86,6 +86,7 @@ interface TreeNodeProps {
   onRenameFinish: () => void
   onRenameCancel: () => void
   getContextMenu: () => MenuProps['items']
+  onMouseDown: () => void
 }
 
 function getGitStatusColor(status: string | undefined): string | undefined {
@@ -127,7 +128,8 @@ const TreeNode = memo(function TreeNode({
   onRenameChange,
   onRenameFinish,
   onRenameCancel,
-  getContextMenu
+  getContextMenu,
+  onMouseDown
 }: TreeNodeProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const isCanceling = useRef(false)
@@ -157,6 +159,7 @@ const TreeNode = memo(function TreeNode({
       <div
         className={`${styles.treeNode} ${isSelected ? styles.selected : ''}`}
         style={{ paddingLeft: depth * 16 + 8 }}
+        onMouseDown={onMouseDown}
         onClick={onSelect}
         onDoubleClick={onDoubleClick}
         onContextMenu={onContextMenu}
@@ -333,6 +336,7 @@ function FileTree(): JSX.Element {
   const toggleExpand = useFileTreeStore(state => state.toggleExpand)
   const select = useFileTreeStore(state => state.select)
   const clearSelection = useFileTreeStore(state => state.clearSelection)
+  const setFocusedKey = useFileTreeStore(state => state.setFocusedKey)
   const startRename = useFileTreeStore(state => state.startRename)
   const finishRename = useFileTreeStore(state => state.finishRename)
   const cancelEdit = useFileTreeStore(state => state.cancelEdit)
@@ -350,6 +354,10 @@ function FileTree(): JSX.Element {
 
   const treeRef = useRef<HTMLDivElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const typeNavigationRef = useRef<{ pattern: string; timer: NodeJS.Timeout | null }>({
+    pattern: '',
+    timer: null
+  })
 
   // 防抖搜索
   const debouncedSearch = useCallback(
@@ -441,51 +449,65 @@ function FileTree(): JSX.Element {
     [paste, clipboard, message]
   )
 
-  // 键盘导航
+  // 打开文件
+  const handleOpenFile = useCallback(
+    async (node: (typeof flattenedNodes)[0]['node']) => {
+      try {
+        await openFile(node.path, node.name)
+      } catch (error) {
+        console.error('Failed to open file:', error)
+        message.error(`打开文件失败: ${node.name}`)
+      }
+    },
+    [openFile, message]
+  )
+
+  // 键盘导航 - 绑定在文件树容器上，只有获得焦点时才响应
   useEffect(() => {
+    const el = treeRef.current
+    if (!el) return
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 如果正在编辑，不处理快捷键
-      if (editingKey || newItemParent !== null) return
+      if (editingKey || newItemParent !== undefined) return
 
-      // 检查当前焦点是否在输入元素或编辑器中
-      const activeElement = document.activeElement
-      const isInputFocused =
-        activeElement instanceof HTMLElement &&
-        (activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          activeElement.isContentEditable ||
-          activeElement.closest('.ProseMirror') ||
-          activeElement.closest('[contenteditable="true"]'))
-
-      // 如果焦点在输入元素或编辑器中，不处理任何快捷键（让编辑器/浏览器原生处理）
-      if (isInputFocused) {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
       }
 
       const selectedArray = Array.from(selectedKeys)
+      const ctrlOrCmd = e.ctrlKey || e.metaKey
 
-      // 方向键导航
-      if (e.key === 'ArrowUp') {
+      // ---- 方向键导航 ----
+      if (e.key === 'ArrowUp' && !ctrlOrCmd) {
         e.preventDefault()
+        e.stopPropagation()
         const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
         if (currentIndex > 0) {
-          const prevNode = flattenedNodes[currentIndex - 1]
-          select(prevNode.id)
+          select(flattenedNodes[currentIndex - 1].id)
+        } else if (currentIndex === -1 && flattenedNodes.length > 0) {
+          select(flattenedNodes[0].id)
         }
+        return
       }
 
-      if (e.key === 'ArrowDown') {
+      if (e.key === 'ArrowDown' && !ctrlOrCmd) {
         e.preventDefault()
+        e.stopPropagation()
         const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
         if (currentIndex < flattenedNodes.length - 1) {
-          const nextNode = flattenedNodes[currentIndex + 1]
-          select(nextNode.id)
+          select(flattenedNodes[currentIndex + 1].id)
+        } else if (currentIndex === -1 && flattenedNodes.length > 0) {
+          select(flattenedNodes[0].id)
         }
+        return
       }
 
       // ArrowLeft: 折叠或跳转到父节点
-      if (e.key === 'ArrowLeft' && focusedKey) {
+      if (e.key === 'ArrowLeft' && !ctrlOrCmd) {
         e.preventDefault()
+        e.stopPropagation()
+        if (!focusedKey) return
         if (expandedKeys.has(focusedKey)) {
           toggleExpand(focusedKey)
         } else {
@@ -494,11 +516,14 @@ function FileTree(): JSX.Element {
             select(parent.key)
           }
         }
+        return
       }
 
       // ArrowRight: 展开或跳转到第一个子节点
-      if (e.key === 'ArrowRight' && focusedKey) {
+      if (e.key === 'ArrowRight' && !ctrlOrCmd) {
         e.preventDefault()
+        e.stopPropagation()
+        if (!focusedKey) return
         const node = findNode(focusedKey)
         if (node?.isDirectory) {
           if (!expandedKeys.has(focusedKey)) {
@@ -507,54 +532,165 @@ function FileTree(): JSX.Element {
             select(node.children[0].key)
           }
         }
+        return
       }
 
-      // Home/End
-      if (e.key === 'Home' && flattenedNodes.length > 0) {
+      // Home
+      if (e.key === 'Home') {
         e.preventDefault()
-        select(flattenedNodes[0].id)
+        e.stopPropagation()
+        if (flattenedNodes.length > 0) {
+          select(flattenedNodes[0].id)
+        }
+        return
       }
 
-      if (e.key === 'End' && flattenedNodes.length > 0) {
+      // End
+      if (e.key === 'End') {
         e.preventDefault()
-        select(flattenedNodes[flattenedNodes.length - 1].id)
+        e.stopPropagation()
+        if (flattenedNodes.length > 0) {
+          select(flattenedNodes[flattenedNodes.length - 1].id)
+        }
+        return
       }
 
-      // F2 - 重命名
+      // PageUp
+      if (e.key === 'PageUp') {
+        e.preventDefault()
+        e.stopPropagation()
+        const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
+        if (currentIndex > 0) {
+          const pageSize = Math.max(1, Math.floor(el.clientHeight / 22))
+          const targetIndex = Math.max(0, currentIndex - pageSize)
+          select(flattenedNodes[targetIndex].id)
+          virtualizer.scrollToIndex(targetIndex, { align: 'start' })
+        }
+        return
+      }
+
+      // PageDown
+      if (e.key === 'PageDown') {
+        e.preventDefault()
+        e.stopPropagation()
+        const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
+        if (currentIndex < flattenedNodes.length - 1) {
+          const pageSize = Math.max(1, Math.floor(el.clientHeight / 22))
+          const targetIndex = Math.min(flattenedNodes.length - 1, currentIndex + pageSize)
+          select(flattenedNodes[targetIndex].id)
+          virtualizer.scrollToIndex(targetIndex, { align: 'start' })
+        }
+        return
+      }
+
+      // ---- F2 / Enter - 重命名 ----
       if (e.key === 'F2' && selectedArray.length === 1) {
         e.preventDefault()
+        e.stopPropagation()
         startRename(selectedArray[0])
+        return
       }
 
-      // Delete - 删除
+      // ---- Delete - 删除 ----
       if (e.key === 'Delete' && selectedArray.length > 0) {
         e.preventDefault()
+        e.stopPropagation()
         confirmDelete(selectedArray, !e.shiftKey)
+        return
       }
 
-      // Ctrl+C - 复制
-      if (e.key === 'c' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
+      // ---- Ctrl+C - 复制 ----
+      if (e.key === 'c' && ctrlOrCmd && selectedArray.length > 0) {
         e.preventDefault()
+        e.stopPropagation()
         copyItems(selectedArray)
         message.success(`已复制 ${selectedArray.length} 个项目`)
+        return
       }
 
-      // Ctrl+X - 剪切
-      if (e.key === 'x' && (e.ctrlKey || e.metaKey) && selectedArray.length > 0) {
+      // ---- Ctrl+X - 剪切 ----
+      if (e.key === 'x' && ctrlOrCmd && selectedArray.length > 0) {
         e.preventDefault()
+        e.stopPropagation()
         cutItems(selectedArray)
         message.success(`已剪切 ${selectedArray.length} 个项目`)
+        return
       }
 
-      // Ctrl+V - 粘贴
-      if (e.key === 'v' && (e.ctrlKey || e.metaKey) && clipboard) {
+      // ---- Ctrl+V - 粘贴 ----
+      if (e.key === 'v' && ctrlOrCmd && clipboard) {
         e.preventDefault()
-        handlePaste(selectedArray[0])
+        e.stopPropagation()
+        const targetKey = selectedArray[0]
+        const targetNode = targetKey ? findNode(targetKey) : null
+        if (targetNode?.isDirectory) {
+          handlePaste(targetKey)
+        } else if (targetNode) {
+          const parentKey = useFileTreeStore.getState().getParentNode(targetKey)?.key ?? null
+          handlePaste(parentKey)
+        } else {
+          handlePaste(null)
+        }
+        return
       }
 
-      // Ctrl+N - 新建文件
-      if (e.key === 'n' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      // ---- Ctrl+A - 全选 ----
+      if (e.key === 'a' && ctrlOrCmd) {
         e.preventDefault()
+        e.stopPropagation()
+        useFileTreeStore.getState().selectAll()
+        return
+      }
+
+      // ---- Escape - 取消选择 / 取消剪切 ----
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        if (clipboard?.operation === 'cut') {
+          useFileTreeStore.setState({ clipboard: null })
+          message.info('已取消剪切')
+        } else if (selectedKeys.size > 0) {
+          clearSelection()
+        }
+        return
+      }
+
+      // ---- Space - 切换展开/折叠（VSCode 行为） ----
+      if (e.key === ' ' && !ctrlOrCmd) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (focusedKey) {
+          const node = findNode(focusedKey)
+          if (node?.isDirectory) {
+            toggleExpand(focusedKey)
+          }
+        }
+        return
+      }
+
+      // ---- Enter - 打开文件 / 切换目录展开 ----
+      if (e.key === 'Enter' && !ctrlOrCmd) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (focusedKey) {
+          const node = findNode(focusedKey)
+          if (node?.isDirectory) {
+            toggleExpand(focusedKey)
+          } else if (node) {
+            handleOpenFile(node).then(() => {
+              requestAnimationFrame(() => {
+                treeRef.current?.focus({ preventScroll: true })
+              })
+            })
+          }
+        }
+        return
+      }
+
+      // ---- Ctrl+N - 新建文件 ----
+      if (e.key === 'n' && ctrlOrCmd && !e.shiftKey) {
+        e.preventDefault()
+        e.stopPropagation()
         const targetKey = selectedArray[0]
         const targetNode = targetKey ? findNode(targetKey) : null
         startNewItem(
@@ -565,11 +701,13 @@ function FileTree(): JSX.Element {
               : null,
           'file'
         )
+        return
       }
 
-      // Ctrl+Shift+N - 新建文件夹
-      if (e.key === 'N' && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+      // ---- Ctrl+Shift+N - 新建文件夹 ----
+      if (e.key === 'N' && ctrlOrCmd && e.shiftKey) {
         e.preventDefault()
+        e.stopPropagation()
         const targetKey = selectedArray[0]
         const targetNode = targetKey ? findNode(targetKey) : null
         startNewItem(
@@ -580,11 +718,41 @@ function FileTree(): JSX.Element {
               : null,
           'folder'
         )
+        return
+      }
+
+      // ---- Type Navigation: 按首字母快速定位 ----
+      if (!ctrlOrCmd && !e.altKey && e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key)) {
+        e.preventDefault()
+        e.stopPropagation()
+        const nav = typeNavigationRef.current
+        nav.pattern += e.key.toLowerCase()
+
+        if (nav.timer) {
+          clearTimeout(nav.timer)
+        }
+        nav.timer = setTimeout(() => {
+          nav.pattern = ''
+        }, 800)
+
+        const currentIndex = flattenedNodes.findIndex(n => n.id === focusedKey)
+        const startIdx = currentIndex >= 0 ? currentIndex : 0
+
+        for (let i = 1; i <= flattenedNodes.length; i++) {
+          const idx = (startIdx + i) % flattenedNodes.length
+          const name = flattenedNodes[idx].node.name.toLowerCase()
+          if (name.startsWith(nav.pattern)) {
+            select(flattenedNodes[idx].id)
+            virtualizer.scrollToIndex(idx, { align: 'auto' })
+            break
+          }
+        }
+        return
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    el.addEventListener('keydown', handleKeyDown)
+    return () => el.removeEventListener('keydown', handleKeyDown)
   }, [
     selectedKeys,
     focusedKey,
@@ -600,9 +768,12 @@ function FileTree(): JSX.Element {
     handlePaste,
     message,
     select,
+    clearSelection,
     startNewItem,
     startRename,
-    toggleExpand
+    toggleExpand,
+    handleOpenFile,
+    virtualizer
   ])
 
   // 导出 .novel 文件为 TXT
@@ -768,9 +939,8 @@ function FileTree(): JSX.Element {
     ]
   )
 
-  // 空白处上下文菜单
-  const emptyAreaContextMenu: MenuProps['items'] = useMemo(
-    () => [
+  const emptyAreaContextMenu: MenuProps['items'] = useMemo(() => {
+    const items: MenuProps['items'] = [
       {
         key: 'newFile',
         icon: <FileAddOutlined />,
@@ -782,30 +952,29 @@ function FileTree(): JSX.Element {
         icon: <FolderAddOutlined />,
         label: '新建文件夹',
         onClick: () => startNewItem(null, 'folder')
-      },
-      { type: 'divider' },
-      {
-        key: 'refresh',
-        icon: <ReloadOutlined />,
-        label: '刷新',
-        onClick: refreshTree
       }
-    ],
-    [startNewItem, refreshTree]
-  )
+    ]
 
-  // 打开文件
-  const handleOpenFile = useCallback(
-    async (node: (typeof flattenedNodes)[0]['node']) => {
-      try {
-        await openFile(node.path, node.name)
-      } catch (error) {
-        console.error('Failed to open file:', error)
-        message.error(`打开文件失败: ${node.name}`)
-      }
-    },
-    [openFile, message]
-  )
+    if (clipboard && clipboard.nodes.length > 0) {
+      items.push({ type: 'divider' })
+      items.push({
+        key: 'paste',
+        icon: <span>📥</span>,
+        label: `粘贴 (${clipboard.nodes.length} 个项目)`,
+        onClick: () => handlePaste(null)
+      })
+    }
+
+    items.push({ type: 'divider' })
+    items.push({
+      key: 'refresh',
+      icon: <ReloadOutlined />,
+      label: '刷新',
+      onClick: refreshTree
+    })
+
+    return items
+  }, [startNewItem, refreshTree, clipboard, handlePaste])
 
   // 双击处理
   const handleDoubleClick = useCallback(
@@ -947,7 +1116,20 @@ function FileTree(): JSX.Element {
 
       {/* 文件树内容（虚拟滚动） */}
       <Dropdown menu={{ items: emptyAreaContextMenu }} trigger={['contextMenu']}>
-        <div ref={treeRef} className={styles.content} onClick={() => clearSelection()}>
+        <div
+          ref={treeRef}
+          className={styles.content}
+          tabIndex={0}
+          onClick={() => {
+            clearSelection()
+            treeRef.current?.focus()
+          }}
+          onFocus={() => {
+            if (!focusedKey && flattenedNodes.length > 0) {
+              setFocusedKey(flattenedNodes[0].id)
+            }
+          }}
+        >
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20 }}>
               <Spin />
@@ -1034,7 +1216,11 @@ function FileTree(): JSX.Element {
                         e.stopPropagation()
                         select(node.key, e.ctrlKey || e.metaKey ? 'toggle' : 'single')
                         if (!node.isDirectory) {
-                          handleOpenFile(node)
+                          handleOpenFile(node).then(() => {
+                            requestAnimationFrame(() => {
+                              treeRef.current?.focus({ preventScroll: true })
+                            })
+                          })
                         }
                       }}
                       onDoubleClick={() => handleDoubleClick(node)}
@@ -1042,6 +1228,11 @@ function FileTree(): JSX.Element {
                         e.stopPropagation()
                         if (!selectedKeys.has(node.key)) {
                           select(node.key)
+                        }
+                      }}
+                      onMouseDown={() => {
+                        if (!treeRef.current?.contains(document.activeElement)) {
+                          treeRef.current?.focus({ preventScroll: true })
                         }
                       }}
                       onRenameChange={name => useFileTreeStore.setState({ editingName: name })}
