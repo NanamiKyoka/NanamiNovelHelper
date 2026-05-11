@@ -9,6 +9,11 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 use tokio::process::Command;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 pub struct DynamicSkillService {
     running_processes: Mutex<HashMap<String, tokio::process::Child>>,
 }
@@ -246,16 +251,17 @@ impl DynamicSkillService {
         });
 
         let project_path_for_env = project_path.clone();
-        let exec_id_for_emit = execution_id.clone();
-        let app_for_emit = app.clone();
 
-        let mut child = Command::new(&cmd)
-            .args(&args)
+        let mut cmd = Command::new(&cmd);
+        cmd.args(&args)
             .current_dir(script_path.parent().unwrap_or(&scripts_dir))
             .env("NANAMI_PROJECT_PATH", &project_path_for_env)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
+            .stderr(Stdio::piped());
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        let mut child = cmd
             .spawn()
             .map_err(|e| AppError::OperationFailed(format!("启动脚本失败: {}", e)))?;
 
@@ -278,7 +284,7 @@ impl DynamicSkillService {
                 let mut procs = app_handle.state::<DynamicSkillService>().inner().running_processes.lock().unwrap();
                 procs.remove(&exec_id)
             };
-            if let Some(mut child) = child {
+            if let Some(child) = child {
                 let output = child.wait_with_output().await;
 
                 match output {
@@ -358,9 +364,11 @@ impl DynamicSkillService {
     }
 
     pub fn check_python(&self) -> serde_json::Value {
-        let python_result = std::process::Command::new("python")
-            .arg("--version")
-            .output();
+        let mut cmd = std::process::Command::new("python");
+        cmd.arg("--version");
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        let python_result = cmd.output();
 
         match python_result {
             Ok(output) => {
@@ -372,9 +380,11 @@ impl DynamicSkillService {
                 })
             }
             Err(_) => {
-                let python3_result = std::process::Command::new("python3")
-                    .arg("--version")
-                    .output();
+                let mut cmd = std::process::Command::new("python3");
+                cmd.arg("--version");
+                #[cfg(target_os = "windows")]
+                cmd.creation_flags(CREATE_NO_WINDOW);
+                let python3_result = cmd.output();
                 match python3_result {
                     Ok(output) => {
                         let version = String::from_utf8_lossy(&output.stdout).trim().to_string();

@@ -1,8 +1,11 @@
 use crate::error::{AppError, AppResult};
-use crate::services::project_state;
 use std::path::PathBuf;
-use std::process::Command;
 use std::sync::Mutex;
+
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 pub struct GitService {
     mode: Mutex<String>,
@@ -15,14 +18,36 @@ impl GitService {
         }
     }
 
-    fn get_project_path() -> AppResult<String> {
-        project_state::get_project_path().ok_or(AppError::ProjectNotOpen)
+    async fn exec_git_async(cwd: &str, args: &[&str]) -> AppResult<String> {
+        let mut cmd = tokio::process::Command::new("git");
+        cmd.args(args)
+            .current_dir(cwd);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        let output = cmd
+            .output()
+            .await
+            .map_err(|e| AppError::OperationFailed(format!("执行 git 命令失败: {}", e)))?;
+
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            Err(AppError::OperationFailed(format!(
+                "git {} 失败: {}",
+                args.first().unwrap_or(&""),
+                stderr.trim()
+            )))
+        }
     }
 
     fn exec_git(cwd: &str, args: &[&str]) -> AppResult<String> {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(cwd)
+        let mut cmd = std::process::Command::new("git");
+        cmd.args(args)
+            .current_dir(cwd);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        let output = cmd
             .output()
             .map_err(|e| AppError::OperationFailed(format!("执行 git 命令失败: {}", e)))?;
 
@@ -39,43 +64,49 @@ impl GitService {
     }
 
     pub fn is_system_git_available() -> bool {
-        Command::new("git")
-            .arg("--version")
-            .output()
+        let mut cmd = std::process::Command::new("git");
+        cmd.arg("--version");
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        cmd.output()
             .map(|o| o.status.success())
             .unwrap_or(false)
     }
 
-    pub fn is_repo(&self, repo_path: &str) -> AppResult<bool> {
-        match Self::exec_git(repo_path, &["rev-parse", "--git-dir"]) {
+    pub async fn is_repo_async(&self, repo_path: &str) -> AppResult<bool> {
+        match Self::exec_git_async(repo_path, &["rev-parse", "--git-dir"]).await {
             Ok(_) => Ok(true),
             Err(_) => Ok(false),
         }
     }
 
-    pub fn init(&self, path: String, default_branch: Option<String>) -> AppResult<serde_json::Value> {
+    pub async fn init_async(&self, path: String, default_branch: Option<String>) -> AppResult<serde_json::Value> {
         let mut args = vec!["init"];
-        let mut branch_arg = String::new();
         if let Some(ref branch) = default_branch {
-            branch_arg = format!("-b {}", branch);
             args.push("-b");
             args.push(branch);
         }
-        Self::exec_git(&path, &args)?;
+        Self::exec_git_async(&path, &args).await?;
         Ok(serde_json::json!({ "success": true }))
     }
 
-    pub fn get_status(&self, repo_path: &str) -> AppResult<serde_json::Value> {
-        let branch = Self::exec_git(repo_path, &["branch", "--show-current"])
+    pub async fn get_status_async(&self, repo_path: &str) -> AppResult<serde_json::Value> {
+        let branch = Self::exec_git_async(repo_path, &["branch", "--show-current"])
+            .await
             .map(|s| s.trim().to_string())
             .ok();
 
-        let status_output = Self::exec_git(repo_path, &["status", "--porcelain=v1", "-z", "-uall"])?;
+        let status_output = Self::exec_git_async(repo_path, &["status", "--porcelain=v1", "-z", "-uall"]).await?;
         let mut changes: Vec<serde_json::Value> = Vec::new();
         let mut staged_changes: Vec<serde_json::Value> = Vec::new();
 
         let entries: Vec<&str> = status_output.split('\0').filter(|s| !s.is_empty()).collect();
         let mut i = 0;
+
+        let mut unstaged_paths: Vec<String> = Vec::new();
+        let mut staged_paths: Vec<String> = Vec::new();
+
+        let mut raw_entries: Vec<(String, Option<String>, &str, &str, bool)> = Vec::new();
 
         while i < entries.len() {
             let entry = entries[i];
@@ -106,22 +137,8 @@ impl GitService {
                         file_path = entry[3..].to_string();
                     }
                     let staged = x != ' ' && x != '?' && x != '!';
-                    let (additions, deletions) =
-                        Self::get_numstat(repo_path, &file_path, staged);
-                    let change = serde_json::json!({
-                        "path": file_path,
-                        "oldPath": old_path,
-                        "status": st,
-                        "statusShort": sh,
-                        "staged": staged,
-                        "additions": additions,
-                        "deletions": deletions
-                    });
-                    if staged {
-                        staged_changes.push(change);
-                    } else {
-                        changes.push(change);
-                    }
+                    raw_entries.push((file_path.clone(), old_path, st, sh, staged));
+                    if staged { staged_paths.push(file_path); } else { unstaged_paths.push(file_path); }
                     i += 1;
                     continue;
                 }
@@ -141,10 +158,23 @@ impl GitService {
             };
 
             file_path = entry[3..].to_string();
-
             let staged = x != ' ' && x != '?' && x != '!';
+            raw_entries.push((file_path.clone(), old_path, status, short, staged));
+            if staged { staged_paths.push(file_path); } else { unstaged_paths.push(file_path); }
 
-            let (additions, deletions) = Self::get_numstat(repo_path, &file_path, staged);
+            i += 1;
+        }
+
+        let numstat_unstaged = Self::get_batch_numstat(repo_path, &unstaged_paths, false).await;
+        let numstat_staged = Self::get_batch_numstat(repo_path, &staged_paths, true).await;
+
+        for (file_path, old_path, status, short, staged) in raw_entries {
+            let stats = if staged {
+                numstat_staged.get(&file_path)
+            } else {
+                numstat_unstaged.get(&file_path)
+            };
+            let (additions, deletions) = stats.copied().unwrap_or((0, 0));
 
             let change = serde_json::json!({
                 "path": file_path,
@@ -161,14 +191,12 @@ impl GitService {
             } else {
                 changes.push(change);
             }
-
-            i += 1;
         }
 
-        let (ahead, behind) = match Self::exec_git(
+        let (ahead, behind) = match Self::exec_git_async(
             repo_path,
             &["rev-list", "--left-right", "@{upstream}...HEAD", "--count"],
-        ) {
+        ).await {
             Ok(output) => {
                 let re = regex::Regex::new(r"^(\d+)\s+(\d+)$").unwrap();
                 if let Some(caps) = re.captures(output.trim()) {
@@ -188,7 +216,8 @@ impl GitService {
         let merging = git_dir.join("MERGE_HEAD").exists();
 
         let conflicts = if merging {
-            Self::exec_git(repo_path, &["diff", "--name-only", "--diff-filter=U"])
+            Self::exec_git_async(repo_path, &["diff", "--name-only", "--diff-filter=U"])
+                .await
                 .map(|s| s.split('\n').filter(|l| !l.is_empty()).map(|l| l.to_string()).collect())
                 .unwrap_or_default()
         } else {
@@ -227,37 +256,32 @@ impl GitService {
             "--date-order",
         ];
 
-        let mut max_arg = String::new();
-        if let Some(count) = max_count {
-            max_arg = format!("-n{}", count);
-            args.push(&max_arg);
+        let max_arg = max_count.map(|count| format!("-n{}", count));
+        if let Some(ref arg) = max_arg {
+            args.push(arg.as_str());
         }
 
-        let mut skip_arg = String::new();
-        if let Some(s) = skip {
-            skip_arg = format!("--skip={}", s);
-            args.push(&skip_arg);
+        let skip_arg = skip.map(|s| format!("--skip={}", s));
+        if let Some(ref arg) = skip_arg {
+            args.push(arg.as_str());
         }
 
-        let mut path_arg = String::new();
-        if let Some(ref p) = path {
-            path_arg = p.clone();
+        let path_arg = path;
+        if let Some(ref p) = path_arg {
             args.push("--");
-            args.push(&path_arg);
+            args.push(p.as_str());
         }
 
-        let mut search_arg = String::new();
-        if let Some(ref s) = search {
-            search_arg = s.clone();
+        let search_arg = search;
+        if let Some(ref arg) = search_arg {
             args.push("--grep");
-            args.push(&search_arg);
+            args.push(arg.as_str());
         }
 
-        let mut author_arg = String::new();
-        if let Some(ref a) = author {
-            author_arg = a.clone();
+        let author_arg = author;
+        if let Some(ref arg) = author_arg {
             args.push("--author");
-            args.push(&author_arg);
+            args.push(arg.as_str());
         }
 
         let output = match Self::exec_git(repo_path, &args) {
@@ -277,7 +301,6 @@ impl GitService {
         while i < lines.len() {
             let hash = lines.get(i).map(|s| s.trim()).unwrap_or("");
             if hash.is_empty() {
-                i += 1;
                 break;
             }
             i += 1;
@@ -345,11 +368,20 @@ impl GitService {
     }
 
     pub fn unstage(&self, repo_path: &str, filepaths: Vec<String>) -> AppResult<serde_json::Value> {
-        let mut args = vec!["restore", "--staged", "--"];
-        for fp in &filepaths {
-            args.push(fp);
+        let has_head = Self::exec_git(repo_path, &["rev-parse", "HEAD"]).is_ok();
+        if has_head {
+            let mut args = vec!["restore", "--staged", "--"];
+            for fp in &filepaths {
+                args.push(fp);
+            }
+            Self::exec_git(repo_path, &args)?;
+        } else {
+            let mut args = vec!["rm", "--cached", "--"];
+            for fp in &filepaths {
+                args.push(fp);
+            }
+            Self::exec_git(repo_path, &args)?;
         }
-        Self::exec_git(repo_path, &args)?;
         Ok(serde_json::json!({ "success": true }))
     }
 
@@ -365,11 +397,10 @@ impl GitService {
         if all.unwrap_or(false) {
             args.push("-a");
         }
-        let mut author_arg = String::new();
-        if let (Some(name), Some(email)) = (&author_name, &author_email) {
-            author_arg = format!("{} <{}>", name, email);
+        let author_arg = author_name.as_ref().zip(author_email.as_ref()).map(|(name, email)| format!("{} <{}>", name, email));
+        if let Some(ref arg) = author_arg {
             args.push("--author");
-            args.push(&author_arg);
+            args.push(arg.as_str());
         }
         Self::exec_git(repo_path, &args)?;
 
@@ -402,11 +433,9 @@ impl GitService {
         source: Option<String>,
     ) -> AppResult<serde_json::Value> {
         let mut args = vec!["restore"];
-        let mut source_arg = String::new();
         if let Some(ref s) = source {
-            source_arg = s.clone();
             args.push("-s");
-            args.push(&source_arg);
+            args.push(s.as_str());
         }
         args.push("--");
         for fp in &filepaths {
@@ -416,28 +445,42 @@ impl GitService {
         Ok(serde_json::json!({ "success": true }))
     }
 
-    fn get_numstat(repo_path: &str, file_path: &str, staged: bool) -> (u32, u32) {
-        let numstat_args = if staged {
-            vec!["diff", "--numstat", "--staged", "--", file_path]
+    async fn get_batch_numstat(
+        repo_path: &str,
+        paths: &[String],
+        staged: bool,
+    ) -> std::collections::HashMap<String, (u32, u32)> {
+        let mut result = std::collections::HashMap::new();
+        if paths.is_empty() {
+            return result;
+        }
+
+        let mut args = if staged {
+            vec!["diff", "--numstat", "--staged", "--"]
         } else {
-            vec!["diff", "--numstat", "--", file_path]
+            vec!["diff", "--numstat", "--"]
         };
-        match Self::exec_git(repo_path, &numstat_args) {
+        let path_refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
+        args.extend(path_refs);
+
+        match Self::exec_git_async(repo_path, &args).await {
             Ok(numstat) => {
-                let re = regex::Regex::new(r"^(\d+|-)\t(\d+|-)").unwrap();
-                if let Some(caps) = re.captures(numstat.trim()) {
-                    let add = caps.get(1).map(|m| m.as_str()).unwrap_or("0");
-                    let del = caps.get(2).map(|m| m.as_str()).unwrap_or("0");
-                    (
-                        if add == "-" { 0 } else { add.parse::<u32>().unwrap_or(0) },
-                        if del == "-" { 0 } else { del.parse::<u32>().unwrap_or(0) },
-                    )
-                } else {
-                    (0, 0)
+                let re = regex::Regex::new(r"^(\d+|-)\t(\d+|-)\t(.+)$").unwrap();
+                for line in numstat.lines() {
+                    if let Some(caps) = re.captures(line) {
+                        let add = caps.get(1).map(|m| m.as_str()).unwrap_or("0");
+                        let del = caps.get(2).map(|m| m.as_str()).unwrap_or("0");
+                        let path = caps.get(3).map(|m| m.as_str().to_string()).unwrap_or_default();
+                        let additions = if add == "-" { 0 } else { add.parse::<u32>().unwrap_or(0) };
+                        let deletions = if del == "-" { 0 } else { del.parse::<u32>().unwrap_or(0) };
+                        result.insert(path, (additions, deletions));
+                    }
                 }
             }
-            Err(_) => (0, 0),
+            Err(_) => {}
         }
+
+        result
     }
 
     fn detect_file_status(repo_path: &str, filepath: &str, _staged: bool) -> (String, bool) {
@@ -740,10 +783,8 @@ impl GitService {
         start_point: Option<String>,
     ) -> AppResult<serde_json::Value> {
         let mut args = vec!["branch", name];
-        let mut sp_arg = String::new();
         if let Some(ref sp) = start_point {
-            sp_arg = sp.clone();
-            args.push(&sp_arg);
+            args.push(sp.as_str());
         }
         Self::exec_git(repo_path, &args)?;
         Ok(serde_json::json!({ "success": true }))
@@ -807,11 +848,9 @@ impl GitService {
         if allow_unrelated_histories.unwrap_or(false) {
             args.push("--allow-unrelated-histories");
         }
-        let mut msg_arg = String::new();
         if let Some(ref m) = message {
-            msg_arg = m.clone();
             args.push("-m");
-            args.push(&msg_arg);
+            args.push(m.as_str());
         }
         Self::exec_git(repo_path, &args)?;
         Ok(serde_json::json!({ "success": true }))
@@ -822,13 +861,42 @@ impl GitService {
         Ok(serde_json::json!({ "success": true, "data": value.trim() }))
     }
 
+    pub fn check_author_identity(&self, repo_path: &str) -> AppResult<serde_json::Value> {
+        let user_name = Self::exec_git(repo_path, &["config", "user.name"])
+            .map(|s| s.trim().to_string())
+            .ok()
+            .filter(|s| !s.is_empty());
+        let user_email = Self::exec_git(repo_path, &["config", "user.email"])
+            .map(|s| s.trim().to_string())
+            .ok()
+            .filter(|s| !s.is_empty());
+        let has_identity = user_name.is_some() && user_email.is_some();
+        Ok(serde_json::json!({
+            "success": true,
+            "data": {
+                "hasIdentity": has_identity,
+                "userName": user_name,
+                "userEmail": user_email
+            }
+        }))
+    }
+
     pub fn set_config(
         &self,
         repo_path: &str,
         key: &str,
         value: &str,
+        scope: Option<String>,
     ) -> AppResult<serde_json::Value> {
-        Self::exec_git(repo_path, &["config", key, value])?;
+        let mut args = vec!["config"];
+        match scope.as_deref() {
+            Some("global") => args.push("--global"),
+            Some("local") => args.push("--local"),
+            _ => {}
+        }
+        args.push(key);
+        args.push(value);
+        Self::exec_git(repo_path, &args)?;
         Ok(serde_json::json!({ "success": true }))
     }
 

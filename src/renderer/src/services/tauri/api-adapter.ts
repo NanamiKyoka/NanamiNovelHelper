@@ -156,6 +156,9 @@ export const tauriApi = {
       getSidebarWidth: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).sidebarWidth as number),
       setSidebarWidth: (sidebarWidth: number) =>
         invoke('settings_update_global', { settings: { sidebarWidth } }),
+      getRightSidebarWidth: () => invoke('settings_get_global').then((s: Record<string, unknown>) => (s as Record<string, unknown>).rightSidebarWidth as number),
+      setRightSidebarWidth: (rightSidebarWidth: number) =>
+        invoke('settings_update_global', { settings: { rightSidebarWidth } }),
       getLayout: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown> | undefined) ?? {}),
       updateLayout: (layout: Record<string, unknown>) =>
         invoke('settings_update_global', { settings: { layout } })
@@ -486,7 +489,8 @@ export const tauriApi = {
     rename: (oldPath: string, newPath: string) => invoke('file_rename', { oldPath, newPath }),
     copy: (source: string, destination: string, overwrite?: boolean) => invoke('file_copy', { source, destination, overwrite: overwrite ?? false }),
     list: (path: string, options?: Record<string, unknown>) => invoke('file_list', { path, options }),
-    getTree: (includeHidden?: boolean) => invoke('file_get_tree', { includeHidden: includeHidden ?? false }),
+    getTree: (includeHidden?: boolean, hiddenItems?: string[]) =>
+      invoke('file_get_tree', { includeHidden: includeHidden ?? false, hiddenItems: hiddenItems ?? [] }),
     getInfo: (path: string) => invoke('file_get_info', { path }),
     showSaveDialog: (options?: { title?: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }) =>
       save({ title: options?.title, defaultPath: options?.defaultPath, filters: options?.filters }),
@@ -611,7 +615,8 @@ export const tauriApi = {
     merge: (repoPath: string, options: Record<string, unknown>) =>
       invoke('git_merge', { repoPath, branch: options.branch, allowUnrelatedHistories: options.allowUnrelatedHistories, message: options.message }),
     configGet: (repoPath: string, key: string) => invoke('git_get_config', { repoPath, key }),
-    configSet: (repoPath: string, key: string, value: string) => invoke('git_set_config', { repoPath, key, value }),
+    checkAuthorIdentity: (repoPath: string) => invoke('git_check_author_identity', { repoPath }),
+    configSet: (repoPath: string, key: string, value: string, scope?: string) => invoke('git_set_config', { repoPath, key, value, scope }),
     setMode: (mode: string) => invoke('git_set_mode', { mode }),
     getMode: () => invoke('git_get_mode'),
     getCommitFiles: (repoPath: string, commitHash: string) =>

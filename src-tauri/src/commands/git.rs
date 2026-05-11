@@ -8,28 +8,28 @@ pub fn git_is_available() -> AppResult<bool> {
 }
 
 #[tauri::command]
-pub fn git_is_repo(
+pub async fn git_is_repo(
     repo_path: String,
     git_service: State<'_, GitService>,
 ) -> AppResult<bool> {
-    git_service.is_repo(&repo_path)
+    git_service.is_repo_async(&repo_path).await
 }
 
 #[tauri::command]
-pub fn git_init(
+pub async fn git_init(
     path: String,
     default_branch: Option<String>,
     git_service: State<'_, GitService>,
 ) -> AppResult<serde_json::Value> {
-    git_service.init(path, default_branch)
+    git_service.init_async(path, default_branch).await
 }
 
 #[tauri::command]
-pub fn git_get_status(
+pub async fn git_get_status(
     repo_path: String,
     git_service: State<'_, GitService>,
 ) -> AppResult<serde_json::Value> {
-    git_service.get_status(&repo_path)
+    git_service.get_status_async(&repo_path).await
 }
 
 #[tauri::command]
@@ -195,13 +195,22 @@ pub fn git_get_config(
 }
 
 #[tauri::command]
+pub fn git_check_author_identity(
+    repo_path: String,
+    git_service: State<'_, GitService>,
+) -> AppResult<serde_json::Value> {
+    git_service.check_author_identity(&repo_path)
+}
+
+#[tauri::command]
 pub fn git_set_config(
     repo_path: String,
     key: String,
     value: String,
+    scope: Option<String>,
     git_service: State<'_, GitService>,
 ) -> AppResult<serde_json::Value> {
-    git_service.set_config(&repo_path, &key, &value)
+    git_service.set_config(&repo_path, &key, &value, scope)
 }
 
 #[tauri::command]

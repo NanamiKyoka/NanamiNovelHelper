@@ -1,8 +1,4 @@
-/**
- * 终端独立窗口入口
- */
-
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
 import { ConfigProvider, theme, App as AntApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
@@ -14,6 +10,16 @@ import { initTauriApi } from '@services/tauri/init'
 import '@renderer/styles/global.css'
 
 initTauriApi()
+
+function removeSplashScreen() {
+  const splash = document.getElementById('splash-screen')
+  if (splash) {
+    splash.classList.add('fade-out')
+    setTimeout(() => {
+      splash.remove()
+    }, 300)
+  }
+}
 
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const config = useThemeStore(state => state.config)
@@ -50,6 +56,8 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
 }
 
 function TerminalWindow() {
+  const hasRemovedSplash = useRef(false)
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -81,6 +89,11 @@ function TerminalWindow() {
         await useTerminalStore.getState().loadAvailableShells()
       } catch (_error) {
         // 加载Shell列表失败
+      }
+
+      if (!hasRemovedSplash.current) {
+        hasRemovedSplash.current = true
+        removeSplashScreen()
       }
     }
 

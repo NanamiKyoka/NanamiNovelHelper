@@ -51,6 +51,7 @@ pub fn file_exists(path: &Path) -> bool {
     path.exists() && path.is_file()
 }
 
+#[allow(dead_code)]
 pub fn dir_exists(path: &Path) -> bool {
     path.exists() && path.is_dir()
 }

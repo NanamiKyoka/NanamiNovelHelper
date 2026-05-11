@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { Layout, theme, Button, Tooltip, Spin } from 'antd'
 import {
   TagOutlined,
@@ -80,6 +80,11 @@ function App(): JSX.Element {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<string>('files')
   const [rightPanelKey, setRightPanelKey] = useState<RightPanelKey>(null)
+  const [isResizingRightSidebar, setIsResizingRightSidebar] = useState(false)
+  const [resizingRightSidebarWidth, setResizingRightSidebarWidth] = useState(0)
+
+  const rightSidebarWidth = useSettingsStore(state => state.globalSettings.rightSidebarWidth)
+  const setRightSidebarWidth = useSettingsStore(state => state.setRightSidebarWidth)
 
   const {
     token: { colorBgContainer }
@@ -304,6 +309,49 @@ function App(): JSX.Element {
   const closeRightPanel = useCallback(() => {
     setRightPanelKey(null)
   }, [])
+
+  const RIGHT_SIDEBAR_MIN_WIDTH = 300
+  const RIGHT_SIDEBAR_MAX_WIDTH = 800
+  const BADGE_CONTAINER_WIDTH = 64
+
+  const currentRightSidebarWidth = isResizingRightSidebar
+    ? resizingRightSidebarWidth
+    : rightSidebarWidth
+
+  const resizingWidthRef = useRef(rightSidebarWidth)
+
+  const handleRightSidebarResize = useCallback(
+    (e: MouseEvent) => {
+      const newWidth = window.innerWidth - e.clientX - BADGE_CONTAINER_WIDTH
+      const clampedWidth = Math.max(RIGHT_SIDEBAR_MIN_WIDTH, Math.min(RIGHT_SIDEBAR_MAX_WIDTH, newWidth))
+      resizingWidthRef.current = clampedWidth
+      setResizingRightSidebarWidth(clampedWidth)
+    },
+    []
+  )
+
+  const handleRightSidebarResizeEnd = useCallback(() => {
+    document.removeEventListener('mousemove', handleRightSidebarResize)
+    document.removeEventListener('mouseup', handleRightSidebarResizeEnd)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+    setIsResizingRightSidebar(false)
+    setRightSidebarWidth(resizingWidthRef.current)
+  }, [handleRightSidebarResize, setRightSidebarWidth])
+
+  const handleRightSidebarResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      resizingWidthRef.current = rightSidebarWidth
+      setIsResizingRightSidebar(true)
+      setResizingRightSidebarWidth(rightSidebarWidth)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+      document.addEventListener('mousemove', handleRightSidebarResize)
+      document.addEventListener('mouseup', handleRightSidebarResizeEnd)
+    },
+    [rightSidebarWidth, handleRightSidebarResize, handleRightSidebarResizeEnd]
+  )
 
   // 徽章配置
   const badgeItems = useMemo(() => {
@@ -533,7 +581,7 @@ function App(): JSX.Element {
           </aside>
           <Content
             className={styles.mainContent}
-            style={{ background: colorBgContainer, marginRight: rightPanelKey ? 420 : 60 }}
+            style={{ background: colorBgContainer, marginRight: rightPanelKey ? currentRightSidebarWidth + 20 : 60 }}
             role="main"
           >
             <ErrorBoundary moduleName="MainContent">
@@ -552,6 +600,7 @@ function App(): JSX.Element {
       {rightPanelKey && (
         <aside
           className={styles.rightSidebar}
+          style={{ width: currentRightSidebarWidth }}
           aria-label={`${
             rightPanelKey === 'vocabulary'
               ? '词汇查询'
@@ -572,6 +621,18 @@ function App(): JSX.Element {
                             : '面板'
           }面板`}
         >
+          <div
+            className={styles.rightSidebarResizeHandle}
+            onMouseDown={handleRightSidebarResizeStart}
+            role="separator"
+            aria-label="调整右侧面板宽度"
+            tabIndex={0}
+          />
+          {isResizingRightSidebar && (
+            <div className={styles.rightSidebarWidthIndicator}>
+              {Math.round(resizingRightSidebarWidth)}px
+            </div>
+          )}
           <div className={styles.rightSidebarHeader}>
             <span id={`right-panel-title-${rightPanelKey}`}>
               {rightPanelKey === 'vocabulary'

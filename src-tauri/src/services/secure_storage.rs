@@ -1,4 +1,4 @@
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::utils::{ensure_dir, read_json_file, write_json_file};
 use std::collections::HashMap;
 use std::path::PathBuf;

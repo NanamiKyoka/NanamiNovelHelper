@@ -30,6 +30,7 @@ pub enum AppError {
     #[error("参数无效: {0}")]
     InvalidParam(String),
 
+    #[allow(dead_code)]
     #[error("权限不足: {0}")]
     PermissionDenied(String),
 }

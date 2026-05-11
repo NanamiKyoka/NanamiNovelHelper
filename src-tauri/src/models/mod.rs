@@ -141,6 +141,7 @@ pub struct SensitiveWord {
     pub description: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HighlightConfig {
     #[serde(rename = "typeOverrides", default)]
@@ -161,6 +162,7 @@ pub struct HighlightConfig {
     pub version: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelationshipNode {
     #[serde(flatten)]
@@ -180,6 +182,7 @@ pub struct RelationshipNode {
     pub description: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelationshipEdge {
     #[serde(flatten)]
@@ -196,6 +199,7 @@ pub struct RelationshipEdge {
     pub description: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelationType {
     pub id: String,
@@ -209,6 +213,7 @@ pub struct RelationType {
     pub description: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RelationshipGraph {
     #[serde(flatten)]
@@ -236,10 +241,12 @@ pub struct RelationshipGraph {
     pub view_state: Option<serde_json::Value>,
 }
 
+#[allow(dead_code)]
 fn default_node_style() -> String {
     "circle".to_string()
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimelineNode {
     #[serde(flatten)]
@@ -259,6 +266,7 @@ pub struct TimelineNode {
     pub color: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timeline {
     #[serde(flatten)]
@@ -277,6 +285,7 @@ pub struct Timeline {
     pub view_state: Option<serde_json::Value>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrganizationNode {
     #[serde(flatten)]
@@ -294,6 +303,7 @@ pub struct OrganizationNode {
     pub y: f64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrganizationGraph {
     #[serde(flatten)]
@@ -312,6 +322,7 @@ pub struct OrganizationGraph {
     pub view_state: Option<serde_json::Value>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SequenceEvent {
     #[serde(flatten)]
@@ -329,6 +340,7 @@ pub struct SequenceEvent {
     pub order: i32,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SequenceChart {
     #[serde(flatten)]
@@ -349,6 +361,7 @@ pub struct SequenceChart {
     pub axis_config: Option<serde_json::Value>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapData {
     #[serde(flatten)]

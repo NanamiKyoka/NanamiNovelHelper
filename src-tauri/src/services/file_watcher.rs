@@ -1,4 +1,3 @@
-use crate::services::project_state;
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::PathBuf;
 use std::sync::mpsc;

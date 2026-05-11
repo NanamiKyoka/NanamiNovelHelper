@@ -167,6 +167,7 @@ export interface GlobalSettings {
   window: WindowState
   language: Language
   sidebarWidth: number
+  rightSidebarWidth: number
   showWelcome: boolean
   layout: GlobalLayoutSettings
 }
@@ -176,6 +177,7 @@ export const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {
   window: DEFAULT_WINDOW_STATE,
   language: 'zh-CN',
   sidebarWidth: 280,
+  rightSidebarWidth: 400,
   showWelcome: true,
   layout: DEFAULT_GLOBAL_LAYOUT_SETTINGS
 }

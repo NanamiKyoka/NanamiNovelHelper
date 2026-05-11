@@ -1,10 +1,7 @@
-use crate::error::{AppError, AppResult};
-use crate::services::project_state;
 use crate::services::settings::SettingsService;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter};
 

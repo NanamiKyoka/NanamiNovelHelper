@@ -2,7 +2,6 @@ use crate::error::{AppError, AppResult};
 use crate::services::project_state;
 use crate::utils::{ensure_dir, generate_id};
 use base64::Engine;
-use image::ImageFormat;
 use std::io::Cursor;
 use std::path::PathBuf;
 use std::{fs, io::Write};
@@ -10,7 +9,6 @@ use std::{fs, io::Write};
 const MAX_WIDTH: u32 = 1920;
 const MAX_HEIGHT: u32 = 1080;
 const JPEG_QUALITY: u8 = 85;
-const PNG_COMPRESSION: u8 = 6;
 
 pub struct ImageService;
 

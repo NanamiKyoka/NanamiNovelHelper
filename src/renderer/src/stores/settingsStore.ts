@@ -39,6 +39,7 @@ interface SettingsState {
   setWindowState: (state: Partial<WindowState>) => Promise<void>
   setLanguage: (language: Language) => Promise<void>
   setSidebarWidth: (width: number) => Promise<void>
+  setRightSidebarWidth: (width: number) => Promise<void>
   setShowWelcome: (show: boolean) => Promise<void>
   // 全局布局设置
   updateLayoutSettings: (layout: Partial<GlobalLayoutSettings>) => Promise<void>
@@ -156,6 +157,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     await window.api.settings.global.setSidebarWidth(sidebarWidth)
     const { globalSettings } = get()
     set({ globalSettings: { ...globalSettings, sidebarWidth } })
+  },
+
+  setRightSidebarWidth: async rightSidebarWidth => {
+    await window.api.settings.global.setRightSidebarWidth(rightSidebarWidth)
+    const { globalSettings } = get()
+    set({ globalSettings: { ...globalSettings, rightSidebarWidth } })
   },
 
   setShowWelcome: async showWelcome => {

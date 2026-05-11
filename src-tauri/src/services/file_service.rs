@@ -167,7 +167,7 @@ impl FileService {
             .unwrap_or(false);
         let project_path = Self::get_project_path()?;
         let project_root = PathBuf::from(&project_path);
-        Self::scan_directory(&absolute_path, &project_root, false, include_hidden)
+        Self::scan_directory(&absolute_path, &project_root, false, include_hidden, &[])
     }
 
     pub async fn get_file_info(&self, path: String) -> AppResult<serde_json::Value> {
@@ -209,13 +209,21 @@ impl FileService {
         Ok(true)
     }
 
-    pub async fn get_file_tree(&self, include_hidden: bool) -> AppResult<Vec<FileNode>> {
+    pub async fn get_file_tree(
+        &self,
+        include_hidden: bool,
+        hidden_items: Vec<String>,
+    ) -> AppResult<Vec<FileNode>> {
         let project_path = Self::get_project_path()?;
         let root = PathBuf::from(&project_path);
         if !root.exists() {
             return Ok(vec![]);
         }
-        Self::scan_directory(&root, &root, true, include_hidden)
+        tokio::task::spawn_blocking(move || {
+            Self::scan_directory(&root, &root, true, include_hidden, &hidden_items)
+        })
+        .await
+        .map_err(|e| AppError::OperationFailed(format!("文件树扫描任务失败: {}", e)))?
     }
 
     fn scan_directory(
@@ -223,6 +231,7 @@ impl FileService {
         project_root: &Path,
         recursive: bool,
         include_hidden: bool,
+        hidden_items: &[String],
     ) -> AppResult<Vec<FileNode>> {
         let mut nodes = Vec::new();
         let entries = fs::read_dir(dir_path).map_err(|e| {
@@ -246,6 +255,10 @@ impl FileService {
                 .to_string_lossy()
                 .to_string();
 
+            if hidden_items.iter().any(|h| relative_path == *h || relative_path.starts_with(&format!("{}/", h))) {
+                continue;
+            }
+
             let metadata = entry.metadata().map_err(|e| {
                 AppError::OperationFailed(format!("读取文件信息失败: {}", e))
             })?;
@@ -263,7 +276,7 @@ impl FileService {
             });
 
             let children = if recursive && is_directory {
-                Some(Self::scan_directory(&absolute_path, project_root, true, include_hidden)?)
+                Some(Self::scan_directory(&absolute_path, project_root, true, include_hidden, hidden_items)?)
             } else {
                 None
             };

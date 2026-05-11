@@ -22,11 +22,43 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'out/renderer'),
     emptyOutDir: true,
-    sourcemap: true,
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log']
+      }
+    },
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'src/renderer/index.html'),
         terminal: resolve(__dirname, 'src/renderer/terminal.html')
+      },
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('react/') || id.includes('react-router')) {
+              return 'vendor-react'
+            }
+            if (id.includes('antd') || id.includes('@ant-design')) {
+              return 'vendor-antd'
+            }
+            if (id.includes('@tiptap')) {
+              return 'vendor-editor'
+            }
+            if (id.includes('@codemirror') || id.includes('@lezer')) {
+              return 'vendor-codemirror'
+            }
+            if (id.includes('@antv')) {
+              return 'vendor-graph'
+            }
+            if (id.includes('pixi')) {
+              return 'vendor-pixi'
+            }
+          }
+        }
       }
     }
   },

@@ -21,6 +21,8 @@
       "@utils": ["src/renderer/src/utils"],
       "@types/*": ["src/renderer/src/types/*"],
       "@types": ["src/renderer/src/types"],
+      "@constants/*": ["src/renderer/src/constants/*"],
+      "@constants": ["src/renderer/src/constants"],
       "@shared/*": ["src/shared/*"],
       "@shared": ["src/shared"]
     },

@@ -190,6 +190,7 @@ pub fn run() {
             git_checkout,
             git_merge,
             git_get_config,
+            git_check_author_identity,
             git_set_config,
             git_set_mode,
             git_get_mode,

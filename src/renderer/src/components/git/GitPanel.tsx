@@ -1,9 +1,9 @@
-﻿/**
+/**
  * Git 面板主组件
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Tabs, Modal, App, Dropdown, Empty, Spin, Typography } from 'antd'
+import { Button, Input, Tabs, Modal, App, Dropdown, Empty, Spin, Typography, Form, Radio } from 'antd'
 import {
   BranchesOutlined,
   PlusOutlined,
@@ -11,7 +11,8 @@ import {
   HistoryOutlined,
   FileAddOutlined,
   SettingOutlined,
-  CheckOutlined
+  CheckOutlined,
+  UserOutlined
 } from '@ant-design/icons'
 import { useGitStore } from '@stores/gitStore'
 import { useProjectStore } from '@stores/projectStore'
@@ -23,6 +24,12 @@ import styles from './GitPanel.module.css'
 
 const { TextArea } = Input
 const { Text } = Typography
+
+interface AuthorIdentityForm {
+  name: string
+  email: string
+  scope: 'global' | 'local'
+}
 
 function GitPanel(): JSX.Element {
   const { message } = App.useApp()
@@ -44,6 +51,9 @@ function GitPanel(): JSX.Element {
   const [committing, setCommitting] = useState(false)
   const [showInitModal, setShowInitModal] = useState(false)
   const [initing, setIniting] = useState(false)
+  const [showIdentityModal, setShowIdentityModal] = useState(false)
+  const [identityForm] = Form.useForm<AuthorIdentityForm>()
+  const [savingIdentity, setSavingIdentity] = useState(false)
 
   // 兜底初始化：项目打开时 git 可能尚未初始化完成
   useEffect(() => {
@@ -77,6 +87,43 @@ function GitPanel(): JSX.Element {
     }
   }
 
+  const doCommit = async (msg: string) => {
+    setCommitting(true)
+    try {
+      const success = await commit({ message: msg })
+      if (success) {
+        message.success('提交成功')
+        setCommitMessage('')
+      }
+    } finally {
+      setCommitting(false)
+    }
+  }
+
+  const handleSaveIdentity = async () => {
+    try {
+      const values = await identityForm.validateFields()
+      if (!currentProject?.path) return
+
+      setSavingIdentity(true)
+      const scope = values.scope
+
+      await window.api.git.configSet(currentProject.path, 'user.name', values.name, scope)
+      await window.api.git.configSet(currentProject.path, 'user.email', values.email, scope)
+
+      message.success('身份信息配置成功')
+      setShowIdentityModal(false)
+
+      await doCommit(commitMessage.trim())
+    } catch (err) {
+      if (err instanceof Error) {
+        message.error(`配置失败: ${err.message}`)
+      }
+    } finally {
+      setSavingIdentity(false)
+    }
+  }
+
   // 提交
   const handleCommit = async () => {
     if (!commitMessage.trim()) {
@@ -89,16 +136,24 @@ function GitPanel(): JSX.Element {
       return
     }
 
-    setCommitting(true)
+    if (!currentProject?.path) return
+
     try {
-      const success = await commit({ message: commitMessage.trim() })
-      if (success) {
-        message.success('提交成功')
-        setCommitMessage('')
+      const result = await window.api.git.checkAuthorIdentity(currentProject.path)
+      if (result.success && result.data && !result.data.hasIdentity) {
+        identityForm.setFieldsValue({
+          name: result.data.userName || '',
+          email: result.data.userEmail || '',
+          scope: 'global'
+        })
+        setShowIdentityModal(true)
+        return
       }
-    } finally {
-      setCommitting(false)
+    } catch {
+      // 检查失败时继续提交，让 git commit 自身报错
     }
+
+    await doCommit(commitMessage.trim())
   }
 
   // 刷新
@@ -265,6 +320,50 @@ function GitPanel(): JSX.Element {
           }
         ]}
       />
+
+      <Modal
+        title={
+          <span>
+            <UserOutlined style={{ marginRight: 8 }} />
+            配置 Git 身份信息
+          </span>
+        }
+        open={showIdentityModal}
+        onOk={handleSaveIdentity}
+        onCancel={() => setShowIdentityModal(false)}
+        confirmLoading={savingIdentity}
+        okText="保存并提交"
+        cancelText="取消"
+      >
+        <p style={{ marginBottom: 16, color: 'var(--ant-color-text-secondary)' }}>
+          提交需要配置 Git 用户名和邮箱，请填写以下信息：
+        </p>
+        <Form form={identityForm} layout="vertical" autoComplete="off">
+          <Form.Item
+            name="name"
+            label="用户名"
+            rules={[{ required: true, message: '请输入用户名' }]}
+          >
+            <Input placeholder="请输入 Git 用户名" />
+          </Form.Item>
+          <Form.Item
+            name="email"
+            label="邮箱"
+            rules={[
+              { required: true, message: '请输入邮箱' },
+              { type: 'email', message: '请输入有效的邮箱地址' }
+            ]}
+          >
+            <Input placeholder="请输入 Git 邮箱" />
+          </Form.Item>
+          <Form.Item name="scope" label="配置范围">
+            <Radio.Group>
+              <Radio value="global">全局配置（所有仓库生效）</Radio>
+              <Radio value="local">仅当前仓库</Radio>
+            </Radio.Group>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

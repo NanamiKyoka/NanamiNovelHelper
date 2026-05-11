@@ -1,6 +1,7 @@
 use crate::error::AppResult;
 use crate::services::terminal::TerminalService;
 use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::window::Color;
 
 #[tauri::command]
 pub fn terminal_get_shells(
@@ -84,6 +85,7 @@ pub async fn terminal_window_create(app: AppHandle) -> AppResult<bool> {
     .min_inner_size(400.0, 300.0)
     .resizable(true)
     .decorations(false)
+    .background_color(Color(30, 30, 30, 255))
     .build()
     .map_err(|e| {
         crate::error::AppError::OperationFailed(format!("创建终端窗口失败: {}", e))

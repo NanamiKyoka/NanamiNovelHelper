@@ -84,7 +84,8 @@ pub async fn file_export_txt(
 #[tauri::command]
 pub async fn file_get_tree(
     include_hidden: bool,
+    hidden_items: Option<Vec<String>>,
     service: State<'_, FileService>,
 ) -> AppResult<Vec<FileNode>> {
-    service.get_file_tree(include_hidden).await
+    service.get_file_tree(include_hidden, hidden_items.unwrap_or_default()).await
 }

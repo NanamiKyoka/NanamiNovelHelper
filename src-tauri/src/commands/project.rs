@@ -41,8 +41,8 @@ pub fn get_current_project(project_service: State<ProjectService>) -> Option<Pro
 }
 
 #[tauri::command]
-pub fn get_init_data(project_service: State<ProjectService>) -> AppResult<ProjectInitData> {
-    project_service.get_init_data()
+pub async fn get_init_data(project_service: State<'_, ProjectService>) -> AppResult<ProjectInitData> {
+    project_service.get_init_data().await
 }
 
 #[tauri::command]

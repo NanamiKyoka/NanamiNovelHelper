@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 文件树组件 - VSCode 风格
  * 支持：虚拟滚动、右键菜单、拖拽、键盘导航、内联重命名
  */
@@ -310,45 +310,43 @@ function FileTree(): JSX.Element {
   const openOpenProjectModal = useUIStore(state => state.openOpenProjectModal)
   const openFile = useEditorStore(state => state.openFile)
 
-  // 文件树 Store
-  const {
-    roots,
-    loading,
-    error,
-    expandedKeys,
-    selectedKeys,
-    focusedKey,
-    editingKey,
-    editingName,
-    newItemParent,
-    newItemType,
-    newItemName,
-    clipboard,
-    searchPattern,
-    filteredKeys,
-    sortMode,
-    sortOptions,
-    gitStatus,
-    loadTree,
-    refreshTree,
-    toggleExpand,
-    select,
-    clearSelection,
-    startRename,
-    finishRename,
-    cancelEdit,
-    startNewItem,
-    finishNewItem,
-    deleteItems,
-    copyItems,
-    cutItems,
-    paste,
-    search,
-    setSortMode,
-    toggleSortOrder,
-    findNode,
-    getFlattenedNodes
-  } = useFileTreeStore()
+  const roots = useFileTreeStore(state => state.roots)
+  const loading = useFileTreeStore(state => state.loading)
+  const error = useFileTreeStore(state => state.error)
+  const expandedKeys = useFileTreeStore(state => state.expandedKeys)
+  const selectedKeys = useFileTreeStore(state => state.selectedKeys)
+  const focusedKey = useFileTreeStore(state => state.focusedKey)
+  const editingKey = useFileTreeStore(state => state.editingKey)
+  const editingName = useFileTreeStore(state => state.editingName)
+  const newItemParent = useFileTreeStore(state => state.newItemParent)
+  const newItemType = useFileTreeStore(state => state.newItemType)
+  const newItemName = useFileTreeStore(state => state.newItemName)
+  const clipboard = useFileTreeStore(state => state.clipboard)
+  const searchPattern = useFileTreeStore(state => state.searchPattern)
+  const filteredKeys = useFileTreeStore(state => state.filteredKeys)
+  const sortMode = useFileTreeStore(state => state.sortMode)
+  const sortOptions = useFileTreeStore(state => state.sortOptions)
+  const gitStatus = useFileTreeStore(state => state.gitStatus)
+
+  const loadTree = useFileTreeStore(state => state.loadTree)
+  const refreshTree = useFileTreeStore(state => state.refreshTree)
+  const toggleExpand = useFileTreeStore(state => state.toggleExpand)
+  const select = useFileTreeStore(state => state.select)
+  const clearSelection = useFileTreeStore(state => state.clearSelection)
+  const startRename = useFileTreeStore(state => state.startRename)
+  const finishRename = useFileTreeStore(state => state.finishRename)
+  const cancelEdit = useFileTreeStore(state => state.cancelEdit)
+  const startNewItem = useFileTreeStore(state => state.startNewItem)
+  const finishNewItem = useFileTreeStore(state => state.finishNewItem)
+  const deleteItems = useFileTreeStore(state => state.deleteItems)
+  const copyItems = useFileTreeStore(state => state.copyItems)
+  const cutItems = useFileTreeStore(state => state.cutItems)
+  const paste = useFileTreeStore(state => state.paste)
+  const search = useFileTreeStore(state => state.search)
+  const setSortMode = useFileTreeStore(state => state.setSortMode)
+  const toggleSortOrder = useFileTreeStore(state => state.toggleSortOrder)
+  const findNode = useFileTreeStore(state => state.findNode)
+  const getFlattenedNodes = useFileTreeStore(state => state.getFlattenedNodes)
 
   const treeRef = useRef<HTMLDivElement>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)

@@ -1,6 +1,6 @@
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom/client'
-import { ConfigProvider, theme as antTheme, App as AntApp, Spin } from 'antd'
+import { ConfigProvider, theme as antTheme, App as AntApp } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import App from './App'
 import { useThemeStore } from '@stores/themeStore'
@@ -11,31 +11,35 @@ import './styles/global.css'
 
 initTauriApi()
 
-// 主题提供者组件
+function removeSplashScreen() {
+  const splash = document.getElementById('splash-screen')
+  if (splash) {
+    splash.classList.add('fade-out')
+    setTimeout(() => {
+      splash.remove()
+    }, 300)
+  }
+}
+
 function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element {
   const config = useThemeStore(state => state.config)
   const resolvedMode = useThemeStore(state => state.resolvedMode)
 
-  // 更新 CSS 变量和 body 类
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--font-size', `${config.fontSize}px`)
     root.style.setProperty('--font-family', config.fontFamily)
 
-    // 更新 body 类
     document.body.classList.remove('light', 'dark')
     document.body.classList.add(resolvedMode)
 
-    // 更新 data 属性（用于 CSS 选择器）
     root.setAttribute('data-theme', resolvedMode)
   }, [config.fontSize, config.fontFamily, resolvedMode])
 
-  // 动态更新主题色 CSS 变量
   useEffect(() => {
     applyPrimaryColorToRoot(config.primaryColor, resolvedMode === 'dark')
   }, [config.primaryColor, resolvedMode])
 
-  // 设置标题栏高度 CSS 变量（用于全屏模式）
   useEffect(() => {
     const root = document.documentElement
     const titlebarHeight = window.api?.platform === 'macos' ? '0px' : '32px'
@@ -61,38 +65,26 @@ function ThemeProvider({ children }: { children: React.ReactNode }): JSX.Element
   )
 }
 
-// 全局设置初始化组件
 function GlobalSettingsInitializer({ children }: { children: React.ReactNode }): JSX.Element {
   const initGlobalSettings = useSettingsStore(state => state.initGlobalSettings)
   const isInitialized = useSettingsStore(state => state.isInitialized)
-  const [error, setError] = useState<string | null>(null)
+  const hasRemovedSplash = useRef(false)
 
   useEffect(() => {
     initGlobalSettings().catch(err => {
       console.error('Failed to initialize global settings:', err)
-      setError(err.message)
     })
   }, [initGlobalSettings])
 
-  if (error) {
-    // 即使初始化失败也继续渲染，使用默认设置
-    console.warn('Using default settings due to initialization error')
-  }
+  useEffect(() => {
+    if (isInitialized && !hasRemovedSplash.current) {
+      hasRemovedSplash.current = true
+      removeSplashScreen()
+    }
+  }, [isInitialized])
 
-  // 等待初始化完成
   if (!isInitialized) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh'
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    )
+    return <></>
   }
 
   return <>{children}</>

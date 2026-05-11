@@ -189,7 +189,8 @@ impl ProjectService {
         current.clone()
     }
 
-    pub fn get_init_data(&self) -> AppResult<crate::models::ProjectInitData> {
+    #[allow(dead_code)]
+    pub fn get_init_data_sync(&self) -> AppResult<crate::models::ProjectInitData> {
         let project = self
             .get_current_project()
             .ok_or(AppError::ProjectNotOpen)?;
@@ -257,6 +258,81 @@ impl ProjectService {
             maps,
             file_tree: None,
         })
+    }
+
+    pub async fn get_init_data(&self) -> AppResult<crate::models::ProjectInitData> {
+        let project = self
+            .get_current_project()
+            .ok_or(AppError::ProjectNotOpen)?;
+
+        let project_path = project.path.clone();
+        let data_dir = Self::get_data_dir(&project_path);
+
+        tokio::task::spawn_blocking(move || {
+            let settings = read_json_file::<serde_json::Value>(&data_dir.join("settings.json")).ok();
+
+            let vocabulary_types = crate::services::VocabularyService::new()
+                .load_vocabulary_types()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|v| serde_json::to_value(v).unwrap_or_default())
+                .collect();
+
+            let vocabulary_entries = crate::services::VocabularyService::new()
+                .load_vocabulary_entries(None)
+                .unwrap_or_default()
+                .into_iter()
+                .map(|v| serde_json::to_value(v).unwrap_or_default())
+                .collect();
+
+            let sensitive_words = crate::services::VocabularyService::new()
+                .load_sensitive_words()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|v| serde_json::to_value(v).unwrap_or_default())
+                .collect();
+
+            let highlight_config = crate::services::SettingsService::new()
+                .get_highlight_config()
+                .ok();
+
+            let relationship_graphs = crate::services::GraphService::new()
+                .get_list("relationships")
+                .unwrap_or_default();
+
+            let timelines = crate::services::GraphService::new()
+                .get_list("timelines")
+                .unwrap_or_default();
+
+            let sequence_charts = crate::services::GraphService::new()
+                .get_list("sequence-charts")
+                .unwrap_or_default();
+
+            let organization_graphs = crate::services::GraphService::new()
+                .get_list("organizations")
+                .unwrap_or_default();
+
+            let maps = crate::services::GraphService::new()
+                .get_list("maps")
+                .unwrap_or_default();
+
+            Ok(crate::models::ProjectInitData {
+                project: Some(project),
+                settings,
+                vocabulary_types,
+                vocabulary_entries,
+                sensitive_words,
+                highlight_config,
+                relationship_graphs,
+                timelines,
+                sequence_charts,
+                organization_graphs,
+                maps,
+                file_tree: None,
+            })
+        })
+        .await
+        .map_err(|e| AppError::OperationFailed(format!("获取项目初始化数据失败: {}", e)))?
     }
 
     pub fn get_project_stats(&self, project_path: &str) -> AppResult<serde_json::Value> {

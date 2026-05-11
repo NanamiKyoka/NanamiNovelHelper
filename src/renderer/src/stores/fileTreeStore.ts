@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand'
+import { create } from 'zustand'
 import type {
   FileNodeData,
   FlattenedNode,
@@ -15,6 +15,33 @@ interface NewItemNode extends FileNodeData {
 }
 
 let saveExpandedFoldersTimer: ReturnType<typeof setTimeout> | null = null
+let nodeIndexCache: Map<string, { node: FileNodeData; parent: FileNodeData | null }> | null = null
+let nodeIndexRootsRef: FileNodeData[] | null = null
+
+function buildNodeIndex(nodes: FileNodeData[], parent: FileNodeData | null = null): void {
+  for (const node of nodes) {
+    nodeIndexCache!.set(node.key, { node, parent })
+    if (node.children) {
+      buildNodeIndex(node.children, node)
+    }
+  }
+}
+
+function getNodeIndex(): Map<string, { node: FileNodeData; parent: FileNodeData | null }> {
+  const { roots } = useFileTreeStore.getState()
+  if (nodeIndexCache && nodeIndexRootsRef === roots) {
+    return nodeIndexCache
+  }
+  nodeIndexCache = new Map()
+  nodeIndexRootsRef = roots
+  buildNodeIndex(roots)
+  return nodeIndexCache
+}
+
+function invalidateNodeIndex(): void {
+  nodeIndexCache = null
+  nodeIndexRootsRef = null
+}
 
 interface FileTreeState {
   roots: FileNodeData[]
@@ -77,32 +104,6 @@ interface FileTreeState {
   clearFileTreeData: () => void
 }
 
-function findNodeRecursive(nodes: FileNodeData[], key: string): FileNodeData | null {
-  for (const node of nodes) {
-    if (node.key === key) return node
-    if (node.children) {
-      const found = findNodeRecursive(node.children, key)
-      if (found) return found
-    }
-  }
-  return null
-}
-
-function findParentNodeRecursive(
-  nodes: FileNodeData[],
-  key: string,
-  parent: FileNodeData | null = null
-): FileNodeData | null {
-  for (const node of nodes) {
-    if (node.key === key) return parent
-    if (node.children) {
-      const found = findParentNodeRecursive(node.children, key, node)
-      if (found !== undefined) return found
-    }
-  }
-  return undefined as unknown as FileNodeData | null
-}
-
 function collectAllKeys(nodes: FileNodeData[]): string[] {
   const keys: string[] = []
   for (const node of nodes) {
@@ -123,9 +124,11 @@ function flattenTree(
   newItemParent: string | null | undefined,
   newItemType: 'file' | 'folder',
   newItemName: string,
-  depth = 0
+  depth = 0,
+  expandedKeysOverride?: Set<string>
 ): FlattenedNode[] {
   const result: FlattenedNode[] = []
+  const effectiveExpanded = expandedKeysOverride ?? expandedKeys
 
   if (newItemParent === null && depth === 0) {
     result.push({
@@ -154,11 +157,14 @@ function flattenTree(
     })
 
     if (node.isDirectory && node.children) {
-      if (newItemParent === node.key) {
-        if (!expandedKeys.has(node.key)) {
-          expandedKeys = new Set([...expandedKeys, node.key])
-        }
+      let currentExpanded = effectiveExpanded
+      if (newItemParent === node.key && !effectiveExpanded.has(node.key)) {
+        const augmented = new Set(effectiveExpanded)
+        augmented.add(node.key)
+        currentExpanded = augmented
+      }
 
+      if (newItemParent === node.key) {
         result.push({
           node: {
             key: '__new_item__',
@@ -173,7 +179,7 @@ function flattenTree(
         })
       }
 
-      if (expandedKeys.has(node.key)) {
+      if (currentExpanded.has(node.key)) {
         const children = flattenTree(
           node.children,
           expandedKeys,
@@ -181,7 +187,8 @@ function flattenTree(
           newItemParent,
           newItemType,
           newItemName,
-          depth + 1
+          depth + 1,
+          currentExpanded !== effectiveExpanded ? currentExpanded : expandedKeysOverride
         )
         result.push(...children)
       }
@@ -261,14 +268,15 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
     gitStatus: new Map(),
 
     loadTree: async () => {
-      const { sortOptions } = get()
       set({ loading: true, error: null })
       try {
-        const showHiddenFiles = await window.api.settings.global.getShowHiddenFiles()
-        const hiddenItems = await window.api.settings.project.getHiddenItems()
-        const tree = await window.api.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+        const [showHiddenFiles, hiddenItems, savedExpandedFolders] = await Promise.all([
+          window.api.settings.global.getShowHiddenFiles(),
+          window.api.settings.project.getHiddenItems(),
+          window.api.settings.project.getExpandedFolders()
+        ])
 
-        const savedExpandedFolders = await window.api.settings.project.getExpandedFolders()
+        const tree = await window.api.file.getTree(showHiddenFiles, hiddenItems)
 
         let expandedKeys: Set<string>
         if (savedExpandedFolders === null) {
@@ -282,6 +290,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
           loading: false,
           expandedKeys
         })
+        invalidateNodeIndex()
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '加载文件树失败'
         set({ loading: false, error: errorMessage })
@@ -298,16 +307,18 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
       try {
         do {
           needsTreeRefresh = false
-          const { sortOptions } = get()
-          const showHiddenFiles = await window.api.settings.global.getShowHiddenFiles()
-          const hiddenItems = await window.api.settings.project.getHiddenItems()
-          const tree = await window.api.file.getTree(showHiddenFiles, sortOptions, hiddenItems)
+          const [showHiddenFiles, hiddenItems] = await Promise.all([
+            window.api.settings.global.getShowHiddenFiles(),
+            window.api.settings.project.getHiddenItems()
+          ])
+          const tree = await window.api.file.getTree(showHiddenFiles, hiddenItems)
           set(state => ({
             roots: tree,
             loading: false,
             error: null,
             expandedKeys: state.expandedKeys
           }))
+          invalidateNodeIndex()
         } while (needsTreeRefresh)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '刷新文件树失败'
@@ -565,13 +576,13 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
     },
 
     findNode: key => {
-      const { roots } = get()
-      return findNodeRecursive(roots, key)
+      const index = getNodeIndex()
+      return index.get(key)?.node ?? null
     },
 
     getParentNode: key => {
-      const { roots } = get()
-      return findParentNodeRecursive(roots, key) ?? null
+      const index = getNodeIndex()
+      return index.get(key)?.parent ?? null
     },
 
     getFlattenedNodes: () => {
@@ -647,6 +658,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
         loading: false,
         error: null
       })
+      invalidateNodeIndex()
     },
 
     clearFileTreeData: () => {
@@ -667,6 +679,7 @@ export const useFileTreeStore = create<FileTreeState>((set, get) => {
         error: null,
         gitStatus: new Map()
       })
+      invalidateNodeIndex()
     }
   }
 })

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 词汇高亮设置组件
  */
 
@@ -119,7 +119,7 @@ export function HighlightSettings(): JSX.Element {
     if (!currentProject) return
     setLoadingDirs(true)
     try {
-      const tree = await window.api.file.getTree(currentProject.path, { depth: 3 })
+      const tree = await window.api.file.getTree(true)
       const convertToTreeData = (nodes: FileNode[], parentPath: string = ''): TreeDataNode[] => {
         return nodes
           .filter(node => node.isDirectory)
