@@ -48,3 +48,30 @@ export function isMarkdownFile(path: string): boolean {
 export function isRenderableFile(path: string): boolean {
   return isNovelFile(path) || isMarkdownFile(path)
 }
+
+export function disableBrowserAutofill(): void {
+  const setAutocompleteOff = (el: Element) => {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      el.setAttribute('autocomplete', 'off')
+    }
+  }
+
+  document.querySelectorAll('input, textarea').forEach(setAutocompleteOff)
+
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          setAutocompleteOff(node)
+          node.querySelectorAll('input, textarea').forEach(setAutocompleteOff)
+        }
+      }
+    }
+  })
+
+  observer.observe(document.body, { childList: true, subtree: true })
+}
+
+export function disableContextMenu(): void {
+  document.addEventListener('contextmenu', e => e.preventDefault(), { capture: true })
+}

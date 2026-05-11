@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 项目操作 Hook
  *
  * 统一管理项目相关的跨 Store 操作，解耦 Store 间的直接依赖
@@ -15,6 +15,7 @@ import { useTimelineStore } from '@stores/timelineStore'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
+import { useEditorStore } from '@stores/editorStore'
 import { useGitStore } from '@stores/gitStore'
 import { useHighlightService, updateHighlightPatterns } from '@services/highlightService'
 import type { CreateProjectOptions } from '@shared/project'
@@ -143,7 +144,7 @@ export function useProjectActions() {
     clearSequenceChartData()
     clearOrganizationData()
     clearFileTreeData()
-    // 清空高亮模式，防止旧项目的词汇高亮残留
+    useEditorStore.getState().closeAllTabs()
     updateHighlightPatterns([], [], [])
   }, [
     clearProjectSettings,

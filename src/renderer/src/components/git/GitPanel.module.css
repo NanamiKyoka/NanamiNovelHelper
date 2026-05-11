@@ -263,7 +263,6 @@
 
 .hunk {
   border-bottom: 1px solid var(--ant-color-border-secondary);
-  min-width: max-content;
 }
 
 .hunkHeader {
@@ -301,7 +300,8 @@
 
 .lineContent {
   flex: 1;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .linePrefix {

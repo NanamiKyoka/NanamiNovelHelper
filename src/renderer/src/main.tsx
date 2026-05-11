@@ -6,10 +6,13 @@ import App from './App'
 import { useThemeStore } from '@stores/themeStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { applyPrimaryColorToRoot } from '@utils/theme'
+import { disableBrowserAutofill, disableContextMenu } from '@utils/html'
 import { initTauriApi } from '@services/tauri/init'
 import './styles/global.css'
 
 initTauriApi()
+disableBrowserAutofill()
+disableContextMenu()
 
 function removeSplashScreen() {
   const splash = document.getElementById('splash-screen')

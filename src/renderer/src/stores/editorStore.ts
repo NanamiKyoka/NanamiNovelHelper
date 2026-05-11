@@ -15,6 +15,7 @@ import {
   DEFAULT_STATUS_BAR_CONFIG as defaultStatusBarConfig
 } from '../types/editor'
 import { LRUCache } from '../utils/lruCache'
+import { computeHash } from '../utils/hash'
 
 const FILE_CACHE_MAX = 20
 const FILE_CACHE_MAX_AGE = 30 * 60 * 1000
@@ -301,6 +302,18 @@ export const useEditorStore = create<EditorState>()(
           if (state.previewTabId) {
             const previewTab = state.tabs.find(t => t.id === state.previewTabId)
             if (previewTab && !previewTab.isDirty) {
+              const cachedContent = state.fileContents.get(previewTab.path)
+              if (cachedContent?.editorState && cachedContent?.hash) {
+                state.fileContents.set(previewTab.path, {
+                  path: previewTab.path,
+                  content: '',
+                  hash: cachedContent.hash,
+                  loadedAt: cachedContent.loadedAt,
+                  editorState: cachedContent.editorState
+                })
+              } else {
+                state.fileContents.delete(previewTab.path)
+              }
               set(state => ({
                 tabs: state.tabs.filter(t => t.id !== state.previewTabId)
               }))
@@ -316,12 +329,36 @@ export const useEditorStore = create<EditorState>()(
             lastActiveAt: Date.now()
           }
 
-          await get().loadFileContent(path)
+          const cachedContent = state.fileContents.get(path)
+          if (cachedContent?.editorState && cachedContent?.hash) {
+            const content = await window.api.file.read(path)
+            const newHash = await computeHash(content)
+
+            if (newHash === cachedContent.hash) {
+              state.fileContents.set(path, {
+                path,
+                content,
+                hash: newHash,
+                loadedAt: Date.now(),
+                editorState: cachedContent.editorState
+              })
+            } else {
+              state.fileContents.set(path, {
+                path,
+                content,
+                hash: newHash,
+                loadedAt: Date.now()
+              })
+            }
+          } else if (!state.fileContents.has(path)) {
+            await get().loadFileContent(path)
+          }
 
           set(state => ({
             tabs: [...state.tabs, newTab],
             activeTabId: newTab.id,
-            previewTabId: newTab.id
+            previewTabId: newTab.id,
+            _cacheVersion: state._cacheVersion + 1
           }))
         },
 
@@ -352,12 +389,36 @@ export const useEditorStore = create<EditorState>()(
             lastActiveAt: Date.now()
           }
 
-          await get().loadFileContent(path)
+          const cachedContent = state.fileContents.get(path)
+          if (cachedContent?.editorState && cachedContent?.hash) {
+            const content = await window.api.file.read(path)
+            const newHash = await computeHash(content)
+
+            if (newHash === cachedContent.hash) {
+              state.fileContents.set(path, {
+                path,
+                content,
+                hash: newHash,
+                loadedAt: Date.now(),
+                editorState: cachedContent.editorState
+              })
+            } else {
+              state.fileContents.set(path, {
+                path,
+                content,
+                hash: newHash,
+                loadedAt: Date.now()
+              })
+            }
+          } else if (!state.fileContents.has(path)) {
+            await get().loadFileContent(path)
+          }
 
           set(state => ({
             tabs: [...state.tabs, newTab],
             activeTabId: newTab.id,
-            previewTabId: null
+            previewTabId: null,
+            _cacheVersion: state._cacheVersion + 1
           }))
         },
 
@@ -367,6 +428,7 @@ export const useEditorStore = create<EditorState>()(
 
           if (tabIndex === -1) return
 
+          const closedTab = state.tabs.find(tab => tab.id === tabId)
           const newTabs = state.tabs.filter(tab => tab.id !== tabId)
 
           let newActiveTabId = state.activeTabId
@@ -382,7 +444,27 @@ export const useEditorStore = create<EditorState>()(
 
           const newPreviewTabId = state.previewTabId === tabId ? null : state.previewTabId
 
-          set({ tabs: newTabs, activeTabId: newActiveTabId, previewTabId: newPreviewTabId })
+          if (closedTab) {
+            const cachedContent = state.fileContents.get(closedTab.path)
+            if (cachedContent?.editorState && cachedContent?.hash) {
+              state.fileContents.set(closedTab.path, {
+                path: closedTab.path,
+                content: '',
+                hash: cachedContent.hash,
+                loadedAt: cachedContent.loadedAt,
+                editorState: cachedContent.editorState
+              })
+            } else {
+              state.fileContents.delete(closedTab.path)
+            }
+          }
+
+          set({
+            tabs: newTabs,
+            activeTabId: newActiveTabId,
+            previewTabId: newPreviewTabId,
+            _cacheVersion: state._cacheVersion + 1
+          })
         },
 
         closeOtherTabs: (tabId: string) => {
@@ -464,9 +546,11 @@ export const useEditorStore = create<EditorState>()(
           set({ isLoading: true })
           try {
             const content = await fileReadLimiter.queue(() => window.api.file.read(path))
+            const hash = await computeHash(content)
             const fileContent: EditorFileContent = {
               path,
               content,
+              hash,
               loadedAt: Date.now()
             }
 
@@ -490,12 +574,16 @@ export const useEditorStore = create<EditorState>()(
           set({ isSaving: true })
           try {
             await window.api.file.write(path, content)
+            const hash = await computeHash(content)
 
             set(state => {
+              const existing = state.fileContents.get(path)
               state.fileContents.set(path, {
                 path,
                 content,
-                loadedAt: Date.now()
+                hash,
+                loadedAt: Date.now(),
+                editorState: existing?.editorState
               })
               return {
                 fileContents: state.fileContents,

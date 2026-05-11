@@ -267,15 +267,22 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     const savedState = getEditorState(currentPath)
 
     if (savedState) {
-      // 恢复缓存的状态
-      try {
-        editor.view.updateState(savedState as typeof editor.view.state)
-      } catch {
-        // 恢复失败，创建新状态
-        restoreEditorContent(editor, currentContent)
-      }
+      const dom = editor.view.dom as HTMLElement
+      dom.blur()
+
+      requestAnimationFrame(() => {
+        try {
+          const state = savedState as typeof editor.view.state
+          if (state.doc.content.size === 0 || !state.doc.textContent) {
+            restoreEditorContent(editor, currentContent)
+          } else {
+            editor.view.updateState(state)
+          }
+        } catch {
+          restoreEditorContent(editor, currentContent)
+        }
+      })
     } else {
-      // 没有缓存，创建全新状态
       restoreEditorContent(editor, currentContent)
     }
 

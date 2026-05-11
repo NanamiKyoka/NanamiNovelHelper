@@ -7,9 +7,12 @@ import { useThemeStore } from '@stores/themeStore'
 import { useProjectStore } from '@stores/projectStore'
 import { useTerminalStore } from '@stores/terminalStore'
 import { initTauriApi } from '@services/tauri/init'
+import { disableBrowserAutofill, disableContextMenu } from '@utils/html'
 import '@renderer/styles/global.css'
 
 initTauriApi()
+disableBrowserAutofill()
+disableContextMenu()
 
 function removeSplashScreen() {
   const splash = document.getElementById('splash-screen')

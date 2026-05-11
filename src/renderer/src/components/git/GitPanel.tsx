@@ -3,13 +3,11 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Button, Input, Tabs, Modal, App, Dropdown, Empty, Spin, Typography, Form, Radio } from 'antd'
+import { Button, Input, Tabs, Modal, App, Empty, Spin, Typography, Form, Radio } from 'antd'
 import {
   BranchesOutlined,
   PlusOutlined,
   SyncOutlined,
-  HistoryOutlined,
-  FileAddOutlined,
   SettingOutlined,
   CheckOutlined,
   UserOutlined
@@ -19,7 +17,6 @@ import { useProjectStore } from '@stores/projectStore'
 import ChangesList from './ChangesList'
 import CommitHistory from './CommitHistory'
 import BranchManager from './BranchManager'
-import type { MenuProps } from 'antd'
 import styles from './GitPanel.module.css'
 
 const { TextArea } = Input
@@ -54,6 +51,7 @@ function GitPanel(): JSX.Element {
   const [showIdentityModal, setShowIdentityModal] = useState(false)
   const [identityForm] = Form.useForm<AuthorIdentityForm>()
   const [savingIdentity, setSavingIdentity] = useState(false)
+  const [identityFromCommit, setIdentityFromCommit] = useState(false)
 
   // 兜底初始化：项目打开时 git 可能尚未初始化完成
   useEffect(() => {
@@ -114,13 +112,16 @@ function GitPanel(): JSX.Element {
       message.success('身份信息配置成功')
       setShowIdentityModal(false)
 
-      await doCommit(commitMessage.trim())
+      if (identityFromCommit) {
+        await doCommit(commitMessage.trim())
+      }
     } catch (err) {
       if (err instanceof Error) {
         message.error(`配置失败: ${err.message}`)
       }
     } finally {
       setSavingIdentity(false)
+      setIdentityFromCommit(false)
     }
   }
 
@@ -146,6 +147,7 @@ function GitPanel(): JSX.Element {
           email: result.data.userEmail || '',
           scope: 'global'
         })
+        setIdentityFromCommit(true)
         setShowIdentityModal(true)
         return
       }
@@ -157,31 +159,30 @@ function GitPanel(): JSX.Element {
   }
 
   // 刷新
+  const handleOpenIdentityModal = async () => {
+    if (!currentProject?.path) return
+
+    try {
+      const result = await window.api.git.checkAuthorIdentity(currentProject.path)
+      if (result.success && result.data) {
+        identityForm.setFieldsValue({
+          name: result.data.userName || '',
+          email: result.data.userEmail || '',
+          scope: 'global'
+        })
+      } else {
+        identityForm.setFieldsValue({ name: '', email: '', scope: 'global' })
+      }
+    } catch {
+      identityForm.setFieldsValue({ name: '', email: '', scope: 'global' })
+    }
+
+    setShowIdentityModal(true)
+  }
+
   const handleRefresh = () => {
     refresh()
   }
-
-  // 切换视图的下拉菜单
-  const viewMenuItems: MenuProps['items'] = [
-    {
-      key: 'changes',
-      label: '变更',
-      icon: <FileAddOutlined />,
-      onClick: () => setViewMode('changes')
-    },
-    {
-      key: 'history',
-      label: '历史',
-      icon: <HistoryOutlined />,
-      onClick: () => setViewMode('history')
-    },
-    {
-      key: 'branches',
-      label: '分支',
-      icon: <BranchesOutlined />,
-      onClick: () => setViewMode('branches')
-    }
-  ]
 
   // 加载中
   if (loading && !initialized) {
@@ -249,9 +250,12 @@ function GitPanel(): JSX.Element {
             loading={loading}
             title="刷新"
           />
-          <Dropdown menu={{ items: viewMenuItems }} trigger={['click']}>
-            <Button size="small" icon={<SettingOutlined />} title="切换视图" />
-          </Dropdown>
+          <Button
+            size="small"
+            icon={<SettingOutlined />}
+            onClick={handleOpenIdentityModal}
+            title="Git 设置"
+          />
         </div>
       </div>
 
@@ -332,11 +336,13 @@ function GitPanel(): JSX.Element {
         onOk={handleSaveIdentity}
         onCancel={() => setShowIdentityModal(false)}
         confirmLoading={savingIdentity}
-        okText="保存并提交"
+        okText={identityFromCommit ? '保存并提交' : '保存'}
         cancelText="取消"
       >
         <p style={{ marginBottom: 16, color: 'var(--ant-color-text-secondary)' }}>
-          提交需要配置 Git 用户名和邮箱，请填写以下信息：
+          {identityFromCommit
+            ? '提交需要配置 Git 用户名和邮箱，请填写以下信息：'
+            : '配置当前仓库的 Git 用户名和邮箱信息：'}
         </p>
         <Form form={identityForm} layout="vertical" autoComplete="off">
           <Form.Item

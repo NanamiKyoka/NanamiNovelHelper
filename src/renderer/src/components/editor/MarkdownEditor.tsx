@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
@@ -204,11 +204,21 @@ export function MarkdownEditor({
     const savedState = getEditorState(currentPath)
 
     if (savedState) {
-      try {
-        editor.view.updateState(savedState as typeof editor.view.state)
-      } catch {
-        editor.commands.setContent(displayContent, false)
-      }
+      const dom = editor.view.dom as HTMLElement
+      dom.blur()
+
+      requestAnimationFrame(() => {
+        try {
+          const state = savedState as typeof editor.view.state
+          if (state.doc.content.size === 0 || !state.doc.textContent) {
+            editor.commands.setContent(displayContent, false)
+          } else {
+            editor.view.updateState(state)
+          }
+        } catch {
+          editor.commands.setContent(displayContent, false)
+        }
+      })
     } else {
       editor.commands.setContent(displayContent, false)
     }
