@@ -171,9 +171,13 @@ impl ProjectService {
         let mut current = self.current_project.lock().unwrap();
         *current = Some(project.clone());
 
-        project_state::set_project_path(Some(path));
+        project_state::set_project_path(Some(path.clone()));
 
-        let _ = self.add_recent_project(&project);
+        drop(current);
+
+        if let Err(e) = self.add_recent_project(&project) {
+            log::warn!("添加最近项目失败: {}", e);
+        }
 
         Ok(project)
     }

@@ -1,5 +1,5 @@
 use crate::error::{AppError, AppResult};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 #[cfg(target_os = "windows")]
@@ -18,10 +18,36 @@ impl GitService {
         }
     }
 
+    fn normalize_path(path: &str) -> AppResult<PathBuf> {
+        let path = Path::new(path);
+        
+        if !path.exists() {
+            return Err(AppError::OperationFailed(format!(
+                "路径不存在: {}",
+                path.display()
+            )));
+        }
+        
+        if !path.is_dir() {
+            return Err(AppError::OperationFailed(format!(
+                "路径不是目录: {}",
+                path.display()
+            )));
+        }
+        
+        let canonical = path
+            .canonicalize()
+            .map_err(|e| AppError::OperationFailed(format!("路径规范化失败: {}", e)))?;
+        
+        Ok(canonical)
+    }
+
     async fn exec_git_async(cwd: &str, args: &[&str]) -> AppResult<String> {
+        let normalized_path = Self::normalize_path(cwd)?;
+        
         let mut cmd = tokio::process::Command::new("git");
         cmd.args(args)
-            .current_dir(cwd);
+            .current_dir(&normalized_path);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(CREATE_NO_WINDOW);
         let output = cmd
@@ -42,9 +68,11 @@ impl GitService {
     }
 
     fn exec_git(cwd: &str, args: &[&str]) -> AppResult<String> {
+        let normalized_path = Self::normalize_path(cwd)?;
+        
         let mut cmd = std::process::Command::new("git");
         cmd.args(args)
-            .current_dir(cwd);
+            .current_dir(&normalized_path);
         #[cfg(target_os = "windows")]
         cmd.creation_flags(CREATE_NO_WINDOW);
         let output = cmd

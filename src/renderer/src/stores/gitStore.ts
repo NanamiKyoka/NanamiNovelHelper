@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand'
+import { create } from 'zustand'
 import { useProjectStore } from './projectStore'
 import { useEditorStore } from './editorStore'
 import { useFileTreeStore } from './fileTreeStore'
@@ -356,7 +356,15 @@ export const useGitStore = create<GitState>((set, get) => {
           set({ mode: modeResult.mode, useSystemGit: modeResult.useSystemGit })
         }
 
-        const isRepo = await window.api.git.isRepo(project.path)
+        let isRepo: boolean
+        try {
+          isRepo = await window.api.git.isRepo(project.path)
+        } catch (err) {
+          console.warn('Git仓库检测失败:', err)
+          set({ initialized: true, isRepo: false, repository: null, loading: false, error: null })
+          useFileTreeStore.getState().updateGitStatus([])
+          return
+        }
 
         if (!isRepo) {
           set({ initialized: true, isRepo: false, repository: null, loading: false })
@@ -383,7 +391,8 @@ export const useGitStore = create<GitState>((set, get) => {
           })
         }
       } catch (error) {
-        set({ initialized: true, isRepo: false, error: String(error), loading: false })
+        console.warn('Git初始化失败:', error)
+        set({ initialized: true, isRepo: false, error: null, loading: false })
       }
     },
 

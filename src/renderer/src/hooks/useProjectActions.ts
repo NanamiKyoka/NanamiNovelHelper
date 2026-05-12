@@ -186,7 +186,7 @@ export function useProjectActions() {
         useGitStore
           .getState()
           .init()
-          .catch(() => {})
+          .catch(err => console.warn('Git初始化失败:', err))
 
         // 刷新最近项目列表
         loadRecentProjects()
@@ -235,7 +235,7 @@ export function useProjectActions() {
         useGitStore
           .getState()
           .init()
-          .catch(() => {})
+          .catch(err => console.warn('Git初始化失败:', err))
 
         // 刷新最近项目列表
         loadRecentProjects()
