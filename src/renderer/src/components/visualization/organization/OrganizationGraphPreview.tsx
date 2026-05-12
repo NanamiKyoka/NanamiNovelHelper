@@ -5,7 +5,8 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { Button, Empty, Spin, Typography, theme, Tooltip, App } from 'antd'
+import { Button, Empty, Spin, Typography, theme, Tooltip, App, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   ZoomInOutlined,
   ZoomOutOutlined,
@@ -16,7 +17,8 @@ import {
   CheckOutlined,
   UnorderedListOutlined,
   AppstoreOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import type { NodeData } from '@antv/g6'
@@ -281,6 +283,12 @@ function OrganizationGraphPreview({
   // 拖拽状态
   const [activeId, setActiveId] = useState<string | null>(null)
 
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+  }>({ visible: false, x: 0, y: 0 })
+
   // DnD 传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -492,6 +500,50 @@ function OrganizationGraphPreview({
     }
   }
 
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleResetView = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    graphRef.current.zoomTo(1)
+    const canvas = graphRef.current.getCanvas()
+    const width = canvas.getConfig().width || 800
+    const height = canvas.getConfig().height || 600
+    graphRef.current.translate(width / 2, height / 2)
+    setZoom(1)
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [])
+
+  const canvasContextMenuItems: MenuProps['items'] = [
+    {
+      key: 'edit',
+      icon: <EditOutlined />,
+      label: '进入编辑模式',
+      onClick: () => {
+        onEnterEditMode()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    { type: 'divider' },
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应画布',
+      onClick: () => {
+        handleFitView()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'resetView',
+      icon: <ReloadOutlined />,
+      label: '重置视图',
+      onClick: handleResetView
+    }
+  ]
+
   // 拖拽开始
   const handleDragStart = useCallback((event: DragStartEvent): void => {
     setActiveId(event.active.id as string)
@@ -636,9 +688,27 @@ function OrganizationGraphPreview({
 
       {/* 内容区域 */}
       {viewMode === 'canvas' ? (
-        <div className={styles.canvasContainer}>
-          <div ref={containerRef} className={styles.canvas} />
-        </div>
+        <>
+          <div className={styles.canvasContainer}>
+            <div ref={containerRef} className={styles.canvas} onContextMenu={handleCanvasContextMenu} />
+          </div>
+
+          <Dropdown
+            menu={{ items: canvasContextMenuItems }}
+            open={contextMenu.visible}
+            onOpenChange={open => {
+              if (!open) setContextMenu(prev => ({ ...prev, visible: false }))
+            }}
+            overlayStyle={{
+              position: 'fixed',
+              left: contextMenu.x,
+              top: contextMenu.y,
+              zIndex: 10001
+            }}
+          >
+            <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+          </Dropdown>
+        </>
       ) : (
         <div className={styles.listContainer}>
           <DndContext

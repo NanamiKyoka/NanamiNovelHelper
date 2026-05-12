@@ -4,13 +4,15 @@
  */
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { Button, Empty, Spin, Typography, theme, Tooltip } from 'antd'
+import { Button, Empty, Spin, Typography, theme, Tooltip, Dropdown, App } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   ZoomInOutlined,
   ZoomOutOutlined,
   EditOutlined,
   ExpandOutlined,
-  ArrowLeftOutlined
+  ArrowLeftOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import type { NodeData, EdgeData } from '@antv/g6'
@@ -33,6 +35,7 @@ function RelationshipGraphPreview({
   onEnterEditMode
 }: RelationshipGraphPreviewProps): JSX.Element {
   const { token } = theme.useToken()
+  const { message: _message } = App.useApp()
   const isDarkMode =
     token.colorBgContainer === '#141414' ||
     token.colorBgContainer === '#1f1f1f' ||
@@ -43,6 +46,12 @@ function RelationshipGraphPreview({
   const graphRef = useRef<Graph | null>(null)
   const [zoom, setZoom] = useState(1)
   const [graphReady, setGraphReady] = useState(false)
+
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+  }>({ visible: false, x: 0, y: 0 })
 
   // 获取所有关系类型
   const relationTypes: RelationType[] = useMemo(
@@ -277,6 +286,49 @@ function RelationshipGraphPreview({
     }
   }
 
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleResetView = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    graphRef.current.zoomTo(1)
+    const canvas = graphRef.current.getCanvas()
+    const width = canvas.getConfig().width || 800
+    const height = canvas.getConfig().height || 600
+    graphRef.current.translate(width / 2, height / 2)
+    setZoom(1)
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [])
+
+  const canvasContextMenuItems: MenuProps['items'] = [
+    {
+      key: 'edit',
+      icon: <EditOutlined />,
+      label: '进入编辑模式',
+      onClick: () => {
+        onEnterEditMode()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    { type: 'divider' },
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应画布',
+      onClick: () => {
+        handleFitView()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'resetView',
+      icon: <ReloadOutlined />,
+      label: '重置视图',
+      onClick: handleResetView
+    }
+  ]
   const handleFitView = () => {
     if (graphRef.current && !graphRef.current.destroyed) {
       graphRef.current.fitView(40)
@@ -338,8 +390,24 @@ function RelationshipGraphPreview({
 
       {/* 画布区域 */}
       <div className={styles.canvasContainer}>
-        <div ref={containerRef} className={styles.canvas} />
+        <div ref={containerRef} className={styles.canvas} onContextMenu={handleCanvasContextMenu} />
       </div>
+
+      <Dropdown
+        menu={{ items: canvasContextMenuItems }}
+        open={contextMenu.visible}
+        onOpenChange={open => {
+          if (!open) setContextMenu(prev => ({ ...prev, visible: false }))
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+          zIndex: 10001
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
 
       {/* 底部统计 */}
       <div className={styles.statsBar}>

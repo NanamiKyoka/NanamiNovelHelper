@@ -107,6 +107,9 @@ impl FileService {
         if !absolute_old.exists() {
             return Err(AppError::FileNotFound(old_path));
         }
+        if absolute_old == absolute_new {
+            return Ok(());
+        }
         if absolute_new.exists() {
             return Err(AppError::OperationFailed(format!("目标路径已存在: {}", new_path)));
         }

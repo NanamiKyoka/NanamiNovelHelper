@@ -4,6 +4,7 @@ import { useEditorStore } from '@stores/editorStore'
 import { useUIStore } from '@stores/uiStore'
 import { useMarkdownExtensions } from '@hooks'
 import { EditorToolbar } from './EditorToolbar'
+import { EditorContextMenu } from './EditorContextMenu'
 import { SearchReplacePanel } from './SearchReplacePanel'
 import styles from './MarkdownEditor.module.css'
 
@@ -455,10 +456,12 @@ export function MarkdownEditor({
         onClose={() => setSearchPanelVisible(false)}
       />
 
-      <EditorContent
-        editor={editor}
-        className={`${styles.editorContainer} ${plainText ? styles.plainTextEditor : ''}`}
-      />
+      <EditorContextMenu editor={editor} fileType={activeTab?.type}>
+        <EditorContent
+          editor={editor}
+          className={`${styles.editorContainer} ${plainText ? styles.plainTextEditor : ''}`}
+        />
+      </EditorContextMenu>
     </div>
   )
 }

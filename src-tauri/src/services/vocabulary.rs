@@ -305,7 +305,7 @@ impl VocabularyService {
     pub fn create_linked_file(&self, entry: serde_json::Value) -> AppResult<serde_json::Value> {
         let project_path = project_state::get_project_path().ok_or(AppError::ProjectNotOpen)?;
         let data_dir = project_state::get_data_dir(&project_path);
-        let detail_dir = data_dir.join("vocabulary").join("detail");
+        let detail_dir = data_dir.join("vocabularies").join("details");
         ensure_dir(&detail_dir)?;
 
         let entry_id = entry.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -316,7 +316,7 @@ impl VocabularyService {
 
         let safe_type_name: String = type_name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
         let safe_entry_name: String = entry_name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();
-        let file_name = format!("{}_{}.novel", safe_type_name, safe_entry_name);
+        let file_name = format!("{}_{}.md", safe_type_name, safe_entry_name);
         let file_path = detail_dir.join(&file_name);
 
         let content = format!(

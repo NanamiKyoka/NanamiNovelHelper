@@ -30,7 +30,11 @@ import {
   EditOutlined,
   ExpandOutlined,
   UserAddOutlined,
-  TeamOutlined
+  TeamOutlined,
+  CopyOutlined,
+  AimOutlined,
+  CameraOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import type { NodeData, IElementEvent } from '@antv/g6'
@@ -526,6 +530,52 @@ function OrganizationGraphFullscreen({
   }
 
   // 右键菜单项
+  const handleDuplicateNode = useCallback(async () => {
+    if (!contextMenu.targetId) return
+    const node = currentGraph?.nodes?.find(n => n.id === contextMenu.targetId)
+    if (!node) return
+    await addNode({
+      name: `${node.name} (副本)`,
+      description: node.description,
+      color: node.color,
+      parentId: node.parentId
+    })
+    message.success('节点已复制')
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [contextMenu.targetId, currentGraph?.nodes, addNode, message])
+
+  const handleFocusNode = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed || !contextMenu.targetId) return
+    graphRef.current.focusItem(contextMenu.targetId, { duration: 500 })
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [contextMenu.targetId])
+
+  const handleResetView = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    graphRef.current.zoomTo(1)
+    const canvas = graphRef.current.getCanvas()
+    const width = canvas.getConfig().width || 800
+    const height = canvas.getConfig().height || 600
+    graphRef.current.translate(width / 2, height / 2)
+    setZoom(1)
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [])
+
+  const handleExportImage = useCallback(async () => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    try {
+      const dataUrl = await graphRef.current.toDataURL()
+      const link = document.createElement('a')
+      link.download = `${currentGraph?.name || '组织架构图'}.png`
+      link.href = dataUrl
+      link.click()
+      message.success('图片已导出')
+    } catch {
+      message.error('导出图片失败')
+    }
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [currentGraph?.name, message])
+
   const nodeContextMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
@@ -548,6 +598,19 @@ function OrganizationGraphFullscreen({
           setContextMenu(prev => ({ ...prev, visible: false }))
         }
       }
+    },
+    {
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: '复制节点',
+      onClick: handleDuplicateNode
+    },
+    { type: 'divider' },
+    {
+      key: 'focus',
+      icon: <AimOutlined />,
+      label: '聚焦此节点',
+      onClick: handleFocusNode
     },
     { type: 'divider' },
     {
@@ -572,6 +635,28 @@ function OrganizationGraphFullscreen({
         handleAddNode(null)
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    { type: 'divider' },
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应画布',
+      onClick: () => {
+        handleFitView()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'resetView',
+      icon: <ReloadOutlined />,
+      label: '重置视图',
+      onClick: handleResetView
+    },
+    {
+      key: 'exportImage',
+      icon: <CameraOutlined />,
+      label: '导出图片',
+      onClick: handleExportImage
     }
   ]
 

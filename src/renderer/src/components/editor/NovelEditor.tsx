@@ -21,6 +21,7 @@ import {
 } from './extensions/vocabularyHighlight'
 import { HighlightHoverCard } from './HighlightHoverCard'
 import { EditorToolbar } from './EditorToolbar'
+import { EditorContextMenu } from './EditorContextMenu'
 import { SearchReplacePanel } from './SearchReplacePanel'
 import styles from './NovelEditor.module.css'
 
@@ -189,21 +190,30 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       }
     },
     onSelectionUpdate: ({ editor }) => {
-      const { from, to } = editor.state.selection
-      if (from !== to) {
-        const text = editor.state.doc.textBetween(from, to, ' ')
-        setSelectedText(text.trim())
-      } else {
-        setSelectedText('')
-      }
+      try {
+        const { from, to } = editor.state.selection
+        const docSize = editor.state.doc.content.size
 
-      // 更新光标位置
-      const $from = editor.state.doc.resolve(from)
-      const line =
-        $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
-      const lineStart = from - $from.textOffset
-      const column = from - lineStart + 1
-      updateCursorPosition({ line, column })
+        if (from < 0 || to < 0 || from > docSize || to > docSize) {
+          return
+        }
+
+        if (from !== to) {
+          const text = editor.state.doc.textBetween(from, to, ' ')
+          setSelectedText(text.trim())
+        } else {
+          setSelectedText('')
+        }
+
+        const $from = editor.state.doc.resolve(from)
+        const line =
+          $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
+        const lineStart = from - $from.textOffset
+        const column = from - lineStart + 1
+        updateCursorPosition({ line, column })
+      } catch (e) {
+        console.warn('Selection update error:', e)
+      }
     }
   })
 
@@ -256,13 +266,15 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
 
-    // 切换前，保存当前编辑器状态
     if (prevPath && prevPath !== currentPath) {
-      saveEditorState(prevPath, editor.view.state)
+      try {
+        saveEditorState(prevPath, editor.view.state)
+      } catch (e) {
+        console.warn('Failed to save editor state:', e)
+      }
       clearHighlightCache()
     }
 
-    // 获取当前文件内容
     const currentContent = getCurrentContent()
     const savedState = getEditorState(currentPath)
 
@@ -273,12 +285,24 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       requestAnimationFrame(() => {
         try {
           const state = savedState as typeof editor.view.state
-          if (state.doc.content.size === 0 || !state.doc.textContent) {
+          const docSize = state.doc?.content?.size ?? 0
+          const hasContent = state.doc?.textContent && state.doc.textContent.length > 0
+
+          if (docSize <= 2 || !hasContent) {
             restoreEditorContent(editor, currentContent)
           } else {
-            editor.view.updateState(state)
+            const selection = state.selection
+            const validFrom = Math.min(selection.from, docSize - 1)
+            const validTo = Math.min(selection.to, docSize - 1)
+
+            if (validFrom < 0 || validTo < 0 || validFrom > docSize || validTo > docSize) {
+              restoreEditorContent(editor, currentContent)
+            } else {
+              editor.view.updateState(state)
+            }
           }
-        } catch {
+        } catch (e) {
+          console.warn('Failed to restore editor state:', e)
           restoreEditorContent(editor, currentContent)
         }
       })
@@ -286,7 +310,6 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       restoreEditorContent(editor, currentContent)
     }
 
-    // 切换标签后更新字数统计
     const textContent = editor.getText()
     updateWordCount(textContent)
 
@@ -533,7 +556,9 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
         onClose={() => setSearchPanelVisible(false)}
       />
 
-      <EditorContent editor={editor} className={styles.editorContainer} />
+      <EditorContextMenu editor={editor} fileType={activeTab?.type}>
+        <EditorContent editor={editor} className={styles.editorContainer} />
+      </EditorContextMenu>
 
       <HighlightHoverCard
         entryId={hoverCard.state.entryId}
@@ -553,10 +578,21 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
  */
 function restoreEditorContent(editor: ReturnType<typeof useEditor>, content: string) {
   try {
+    if (!content || content.trim() === '') {
+      editor.chain().clearContent(false).run()
+      return
+    }
+
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = content
     const parser = DOMParser.fromSchema(editor.schema)
     const newDoc = parser.parse(tempDiv)
+
+    const docSize = newDoc.content.size
+    if (docSize <= 0) {
+      editor.chain().clearContent(false).run()
+      return
+    }
 
     const newState = EditorState.create({
       doc: newDoc,
@@ -564,8 +600,13 @@ function restoreEditorContent(editor: ReturnType<typeof useEditor>, content: str
     })
 
     editor.view.updateState(newState)
-  } catch {
-    editor.chain().clearContent(false).setContent(content, false).run()
+  } catch (e) {
+    console.warn('Failed to restore editor content:', e)
+    try {
+      editor.chain().clearContent(false).setContent(content, false).run()
+    } catch {
+      editor.chain().clearContent(false).run()
+    }
   }
 }
 

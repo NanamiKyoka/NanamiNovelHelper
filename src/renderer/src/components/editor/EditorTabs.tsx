@@ -1,10 +1,10 @@
-﻿/**
+/**
  * VSCode 风格编辑器标签页组件
  */
 
 import { useRef, useCallback, useState } from 'react'
 import { Dropdown, MenuProps, App } from 'antd'
-import { CloseOutlined, CloseCircleFilled, ExportOutlined } from '@ant-design/icons'
+import { CloseOutlined, CloseCircleFilled, ExportOutlined, CopyOutlined, FileTextOutlined } from '@ant-design/icons'
 import { useEditorStore } from '@stores/editorStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
 import { stripHtmlTags } from '@utils/html'
@@ -216,9 +216,33 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
         )
       }
 
+      items.push(
+        { type: 'divider' },
+        {
+          key: 'copyPath',
+          label: '复制文件路径',
+          icon: <CopyOutlined />,
+          onClick: () => {
+            navigator.clipboard.writeText(tab.path).then(() => {
+              message.success('已复制文件路径')
+            })
+          }
+        },
+        {
+          key: 'copyName',
+          label: '复制文件名',
+          icon: <FileTextOutlined />,
+          onClick: () => {
+            navigator.clipboard.writeText(tab.name).then(() => {
+              message.success('已复制文件名')
+            })
+          }
+        }
+      )
+
       return items
     },
-    [closeTab, closeOtherTabs, closeAllTabs, handleExportTxt]
+    [closeTab, closeOtherTabs, closeAllTabs, handleExportTxt, message]
   )
 
   if (tabs.length === 0) return null

@@ -28,7 +28,12 @@ import {
   EditOutlined,
   SearchOutlined,
   UndoOutlined,
-  RedoOutlined
+  RedoOutlined,
+  CopyOutlined,
+  VerticalAlignTopOutlined,
+  VerticalAlignBottomOutlined,
+  TagOutlined,
+  InsertRowBelowOutlined
 } from '@ant-design/icons'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useUIStore } from '@stores/uiStore'
@@ -462,6 +467,81 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
   }
 
   // 事件右键菜单项
+  const handleDuplicateEvent = useCallback(
+    async (eventId: string) => {
+      const event = currentChart?.events?.find(e => e.id === eventId)
+      if (!event) return
+      await addEvent({
+        title: `${event.title} (副本)`,
+        description: event.description,
+        timeInfo: { cellStart: event.cellStart, cellEnd: event.cellEnd },
+        progress: event.progress,
+        color: event.color
+      })
+      message.success('事件已复制')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentChart?.events, addEvent, message]
+  )
+
+  const handleInsertEventBefore = useCallback(
+    (eventId: string) => {
+      const event = currentChart?.events?.find(e => e.id === eventId)
+      if (!event) return
+      setNewEventStart(event.cellStart)
+      setNewEventEnd(event.cellStart + 2)
+      setNewEventTitle('')
+      setNewEventDescription('')
+      setNewEventProgress(0)
+      setAddModalVisible(true)
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentChart?.events]
+  )
+
+  const handleInsertEventAfter = useCallback(
+    (eventId: string) => {
+      const event = currentChart?.events?.find(e => e.id === eventId)
+      if (!event) return
+      setNewEventStart(event.cellEnd + 1)
+      setNewEventEnd(event.cellEnd + 3)
+      setNewEventTitle('')
+      setNewEventDescription('')
+      setNewEventProgress(0)
+      setAddModalVisible(true)
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentChart?.events]
+  )
+
+  const handleSetTimeLabel = useCallback(
+    (cellIndex: number) => {
+      const position = cellIndex + 1
+      const existingLabel = currentChart?.axisConfig?.timeLabels?.find(
+        l => l.position === position
+      )
+      setEditingLabelPos(position)
+      setEditingLabelText(existingLabel?.label || '')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentChart?.axisConfig?.timeLabels]
+  )
+
+  const handleInsertColumn = useCallback(
+    async (_cellIndex: number) => {
+      const cellCount = currentChart?.axisConfig?.initialCellCount || 50
+      await updateChart({
+        axisConfig: {
+          ...currentChart?.axisConfig,
+          initialCellCount: cellCount + 1
+        }
+      })
+      message.success('已插入列')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentChart?.axisConfig, message]
+  )
+
   const getEventContextMenuItems = (eventId: string): MenuProps['items'] => [
     {
       key: 'edit',
@@ -475,6 +555,24 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
         }
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    {
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: '复制事件',
+      onClick: () => handleDuplicateEvent(eventId)
+    },
+    {
+      key: 'insertBefore',
+      icon: <VerticalAlignTopOutlined />,
+      label: '在此事件前插入',
+      onClick: () => handleInsertEventBefore(eventId)
+    },
+    {
+      key: 'insertAfter',
+      icon: <VerticalAlignBottomOutlined />,
+      label: '在此事件后插入',
+      onClick: () => handleInsertEventAfter(eventId)
     },
     { type: 'divider' },
     {
@@ -502,6 +600,18 @@ function SequenceChartFullscreen({ chartId, onBack }: SequenceChartFullscreenPro
         setAddModalVisible(true)
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    {
+      key: 'setLabel',
+      icon: <TagOutlined />,
+      label: '设置时间标签',
+      onClick: () => handleSetTimeLabel(cellIndex)
+    },
+    {
+      key: 'insertColumn',
+      icon: <InsertRowBelowOutlined />,
+      label: '在此处插入列',
+      onClick: () => handleInsertColumn(cellIndex)
     }
   ]
 

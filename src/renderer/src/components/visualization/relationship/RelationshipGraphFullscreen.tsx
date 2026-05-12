@@ -31,7 +31,12 @@ import {
   EditOutlined,
   TeamOutlined,
   SettingOutlined,
-  ExpandOutlined
+  ExpandOutlined,
+  CopyOutlined,
+  AimOutlined,
+  SwapOutlined,
+  CameraOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import { Graph } from '@antv/g6'
 import type { NodeData, EdgeData, IElementEvent } from '@antv/g6'
@@ -677,6 +682,98 @@ function RelationshipGraphFullscreen({
     : null
 
   // 右键菜单项定义（精简版：只保留编辑和删除）
+  const handleFocusNode = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed || !selectedNodeId) return
+    const nodeData = graphRef.current.getNodeData(selectedNodeId)
+    if (nodeData?.style) {
+      const { x, y } = nodeData.style
+      if (x !== undefined && y !== undefined) {
+        graphRef.current.focusItem(selectedNodeId, { duration: 500 })
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    }
+  }, [selectedNodeId])
+
+  const handleDuplicateNode = useCallback(async () => {
+    if (!selectedNode) return
+    await addNode({
+      name: `${selectedNode.name} (副本)`,
+      gender: selectedNode.gender,
+      description: selectedNode.description,
+      color: selectedNode.color,
+      linkedTypeId: selectedNode.linkedTypeId,
+      linkedEntryId: selectedNode.linkedEntryId
+    })
+    message.success('节点已复制')
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [selectedNode, addNode, message])
+
+  const handleReverseEdge = useCallback(async () => {
+    if (!selectedEdge || !selectedEdgeId) return
+    await updateEdge(selectedEdgeId, {
+      source: selectedEdge.target,
+      target: selectedEdge.source
+    })
+    message.success('关系方向已反转')
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [selectedEdge, selectedEdgeId, updateEdge, message])
+
+  const handleDuplicateEdge = useCallback(async () => {
+    if (!selectedEdge) return
+    await addEdge({
+      source: selectedEdge.source,
+      target: selectedEdge.target,
+      relationTypeId: selectedEdge.relationTypeId,
+      label: selectedEdge.label
+    })
+    message.success('关系已复制')
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [selectedEdge, addEdge, message])
+
+  const handleResetView = useCallback(() => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    graphRef.current.zoomTo(1)
+    const canvas = graphRef.current.getCanvas()
+    const width = canvas.getConfig().width || 800
+    const height = canvas.getConfig().height || 600
+    graphRef.current.translate(width / 2, height / 2)
+    setZoom(1)
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [])
+
+  const handleExportImage = useCallback(async () => {
+    if (!graphRef.current || graphRef.current.destroyed) return
+    try {
+      const dataUrl = await graphRef.current.toDataURL()
+      const link = document.createElement('a')
+      link.download = `${currentGraph?.name || '关系图'}.png`
+      link.href = dataUrl
+      link.click()
+      message.success('图片已导出')
+    } catch {
+      message.error('导出图片失败')
+    }
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [currentGraph?.name, message])
+
+  const handleCreateEdgeFromNode = useCallback(() => {
+    if (!currentGraph?.nodes?.length || currentGraph.nodes.length < 2) {
+      message.warning('需要至少两个节点才能创建关系')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+      return
+    }
+    setEdgeModal({
+      visible: true,
+      mode: 'create',
+      edge: {
+        source: selectedNodeId || undefined,
+        target: undefined,
+        relationTypeId: relationTypes[0]?.id
+      }
+    })
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [currentGraph?.nodes, selectedNodeId, relationTypes, message])
+
   const nodeContextMenuItems: MenuProps['items'] = [
     {
       key: 'edit',
@@ -688,6 +785,25 @@ function RelationshipGraphFullscreen({
         }
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    {
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: '复制节点',
+      onClick: handleDuplicateNode
+    },
+    {
+      key: 'createEdge',
+      icon: <HeartOutlined />,
+      label: '从此节点创建关系',
+      onClick: handleCreateEdgeFromNode
+    },
+    { type: 'divider' },
+    {
+      key: 'focus',
+      icon: <AimOutlined />,
+      label: '聚焦此节点',
+      onClick: handleFocusNode
     },
     { type: 'divider' },
     {
@@ -717,6 +833,18 @@ function RelationshipGraphFullscreen({
         }
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    {
+      key: 'reverse',
+      icon: <SwapOutlined />,
+      label: '反转方向',
+      onClick: handleReverseEdge
+    },
+    {
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: '复制关系',
+      onClick: handleDuplicateEdge
     },
     { type: 'divider' },
     {
@@ -756,6 +884,27 @@ function RelationshipGraphFullscreen({
       }
     },
     {
+      key: 'addFromVocabulary',
+      icon: <TeamOutlined />,
+      label: '从词库添加',
+      disabled: linkedEntries.length === 0,
+      onClick: () => {
+        setSelectFromVocabulary(true)
+        setNodeModal({
+          visible: true,
+          mode: 'create',
+          node: {
+            name: '',
+            gender: 'unknown',
+            color: getThemeColor('--color-primary'),
+            x: contextMenu.canvasX,
+            y: contextMenu.canvasY
+          }
+        })
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
       key: 'addEdge',
       icon: <HeartOutlined />,
       label: '添加关系',
@@ -772,6 +921,28 @@ function RelationshipGraphFullscreen({
         })
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    { type: 'divider' },
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应画布',
+      onClick: () => {
+        handleFitView()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'resetView',
+      icon: <ReloadOutlined />,
+      label: '重置视图',
+      onClick: handleResetView
+    },
+    {
+      key: 'exportImage',
+      icon: <CameraOutlined />,
+      label: '导出图片',
+      onClick: handleExportImage
     }
   ]
 

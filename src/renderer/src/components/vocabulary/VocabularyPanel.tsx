@@ -23,7 +23,8 @@ import {
   Badge,
   Checkbox,
   Tooltip,
-  Skeleton
+  Skeleton,
+  Modal
 } from 'antd'
 import type { MenuProps } from 'antd'
 import {

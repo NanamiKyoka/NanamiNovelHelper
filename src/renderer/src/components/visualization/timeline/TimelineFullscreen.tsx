@@ -32,7 +32,12 @@ import {
   CheckOutlined,
   MenuOutlined,
   ClockCircleOutlined,
-  EditOutlined
+  EditOutlined,
+  CopyOutlined,
+  BranchesOutlined,
+  VerticalAlignBottomOutlined,
+  ExpandOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -258,11 +263,13 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     x: number
     y: number
     nodeId: string | null
+    type: 'node' | 'canvas'
   }>({
     visible: false,
     x: 0,
     y: 0,
-    nodeId: null
+    nodeId: null,
+    type: 'node'
   })
 
   // 初始化
@@ -563,6 +570,55 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
   }
 
   // 获取节点操作菜单（精简版：只保留编辑和删除）
+  const handleDuplicateNode = useCallback(
+    (node: TimelineNode) => {
+      const nodes = currentTimeline?.nodes || []
+      const maxOrder = nodes.length > 0 ? Math.max(...nodes.map(n => n.order)) : -1
+      addNode({
+        title: `${node.title} (副本)`,
+        description: node.description,
+        timeInfo: { ...node.timeInfo },
+        characters: node.characters ? [...node.characters] : [],
+        tags: node.tags ? [...node.tags] : [],
+        color: node.color,
+        order: maxOrder + 1,
+        isBranchPoint: node.isBranchPoint,
+        chapter: node.chapter
+      })
+      message.success('节点已复制')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentTimeline?.nodes, addNode, message]
+  )
+
+  const handleInsertNode = useCallback(
+    (afterNode: TimelineNode) => {
+      const nodes = currentTimeline?.nodes || []
+      const _maxOrder = nodes.length > 0 ? Math.max(...nodes.map(n => n.order)) : -1
+      const newOrder = afterNode.order + 1
+      addNode({
+        title: '',
+        description: '',
+        timeInfo: { format: 'custom' },
+        characters: [],
+        tags: [],
+        order: newOrder,
+        isBranchPoint: false
+      })
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [currentTimeline?.nodes, addNode]
+  )
+
+  const handleToggleBranchPoint = useCallback(
+    (node: TimelineNode) => {
+      updateNode(node.id, { isBranchPoint: !node.isBranchPoint })
+      message.success(node.isBranchPoint ? '已取消分支点' : '已设为分支点')
+      setContextMenu(prev => ({ ...prev, visible: false }))
+    },
+    [updateNode, message]
+  )
+
   const getNodeContextMenu = (node: TimelineNode): MenuProps['items'] => [
     {
       key: 'edit',
@@ -572,6 +628,24 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         handleEditNode(node)
         setContextMenu(prev => ({ ...prev, visible: false }))
       }
+    },
+    {
+      key: 'duplicate',
+      icon: <CopyOutlined />,
+      label: '复制节点',
+      onClick: () => handleDuplicateNode(node)
+    },
+    {
+      key: 'insertAfter',
+      icon: <VerticalAlignBottomOutlined />,
+      label: '在下方插入',
+      onClick: () => handleInsertNode(node)
+    },
+    {
+      key: 'toggleBranch',
+      icon: <BranchesOutlined />,
+      label: node.isBranchPoint ? '取消分支点' : '设为分支点',
+      onClick: () => handleToggleBranchPoint(node)
     },
     { type: 'divider' },
     {
@@ -591,6 +665,37 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
     }
   ]
 
+  const canvasContextMenuItems: MenuProps['items'] = [
+    {
+      key: 'addNode',
+      icon: <PlusOutlined />,
+      label: '添加节点',
+      onClick: () => {
+        handleAddNode()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    { type: 'divider' },
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应视图',
+      onClick: () => {
+        handleZoomReset()
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'resetZoom',
+      icon: <ReloadOutlined />,
+      label: '重置缩放',
+      onClick: () => {
+        setZoom(1)
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    }
+  ]
+
   // 处理右键菜单
   const handleContextMenu = (e: React.MouseEvent, node: TimelineNode) => {
     e.preventDefault()
@@ -599,9 +704,21 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       visible: true,
       x: e.clientX,
       y: e.clientY,
-      nodeId: node.id
+      nodeId: node.id,
+      type: 'node'
     })
   }
+
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeId: null,
+      type: 'canvas'
+    })
+  }, [])
 
   // 键盘快捷键
   useEffect(() => {
@@ -787,6 +904,7 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
         className={styles.content}
         ref={contentRef}
         style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+        onContextMenu={handleCanvasContextMenu}
       >
         {sortedNodes.length === 0 ? (
           <div className={styles.emptyNodes}>
@@ -1063,9 +1181,11 @@ function TimelineFullscreen({ timelineId, onBack }: TimelineFullscreenProps): JS
       {/* 右键菜单 */}
       <Dropdown
         menu={{
-          items: contextMenu.nodeId
-            ? getNodeContextMenu(sortedNodes.find(n => n.id === contextMenu.nodeId)!)
-            : []
+          items: contextMenu.type === 'canvas'
+            ? canvasContextMenuItems
+            : contextMenu.nodeId
+              ? getNodeContextMenu(sortedNodes.find(n => n.id === contextMenu.nodeId)!)
+              : []
         }}
         open={contextMenu.visible}
         onOpenChange={open => {

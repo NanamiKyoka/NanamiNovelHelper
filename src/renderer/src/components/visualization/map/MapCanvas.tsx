@@ -11,8 +11,17 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Application, Container, Graphics, Text, FederatedPointerEvent, Color } from 'pixi.js'
-// 导入 unsafe-eval 支持以解决 Tauri 环境下的 CSP 限制
 import 'pixi.js/unsafe-eval'
+import { Dropdown, App } from 'antd'
+import type { MenuProps } from 'antd'
+import {
+  ExpandOutlined,
+  ReloadOutlined,
+  CameraOutlined,
+  AimOutlined,
+  EditOutlined,
+  ApiOutlined
+} from '@ant-design/icons'
 import { useMapStore } from '@renderer/stores/mapStore'
 import { useThemeStore } from '@renderer/stores/themeStore'
 import type { MapData, Point } from '@renderer/types/map'
@@ -26,6 +35,7 @@ interface MapCanvasProps {
 const VERTEX_SNAP_DISTANCE = 15
 
 export function MapCanvas({ onSave }: MapCanvasProps) {
+  const { message } = App.useApp()
   const canvasRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
   const layersRef = useRef<{
@@ -39,6 +49,12 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
   const [isSpacePressed, setIsSpacePressed] = useState(false)
   const isPanningRef = useRef(false)
   const panStartRef = useRef<Point>({ x: 0, y: 0 })
+
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+  }>({ visible: false, x: 0, y: 0 })
 
   // 从 store 获取状态
   const currentMap = useMapStore(state => state.currentMap)
@@ -657,5 +673,104 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
     onSave
   ])
 
-  return <div ref={canvasRef} className={styles.canvasContainer} />
+  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setContextMenu({ visible: true, x: e.clientX, y: e.clientY })
+  }, [])
+
+  const handleFitView = useCallback(() => {
+    setZoom(1)
+    setPan(0, 0)
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [setZoom, setPan])
+
+  const handleExportImage = useCallback(async () => {
+    if (!appRef.current) return
+    try {
+      const dataUrl = await appRef.current.canvas.toDataURL?.('image/png')
+      if (dataUrl) {
+        const link = document.createElement('a')
+        link.download = `${currentMap?.name || '地图'}.png`
+        link.href = dataUrl
+        link.click()
+        message.success('图片已导出')
+      }
+    } catch {
+      message.error('导出图片失败')
+    }
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }, [currentMap?.name, message])
+
+  const setTool = useMapStore(state => state.setTool)
+
+  const canvasContextMenuItems: MenuProps['items'] = [
+    {
+      key: 'fitView',
+      icon: <ExpandOutlined />,
+      label: '适应画布',
+      onClick: handleFitView
+    },
+    {
+      key: 'resetView',
+      icon: <ReloadOutlined />,
+      label: '重置视图',
+      onClick: handleFitView
+    },
+    { type: 'divider' },
+    {
+      key: 'tool-select',
+      icon: <AimOutlined />,
+      label: '选择工具',
+      onClick: () => {
+        setTool('select')
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'tool-draw',
+      icon: <EditOutlined />,
+      label: '绘制工具',
+      onClick: () => {
+        setTool('draw')
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    {
+      key: 'tool-connect',
+      icon: <ApiOutlined />,
+      label: '连接工具',
+      onClick: () => {
+        setTool('connect')
+        setContextMenu(prev => ({ ...prev, visible: false }))
+      }
+    },
+    { type: 'divider' },
+    {
+      key: 'exportImage',
+      icon: <CameraOutlined />,
+      label: '导出图片',
+      onClick: handleExportImage
+    }
+  ]
+
+  return (
+    <>
+      <div ref={canvasRef} className={styles.canvasContainer} onContextMenu={handleCanvasContextMenu} />
+      <Dropdown
+        menu={{ items: canvasContextMenuItems }}
+        open={contextMenu.visible}
+        onOpenChange={open => {
+          if (!open) setContextMenu(prev => ({ ...prev, visible: false }))
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+          zIndex: 10001
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
+    </>
+  )
 }

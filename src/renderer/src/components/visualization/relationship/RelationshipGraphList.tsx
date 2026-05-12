@@ -1,10 +1,11 @@
-﻿/**
+/**
  * 关系图列表组件
  * 展示所有关系图，支持创建、编辑、删除、导入导出、拖拽排序
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Typography, Button, Card, Modal, App, Input, Select, Spin } from 'antd'
+import { useState, useEffect, useCallback } from 'react'
+import { Typography, Button, Card, Modal, App, Input, Select, Spin, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
 import {
   PlusOutlined,
   ImportOutlined,
@@ -43,14 +44,6 @@ const { TextArea } = Input
 
 interface RelationshipGraphListProps {
   onSelectGraph: (graphId: string) => void
-}
-
-// 右键菜单位置
-interface ContextMenuState {
-  visible: boolean
-  x: number
-  y: number
-  graph: RelationshipGraphMeta | null
 }
 
 // 可排序的卡片组件
@@ -159,46 +152,29 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
   )
 
   // 右键菜单状态
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean
+    x: number
+    y: number
+    graph: RelationshipGraphMeta | null
+  }>({
     visible: false,
     x: 0,
     y: 0,
     graph: null
   })
 
-  const contextMenuRef = useRef<HTMLDivElement>(null)
-
-  // 加载列表
   useEffect(() => {
     loadList()
     loadTypes()
   }, [loadList, loadTypes])
 
-  // 将本地路径转换为 local:// URL（处理 Windows 路径）
   const getLocalUrl = (filePath: string): string => {
-    // Windows 路径如 E:\path -> local://file/E%3A/path
-    // 使用 'file/' 前缀并对冒号编码，避免浏览器把盘符当作主机名
     const normalizedPath = filePath.replace(/\\/g, '/')
-    // 对路径进行 URL 编码，确保特殊字符（如冒号、空格）正确处理
     const encodedPath = encodeURIComponent(normalizedPath)
     return `local://file/${encodedPath}`
   }
 
-  // 点击外部关闭右键菜单
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu(prev => ({ ...prev, visible: false }))
-      }
-    }
-
-    if (contextMenu.visible) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [contextMenu.visible])
-
-  // 处理右键菜单
   const handleContextMenu = useCallback((e: React.MouseEvent, graph: RelationshipGraphMeta) => {
     e.preventDefault()
     setContextMenu({
@@ -272,6 +248,35 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
     }
     setContextMenu(prev => ({ ...prev, visible: false }))
   }
+
+  const getContextMenuItems = useCallback((): MenuProps['items'] => {
+    if (!contextMenu.graph) return []
+    return [
+      {
+        key: 'edit',
+        icon: <EditOutlined />,
+        label: '编辑',
+        onClick: () => {
+          onSelectGraph(contextMenu.graph!.id)
+          setContextMenu(prev => ({ ...prev, visible: false }))
+        }
+      },
+      {
+        key: 'export',
+        icon: <ExportOutlined />,
+        label: '导出',
+        onClick: () => handleExport(contextMenu.graph!)
+      },
+      { type: 'divider' },
+      {
+        key: 'delete',
+        icon: <DeleteOutlined />,
+        label: '删除',
+        danger: true,
+        onClick: () => handleDelete(contextMenu.graph!)
+      }
+    ]
+  }, [contextMenu.graph, onSelectGraph, handleDelete, handleExport])
 
   // 导入关系图
   const handleImport = async () => {
@@ -384,36 +389,21 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
       </div>
 
       {/* 右键菜单 */}
-      {contextMenu.visible && contextMenu.graph && (
-        <div
-          ref={contextMenuRef}
-          className={styles.contextMenu}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-        >
-          <div
-            className={styles.contextMenuItem}
-            onClick={() => {
-              onSelectGraph(contextMenu.graph!.id)
-              setContextMenu(prev => ({ ...prev, visible: false }))
-            }}
-          >
-            <EditOutlined />
-            <span>编辑</span>
-          </div>
-          <div className={styles.contextMenuItem} onClick={() => handleExport(contextMenu.graph!)}>
-            <ExportOutlined />
-            <span>导出</span>
-          </div>
-          <div className={styles.contextMenuDivider} />
-          <div
-            className={`${styles.contextMenuItem} ${styles.contextMenuItemDanger}`}
-            onClick={() => handleDelete(contextMenu.graph!)}
-          >
-            <DeleteOutlined />
-            <span>删除</span>
-          </div>
-        </div>
-      )}
+      <Dropdown
+        menu={{ items: getContextMenuItems() }}
+        open={contextMenu.visible}
+        onOpenChange={open => {
+          if (!open) setContextMenu(prev => ({ ...prev, visible: false }))
+        }}
+        overlayStyle={{
+          position: 'fixed',
+          left: contextMenu.x,
+          top: contextMenu.y,
+          zIndex: 10001
+        }}
+      >
+        <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y }} />
+      </Dropdown>
 
       {/* 创建模态框 */}
       <Modal
