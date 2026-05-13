@@ -341,8 +341,8 @@ export const useGitStore = create<GitState>((set, get) => {
     setViewMode: (mode: GitViewMode) => set({ viewMode: mode }),
 
     init: async () => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) {
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) {
         set({ initialized: true, isRepo: false, repository: null })
         useFileTreeStore.getState().updateGitStatus([])
         return
@@ -358,7 +358,7 @@ export const useGitStore = create<GitState>((set, get) => {
 
         let isRepo: boolean
         try {
-          isRepo = await window.api.git.isRepo(project.path)
+          isRepo = await window.api.git.isRepo(projectPath)
         } catch (err) {
           console.warn('Git仓库检测失败:', err)
           set({ initialized: true, isRepo: false, repository: null, loading: false, error: null })
@@ -372,7 +372,7 @@ export const useGitStore = create<GitState>((set, get) => {
           return
         }
 
-        const statusResult = await window.api.git.status(project.path)
+        const statusResult = await window.api.git.status(projectPath)
         if (statusResult.success && statusResult.data) {
           set({
             initialized: true,
@@ -397,14 +397,14 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     refresh: async () => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path || !get().isRepo) return
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath || !get().isRepo) return
 
       await statusSequencer.queue(async () => {
         set({ loading: true, error: null })
 
         try {
-          const statusResult = await window.api.git.status(project.path)
+          const statusResult = await window.api.git.status(projectPath)
           if (statusResult.success && statusResult.data) {
             set({
               repository: statusResult.data,
@@ -430,23 +430,23 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     checkRepo: async () => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
-      const isRepo = await window.api.git.isRepo(project.path)
+      const isRepo = await window.api.git.isRepo(projectPath)
       set({ isRepo })
       return isRepo
     },
 
     getLog: async (options?: GitLogOptions) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return
 
       const logOptions = { ...get().logOptions, ...options }
       set({ logOptions })
 
       try {
-        const result = await window.api.git.log(project.path, logOptions)
+        const result = await window.api.git.log(projectPath, logOptions)
         if (result.success && result.data) {
           set({ commits: result.data })
         }
@@ -456,14 +456,14 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     commit: async (options: GitCommitOptions) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       set({ loading: true, error: null })
 
       try {
         return await runOperation(Operations.Commit, async () => {
-          const result = await window.api.git.commit(project.path, options)
+          const result = await window.api.git.commit(projectPath, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -480,14 +480,14 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     reset: async (options: GitResetOptions) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       set({ loading: true, error: null })
 
       try {
         return await runOperation(Operations.Reset, async () => {
-          const result = await window.api.git.reset(project.path, options)
+          const result = await window.api.git.reset(projectPath, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -504,12 +504,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     add: async (filepaths: string[]) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       try {
         return await runOperation(Operations.Add, async () => {
-          const result = await window.api.git.add(project.path, filepaths)
+          const result = await window.api.git.add(projectPath, filepaths)
           if (!result.success) {
             set({ error: result.error || '添加失败' })
           }
@@ -531,12 +531,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     unstage: async (filepaths: string[]) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       try {
         return await runOperation(Operations.Add, async () => {
-          const result = await window.api.git.restoreStaged(project.path, filepaths)
+          const result = await window.api.git.restoreStaged(projectPath, filepaths)
           if (!result.success) {
             set({ error: result.error || '撤销暂存失败' })
           }
@@ -549,12 +549,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     restore: async (filepaths: string[], source?: string) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       try {
         return await runOperation(Operations.Restore, async () => {
-          const result = await window.api.git.restore(project.path, filepaths, source)
+          const result = await window.api.git.restore(projectPath, filepaths, source)
           if (!result.success) {
             set({ error: result.error || '恢复失败' })
           }
@@ -567,12 +567,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     getDiff: async (filepath: string, staged: boolean = false) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return null
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return null
 
       try {
         return await runOperation(Operations.Diff, async () => {
-          const result = await window.api.git.diff(project.path, filepath, staged)
+          const result = await window.api.git.diff(projectPath, filepath, staged)
           if (result.success && result.data) {
             set({ currentDiff: result.data })
             return result.data
@@ -597,11 +597,11 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     getBranches: async () => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return
 
       try {
-        const result = await window.api.git.branchList(project.path)
+        const result = await window.api.git.branchList(projectPath)
         if (result.success && result.data) {
           set({ branches: result.data })
         }
@@ -611,12 +611,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     createBranch: async (name: string, startPoint?: string) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       try {
         return await runOperation(Operations.Branch, async () => {
-          const result = await window.api.git.branchCreate(project.path, name, startPoint)
+          const result = await window.api.git.branchCreate(projectPath, name, startPoint)
           if (result.success) {
             await get().getBranches()
             return true
@@ -632,11 +632,11 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     deleteBranch: async (name: string, force?: boolean) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       try {
-        const result = await window.api.git.branchDelete(project.path, name, force)
+        const result = await window.api.git.branchDelete(projectPath, name, force)
         if (result.success) {
           await get().getBranches()
           return true
@@ -651,14 +651,14 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     checkout: async (options: GitCheckoutOptions) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       set({ loading: true, error: null })
 
       try {
         return await runOperation(Operations.Checkout, async () => {
-          const result = await window.api.git.checkout(project.path, options)
+          const result = await window.api.git.checkout(projectPath, options)
           if (result.success) {
             await get().getBranches()
             await get().getLog()
@@ -676,14 +676,14 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     merge: async (options: GitMergeOptions) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return false
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return false
 
       set({ loading: true, error: null })
 
       try {
         return await runOperation(Operations.Merge, async () => {
-          const result = await window.api.git.merge(project.path, options)
+          const result = await window.api.git.merge(projectPath, options)
           if (result.success) {
             await get().getLog()
             set({ loading: false })
@@ -755,13 +755,13 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     getCommitDetail: async (commit: GitCommit) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return
 
       set({ commitDetail: { commit, files: [], loading: true } })
 
       try {
-        const result = await window.api.git.getCommitFiles(project.path, commit.hash)
+        const result = await window.api.git.getCommitFiles(projectPath, commit.hash)
         if (result.success && result.data) {
           set({ commitDetail: { commit, files: result.data, loading: false } })
         } else {
@@ -776,12 +776,12 @@ export const useGitStore = create<GitState>((set, get) => {
     },
 
     getCommitFileDiff: async (commitHash: string, filepath: string) => {
-      const project = useProjectStore.getState().currentProject
-      if (!project?.path) return null
+      const projectPath = useProjectStore.getState().currentProjectPath
+      if (!projectPath) return null
 
       try {
         const result = await window.api.git.getCommitFileDiff(
-          project.path,
+          projectPath,
           commitHash,
           filepath
         )

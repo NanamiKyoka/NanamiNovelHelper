@@ -26,3 +26,7 @@ export type { ConfirmDialogProps } from './ConfirmDialog'
 
 // 关于对话框组件
 export { AboutModal } from './AboutModal'
+
+// 项目加载错误组件
+export { ProjectLoadError } from './ProjectLoadError'
+export type { ProjectLoadErrorProps } from './ProjectLoadError'

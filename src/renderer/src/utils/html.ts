@@ -50,9 +50,16 @@ export function isRenderableFile(path: string): boolean {
 }
 
 export function disableBrowserAutofill(): void {
+  const isInEditor = (el: Element): boolean => {
+    return el.closest('.ProseMirror') !== null || el.closest('[contenteditable]') !== null
+  }
+
   const setAutocompleteOff = (el: Element) => {
     if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-      el.setAttribute('autocomplete', 'off')
+      if (isInEditor(el)) return
+      if (el.getAttribute('autocomplete') !== 'off') {
+        el.setAttribute('autocomplete', 'off')
+      }
     }
   }
 
@@ -60,8 +67,12 @@ export function disableBrowserAutofill(): void {
 
   const observer = new MutationObserver(mutations => {
     for (const mutation of mutations) {
+      const target = mutation.target
+      if (target instanceof HTMLElement && isInEditor(target)) continue
+
       for (const node of mutation.addedNodes) {
         if (node instanceof HTMLElement) {
+          if (isInEditor(node)) continue
           setAutocompleteOff(node)
           node.querySelectorAll('input, textarea').forEach(setAutocompleteOff)
         }

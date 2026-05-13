@@ -6,7 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-const PROJECT_FILE: &str = "project.json";
+const PROJECT_FILE: &str = "project.json5";
 const MAX_RECENT_PROJECTS: usize = 10;
 
 pub struct ProjectService {
@@ -52,9 +52,9 @@ impl ProjectService {
             .collect()
     }
 
-    pub fn add_recent_project(&self, project: &crate::models::Project) -> AppResult<()> {
+    pub fn add_recent_project(&self, project: &crate::models::Project, path: &str) -> AppResult<()> {
         let mut recent = Self::load_recent_projects();
-        recent.retain(|item| item.path != project.path);
+        recent.retain(|item| item.path != path);
 
         let now = chrono::Utc::now().to_rfc3339();
         recent.insert(
@@ -62,7 +62,7 @@ impl ProjectService {
             RecentProject {
                 id: project.id.clone(),
                 name: project.name.clone(),
-                path: project.path.clone(),
+                path: path.to_string(),
                 description: project.description.clone(),
                 cover: project.cover.clone(),
                 last_opened_at: now,
@@ -113,7 +113,9 @@ impl ProjectService {
 
         project.updated_at = chrono::Utc::now().to_rfc3339();
 
-        let project_file = Self::get_project_file_path(&project.path);
+        let project_path = project_state::get_project_path()
+            .ok_or(AppError::ProjectNotOpen)?;
+        let project_file = Self::get_project_file_path(&project_path);
         write_json_file(&project_file, &*project)?;
 
         Ok(project.clone())
@@ -132,7 +134,7 @@ impl ProjectService {
         name: String,
         path: String,
     ) -> AppResult<crate::models::Project> {
-        let project = crate::models::Project::new(name, path.clone());
+        let project = crate::models::Project::new(name);
         let data_dir = Self::get_data_dir(&path);
         ensure_dir(&data_dir)?;
 
@@ -153,9 +155,9 @@ impl ProjectService {
         let mut current = self.current_project.lock().unwrap();
         *current = Some(project.clone());
 
-        project_state::set_project_path(Some(path));
+        project_state::set_project_path(Some(path.clone()));
 
-        let _ = self.add_recent_project(&project);
+        let _ = self.add_recent_project(&project, &path);
 
         Ok(project)
     }
@@ -175,7 +177,7 @@ impl ProjectService {
 
         drop(current);
 
-        if let Err(e) = self.add_recent_project(&project) {
+        if let Err(e) = self.add_recent_project(&project, &path) {
             log::warn!("添加最近项目失败: {}", e);
         }
 
@@ -199,7 +201,9 @@ impl ProjectService {
             .get_current_project()
             .ok_or(AppError::ProjectNotOpen)?;
 
-        let data_dir = Self::get_data_dir(&project.path);
+        let project_path = project_state::get_project_path()
+            .ok_or(AppError::ProjectNotOpen)?;
+        let data_dir = Self::get_data_dir(&project_path);
 
         let settings = read_json_file::<serde_json::Value>(&data_dir.join("settings.json")).ok();
 
@@ -269,7 +273,8 @@ impl ProjectService {
             .get_current_project()
             .ok_or(AppError::ProjectNotOpen)?;
 
-        let project_path = project.path.clone();
+        let project_path = project_state::get_project_path()
+            .ok_or(AppError::ProjectNotOpen)?;
         let data_dir = Self::get_data_dir(&project_path);
 
         tokio::task::spawn_blocking(move || {

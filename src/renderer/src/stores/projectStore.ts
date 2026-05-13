@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 项目状态管理
  *
  * 注意：createProject、openProject、closeProject 方法仅管理项目自身的状态
@@ -16,6 +16,7 @@ const handleError = createErrorHandler('[ProjectStore]')
 interface ProjectState {
   // 状态
   currentProject: Project | null
+  currentProjectPath: string | null
   recentProjects: RecentProject[]
   isLoading: boolean
   error: string | null
@@ -35,11 +36,13 @@ interface ProjectState {
   clearError: () => void
   // 批量设置方法（用于聚合接口）
   setCurrentProject: (project: Project | null) => void
+  setCurrentProjectPath: (path: string | null) => void
 }
 
 export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 初始状态
   currentProject: null,
+  currentProjectPath: null,
   recentProjects: [],
   isLoading: false,
   error: null,
@@ -49,10 +52,9 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const project = await window.api.project.create(options)
-      const openedProject = await window.api.project.open(project.path)
-      set({ currentProject: openedProject, isLoading: false })
+      set({ currentProject: project, currentProjectPath: options.parentPath, isLoading: false })
       get().loadRecentProjects()
-      return openedProject
+      return project
     } catch (error) {
       const errorMessage = handleError(error, { fallbackMessage: '创建项目失败' })
       set({ error: errorMessage, isLoading: false })
@@ -65,7 +67,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const project = await window.api.project.open(path)
-      set({ currentProject: project, isLoading: false })
+      set({ currentProject: project, currentProjectPath: path, isLoading: false })
       get().loadRecentProjects()
       return project
     } catch (error) {
@@ -80,7 +82,7 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       await window.api.project.close()
-      set({ currentProject: null, isLoading: false })
+      set({ currentProject: null, currentProjectPath: null, isLoading: false })
     } catch (error) {
       const errorMessage = handleError(error, { fallbackMessage: '关闭项目失败' })
       set({ error: errorMessage, isLoading: false })
@@ -161,5 +163,10 @@ export const useProjectStore = create<ProjectState>()((set, get) => ({
   // 批量设置当前项目（用于聚合接口）
   setCurrentProject: (project: Project | null) => {
     set({ currentProject: project, isLoading: false, error: null })
+  },
+
+  // 设置当前项目路径
+  setCurrentProjectPath: (path: string | null) => {
+    set({ currentProjectPath: path })
   }
 }))

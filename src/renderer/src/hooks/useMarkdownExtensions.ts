@@ -20,6 +20,16 @@ import {
 
 const lowlight = createLowlight(common)
 
+// Pre-compile all registered grammars to avoid first-use compilation delay
+// during setContent (highlight.js compiles grammars lazily on first highlight call)
+for (const language of lowlight.listLanguages()) {
+  try {
+    lowlight.highlight(language, '')
+  } catch {
+    // Some grammars may throw on empty input — ignore
+  }
+}
+
 export function useMarkdownExtensions() {
   const getExtensions = useCallback((plainText = false) => {
     if (plainText) {

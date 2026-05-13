@@ -8,8 +8,8 @@ import { Card, Tag, Typography, Divider } from 'antd'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useSensitiveStore } from '@stores/sensitiveStore'
 import { useHighlightService } from '@services/highlightService'
-import type { VocabularyType } from '@shared/vocabulary'
-import type { HoverCardConfig } from '@shared/highlight'
+import type { VocabularyType, FieldDefinition } from '@shared/vocabulary'
+import type { HoverCardConfig, HoverCardFieldConfig } from '@shared/highlight'
 import styles from './HighlightHoverCard.module.css'
 
 const { Text } = Typography
@@ -34,12 +34,70 @@ interface HighlightHoverCardProps {
 /**
  * 格式化字段值显示
  */
-function formatFieldValue(value: string | string[] | undefined): string {
-  if (!value) return '-'
+function formatFieldValue(value: unknown): string {
+  if (value === undefined || value === null) return '-'
+  // 处理 ColorPicker 对象
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const colorObj = value as {
+      toHexString?: () => string
+      metaColor?: { toHexString?: () => string }
+    }
+    if (colorObj.toHexString) {
+      return colorObj.toHexString()
+    }
+    if (colorObj.metaColor?.toHexString) {
+      return colorObj.metaColor.toHexString()
+    }
+    return '-'
+  }
   if (Array.isArray(value)) {
     return value.length > 0 ? value.join(', ') : '-'
   }
-  return value
+  if (typeof value === 'string') {
+    return value || '-'
+  }
+  return String(value)
+}
+
+/**
+ * 检查值是否为颜色对象或颜色字符串
+ */
+function isColorValue(value: unknown): boolean {
+  if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) {
+    return true
+  }
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const colorObj = value as {
+      toHexString?: () => string
+      metaColor?: { toHexString?: () => string }
+    }
+    return !!(colorObj.toHexString || colorObj.metaColor?.toHexString)
+  }
+  return false
+}
+
+/**
+ * 获取颜色字符串
+ */
+function getColorString(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const colorObj = value as {
+      toHexString?: () => string
+      metaColor?: { toHexString?: () => string }
+    }
+    if (colorObj.toHexString) return colorObj.toHexString()
+    if (colorObj.metaColor?.toHexString) return colorObj.metaColor.toHexString()
+  }
+  return '#000000'
+}
+
+/**
+ * 获取字段定义
+ */
+function getFieldDefinition(fieldId: string, type: VocabularyType | undefined): FieldDefinition | undefined {
+  if (!type) return undefined
+  return (type.fields || []).find(f => f.id === fieldId)
 }
 
 /**
@@ -96,12 +154,27 @@ export function HighlightHoverCard({
     // 如果有配置，使用配置的字段列表
     if (activeConfig.typeConfigs) {
       const typeConfig = activeConfig.typeConfigs.find(tc => tc.typeId === vocabularyType.id)
-      if (typeConfig && typeConfig.fields && typeConfig.fields.length > 0) {
-        return typeConfig.fields
+      // 如果存在该类型的配置（即使 fields 为空），使用配置值
+      if (typeConfig) {
+        if (!typeConfig.fields || typeConfig.fields.length === 0) {
+          // 配置存在但 fields 为空，表示用户不想显示任何字段
+          return []
+        }
+        // 检查 fields 是 string[] 还是 HoverCardFieldConfig[]
+        const firstField = typeConfig.fields[0]
+        if (typeof firstField === 'string') {
+          return typeConfig.fields as string[]
+        } else {
+          // HoverCardFieldConfig[] 类型，提取 visible 为 true 的 fieldId
+          return (typeConfig.fields as HoverCardFieldConfig[])
+            .filter(f => f.visible)
+            .sort((a, b) => a.order - b.order)
+            .map(f => f.fieldId)
+        }
       }
     }
 
-    // 默认显示该类型的所有自定义字段（排除内置的 name 和 type）
+    // 只有当配置中不存在该类型的配置时，才使用默认值
     return (vocabularyType.fields || []).filter(f => !['name', 'type'].includes(f.id)).map(f => f.id)
   }, [vocabularyType, activeConfig.typeConfigs])
 
@@ -236,14 +309,30 @@ export function HighlightHoverCard({
           )
           .map(fieldId => {
             const value = entry.fields[fieldId]
-            if (!value || (Array.isArray(value) && value.length === 0)) return null
+            if (value === undefined || value === null) return null
+            if (Array.isArray(value) && value.length === 0) return null
+
+            const fieldDef = getFieldDefinition(fieldId, vocabularyType)
+            const isColor = fieldDef?.type === 'color' || isColorValue(value)
 
             return (
               <div key={fieldId} className={styles.fieldRow}>
                 <Text type="secondary" className={styles.label}>
                   {getFieldDisplayName(fieldId, vocabularyType)}:
                 </Text>
-                <Text>{formatFieldValue(value)}</Text>
+                {isColor ? (
+                  <div
+                    style={{
+                      width: 20,
+                      height: 20,
+                      backgroundColor: getColorString(value),
+                      borderRadius: 4,
+                      border: '1px solid #d9d9d9'
+                    }}
+                  />
+                ) : (
+                  <Text>{formatFieldValue(value)}</Text>
+                )}
               </div>
             )
           })}

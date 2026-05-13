@@ -89,6 +89,12 @@
   background-color: var(--ant-color-bg-text-hover);
 }
 
+.recentItem.loading {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
 .pathText {
   font-size: 12px;
   display: block;

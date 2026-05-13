@@ -84,8 +84,6 @@ export interface Project {
   description?: string
   /** 作者 */
   author?: string
-  /** 项目路径（绝对路径） */
-  path: string
   /** 封面图片路径 */
   cover?: string
   /** 标签 */

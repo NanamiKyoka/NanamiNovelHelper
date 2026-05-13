@@ -9,6 +9,8 @@ import { SearchReplacePanel } from './SearchReplacePanel'
 import styles from './MarkdownEditor.module.css'
 
 const WORD_COUNT_DEBOUNCE_MS = 300
+const SAVE_STATE_DEBOUNCE_MS = 500
+const CONTENT_DEBOUNCE_MS = 150
 
 function getMarkdownFromEditor(editor: {
   storage: { markdown: { getMarkdown: () => string } }
@@ -68,24 +70,30 @@ export function MarkdownEditor({
   const [searchPanelVisible, setSearchPanelVisible] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wordCountTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const saveStateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const contentUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null)
+  const onSaveRef = useRef(onSave)
+  onSaveRef.current = onSave
 
   const activeTab = tabs.find(tab => tab.id === activeTabId)
   const currentFilePath = activeTab?.path || ''
 
   const currentFilePathRef = useRef<string>(currentFilePath)
   const prevFilePathRef = useRef<string | null>(null)
+  const prevActiveTabIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     currentFilePathRef.current = currentFilePath
   }, [currentFilePath])
 
   const debouncedUpdateWordCount = useCallback(
-    (textContent: string) => {
+    (getText: () => string) => {
       if (wordCountTimeoutRef.current) {
         clearTimeout(wordCountTimeoutRef.current)
       }
       wordCountTimeoutRef.current = setTimeout(() => {
-        updateWordCount(textContent)
+        updateWordCount(getText())
       }, WORD_COUNT_DEBOUNCE_MS)
     },
     [updateWordCount]
@@ -106,7 +114,17 @@ export function MarkdownEditor({
       handleKeyDown: (_view, event) => {
         if ((event.ctrlKey || event.metaKey) && event.key === 's') {
           event.preventDefault()
-          onSave?.()
+          if (contentUpdateTimeoutRef.current) {
+            clearTimeout(contentUpdateTimeoutRef.current)
+            contentUpdateTimeoutRef.current = null
+            const ed = editorRef.current
+            if (ed) {
+              const c = plainText ? getPlainTextFromEditor(ed) : getMarkdownFromEditor(ed)
+              updateContent(c)
+              onChange?.(c)
+            }
+          }
+          onSaveRef.current?.()
           return true
         }
         if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
@@ -120,16 +138,25 @@ export function MarkdownEditor({
     onUpdate: ({ editor }) => {
       if (isComposing) return
 
-      const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
-      const textContent = editor.getText()
-      updateContent(content)
-      onChange?.(content)
+      if (contentUpdateTimeoutRef.current) {
+        clearTimeout(contentUpdateTimeoutRef.current)
+      }
+      contentUpdateTimeoutRef.current = setTimeout(() => {
+        const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
+        updateContent(content)
+        onChange?.(content)
+      }, CONTENT_DEBOUNCE_MS)
 
-      debouncedUpdateWordCount(textContent)
+      debouncedUpdateWordCount(() => editor.getText())
 
       const filePath = currentFilePathRef.current
       if (filePath) {
-        saveEditorState(filePath, editor.view.state)
+        if (saveStateTimeoutRef.current) {
+          clearTimeout(saveStateTimeoutRef.current)
+        }
+        saveStateTimeoutRef.current = setTimeout(() => {
+          saveEditorState(filePath, editor.view.state)
+        }, SAVE_STATE_DEBOUNCE_MS)
       }
 
       if (settings.autoSaveInterval > 0) {
@@ -137,7 +164,17 @@ export function MarkdownEditor({
           clearTimeout(saveTimeoutRef.current)
         }
         saveTimeoutRef.current = setTimeout(() => {
-          onSave?.()
+          if (contentUpdateTimeoutRef.current) {
+            clearTimeout(contentUpdateTimeoutRef.current)
+            contentUpdateTimeoutRef.current = null
+            const ed = editorRef.current
+            if (ed) {
+              const c = plainText ? getPlainTextFromEditor(ed) : getMarkdownFromEditor(ed)
+              updateContent(c)
+              onChange?.(c)
+            }
+          }
+          onSaveRef.current?.()
         }, settings.autoSaveInterval)
       }
     },
@@ -151,13 +188,32 @@ export function MarkdownEditor({
       }
 
       const $from = editor.state.doc.resolve(from)
-      const line =
-        $from.start() === 1 ? 1 : editor.state.doc.textContent.substring(0, from).split('\n').length
+      let line = 1
+      if (from > 1) {
+        const doc = editor.state.doc
+        const blockIndex = $from.index(0)
+        for (let i = 0; i < blockIndex; i++) {
+          const block = doc.child(i)
+          const text = block.textContent
+          let blockLines = 1
+          for (let j = 0; j < text.length; j++) {
+            if (text.charCodeAt(j) === 0x0a) blockLines++
+          }
+          line += blockLines
+        }
+        const parentOffset = $from.parentOffset
+        const parentText = $from.parent.textContent
+        for (let j = 0; j < parentOffset && j < parentText.length; j++) {
+          if (parentText.charCodeAt(j) === 0x0a) line++
+        }
+      }
       const lineStart = from - $from.textOffset
       const column = from - lineStart + 1
       updateCursorPosition({ line, column })
     }
   })
+
+  editorRef.current = editor
 
   useEffect(() => {
     if (!editor) return
@@ -167,11 +223,15 @@ export function MarkdownEditor({
     const handleCompositionStart = () => setIsComposing(true)
     const handleCompositionEnd = () => {
       setIsComposing(false)
-      const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
-      const textContent = editor.getText()
-      updateContent(content)
-      onChange?.(content)
-      debouncedUpdateWordCount(textContent)
+      if (contentUpdateTimeoutRef.current) {
+        clearTimeout(contentUpdateTimeoutRef.current)
+      }
+      contentUpdateTimeoutRef.current = setTimeout(() => {
+        const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
+        updateContent(content)
+        onChange?.(content)
+      }, CONTENT_DEBOUNCE_MS)
+      debouncedUpdateWordCount(() => editor.getText())
     }
 
     editorElement.addEventListener('compositionstart', handleCompositionStart)
@@ -193,41 +253,67 @@ export function MarkdownEditor({
   useEffect(() => {
     if (!editor) return
 
+    const isFirstMount = prevActiveTabIdRef.current === null
+    const isTabSwitch = !isFirstMount && prevActiveTabIdRef.current !== activeTabId
+
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
 
-    if (prevPath && prevPath !== currentPath) {
+    if (!isFirstMount && prevPath && prevPath !== currentPath) {
       saveEditorState(prevPath, editor.view.state)
     }
 
-    const currentContent = getCurrentContent()
-    const displayContent = plainText ? plainTextToHtml(currentContent) : currentContent
-    const savedState = getEditorState(currentPath)
+    if (isFirstMount || isTabSwitch) {
+      const currentContent = getCurrentContent()
+      const displayContent = plainText ? plainTextToHtml(currentContent) : currentContent
+      const savedState = getEditorState(currentPath)
 
-    if (savedState) {
-      const dom = editor.view.dom as HTMLElement
-      dom.blur()
+      if (savedState) {
+        const dom = editor.view.dom as HTMLElement
+        dom.blur()
 
-      requestAnimationFrame(() => {
-        try {
-          const state = savedState as typeof editor.view.state
-          if (state.doc.content.size === 0 || !state.doc.textContent) {
+        requestAnimationFrame(() => {
+          try {
+            const state = savedState as typeof editor.view.state
+            if (state.doc.content.size === 0 || !state.doc.textContent) {
+              editor.commands.setContent(displayContent, false)
+            } else {
+              const savedTextContent = state.doc.textContent || ''
+              const currentTextContent = currentContent.trim()
+              const contentMatches = savedTextContent.trim() === currentTextContent
+
+              if (!contentMatches) {
+                editor.commands.setContent(displayContent, false)
+              } else {
+                const docSize = state.doc.content.size
+                const selection = state.selection
+                const validFrom = Math.min(selection.from, docSize - 1)
+                const validTo = Math.min(selection.to, docSize - 1)
+
+                if (validFrom < 0 || validTo < 0 || validFrom > docSize || validTo > docSize) {
+                  editor.commands.setContent(displayContent, false)
+                } else {
+                  editor.view.updateState(state)
+                }
+              }
+            }
+          } catch {
             editor.commands.setContent(displayContent, false)
-          } else {
-            editor.view.updateState(state)
           }
-        } catch {
+          const textContent = editor.getText()
+          updateWordCount(textContent)
+        })
+      } else {
+        requestAnimationFrame(() => {
           editor.commands.setContent(displayContent, false)
-        }
-      })
-    } else {
-      editor.commands.setContent(displayContent, false)
+          const textContent = editor.getText()
+          updateWordCount(textContent)
+        })
+      }
     }
 
-    const textContent = editor.getText()
-    updateWordCount(textContent)
-
     prevFilePathRef.current = currentPath
+    prevActiveTabIdRef.current = activeTabId
   }, [
     editor,
     getCurrentContent,
@@ -258,6 +344,8 @@ export function MarkdownEditor({
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
       if (wordCountTimeoutRef.current) clearTimeout(wordCountTimeoutRef.current)
+      if (saveStateTimeoutRef.current) clearTimeout(saveStateTimeoutRef.current)
+      if (contentUpdateTimeoutRef.current) clearTimeout(contentUpdateTimeoutRef.current)
     }
   }, [])
 

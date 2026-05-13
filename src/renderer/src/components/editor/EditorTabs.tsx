@@ -70,8 +70,8 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
   )
 
   const handleTabClick = useCallback(
-    (tabId: string) => {
-      setActiveTab(tabId)
+    async (tabId: string) => {
+      await setActiveTab(tabId)
     },
     [setActiveTab]
   )

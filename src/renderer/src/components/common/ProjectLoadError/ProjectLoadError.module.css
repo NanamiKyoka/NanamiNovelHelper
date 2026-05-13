@@ -1,0 +1,80 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+}
+
+.errorCard {
+  max-width: 600px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.icon {
+  font-size: 36px;
+  color: var(--ant-color-error, #ff4d4f);
+}
+
+.title {
+  margin: 0 !important;
+  color: var(--ant-color-text, rgba(0, 0, 0, 0.88));
+}
+
+.alert {
+  margin-bottom: 16px;
+}
+
+.collapse {
+  margin-bottom: 16px;
+  background: transparent;
+}
+
+.collapse :global(.ant-collapse-header) {
+  padding: 12px 16px !important;
+}
+
+.list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ant-color-text-secondary, rgba(0, 0, 0, 0.45));
+  line-height: 2;
+}
+
+.list li {
+  margin-bottom: 4px;
+}
+
+.pathInfo {
+  padding: 12px 16px;
+  background: var(--ant-color-bg-container, #ffffff);
+  border-radius: 6px;
+  border: 1px solid var(--ant-color-border, #d9d9d9);
+  margin-bottom: 8px;
+}
+
+.pathText {
+  word-break: break-all;
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.actions :global(.ant-btn) {
+  min-width: 120px;
+}

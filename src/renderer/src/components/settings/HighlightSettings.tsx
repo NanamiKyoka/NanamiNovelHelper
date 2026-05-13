@@ -25,7 +25,7 @@ import {
 } from 'antd'
 import type { TreeDataNode, TreeProps } from 'antd'
 import { PlusOutlined, FolderOutlined } from '@ant-design/icons'
-import type { HighlightConfig, HoverCardTypeConfig } from '@shared/highlight'
+import type { HighlightConfig, HoverCardTypeConfig, HoverCardFieldConfig } from '@shared/highlight'
 import { useHighlightService } from '@services/highlightService'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useProjectStore } from '@stores/projectStore'
@@ -577,9 +577,29 @@ export function HighlightSettings(): JSX.Element {
 
           <Collapse
             items={vocabTypes.map(vocabType => {
-              const typeConfig = config.hoverCard?.typeConfigs?.find(
+              const existingConfig = config.hoverCard?.typeConfigs?.find(
                 (c: HoverCardTypeConfig) => c.typeId === vocabType.id
-              ) || { typeId: vocabType.id, fields: ['name', 'type'] }
+              )
+              
+              // 将 fields 转换为字符串数组供 Checkbox.Group 使用
+              let selectedFields: string[]
+              if (existingConfig?.fields && existingConfig.fields.length > 0) {
+                const firstField = existingConfig.fields[0]
+                if (typeof firstField === 'string') {
+                  selectedFields = existingConfig.fields as string[]
+                } else {
+                  // HoverCardFieldConfig[] 类型，提取 visible 为 true 的 fieldId
+                  selectedFields = (existingConfig.fields as HoverCardFieldConfig[])
+                    .filter(f => f.visible)
+                    .map(f => f.fieldId)
+                }
+              } else if (existingConfig) {
+                // 配置存在但 fields 为空
+                selectedFields = []
+              } else {
+                // 配置不存在，使用默认值
+                selectedFields = ['name', 'type']
+              }
 
               return {
                 key: vocabType.id,
@@ -593,7 +613,7 @@ export function HighlightSettings(): JSX.Element {
                   <div>
                     <p className={styles.hint}>选择悬浮卡片中显示的字段：</p>
                     <Checkbox.Group
-                      value={typeConfig.fields}
+                      value={selectedFields}
                       onChange={checkedValues => {
                         const newTypeConfigs = [
                           ...(config.hoverCard?.typeConfigs?.filter(

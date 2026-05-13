@@ -71,6 +71,7 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   // 文件路径追踪 refs
   const currentFilePathRef = useRef<string>(currentFilePath)
   const prevFilePathRef = useRef<string | null>(null)
+  const prevActiveTabIdRef = useRef<string | null>(null)
 
   // 同步 ref
   useEffect(() => {
@@ -263,10 +264,13 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
   useEffect(() => {
     if (!editor) return
 
+    const isFirstMount = prevActiveTabIdRef.current === null
+    const isTabSwitch = !isFirstMount && prevActiveTabIdRef.current !== activeTabId
+
     const prevPath = prevFilePathRef.current
     const currentPath = currentFilePath
 
-    if (prevPath && prevPath !== currentPath) {
+    if (!isFirstMount && prevPath && prevPath !== currentPath) {
       try {
         saveEditorState(prevPath, editor.view.state)
       } catch (e) {
@@ -275,45 +279,56 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       clearHighlightCache()
     }
 
-    const currentContent = getCurrentContent()
-    const savedState = getEditorState(currentPath)
+    if (isFirstMount || isTabSwitch) {
+      const currentContent = getCurrentContent()
+      const savedState = getEditorState(currentPath)
 
-    if (savedState) {
-      const dom = editor.view.dom as HTMLElement
-      dom.blur()
+      if (savedState) {
+        const dom = editor.view.dom as HTMLElement
+        dom.blur()
 
-      requestAnimationFrame(() => {
-        try {
-          const state = savedState as typeof editor.view.state
-          const docSize = state.doc?.content?.size ?? 0
-          const hasContent = state.doc?.textContent && state.doc.textContent.length > 0
+        requestAnimationFrame(() => {
+          try {
+            const state = savedState as typeof editor.view.state
+            const docSize = state.doc?.content?.size ?? 0
+            const hasContent = state.doc?.textContent && state.doc.textContent.length > 0
 
-          if (docSize <= 2 || !hasContent) {
-            restoreEditorContent(editor, currentContent)
-          } else {
-            const selection = state.selection
-            const validFrom = Math.min(selection.from, docSize - 1)
-            const validTo = Math.min(selection.to, docSize - 1)
-
-            if (validFrom < 0 || validTo < 0 || validFrom > docSize || validTo > docSize) {
+            if (docSize <= 2 || !hasContent) {
               restoreEditorContent(editor, currentContent)
             } else {
-              editor.view.updateState(state)
+              const savedTextContent = state.doc.textContent || ''
+              const currentTextContent = currentContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')
+              const contentMatches = savedTextContent.trim() === currentTextContent.trim()
+
+              if (!contentMatches) {
+                restoreEditorContent(editor, currentContent)
+              } else {
+                const selection = state.selection
+                const validFrom = Math.min(selection.from, docSize - 1)
+                const validTo = Math.min(selection.to, docSize - 1)
+
+                if (validFrom < 0 || validTo < 0 || validFrom > docSize || validTo > docSize) {
+                  restoreEditorContent(editor, currentContent)
+                } else {
+                  editor.view.updateState(state)
+                }
+              }
             }
+          } catch (e) {
+            console.warn('Failed to restore editor state:', e)
+            restoreEditorContent(editor, currentContent)
           }
-        } catch (e) {
-          console.warn('Failed to restore editor state:', e)
-          restoreEditorContent(editor, currentContent)
-        }
-      })
-    } else {
-      restoreEditorContent(editor, currentContent)
+        })
+      } else {
+        restoreEditorContent(editor, currentContent)
+      }
+
+      const textContent = editor.getText()
+      updateWordCount(textContent)
     }
 
-    const textContent = editor.getText()
-    updateWordCount(textContent)
-
     prevFilePathRef.current = currentPath
+    prevActiveTabIdRef.current = activeTabId
   }, [
     editor,
     getCurrentContent,

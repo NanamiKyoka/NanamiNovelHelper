@@ -43,7 +43,7 @@ function GitPanel(): JSX.Element {
     commit
   } = useGitStore()
 
-  const { currentProject } = useProjectStore()
+  const { currentProject, currentProjectPath } = useProjectStore()
   const [commitMessage, setCommitMessage] = useState('')
   const [committing, setCommitting] = useState(false)
   const [showInitModal, setShowInitModal] = useState(false)
@@ -55,19 +55,19 @@ function GitPanel(): JSX.Element {
 
   // 兜底初始化：项目打开时 git 可能尚未初始化完成
   useEffect(() => {
-    if (currentProject?.path && !initialized && !loading) {
+    if (currentProjectPath && !initialized && !loading) {
       init()
     }
-  }, [currentProject?.path, initialized, loading, init])
+  }, [currentProjectPath, initialized, loading, init])
 
   // 初始化仓库
   const handleInitRepo = async () => {
-    if (!currentProject?.path) return
+    if (!currentProjectPath) return
 
     setIniting(true)
     try {
       const result = await window.api.git.init({
-        path: currentProject.path,
+        path: currentProjectPath,
         defaultBranch: 'main',
         initialCommit: '初始化项目'
       })
@@ -101,13 +101,13 @@ function GitPanel(): JSX.Element {
   const handleSaveIdentity = async () => {
     try {
       const values = await identityForm.validateFields()
-      if (!currentProject?.path) return
+      if (!currentProjectPath) return
 
       setSavingIdentity(true)
       const scope = values.scope
 
-      await window.api.git.configSet(currentProject.path, 'user.name', values.name, scope)
-      await window.api.git.configSet(currentProject.path, 'user.email', values.email, scope)
+      await window.api.git.configSet(currentProjectPath, 'user.name', values.name, scope)
+      await window.api.git.configSet(currentProjectPath, 'user.email', values.email, scope)
 
       message.success('身份信息配置成功')
       setShowIdentityModal(false)
@@ -137,10 +137,10 @@ function GitPanel(): JSX.Element {
       return
     }
 
-    if (!currentProject?.path) return
+    if (!currentProjectPath) return
 
     try {
-      const result = await window.api.git.checkAuthorIdentity(currentProject.path)
+      const result = await window.api.git.checkAuthorIdentity(currentProjectPath)
       if (result.success && result.data && !result.data.hasIdentity) {
         identityForm.setFieldsValue({
           name: result.data.userName || '',
@@ -160,10 +160,10 @@ function GitPanel(): JSX.Element {
 
   // 刷新
   const handleOpenIdentityModal = async () => {
-    if (!currentProject?.path) return
+    if (!currentProjectPath) return
 
     try {
-      const result = await window.api.git.checkAuthorIdentity(currentProject.path)
+      const result = await window.api.git.checkAuthorIdentity(currentProjectPath)
       if (result.success && result.data) {
         identityForm.setFieldsValue({
           name: result.data.userName || '',
@@ -222,7 +222,7 @@ function GitPanel(): JSX.Element {
           cancelText="取消"
         >
           <p>将在项目目录下初始化 Git 仓库：</p>
-          <Text code>{currentProject.path}</Text>
+          <Text code>{currentProjectPath}</Text>
           <p style={{ marginTop: 16 }}>这将创建一个初始提交。</p>
         </Modal>
       </div>

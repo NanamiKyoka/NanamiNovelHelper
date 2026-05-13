@@ -35,7 +35,6 @@ interface ProjectInitData {
     name: string
     description?: string
     author?: string
-    path: string
     cover?: string
     tags: string[]
     createdAt: string
@@ -71,6 +70,7 @@ export function useProjectActions() {
 
   // Store actions - project store
   const setCurrentProject = useProjectStore(s => s.setCurrentProject)
+  const setCurrentProjectPath = useProjectStore(s => s.setCurrentProjectPath)
   const setLoading = useProjectStore(s => s.setLoading)
   const setError = useProjectStore(s => s.setError)
   const clearError = useProjectStore(s => s.clearError)
@@ -175,6 +175,7 @@ export function useProjectActions() {
         // 打开项目（主进程初始化）
         const project = await window.api.project.open(path)
         setCurrentProject(project)
+        setCurrentProjectPath(path)
 
         // 获取聚合初始化数据
         const initData: ProjectInitData = await window.api.project.getInitData()
@@ -194,6 +195,7 @@ export function useProjectActions() {
         return project
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '打开项目失败'
+        setLoading(false)
         setError(errorMessage)
         throw error
       }
@@ -202,6 +204,7 @@ export function useProjectActions() {
       setLoading,
       clearError,
       setCurrentProject,
+      setCurrentProjectPath,
       dispatchInitData,
       loadRecentProjects,
       setError,
@@ -219,11 +222,15 @@ export function useProjectActions() {
 
       try {
         // 创建项目
-        const project = await window.api.project.create(options)
+        const _project = await window.api.project.create(options)
+
+        // 计算项目路径
+        const projectPath = `${options.parentPath}\\${options.name}`
 
         // 创建后打开项目
-        const openedProject = await window.api.project.open(project.path)
+        const openedProject = await window.api.project.open(projectPath)
         setCurrentProject(openedProject)
+        setCurrentProjectPath(projectPath)
 
         // 获取聚合初始化数据
         const initData: ProjectInitData = await window.api.project.getInitData()
@@ -243,11 +250,12 @@ export function useProjectActions() {
         return openedProject
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '创建项目失败'
+        setLoading(false)
         setError(errorMessage)
         throw error
       }
     },
-    [setLoading, clearError, setCurrentProject, dispatchInitData, loadRecentProjects, setError]
+    [setLoading, clearError, setCurrentProject, setCurrentProjectPath, dispatchInitData, loadRecentProjects, setError]
   )
 
   /**
@@ -262,6 +270,7 @@ export function useProjectActions() {
 
       // 清除当前项目
       setCurrentProject(null)
+      setCurrentProjectPath(null)
 
       // 清除所有项目相关数据
       clearAllProjectData()
@@ -273,7 +282,7 @@ export function useProjectActions() {
       setError(errorMessage)
       throw error
     }
-  }, [setLoading, clearError, setCurrentProject, clearAllProjectData, setError])
+  }, [setLoading, clearError, setCurrentProject, setCurrentProjectPath, clearAllProjectData, setError])
 
   /**
    * 选择并打开项目

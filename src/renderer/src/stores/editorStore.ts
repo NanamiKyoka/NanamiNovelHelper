@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand'
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { Sequencer, Limiter } from '@shared/async'
@@ -21,7 +21,42 @@ const FILE_CACHE_MAX = 20
 const FILE_CACHE_MAX_AGE = 30 * 60 * 1000
 const FILE_READ_CONCURRENCY = 3
 
-const PUNCT_REGEX = /\p{P}/u
+function isWhitespace(code: number): boolean {
+  return (
+    code === 0x09 ||
+    code === 0x0a ||
+    code === 0x0b ||
+    code === 0x0c ||
+    code === 0x0d ||
+    code === 0x20 ||
+    code === 0xa0 ||
+    code === 0x1680 ||
+    (code >= 0x2000 && code <= 0x200a) ||
+    code === 0x2028 ||
+    code === 0x2029 ||
+    code === 0x202f ||
+    code === 0x205f ||
+    code === 0x3000
+  )
+}
+
+function isPunctuation(code: number): boolean {
+  if (
+    (code >= 0x21 && code <= 0x2f) ||
+    (code >= 0x3a && code <= 0x40) ||
+    (code >= 0x5b && code <= 0x60) ||
+    (code >= 0x7b && code <= 0x7e)
+  ) {
+    return true
+  }
+  if (code >= 0x2010 && code <= 0x206f) return true
+  if (code >= 0x2e00 && code <= 0x2e7f) return true
+  if (code >= 0x3000 && code <= 0x303f) return true
+  if (code >= 0xfe30 && code <= 0xfe4f) return true
+  if (code >= 0xff01 && code <= 0xff60) return true
+  if (code >= 0xfe50 && code <= 0xfe6f) return true
+  return false
+}
 
 function isAsciiWordChar(code: number): boolean {
   return (
@@ -59,8 +94,10 @@ function calculateWordCount(content: string): WordCount {
   let words = 0
   let nonWSChars = 0
   let nonWSNoPunct = 0
-
+  let lines = 1
+  let paragraphs = 0
   let inAsciiWord = false
+  let inNonEmptyLine = false
 
   for (let i = 0; i < content.length; i++) {
     let code = content.charCodeAt(i)
@@ -73,14 +110,24 @@ function calculateWordCount(content: string): WordCount {
       }
     }
 
-    const ch = String.fromCodePoint(code)
-
-    if (!/\s/.test(ch)) {
-      nonWSChars++
-      if (!PUNCT_REGEX.test(ch)) {
-        nonWSNoPunct++
-      }
+    if (code === 0x0a) {
+      lines++
+      if (inNonEmptyLine) paragraphs++
+      inNonEmptyLine = false
+      inAsciiWord = false
+      continue
     }
+
+    if (isWhitespace(code)) {
+      inAsciiWord = false
+      continue
+    }
+
+    nonWSChars++
+    if (!isPunctuation(code)) {
+      nonWSNoPunct++
+    }
+    inNonEmptyLine = true
 
     if (code <= 0x7f) {
       asciiChars++
@@ -88,9 +135,7 @@ function calculateWordCount(content: string): WordCount {
 
     if (isHan(code)) {
       cjkChars++
-      if (inAsciiWord) {
-        inAsciiWord = false
-      }
+      inAsciiWord = false
       continue
     }
 
@@ -100,14 +145,12 @@ function calculateWordCount(content: string): WordCount {
         inAsciiWord = true
       }
     } else {
-      if (inAsciiWord) {
-        inAsciiWord = false
-      }
+      inAsciiWord = false
     }
   }
 
-  const lines = content.split('\n').length
-  const paragraphs = content.split('\n').filter(line => line.trim().length > 0).length
+  if (inNonEmptyLine) paragraphs++
+
   const total = cjkChars + words
 
   return {
@@ -161,7 +204,7 @@ interface EditorState {
   closeAllTabs: () => void
   closeTabsByPaths: (paths: string[]) => void
   updateTabPath: (oldPath: string, newPath: string, newName: string) => void
-  setActiveTab: (tabId: string) => void
+  setActiveTab: (tabId: string) => Promise<void>
   moveTab: (fromIndex: number, toIndex: number) => void
   markDirty: (tabId: string, isDirty: boolean) => void
 
@@ -289,6 +332,9 @@ export const useEditorStore = create<EditorState>()(
 
           const existingTab = state.tabs.find(tab => tab.path === path)
           if (existingTab) {
+            if (!state.fileContents.has(path)) {
+              await get().loadFileContent(path)
+            }
             set({ activeTabId: existingTab.id })
             set({
               tabs: state.tabs.map(tab =>
@@ -371,6 +417,9 @@ export const useEditorStore = create<EditorState>()(
 
           const existingTab = state.tabs.find(tab => tab.path === path)
           if (existingTab) {
+            if (!state.fileContents.has(path)) {
+              await get().loadFileContent(path)
+            }
             set({ activeTabId: existingTab.id })
             set({
               tabs: state.tabs.map(tab =>
@@ -515,11 +564,15 @@ export const useEditorStore = create<EditorState>()(
           })
         },
 
-        setActiveTab: (tabId: string) => {
+        setActiveTab: async (tabId: string) => {
           const state = get()
           const tab = state.tabs.find(t => t.id === tabId)
 
           if (!tab) return
+
+          if (!state.fileContents.has(tab.path)) {
+            await get().loadFileContent(tab.path)
+          }
 
           set({
             activeTabId: tabId,
@@ -537,9 +590,13 @@ export const useEditorStore = create<EditorState>()(
         },
 
         markDirty: (tabId: string, isDirty: boolean) => {
-          set(state => ({
-            tabs: state.tabs.map(tab => (tab.id === tabId ? { ...tab, isDirty } : tab))
-          }))
+          set(state => {
+            const tab = state.tabs.find(t => t.id === tabId)
+            if (!tab || tab.isDirty === isDirty) return state
+            return {
+              tabs: state.tabs.map(t => (t.id === tabId ? { ...t, isDirty } : t))
+            }
+          })
         },
 
         loadFileContent: async (path: string) => {
@@ -558,8 +615,6 @@ export const useEditorStore = create<EditorState>()(
               state.fileContents.set(path, fileContent)
               return { fileContents: state.fileContents, _cacheVersion: state._cacheVersion + 1 }
             })
-
-            get().updateWordCount(content)
 
             return content
           } catch (error) {

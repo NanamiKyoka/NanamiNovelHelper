@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 pub struct Project {
     pub id: String,
     pub name: String,
-    pub path: String,
     #[serde(default)]
     pub description: Option<String>,
     #[serde(default)]
@@ -20,12 +19,11 @@ pub struct Project {
 }
 
 impl Project {
-    pub fn new(name: String, path: String) -> Self {
+    pub fn new(name: String) -> Self {
         let now = chrono::Utc::now().to_rfc3339();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name,
-            path,
             description: None,
             author: None,
             cover: None,

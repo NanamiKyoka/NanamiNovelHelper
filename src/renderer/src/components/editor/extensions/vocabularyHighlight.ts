@@ -4,9 +4,9 @@
  */
 
 import { Mark, mergeAttributes } from '@tiptap/core'
-import type { Editor } from '@tiptap/core'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import type { EditorView } from '@tiptap/pm/view'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { THEME_COLORS } from '@shared/constants/colors'
 import type { HighlightPattern, HighlightStyleConfig } from '@shared/highlight'
@@ -49,7 +49,14 @@ interface CacheEntry {
   docSize: number
 }
 
-const decorationCache = new WeakMap<Editor, CacheEntry>()
+const decorationCache = new WeakMap<object, CacheEntry>()
+
+let lastRecomputeTime = 0
+const MIN_RECOMPUTE_INTERVAL = 200
+
+let visibleFrom = 0
+let visibleTo = 3000
+const VIEWPORT_BUFFER = 1500
 
 /**
  * 分词器实例（使用 Intl.Segmenter 进行中文分词）
@@ -274,6 +281,32 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
 
   addProseMirrorPlugins() {
     const { onClick, onHover } = this.options
+    const editorRef = this.editor
+
+    const updateViewport = (view: EditorView) => {
+      const dom = view.dom
+      const scrollTop = dom.scrollTop
+      const clientHeight = dom.clientHeight
+
+      const startCoords = view.posAtCoords({
+        left: 0,
+        top: Math.max(0, scrollTop - VIEWPORT_BUFFER)
+      })
+      const endCoords = view.posAtCoords({
+        left: 0,
+        top: scrollTop + clientHeight + VIEWPORT_BUFFER
+      })
+
+      const newFrom = startCoords?.pos ?? 0
+      const newTo = endCoords?.pos ?? view.state.doc.content.size
+
+      if (Math.abs(newFrom - visibleFrom) > 300 || Math.abs(newTo - visibleTo) > 300) {
+        visibleFrom = newFrom
+        visibleTo = Math.min(newTo, view.state.doc.content.size)
+        const tr = view.state.tr.setMeta(VocabularyHighlightPluginKey, { type: 'viewportChange' })
+        view.dispatch(tr)
+      }
+    }
 
     return [
       new Plugin({
@@ -282,7 +315,7 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
           init() {
             return DecorationSet.empty
           },
-          apply(tr, _oldSet, _oldState, newState) {
+          apply(tr, oldSet, _oldState, newState) {
             const storeState = useHighlightService.getState()
             const patterns = storeState.patterns
             const automaton = storeState.automaton
@@ -293,32 +326,73 @@ export const VocabularyHighlight = Mark.create<VocabularyHighlightOptions>({
             }
 
             const doc = newState.doc
-            const cached = decorationCache.get(doc)
+            const cached = decorationCache.get(editorRef)
+            const viewportMeta = tr.getMeta(VocabularyHighlightPluginKey)
+            const viewportChanged = viewportMeta?.type === 'viewportChange'
 
-            const needsRecompute =
-              tr.docChanged ||
+            const needsFullRecompute =
+              viewportChanged ||
               !cached ||
               cached.version !== globalVersion ||
               cached.docSize !== doc.content.size
 
-            if (!needsRecompute && cached) {
-              return cached.decorations
+            if (tr.docChanged && !needsFullRecompute) {
+              const now = Date.now()
+              if (now - lastRecomputeTime < MIN_RECOMPUTE_INTERVAL) {
+                if (cached) {
+                  return cached.decorations.map(tr.mapping, tr.doc)
+                }
+                return oldSet.map(tr.mapping, tr.doc)
+              }
+              lastRecomputeTime = now
             }
+
+            const from = viewportChanged ? visibleFrom : 0
+            const to = viewportChanged ? visibleTo : doc.content.size
 
             const newDecorations = createHighlightDecorations(
               doc,
               automaton,
               patterns,
-              globalStyleConfig
+              globalStyleConfig,
+              from,
+              to
             )
 
-            decorationCache.set(doc, {
+            decorationCache.set(editorRef, {
               version: globalVersion,
               decorations: newDecorations,
               docSize: doc.content.size
             })
 
             return newDecorations
+          }
+        },
+        view(editorView) {
+          const dom = editorView.dom
+          let scrollTicking = false
+
+          const handleScroll = () => {
+            if (scrollTicking) return
+            scrollTicking = true
+            requestAnimationFrame(() => {
+              scrollTicking = false
+              updateViewport(editorView)
+            })
+          }
+
+          dom.addEventListener('scroll', handleScroll, { passive: true })
+
+          requestAnimationFrame(() => {
+            visibleFrom = 0
+            visibleTo = Math.min(3000, editorView.state.doc.content.size)
+            updateViewport(editorView)
+          })
+
+          return {
+            destroy() {
+              dom.removeEventListener('scroll', handleScroll)
+            }
           }
         },
         props: {
@@ -366,7 +440,9 @@ function createHighlightDecorations(
   doc: ProseMirrorNode,
   automaton: AhoCorasick | null,
   patterns: HighlightPattern[],
-  styleConfig: HighlightStyleConfig
+  styleConfig: HighlightStyleConfig,
+  from: number,
+  to: number
 ): DecorationSet {
   const decorations: Decoration[] = []
 
@@ -374,31 +450,29 @@ function createHighlightDecorations(
     return DecorationSet.empty
   }
 
-  doc.descendants((node: ProseMirrorNode, pos: number) => {
+  const clampedFrom = Math.max(0, from)
+  const clampedTo = Math.min(to, doc.content.size)
+
+  doc.nodesBetween(clampedFrom, clampedTo, (node: ProseMirrorNode, pos: number) => {
     if (!node.isText || !node.text) return
 
     const text = node.text
-
-    // 使用 AC 自动机搜索
     const matches = automaton.search(text)
 
     for (const match of matches) {
-      // match.pattern 包含完整的 HighlightPattern 对象
       const pattern = match.pattern
 
-      const from = pos + match.start
-      const to = pos + match.end
+      const fromPos = pos + match.start
+      const toPos = pos + match.end
 
-      // 检查全词匹配（分词过滤）
       if (!isCompleteWord(text, match.start, match.end, pattern)) {
         continue
       }
 
-      // 创建装饰
       const style = getHighlightStyle(pattern.color, styleConfig, pattern.isSensitive)
 
       decorations.push(
-        Decoration.inline(from, to, {
+        Decoration.inline(fromPos, toPos, {
           class: 'vocabulary-highlight',
           style,
           'data-entry-id': pattern.id,

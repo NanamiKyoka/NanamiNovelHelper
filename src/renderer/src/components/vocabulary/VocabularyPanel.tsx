@@ -81,6 +81,24 @@ import VocabularyExportModal from './VocabularyExportModal'
 import VocabularyEntryDrawer from './VocabularyEntryDrawer'
 import styles from './VocabularyPanel.module.css'
 
+/**
+ * 将颜色值转换为字符串
+ * 处理 ColorPicker 对象格式
+ */
+function colorToString(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value === 'string') return value
+  if (typeof value === 'object') {
+    const colorObj = value as {
+      toHexString?: () => string
+      metaColor?: { toHexString?: () => string }
+    }
+    if (colorObj.toHexString) return colorObj.toHexString()
+    if (colorObj.metaColor?.toHexString) return colorObj.metaColor.toHexString()
+  }
+  return undefined
+}
+
 // 可排序的表格行组件
 interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
   'data-row-key': string
@@ -410,18 +428,31 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
       (entry: VocabularyEntry): void => {
         if (readOnly) return
         setEditingEntry(entry)
+
+        // 转换 fields 中的颜色值
+        const convertedFields: Record<string, unknown> = {}
+        const fieldDefs = currentTypeDefinition?.fields || []
+        for (const [key, value] of Object.entries(entry.fields || {})) {
+          const fieldDef = fieldDefs.find(f => f.id === key)
+          if (fieldDef?.type === 'color') {
+            convertedFields[key] = colorToString(value)
+          } else {
+            convertedFields[key] = value
+          }
+        }
+
         form.setFieldsValue({
           name: entry.name,
           aliases: entry.aliases || [],
-          color: entry.color,
+          color: colorToString(entry.color),
           tags: entry.tags || [],
           description: entry.description,
           linkedFilePath: entry.linkedFilePath,
-          fields: entry.fields || {}
+          fields: convertedFields
         })
         setDrawerOpen(true)
       },
-      [readOnly, form]
+      [readOnly, form, currentTypeDefinition]
     )
 
     // 打开关联文件（在编辑器中打开并定位到文件树）
@@ -624,6 +655,34 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
                 if (field.type === 'image') {
                   return <PictureOutlined style={{ fontSize: 16, color: 'var(--color-primary)' }} />
                 }
+                // 颜色类型显示色块
+                if (field.type === 'color') {
+                  let colorStr = '#000000'
+                  if (typeof value === 'string') {
+                    colorStr = value
+                  } else if (typeof value === 'object' && value !== null) {
+                    const colorObj = value as {
+                      toHexString?: () => string
+                      metaColor?: { toHexString?: () => string }
+                    }
+                    if (colorObj.toHexString) {
+                      colorStr = colorObj.toHexString()
+                    } else if (colorObj.metaColor?.toHexString) {
+                      colorStr = colorObj.metaColor.toHexString()
+                    }
+                  }
+                  return (
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        backgroundColor: colorStr,
+                        borderRadius: 4,
+                        border: '1px solid #d9d9d9'
+                      }}
+                    />
+                  )
+                }
                 if (Array.isArray(value)) {
                   return value.length > 0
                     ? value.slice(0, 2).map((v, i) => (
@@ -661,6 +720,34 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
                 // 图片类型显示图标
                 if (field.type === 'image') {
                   return <PictureOutlined style={{ fontSize: 16, color: 'var(--color-primary)' }} />
+                }
+                // 颜色类型显示色块
+                if (field.type === 'color') {
+                  let colorStr = '#000000'
+                  if (typeof value === 'string') {
+                    colorStr = value
+                  } else if (typeof value === 'object' && value !== null) {
+                    const colorObj = value as {
+                      toHexString?: () => string
+                      metaColor?: { toHexString?: () => string }
+                    }
+                    if (colorObj.toHexString) {
+                      colorStr = colorObj.toHexString()
+                    } else if (colorObj.metaColor?.toHexString) {
+                      colorStr = colorObj.metaColor.toHexString()
+                    }
+                  }
+                  return (
+                    <div
+                      style={{
+                        width: 20,
+                        height: 20,
+                        backgroundColor: colorStr,
+                        borderRadius: 4,
+                        border: '1px solid #d9d9d9'
+                      }}
+                    />
+                  )
                 }
                 if (Array.isArray(value)) {
                   return value.length > 0
@@ -791,8 +878,20 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         const colorValue =
           typeof values.color === 'string'
             ? values.color
-            : values.color?.toHexString?.() || 'var(--color-primary)'
+            : values.color?.toHexString?.() || values.color?.metaColor?.toHexString?.() || 'var(--color-primary)'
         const typeName = types.find(t => t.id === currentType)?.name || '未知'
+
+        // 转换 fields 中的颜色值
+        const convertedFields: Record<string, unknown> = {}
+        const fieldDefs = currentTypeDefinition?.fields || []
+        for (const [key, value] of Object.entries(values.fields || {})) {
+          const fieldDef = fieldDefs.find(f => f.id === key)
+          if (fieldDef?.type === 'color') {
+            convertedFields[key] = colorToString(value) || '#000000'
+          } else {
+            convertedFields[key] = value
+          }
+        }
 
         if (editingEntry) {
           // 编辑模式
@@ -803,7 +902,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
             tags: values.tags || [],
             description: values.description,
             linkedFilePath: values.linkedFilePath,
-            fields: values.fields || {}
+            fields: convertedFields
           })
           message.success('更新成功')
         } else {
@@ -814,7 +913,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
             color: colorValue,
             typeId: currentType,
             typeName,
-            fields: values.fields || {},
+            fields: convertedFields,
             tags: values.tags || [],
             description: values.description,
             linkedFilePath: values.linkedFilePath
@@ -840,8 +939,20 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
         const colorValue =
           typeof values.color === 'string'
             ? values.color
-            : values.color?.toHexString?.() || 'var(--color-primary)'
+            : values.color?.toHexString?.() || values.color?.metaColor?.toHexString?.() || 'var(--color-primary)'
         const typeName = types.find(t => t.id === currentType)?.name || '未知'
+
+        // 转换 fields 中的颜色值
+        const convertedFields: Record<string, unknown> = {}
+        const fieldDefs = currentTypeDefinition?.fields || []
+        for (const [key, value] of Object.entries(values.fields || {})) {
+          const fieldDef = fieldDefs.find(f => f.id === key)
+          if (fieldDef?.type === 'color') {
+            convertedFields[key] = colorToString(value) || '#000000'
+          } else {
+            convertedFields[key] = value
+          }
+        }
 
         await addEntry({
           name: values.name,
@@ -849,7 +960,7 @@ const VocabularyPanel = forwardRef<VocabularyPanelRef, VocabularyPanelProps>(
           color: colorValue,
           typeId: currentType,
           typeName,
-          fields: values.fields || {},
+          fields: convertedFields,
           tags: values.tags || [],
           description: values.description,
           linkedFilePath: values.linkedFilePath

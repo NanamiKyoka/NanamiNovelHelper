@@ -54,9 +54,10 @@ impl FileService {
         if !absolute_path.exists() {
             return Err(AppError::FileNotFound(path));
         }
-        fs::read_to_string(&absolute_path).map_err(|e| {
+        let content = fs::read_to_string(&absolute_path).map_err(|e| {
             AppError::OperationFailed(format!("读取文件失败: {}", e))
-        })
+        })?;
+        Ok(content)
     }
 
     pub async fn write_file(&self, path: String, content: String) -> AppResult<()> {

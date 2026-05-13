@@ -15,7 +15,8 @@ import {
   Tooltip,
   Popconfirm,
   App,
-  Dropdown
+  Dropdown,
+  Modal
 } from 'antd'
 import {
   PlusOutlined,
