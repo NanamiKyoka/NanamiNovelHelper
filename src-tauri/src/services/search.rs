@@ -180,17 +180,18 @@ impl SearchService {
                     }
 
                     let start = mat.start();
-                    let context_before = if start > 50 {
-                        line[start - 50..start].to_string()
-                    } else {
-                        line[..start].to_string()
-                    };
+                    let mut ctx_start = if start > 50 { start - 50 } else { 0 };
+                    while ctx_start < start && !line.is_char_boundary(ctx_start) {
+                        ctx_start += 1;
+                    }
+                    let context_before = line[ctx_start..start].to_string();
+
                     let end = mat.end();
-                    let context_after = if end + 50 < line.len() {
-                        line[end..end + 50].to_string()
-                    } else {
-                        line[end..].to_string()
-                    };
+                    let mut ctx_end = if end + 50 < line.len() { end + 50 } else { line.len() };
+                    while ctx_end < line.len() && !line.is_char_boundary(ctx_end) {
+                        ctx_end += 1;
+                    }
+                    let context_after = line[end..ctx_end].to_string();
 
                     file_matches.push(serde_json::json!({
                         "line": line_num + 1,
