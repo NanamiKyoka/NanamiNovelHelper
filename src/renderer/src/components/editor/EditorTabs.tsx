@@ -245,10 +245,22 @@ export function EditorTabs({ onContextMenu }: EditorTabsProps) {
     [closeTab, closeOtherTabs, closeAllTabs, handleExportTxt, message]
   )
 
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    const container = e.currentTarget
+    const { deltaY, deltaX } = e
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      return
+    }
+
+    e.preventDefault()
+    container.scrollLeft += deltaY
+  }, [])
+
   if (tabs.length === 0) return null
 
   return (
-    <div className={styles.tabsContainer}>
+    <div className={styles.tabsContainer} onWheel={handleWheel}>
       <div className={styles.tabsWrapper}>
         {sortedTabs.map((tab, index) => (
           <Dropdown

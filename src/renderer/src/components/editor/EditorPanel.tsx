@@ -61,6 +61,8 @@ export function EditorPanel() {
   const isText = activeTab?.type === 'text'
   const isDiff = activeTab?.type === 'diff'
 
+  const editorTypeKey = isDiff ? 'diff' : isMarkdown ? 'markdown' : isText ? 'text' : 'novel'
+
   return (
     <div className={styles.panel}>
       <EditorTabs />
@@ -74,6 +76,7 @@ export function EditorPanel() {
           <div className={styles.editorWrapper}>
             {isDiff && activeTab?.diffData ? (
               <DiffViewer
+                key={editorTypeKey}
                 diff={activeTab.diffData}
                 onClose={() => {
                   if (activeTabId) {
@@ -83,13 +86,19 @@ export function EditorPanel() {
               />
             ) : isMarkdown || isText ? (
               <MarkdownEditor
+                key={editorTypeKey}
                 onChange={handleChange}
                 onSave={handleSave}
                 readonly={false}
                 plainText={isText}
               />
             ) : (
-              <NovelEditor onChange={handleChange} onSave={handleSave} readonly={false} />
+              <NovelEditor
+                key={editorTypeKey}
+                onChange={handleChange}
+                onSave={handleSave}
+                readonly={false}
+              />
             )}
           </div>
         )}

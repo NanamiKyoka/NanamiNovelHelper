@@ -320,8 +320,8 @@ impl VocabularyService {
         let file_path = detail_dir.join(&file_name);
 
         let content = format!(
-            "---\nid: {}\ntype: {}\nname: {}\ncreatedAt: {}\nupdatedAt: {}\n---\n\n# {}\n\n{}\n",
-            entry_id, type_name, entry_name, created_at, generate_timestamp(), entry_name, description
+            "---\n\nid: {}\ntype: {}\nname: {}\ncreatedAt: {}\nupdatedAt: {}\n\n---\n\n# {}\n",
+            entry_id, type_name, entry_name, created_at, generate_timestamp(), entry_name
         );
 
         fs::write(&file_path, &content).map_err(|e| {
