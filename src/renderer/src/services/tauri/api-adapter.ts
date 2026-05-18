@@ -76,7 +76,7 @@ export const tauriApi = {
 
   project: {
     create: (options: { name: string; parentPath: string; description?: string; author?: string; tags?: string[] }) =>
-      invoke('create_project', { name: options.name, path: options.parentPath }),
+      invoke('create_project', { name: options.name, path: `${options.parentPath}/${options.name}` }),
     open: (path: string) => invoke('open_project', { path }),
     close: () => invoke('close_project'),
     getCurrent: () => invoke('get_current_project'),

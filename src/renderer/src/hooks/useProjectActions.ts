@@ -194,9 +194,7 @@ export function useProjectActions() {
 
         return project
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '打开项目失败'
         setLoading(false)
-        setError(errorMessage)
         throw error
       }
     },
@@ -207,7 +205,6 @@ export function useProjectActions() {
       setCurrentProjectPath,
       dispatchInitData,
       loadRecentProjects,
-      setError,
       clearAllProjectData
     ]
   )
@@ -222,10 +219,10 @@ export function useProjectActions() {
 
       try {
         // 创建项目
-        const _project = await window.api.project.create(options)
+        await window.api.project.create(options)
 
         // 计算项目路径
-        const projectPath = `${options.parentPath}\\${options.name}`
+        const projectPath = `${options.parentPath}/${options.name}`
 
         // 创建后打开项目
         const openedProject = await window.api.project.open(projectPath)
@@ -249,13 +246,11 @@ export function useProjectActions() {
 
         return openedProject
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : '创建项目失败'
         setLoading(false)
-        setError(errorMessage)
         throw error
       }
     },
-    [setLoading, clearError, setCurrentProject, setCurrentProjectPath, dispatchInitData, loadRecentProjects, setError]
+    [setLoading, clearError, setCurrentProject, setCurrentProjectPath, dispatchInitData, loadRecentProjects]
   )
 
   /**
