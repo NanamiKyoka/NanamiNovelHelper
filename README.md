@@ -523,8 +523,8 @@ feat(editor): 新增词汇悬浮提示功能
 
 ## 联系方式
 
-- **项目主页**: [https://github.com/NanamiKyoka/nanami-novel-helper](https://github.com/NanamiKyoka/nanami-novel-helper)
-- **问题反馈**: [GitHub Issues](https://github.com/NanamiKyoka/nanami-novel-helper/issues)
+- **项目主页**: [https://github.com/NanamiKyoka/NanamiNovelHelper](https://github.com/NanamiKyoka/NanamiNovelHelper)
+- **问题反馈**: [GitHub Issues](https://github.com/NanamiKyoka/NanamiNovelHelper/issues)
 
 ---
 
