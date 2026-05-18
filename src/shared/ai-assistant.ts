@@ -1010,13 +1010,13 @@ export function getBuiltInWorkflows(): PromptWorkflow[] {
 /**
  * AI 提供商类型
  */
-export type AIProvider = 'openai' | 'anthropic' | 'custom'
+export type AIProvider = 'openai' | 'anthropic' | 'custom' | 'deepseek' | 'moonshot' | 'zhipu' | string
 
 /**
  * API 调用选项
  */
 export interface AiApiCallOptions {
-  provider?: AIProvider
+  provider?: string
   model?: string
   temperature?: number
   maxTokens?: number

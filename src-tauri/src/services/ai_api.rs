@@ -1,55 +1,122 @@
-use crate::services::settings::SettingsService;
+use crate::services::secure_storage::SecureStorageService;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::sync::Mutex;
+use std::collections::HashMap;
 use tauri::{AppHandle, Emitter};
 
 const DEFAULT_MAX_TOKENS: u32 = 2000;
 const DEFAULT_TEMPERATURE: f64 = 0.7;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
-pub enum AIProvider {
-    Openai,
+pub enum ApiFormat {
+    OpenAI,
     Anthropic,
-    Custom,
 }
 
-impl AIProvider {
-    fn from_str(s: &str) -> Self {
-        match s {
-            "openai" => AIProvider::Openai,
-            "anthropic" => AIProvider::Anthropic,
-            "custom" => AIProvider::Custom,
-            _ => AIProvider::Openai,
-        }
-    }
-
-    fn api_key_name(&self) -> &str {
-        match self {
-            AIProvider::Openai => "openai_api_key",
-            AIProvider::Anthropic => "anthropic_api_key",
-            AIProvider::Custom => "custom_api_key",
-        }
-    }
-
-    fn base_url(&self) -> &str {
-        match self {
-            AIProvider::Openai => "https://api.openai.com/v1",
-            AIProvider::Anthropic => "https://api.anthropic.com/v1",
-            AIProvider::Custom => "",
-        }
-    }
-
-    fn default_model(&self) -> &str {
-        match self {
-            AIProvider::Openai => "gpt-4",
-            AIProvider::Anthropic => "claude-3-opus-20240229",
-            AIProvider::Custom => "",
-        }
-    }
+#[derive(Debug, Clone)]
+struct ProviderConfig {
+    id: &'static str,
+    name: &'static str,
+    api_key_name: &'static str,
+    base_url: &'static str,
+    default_model: &'static str,
+    api_format: ApiFormat,
+    available_models: &'static [&'static str],
 }
+
+fn get_provider_config(provider_id: &str) -> Option<ProviderConfig> {
+    PROVIDER_CONFIGS
+        .iter()
+        .find(|c| c.id == provider_id)
+        .cloned()
+}
+
+fn get_all_provider_configs() -> &'static [ProviderConfig] {
+    &PROVIDER_CONFIGS
+}
+
+static PROVIDER_CONFIGS: [ProviderConfig; 6] = [
+    ProviderConfig {
+        id: "openai",
+        name: "OpenAI",
+        api_key_name: "openai",
+        base_url: "https://api.openai.com/v1",
+        default_model: "gpt-4o",
+        api_format: ApiFormat::OpenAI,
+        available_models: &[
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-4-turbo",
+            "gpt-4",
+            "gpt-3.5-turbo",
+        ],
+    },
+    ProviderConfig {
+        id: "anthropic",
+        name: "Anthropic",
+        api_key_name: "anthropic",
+        base_url: "https://api.anthropic.com/v1",
+        default_model: "claude-3-opus-20240229",
+        api_format: ApiFormat::Anthropic,
+        available_models: &[
+            "claude-3-opus-20240229",
+            "claude-3-sonnet-20240229",
+            "claude-3-haiku-20240307",
+        ],
+    },
+    ProviderConfig {
+        id: "deepseek",
+        name: "DeepSeek",
+        api_key_name: "deepseek",
+        base_url: "https://api.deepseek.com",
+        default_model: "deepseek-v4-flash",
+        api_format: ApiFormat::OpenAI,
+        available_models: &[
+            "deepseek-v4-flash",
+            "deepseek-v4-pro",
+            "deepseek-chat",
+            "deepseek-reasoner",
+        ],
+    },
+    ProviderConfig {
+        id: "moonshot",
+        name: "Moonshot (Kimi)",
+        api_key_name: "moonshot",
+        base_url: "https://api.moonshot.cn/v1",
+        default_model: "moonshot-v1-8k",
+        api_format: ApiFormat::OpenAI,
+        available_models: &[
+            "moonshot-v1-8k",
+            "moonshot-v1-32k",
+            "moonshot-v1-128k",
+        ],
+    },
+    ProviderConfig {
+        id: "zhipu",
+        name: "智谱 AI",
+        api_key_name: "zhipu",
+        base_url: "https://open.bigmodel.cn/api/paas/v4",
+        default_model: "glm-4",
+        api_format: ApiFormat::OpenAI,
+        available_models: &[
+            "glm-4",
+            "glm-4-flash",
+            "glm-4-plus",
+            "glm-4-air",
+        ],
+    },
+    ProviderConfig {
+        id: "custom",
+        name: "自定义",
+        api_key_name: "custom",
+        base_url: "",
+        default_model: "",
+        api_format: ApiFormat::OpenAI,
+        available_models: &[],
+    },
+];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiApiCallOptions {
@@ -103,7 +170,6 @@ fn wrap_user_content(content: &str) -> String {
 
 pub struct AiApiService {
     client: Client,
-    settings: Mutex<SettingsService>,
 }
 
 impl AiApiService {
@@ -113,80 +179,85 @@ impl AiApiService {
             .build()
             .unwrap_or_default();
 
-        Self {
-            client,
-            settings: Mutex::new(SettingsService::new()),
-        }
+        Self { client }
     }
 
-    fn get_api_key(&self, key_name: &str) -> Option<String> {
-        let settings = self.settings.lock().ok()?;
-        let global = settings.get_global_settings().ok()?;
-        let keys = global.get("apiKeys").and_then(|v| v.as_object())?;
-        keys.get(key_name).and_then(|v| v.as_str()).map(|s| s.to_string())
+    fn get_api_key(storage: &SecureStorageService, key_name: &str) -> Option<String> {
+        storage.get_api_key(key_name)
     }
 
-    fn get_custom_base_url(&self) -> Option<String> {
-        self.get_api_key("custom_base_url")
+    fn get_custom_base_url(storage: &SecureStorageService) -> Option<String> {
+        storage.get_api_key("custom_base_url")
     }
 
-    fn get_custom_model(&self) -> Option<String> {
-        self.get_api_key("custom_model")
+    fn get_custom_model(storage: &SecureStorageService) -> Option<String> {
+        storage.get_api_key("custom_model")
+    }
+
+    fn resolve_provider_config(
+        storage: &SecureStorageService,
+        provider_id: &str,
+    ) -> Option<(ProviderConfig, String, String)> {
+        let config = get_provider_config(provider_id)?;
+
+        let api_key = storage.get_api_key(config.api_key_name)?;
+
+        let base_url = if config.id == "custom" {
+            Self::get_custom_base_url(storage)?
+        } else {
+            let stored_url = storage.get_api_key(&format!("{}_baseUrl", config.id));
+            stored_url.unwrap_or_else(|| config.base_url.to_string())
+        };
+
+        Some((config, api_key, base_url))
     }
 
     pub async fn call(
         &self,
         prompt: &str,
         options: &AiApiCallOptions,
+        storage: &SecureStorageService,
     ) -> AiApiCallResult {
         let start = std::time::Instant::now();
-        let provider_str = options.provider.as_deref().unwrap_or("openai");
-        let provider = AIProvider::from_str(provider_str);
+        let provider_id = options.provider.as_deref().unwrap_or("openai");
 
-        let api_key = match self.get_api_key(provider.api_key_name()) {
-            Some(key) => key,
+        let (config, api_key, base_url) = match Self::resolve_provider_config(storage, provider_id) {
+            Some(resolved) => resolved,
             None => {
                 return AiApiCallResult {
                     success: false,
                     content: None,
-                    error: Some(format!("未配置 {} API Key，请在设置中配置", provider_str)),
+                    error: Some(format!(
+                        "未配置 {} API Key，请在设置中配置",
+                        get_provider_config(provider_id)
+                            .map(|c| c.name)
+                            .unwrap_or(provider_id)
+                    )),
                     tokens_used: None,
                     duration: Some(start.elapsed().as_millis() as u64),
                 }
             }
         };
 
-        match provider {
-            AIProvider::Openai => {
-                self.call_openai_compatible(prompt, options, &api_key, provider.base_url(), start)
+        let custom_model = if config.id == "custom" {
+            Self::get_custom_model(storage)
+        } else {
+            None
+        };
+
+        let model = options
+            .model
+            .as_deref()
+            .or_else(|| custom_model.as_deref())
+            .unwrap_or(if config.default_model.is_empty() { "gpt-4" } else { config.default_model });
+
+        match config.api_format {
+            ApiFormat::OpenAI => {
+                self.call_openai_compatible(prompt, options, &api_key, &base_url, &model, start)
                     .await
             }
-            AIProvider::Anthropic => {
-                self.call_anthropic(prompt, options, &api_key, start)
-                    .await
-            }
-            AIProvider::Custom => {
-                let base_url = match self.get_custom_base_url() {
-                    Some(url) => url,
-                    None => {
-                        return AiApiCallResult {
-                            success: false,
-                            content: None,
-                            error: Some("未配置自定义 API Base URL，请在设置中配置".to_string()),
-                            tokens_used: None,
-                            duration: Some(start.elapsed().as_millis() as u64),
-                        }
-                    }
-                };
-                let custom_model = self.get_custom_model();
-                let model = options
-                    .model
-                    .as_deref()
-                    .or_else(|| custom_model.as_deref())
-                    .unwrap_or("gpt-4");
-                let mut opts = options.clone();
-                opts.model = Some(model.to_string());
-                self.call_openai_compatible(prompt, &opts, &api_key, &base_url, start)
+            ApiFormat::Anthropic => {
+                self.call_anthropic(prompt, options, &api_key, &model, start)
                     .await
             }
         }
@@ -197,17 +268,10 @@ impl AiApiService {
         prompt: &str,
         options: &AiApiCallOptions,
         api_key: &str,
-        default_base_url: &str,
+        base_url: &str,
+        model: &str,
         start: std::time::Instant,
     ) -> AiApiCallResult {
-        let base_url = self
-            .get_custom_base_url()
-            .unwrap_or_else(|| default_base_url.to_string());
-        let model = options
-            .model
-            .as_deref()
-            .unwrap_or("gpt-4");
-
         let mut messages = Vec::new();
         if let Some(sys_prompt) = &options.system_prompt {
             messages.push(serde_json::json!({
@@ -304,13 +368,9 @@ impl AiApiService {
         prompt: &str,
         options: &AiApiCallOptions,
         api_key: &str,
+        model: &str,
         start: std::time::Instant,
     ) -> AiApiCallResult {
-        let model = options
-            .model
-            .as_deref()
-            .unwrap_or("claude-3-opus-20240229");
-
         let mut body = serde_json::json!({
             "model": model,
             "max_tokens": options.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
@@ -397,16 +457,21 @@ impl AiApiService {
         &self,
         prompt: &str,
         options: &AiApiCallOptions,
+        storage: &SecureStorageService,
         app: &AppHandle,
     ) -> AiApiCallResult {
         let start = std::time::Instant::now();
-        let provider_str = options.provider.as_deref().unwrap_or("openai");
-        let provider = AIProvider::from_str(provider_str);
+        let provider_id = options.provider.as_deref().unwrap_or("openai");
 
-        let api_key = match self.get_api_key(provider.api_key_name()) {
-            Some(key) => key,
+        let (config, api_key, base_url) = match Self::resolve_provider_config(storage, provider_id) {
+            Some(resolved) => resolved,
             None => {
-                let error = format!("未配置 {} API Key，请在设置中配置", provider_str);
+                let error = format!(
+                    "未配置 {} API Key，请在设置中配置",
+                    get_provider_config(provider_id)
+                        .map(|c| c.name)
+                        .unwrap_or(provider_id)
+                );
                 let _ = app.emit(
                     "aiAssistant:streamChunk",
                     AiApiStreamChunk::Error {
@@ -423,44 +488,25 @@ impl AiApiService {
             }
         };
 
-        match provider {
-            AIProvider::Openai => {
-                self.call_openai_stream(prompt, options, &api_key, provider.base_url(), start, app)
+        let custom_model = if config.id == "custom" {
+            Self::get_custom_model(storage)
+        } else {
+            None
+        };
+
+        let model = options
+            .model
+            .as_deref()
+            .or_else(|| custom_model.as_deref())
+            .unwrap_or(if config.default_model.is_empty() { "gpt-4" } else { config.default_model });
+
+        match config.api_format {
+            ApiFormat::OpenAI => {
+                self.call_openai_stream(prompt, options, &api_key, &base_url, &model, start, app)
                     .await
             }
-            AIProvider::Anthropic => {
-                self.call_anthropic_stream(prompt, options, &api_key, start, app)
-                    .await
-            }
-            AIProvider::Custom => {
-                let base_url = match self.get_custom_base_url() {
-                    Some(url) => url,
-                    None => {
-                        let error = "未配置自定义 API Base URL，请在设置中配置".to_string();
-                        let _ = app.emit(
-                            "aiAssistant:streamChunk",
-                            AiApiStreamChunk::Error {
-                                error: error.clone(),
-                            },
-                        );
-                        return AiApiCallResult {
-                            success: false,
-                            content: None,
-                            error: Some(error),
-                            tokens_used: None,
-                            duration: Some(start.elapsed().as_millis() as u64),
-                        };
-                    }
-                };
-                let custom_model = self.get_custom_model();
-                let model = options
-                    .model
-                    .as_deref()
-                    .or_else(|| custom_model.as_deref())
-                    .unwrap_or("gpt-4");
-                let mut opts = options.clone();
-                opts.model = Some(model.to_string());
-                self.call_openai_stream(prompt, &opts, &api_key, &base_url, start, app)
+            ApiFormat::Anthropic => {
+                self.call_anthropic_stream(prompt, options, &api_key, &model, start, app)
                     .await
             }
         }
@@ -471,16 +517,12 @@ impl AiApiService {
         prompt: &str,
         options: &AiApiCallOptions,
         api_key: &str,
-        default_base_url: &str,
+        base_url: &str,
+        model: &str,
         start: std::time::Instant,
         app: &AppHandle,
     ) -> AiApiCallResult {
         use futures_util::StreamExt;
-
-        let base_url = self
-            .get_custom_base_url()
-            .unwrap_or_else(|| default_base_url.to_string());
-        let model = options.model.as_deref().unwrap_or("gpt-4");
 
         let mut messages = Vec::new();
         if let Some(sys_prompt) = &options.system_prompt {
@@ -647,12 +689,11 @@ impl AiApiService {
         prompt: &str,
         options: &AiApiCallOptions,
         api_key: &str,
+        model: &str,
         start: std::time::Instant,
         app: &AppHandle,
     ) -> AiApiCallResult {
         use futures_util::StreamExt;
-
-        let model = options.model.as_deref().unwrap_or("claude-3-opus-20240229");
 
         let mut body = serde_json::json!({
             "model": model,
@@ -822,35 +863,59 @@ impl AiApiService {
         }
     }
 
-    pub async fn test_connection(&self, provider: &str) -> AiApiCallResult {
-        let p = AIProvider::from_str(provider);
+    pub async fn test_connection(
+        &self,
+        provider: &str,
+        storage: &SecureStorageService,
+    ) -> AiApiCallResult {
+        let config = match get_provider_config(provider) {
+            Some(c) => c,
+            None => {
+                return AiApiCallResult {
+                    success: false,
+                    content: None,
+                    error: Some(format!("未知的 AI 提供商: {}", provider)),
+                    tokens_used: None,
+                    duration: None,
+                }
+            }
+        };
+
         let options = AiApiCallOptions {
-            provider: Some(provider.to_string()),
-            model: Some(p.default_model().to_string()),
+            provider: Some(config.id.to_string()),
+            model: Some(config.default_model.to_string()),
             system_prompt: None,
             temperature: None,
             max_tokens: Some(10),
         };
-        self.call("Hello", &options).await
+        self.call("Hello", &options, storage).await
     }
 
     pub fn get_available_models(&self, provider: &str) -> Vec<String> {
-        match provider {
-            "openai" => vec![
-                "gpt-4".to_string(),
-                "gpt-4-turbo".to_string(),
-                "gpt-4o".to_string(),
-                "gpt-4o-mini".to_string(),
-                "gpt-3.5-turbo".to_string(),
-            ],
-            "anthropic" => vec![
-                "claude-3-opus-20240229".to_string(),
-                "claude-3-sonnet-20240229".to_string(),
-                "claude-3-haiku-20240307".to_string(),
-            ],
-            "custom" => vec![],
-            _ => vec![],
-        }
+        get_provider_config(provider)
+            .map(|c| c.available_models.iter().map(|s| s.to_string()).collect())
+            .unwrap_or_default()
+    }
+
+    pub fn get_provider_list(&self) -> Vec<HashMap<String, String>> {
+        get_all_provider_configs()
+            .iter()
+            .map(|c| {
+                let mut map = HashMap::new();
+                map.insert("id".to_string(), c.id.to_string());
+                map.insert("name".to_string(), c.name.to_string());
+                map.insert("base_url".to_string(), c.base_url.to_string());
+                map.insert("default_model".to_string(), c.default_model.to_string());
+                map.insert(
+                    "api_format".to_string(),
+                    match c.api_format {
+                        ApiFormat::OpenAI => "openai".to_string(),
+                        ApiFormat::Anthropic => "anthropic".to_string(),
+                    },
+                );
+                map
+            })
+            .collect()
     }
 }
 

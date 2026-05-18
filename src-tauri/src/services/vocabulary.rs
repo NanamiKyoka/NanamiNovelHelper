@@ -311,7 +311,7 @@ impl VocabularyService {
         let entry_id = entry.get("id").and_then(|v| v.as_str()).unwrap_or("");
         let type_name = entry.get("typeName").and_then(|v| v.as_str()).unwrap_or("unknown");
         let entry_name = entry.get("name").and_then(|v| v.as_str()).unwrap_or("untitled");
-        let description = entry.get("description").and_then(|v| v.as_str()).unwrap_or("");
+        
         let created_at = entry.get("createdAt").and_then(|v| v.as_str()).unwrap_or("");
 
         let safe_type_name: String = type_name.chars().map(|c| if r#"\/:*?"<>|"#.contains(c) { '_' } else { c }).collect();

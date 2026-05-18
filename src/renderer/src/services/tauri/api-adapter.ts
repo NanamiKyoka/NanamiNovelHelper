@@ -716,9 +716,9 @@ export const tauriApi = {
     },
     removeStreamChunkListener: () => {},
     testApiConnection: (provider: string) =>
-      invoke('ai_test_connection', { provider }).then((r: Record<string, unknown>) => r.success as boolean),
+      invoke<{ success: boolean; error?: string; content?: string; duration?: number }>('ai_test_connection', { provider }),
     getAvailableModels: (provider: string) =>
-      invoke('ai_get_available_models', { provider })
+      invoke<string[]>('ai_get_available_models', { provider })
   },
 
   dynamicSkill: {

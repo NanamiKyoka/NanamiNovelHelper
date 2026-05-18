@@ -16,7 +16,8 @@ import {
   Divider,
   Radio,
   Tooltip,
-  Alert
+  Alert,
+  Select
 } from 'antd'
 import {
   SaveOutlined,
@@ -146,6 +147,10 @@ export function ApiSettings(): JSX.Element {
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [customConfigs, setCustomConfigs] = useState<ApiConfig[]>([])
 
+  const [providerModels, setProviderModels] = useState<Record<string, string[]>>({})
+  const [selectedModels, setSelectedModels] = useState<Record<string, string>>({})
+  const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({})
+
   useEffect(() => {
     const loadConfigs = async () => {
       const loadedConfigs: ApiConfig[] = []
@@ -189,10 +194,41 @@ export function ApiSettings(): JSX.Element {
 
       setConfigs(loadedConfigs)
       setCustomConfigs(loadedCustomConfigs)
+
+      const allProviderIds = [...loadedConfigs.map(c => c.id), ...loadedCustomConfigs.map(c => c.id)]
+      for (const providerId of allProviderIds) {
+        loadModels(providerId)
+      }
+
+      const modelSelections: Record<string, string> = {}
+      for (const providerId of allProviderIds) {
+        const savedModel = await getApiKey(`${providerId}_model`)
+        if (savedModel) {
+          modelSelections[providerId] = savedModel
+        }
+      }
+      setSelectedModels(modelSelections)
     }
 
     loadConfigs()
   }, [getApiKey])
+
+  const loadModels = async (providerId: string) => {
+    setLoadingModels(prev => ({ ...prev, [providerId]: true }))
+    try {
+      const models = await window.api.aiAssistant.getAvailableModels(providerId)
+      setProviderModels(prev => ({ ...prev, [providerId]: models }))
+    } catch {
+      setProviderModels(prev => ({ ...prev, [providerId]: [] }))
+    } finally {
+      setLoadingModels(prev => ({ ...prev, [providerId]: false }))
+    }
+  }
+
+  const handleModelChange = async (providerId: string, model: string) => {
+    setSelectedModels(prev => ({ ...prev, [providerId]: model }))
+    await setApiKey(`${providerId}_model`, model)
+  }
 
   const handleSave = async (id: string, values: { key: string; baseUrl?: string }) => {
     setLoading(prev => ({ ...prev, [id]: true }))
@@ -223,6 +259,7 @@ export function ApiSettings(): JSX.Element {
       })
 
       message.success('保存成功')
+      loadModels(id)
     } catch (_error) {
       message.error('保存失败')
     } finally {
@@ -382,6 +419,27 @@ export function ApiSettings(): JSX.Element {
             </Text>
           </div>
         )}
+        <div className={styles.modelSelector} style={{ marginTop: 8 }}>
+          <Space>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              模型:
+            </Text>
+            <Select
+              size="small"
+              showSearch
+              style={{ width: 220 }}
+              value={selectedModels[config.id]}
+              onChange={value => handleModelChange(config.id, value)}
+              loading={loadingModels[config.id]}
+              placeholder={loadingModels[config.id] ? '加载中...' : '选择模型'}
+              options={(providerModels[config.id] || []).map(model => ({
+                label: model,
+                value: model
+              }))}
+              notFoundContent={loadingModels[config.id] ? '加载中...' : '暂无可选模型'}
+            />
+          </Space>
+        </div>
         <div style={{ marginTop: 8 }}>
           <Space>
             <Button

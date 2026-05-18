@@ -1,4 +1,4 @@
-﻿/**
+/**
  * AI 写作助手状态管理
  */
 
@@ -78,9 +78,9 @@ interface AiAssistantState {
   onStreamChunk: (callback: (chunk: AiApiStreamChunk) => void) => void
   removeStreamChunkListener: () => void
   testApiConnection: (
-    provider: 'openai' | 'anthropic' | 'custom'
+    provider: string
   ) => Promise<{ success: boolean; error?: string }>
-  getAvailableModels: (provider: 'openai' | 'anthropic' | 'custom') => Promise<string[]>
+  getAvailableModels: (provider: string) => Promise<string[]>
 
   // 变量解析
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => string
@@ -477,7 +477,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     window.api.aiAssistant.removeStreamChunkListener()
   },
 
-  testApiConnection: async (provider: 'openai' | 'anthropic' | 'custom') => {
+  testApiConnection: async (provider: string) => {
     try {
       return await window.api.aiAssistant.testApiConnection(provider)
     } catch (error) {
@@ -488,7 +488,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
   },
 
-  getAvailableModels: async (provider: 'openai' | 'anthropic' | 'custom') => {
+  getAvailableModels: async (provider: string) => {
     try {
       return await window.api.aiAssistant.getAvailableModels(provider)
     } catch (error) {

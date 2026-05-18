@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import {
   Popover,
   Button,
@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons'
 import { generateNames, getRandomSurname, copyToClipboard } from '@utils/randomName'
 import { NAME_TYPES, type NameType } from '@constants/names'
+import { useSettingsStore } from '@stores/settingsStore'
 import styles from './RandomNamePanel.module.css'
 
 const { Text } = Typography
@@ -98,6 +99,8 @@ Return only the names, one per line, without numbers or explanations.`,
 请直接返回名字列表，每行一个，不要添加序号或其他说明。`
 }
 
+const AI_PROVIDER_IDS = ['openai', 'anthropic', 'deepseek', 'moonshot', 'zhipu', 'custom']
+
 function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.Element {
   const { message } = App.useApp()
   const [open, setOpen] = useState(false)
@@ -113,6 +116,8 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   // AI 相关状态
   const [useAi, setUseAi] = useState(false)
   const [aiStyle, setAiStyle] = useState<string>('古风')
+  const [aiProvider, setAiProvider] = useState<string>('')
+  const [configuredProviders, setConfiguredProviders] = useState<{ id: string; name: string }[]>([])
 
   // 当前选中的类型配置
   const currentTypeConfig = useMemo(() => {
@@ -123,6 +128,50 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   const isPersonType = useMemo(() => {
     return currentTypeConfig?.category === 'person'
   }, [currentTypeConfig])
+
+  const getApiKey = useSettingsStore(s => s.getApiKey)
+  const providerInitialized = useRef(false)
+
+  const discoverProviders = useCallback(async () => {
+    const providers: { id: string; name: string }[] = []
+    const nameMap: Record<string, string> = {
+      openai: 'OpenAI',
+      anthropic: 'Anthropic',
+      deepseek: 'DeepSeek',
+      moonshot: 'Moonshot',
+      zhipu: '智谱AI',
+      custom: '自定义'
+    }
+    for (const id of AI_PROVIDER_IDS) {
+      const key = await getApiKey(id)
+      if (key) {
+        providers.push({ id, name: nameMap[id] || id })
+      }
+    }
+    const customKeys = await getApiKey('custom_providers')
+    if (customKeys) {
+      try {
+        const customList = JSON.parse(customKeys)
+        for (const custom of customList) {
+          const key = await getApiKey(custom.id)
+          if (key) {
+            providers.push({ id: custom.id, name: custom.name })
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    setConfiguredProviders(providers)
+    if (providers.length > 0 && !providerInitialized.current) {
+      setAiProvider(providers[0].id)
+      providerInitialized.current = true
+    }
+  }, [getApiKey])
+
+  useEffect(() => {
+    discoverProviders()
+  }, [discoverProviders])
 
   // AI 生成名字
   const generateNamesWithAi = useCallback(async () => {
@@ -154,6 +203,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
 
     try {
       const result = await window.api.aiAssistant.callApi(prompt, {
+        provider: aiProvider,
         systemPrompt:
           '你是一个专业的起名助手。请按照用户的要求生成名字。重要：只输出名字列表，每行一个，不要添加任何解释或序号。',
         temperature: 0.8,
@@ -178,14 +228,19 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
     } catch {
       return null
     }
-  }, [selectedType, gender, aiStyle, surname, charCount])
+  }, [selectedType, gender, aiStyle, surname, charCount, aiProvider])
 
   // 生成名字
   const handleGenerate = useCallback(async () => {
     setLoading(true)
 
-    // 如果启用 AI，尝试 AI 生成
     if (useAi) {
+      if (!aiProvider) {
+        message.warning('请先在设置中配置 API 提供商')
+        setLoading(false)
+        return
+      }
+
       try {
         const aiNames = await generateNamesWithAi()
         if (aiNames && aiNames.length > 0) {
@@ -193,7 +248,6 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
           setLoading(false)
           return
         }
-        // AI 生成失败，提示用户
         message.warning('AI 生成失败，已切换到本地生成')
       } catch {
         message.warning('AI 服务暂时不可用，已切换到本地生成')
@@ -216,7 +270,7 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
       setNames(result)
       setLoading(false)
     }, 100)
-  }, [useAi, generateNamesWithAi, selectedType, surname, gender, charCount, middleChar, suffix, message])
+  }, [useAi, generateNamesWithAi, selectedType, surname, gender, charCount, middleChar, suffix, message, aiProvider])
 
   // 随机姓氏
   const handleRandomSurname = useCallback(() => {
@@ -243,11 +297,14 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       setOpen(newOpen)
-      if (newOpen && names.length === 0) {
-        setTimeout(handleGenerate, 100)
+      if (newOpen) {
+        discoverProviders()
+        if (names.length === 0) {
+          setTimeout(handleGenerate, 100)
+        }
       }
     },
-    [names.length, handleGenerate]
+    [names.length, handleGenerate, discoverProviders]
   )
 
   // 类型选项按分类分组
@@ -397,6 +454,24 @@ function RandomNamePanel({ children, onNameSelect }: RandomNamePanelProps): JSX.
 
         {useAi && (
           <div className={styles.aiStyleSection}>
+            <div className={styles.sectionLabel} style={{ fontSize: 12 }}>
+              API 提供商
+            </div>
+            <Select
+              size="small"
+              value={aiProvider}
+              onChange={setAiProvider}
+              style={{ width: '100%', marginBottom: 8 }}
+              getPopupContainer={triggerNode => triggerNode.parentElement || document.body}
+              options={configuredProviders.map(p => ({ value: p.id, label: p.name }))}
+              placeholder={configuredProviders.length === 0 ? '请先在设置中配置 API' : '选择提供商'}
+              disabled={configuredProviders.length === 0}
+            />
+            {configuredProviders.length === 0 && (
+              <Text type="danger" style={{ fontSize: 11 }}>
+                未检测到已配置的 API 提供商，请在「设置 → AI/API」中添加
+              </Text>
+            )}
             <div className={styles.sectionLabel} style={{ fontSize: 12 }}>
               风格
             </div>
