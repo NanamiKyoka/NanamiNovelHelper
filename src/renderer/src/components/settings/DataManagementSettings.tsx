@@ -192,7 +192,7 @@ export function DataManagementSettings(): JSX.Element {
         <div className={styles.storageInfo}>
           <div className={styles.storageItem}>
             <Text type="secondary">全局设置：</Text>
-            <Text code>用户目录/AppData/Roaming/nanami-novel-helper</Text>
+            <Text code>用户目录/AppData/Roaming/NanamiNovelHelper</Text>
           </div>
           <div className={styles.storageItem}>
             <Text type="secondary">项目设置：</Text>

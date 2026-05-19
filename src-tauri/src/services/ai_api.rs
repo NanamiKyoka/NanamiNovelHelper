@@ -182,10 +182,6 @@ impl AiApiService {
         Self { client }
     }
 
-    fn get_api_key(storage: &SecureStorageService, key_name: &str) -> Option<String> {
-        storage.get_api_key(key_name)
-    }
-
     fn get_custom_base_url(storage: &SecureStorageService) -> Option<String> {
         storage.get_api_key("custom_base_url")
     }

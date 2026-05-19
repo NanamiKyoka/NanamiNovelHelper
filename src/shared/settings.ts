@@ -158,9 +158,9 @@ export const DEFAULT_GLOBAL_LAYOUT_SETTINGS: GlobalLayoutSettings = {
 /**
  * 全局设置
  * 存储在 Tauri Store，路径：
- * - Windows: %APPDATA%/nanami-novel-helper/
- * - macOS: ~/Library/Application Support/nanami-novel-helper/
- * - Linux: ~/.config/nanami-novel-helper/
+ * - Windows: %APPDATA%/NanamiNovelHelper/
+ * - macOS: ~/Library/Application Support/NanamiNovelHelper/
+ * - Linux: ~/.configNanamiNovelHelper/
  */
 export interface GlobalSettings {
   theme: GlobalThemeConfig

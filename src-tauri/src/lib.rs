@@ -240,6 +240,7 @@ pub fn run() {
             ai_call_api_stream,
             ai_test_connection,
             ai_get_available_models,
+            ai_get_provider_list,
             secure_is_encryption_available,
             secure_get_api_key,
             secure_set_api_key,

@@ -4,10 +4,10 @@ import { useUIStore } from '@stores/uiStore'
 
 const { Title, Text, Paragraph } = Typography
 
-const APP_VERSION = '0.1.0'
+const APP_VERSION = '0.1.3'
 const APP_NAME = 'Nanami Novel Helper'
 const APP_DESCRIPTION = '面向小说创作者的专业写作辅助工具'
-const GITHUB_URL = 'https://github.com/nanami-novel-helper/nanami-novel-helper'
+const GITHUB_URL = 'https://github.com/NanamiKyoka/NanamiNovelHelper'
 
 export function AboutModal(): JSX.Element {
   const aboutModalOpen = useUIStore(state => state.aboutModalOpen)

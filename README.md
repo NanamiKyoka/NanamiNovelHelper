@@ -206,8 +206,8 @@ graph TB
 
 ```bash
 # 克隆仓库
-git clone https://github.com/NanamiKyoka/nanami-novel-helper.git
-cd nanami-novel-helper
+git clone https://github.com/NanamiKyoka/NanamiNovelHelper.git
+cd NanamiNovelHelper
 
 # 安装依赖
 npm install
@@ -285,7 +285,7 @@ npm run test -- -u
 ## 项目结构
 
 ```
-nanami-novel-helper/
+NanamiNovelHelper/
 ├── src/
 │   ├── renderer/           # 前端代码
 │   │   ├── src/

@@ -718,7 +718,9 @@ export const tauriApi = {
     testApiConnection: (provider: string) =>
       invoke<{ success: boolean; error?: string; content?: string; duration?: number }>('ai_test_connection', { provider }),
     getAvailableModels: (provider: string) =>
-      invoke<string[]>('ai_get_available_models', { provider })
+      invoke<string[]>('ai_get_available_models', { provider }),
+    getProviderList: () =>
+      invoke<Array<Record<string, string>>>('ai_get_provider_list')
   },
 
   dynamicSkill: {

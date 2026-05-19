@@ -17,7 +17,7 @@ impl SettingsService {
     fn get_global_settings_dir() -> PathBuf {
         dirs::config_dir()
             .unwrap_or_else(|| PathBuf::from("."))
-            .join("nanami-novel-helper")
+            .join("NanamiNovelHelper")
     }
 
     fn get_global_settings_path() -> PathBuf {

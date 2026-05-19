@@ -61,3 +61,10 @@ pub fn ai_get_available_models(
 ) -> AppResult<Vec<String>> {
     Ok(ai_api_service.get_available_models(&provider))
 }
+
+#[tauri::command]
+pub fn ai_get_provider_list(
+    ai_api_service: State<'_, AiApiService>,
+) -> AppResult<Vec<std::collections::HashMap<String, String>>> {
+    Ok(ai_api_service.get_provider_list())
+}
