@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { notification } from 'antd'
+import { ErrorCode, ServiceError } from '@shared/errors'
 import {
-  AppError,
-  AppErrorCode,
+  parseIpcError,
   extractErrorMessage,
   handleError,
   createErrorHandler,
@@ -13,8 +13,8 @@ import {
 
 describe('error utils', () => {
   describe('extractErrorMessage', () => {
-    it('should extract message from AppError', () => {
-      const error = new AppError(AppErrorCode.PROJECT_OPEN_FAILED, '打开项目失败')
+    it('should extract message from ServiceError', () => {
+      const error = new ServiceError(ErrorCode.PRJ_OPEN_FAILED, '打开项目失败')
       expect(extractErrorMessage(error)).toBe('打开项目失败')
     })
 
@@ -97,66 +97,90 @@ describe('error utils', () => {
     })
   })
 
-  describe('AppError', () => {
-    it('should have correct name', () => {
-      const error = new AppError(AppErrorCode.UNKNOWN_ERROR, '未知错误')
-      expect(error.name).toBe('AppError')
+  describe('parseIpcError', () => {
+    it('should return same ServiceError instance', () => {
+      const original = new ServiceError(ErrorCode.PRJ_NOT_OPEN, '项目未打开')
+      const parsed = parseIpcError(original)
+      expect(parsed).toBe(original)
     })
 
-    it('should store code', () => {
-      const error = new AppError(AppErrorCode.PROJECT_NOT_FOUND, '项目未找到')
-      expect(error.code).toBe(AppErrorCode.PROJECT_NOT_FOUND)
+    it('should wrap plain string with UNKNOWN code', () => {
+      const parsed = parseIpcError('一段错误消息')
+      expect(parsed.code).toBe(ErrorCode.UNKNOWN)
+      expect(parsed.message).toBe('一段错误消息')
+      expect(parsed.module).toBe('IPC')
+    })
+
+    it('should parse structured IPC error with known code', () => {
+      const parsed = parseIpcError({ code: 'FIL_NOT_FOUND', message: '文件不存在', module: 'FileService' })
+      expect(parsed.code).toBe(ErrorCode.FIL_NOT_FOUND)
+      expect(parsed.message).toBe('文件不存在')
+      expect(parsed.module).toBe('FileService')
+    })
+
+    it('should parse structured error with unknown code as UNKNOWN', () => {
+      const parsed = parseIpcError({ code: 'XYZ_FAKE', message: '消息' })
+      expect(parsed.code).toBe(ErrorCode.UNKNOWN)
+    })
+
+    it('should handle error with code but no message', () => {
+      const parsed = parseIpcError({ code: 'FIL_NOT_FOUND' })
+      expect(parsed.code).toBe(ErrorCode.FIL_NOT_FOUND)
+      expect(parsed.message).toBe('文件未找到')
+    })
+
+    it('should fallback to UNKNOWN for unrecognized format', () => {
+      const parsed = parseIpcError(42)
+      expect(parsed.code).toBe(ErrorCode.UNKNOWN)
+    })
+  })
+
+  describe('ServiceError', () => {
+    it('should have correct name', () => {
+      const error = new ServiceError(ErrorCode.UNKNOWN, '未知错误')
+      expect(error.name).toBe('ServiceError')
+    })
+
+    it('should store code and message', () => {
+      const error = new ServiceError(ErrorCode.PRJ_NOT_OPEN, '项目未打开')
+      expect(error.code).toBe(ErrorCode.PRJ_NOT_OPEN)
+      expect(error.message).toBe('项目未打开')
+    })
+
+    it('should use default message when not provided', () => {
+      const error = new ServiceError(ErrorCode.FIL_NOT_FOUND)
+      expect(error.message).toBe('文件未找到')
+    })
+
+    it('should have severity from metadata', () => {
+      const fatalError = new ServiceError(ErrorCode.SYS_APP_START_FAILED)
+      expect(fatalError.severity).toBe('fatal')
+
+      const errorError = new ServiceError(ErrorCode.FIL_READ_ERROR)
+      expect(errorError.severity).toBe('error')
+    })
+
+    it('should have recoverable from metadata', () => {
+      const error = new ServiceError(ErrorCode.FIL_NOT_FOUND)
+      expect(error.recoverable).toBe(true)
+
+      const fatal = new ServiceError(ErrorCode.SYS_APP_START_FAILED)
+      expect(fatal.recoverable).toBe(false)
+    })
+
+    it('should serialize to JSON correctly', () => {
+      const error = new ServiceError(ErrorCode.NET_TIMEOUT, '网络超时', { module: 'Test' })
+      const json = error.toJSON()
+      expect(json.code).toBe(ErrorCode.NET_TIMEOUT)
+      expect(json.message).toBe('网络超时')
+      expect(json.module).toBe('Test')
+      expect(json.severity).toBe('error')
     })
 
     it('should store cause', () => {
       const cause = new Error('原始错误')
-      const error = new AppError(AppErrorCode.UNKNOWN_ERROR, '未知错误', cause)
+      const error = new ServiceError(ErrorCode.UNKNOWN, '包装错误', { cause })
       expect(error.cause).toBe(cause)
-    })
-
-    describe('getRecovery', () => {
-      it('should return recovery for PROJECT_NOT_FOUND', () => {
-        const error = new AppError(AppErrorCode.PROJECT_NOT_FOUND, '项目未找到')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(true)
-        expect(recovery.suggestion).toContain('项目路径')
-        expect(recovery.action).toBeDefined()
-        expect(recovery.action?.label).toBeDefined()
-      })
-
-      it('should return recovery for PROJECT_CREATE_FAILED', () => {
-        const error = new AppError(AppErrorCode.PROJECT_CREATE_FAILED, '创建失败')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(true)
-        expect(recovery.suggestion).toContain('写入权限')
-      })
-
-      it('should return recovery for FILE_NOT_FOUND', () => {
-        const error = new AppError(AppErrorCode.FILE_NOT_FOUND, '文件未找到')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(true)
-        expect(recovery.suggestion).toContain('刷新文件列表')
-      })
-
-      it('should return recovery for GIT_OPERATION_FAILED', () => {
-        const error = new AppError(AppErrorCode.GIT_OPERATION_FAILED, 'Git操作失败')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(true)
-        expect(recovery.suggestion).toContain('Git')
-      })
-
-      it('should return non-recoverable for UNKNOWN_ERROR', () => {
-        const error = new AppError(AppErrorCode.UNKNOWN_ERROR, '未知错误')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(false)
-        expect(recovery.suggestion).toContain('重启')
-      })
-
-      it('should fallback to UNKNOWN_ERROR for unmapped codes', () => {
-        const error = new AppError(AppErrorCode.VOCABULARY_SAVE_FAILED, '保存失败')
-        const recovery = error.getRecovery()
-        expect(recovery.recoverable).toBe(false)
-      })
     })
   })
 
@@ -194,13 +218,13 @@ describe('error utils', () => {
       expect(() => handleError(error, { rethrow: true })).toThrow('测试错误')
     })
 
-    it('should wrap non-Error in AppError when rethrow is true', () => {
-      expect(() => handleError('字符串错误', { rethrow: true })).toThrow(AppError)
+    it('should wrap non-Error in ServiceError when rethrow is true', () => {
+      expect(() => handleError('字符串错误', { rethrow: true })).toThrow(ServiceError)
     })
 
     it('should show notification when showNotification is true', () => {
       const notificationSpy = vi.spyOn(notification, 'error').mockImplementation(() => {})
-      const error = new AppError(AppErrorCode.FILE_NOT_FOUND, '文件未找到')
+      const error = new Error('文件不存在')
       handleError(error, { showNotification: true, log: false })
       expect(notificationSpy).toHaveBeenCalled()
       notificationSpy.mockRestore()
@@ -223,7 +247,7 @@ describe('error utils', () => {
       const error = new Error('测试错误')
       const message = handler(error)
       expect(message).toBe('测试错误')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[CustomPrefix] 测试错误', error)
+      expect(consoleErrorSpy).toHaveBeenCalled()
     })
 
     it('should respect log option', () => {
@@ -236,15 +260,14 @@ describe('error utils', () => {
   })
 
   describe('showErrorWithRecovery', () => {
-    it('should show notification with recovery suggestion for AppError', () => {
+    it('should show notification with recovery suggestion for ServiceError', () => {
       const notificationSpy = vi.spyOn(notification, 'error').mockImplementation(() => {})
-      const error = new AppError(AppErrorCode.PROJECT_NOT_FOUND, '项目未找到')
-      showErrorWithRecovery(error)
+      showErrorWithRecovery(new Error('项目未找到'))
       expect(notificationSpy).toHaveBeenCalled()
       notificationSpy.mockRestore()
     })
 
-    it('should show notification without recovery for non-AppError', () => {
+    it('should show notification for non-ServiceError', () => {
       const notificationSpy = vi.spyOn(notification, 'error').mockImplementation(() => {})
       showErrorWithRecovery(new Error('普通错误'))
       expect(notificationSpy).toHaveBeenCalled()

@@ -8,9 +8,11 @@ import { useSettingsStore } from '@stores/settingsStore'
 import { applyPrimaryColorToRoot } from '@utils/theme'
 import { disableBrowserAutofill, disableContextMenu } from '@utils/html'
 import { initTauriApi } from '@services/tauri/init'
+import { installGlobalErrorHandlers } from '@utils/globalErrorHandler'
 import './styles/global.css'
 
 initTauriApi()
+installGlobalErrorHandlers()
 disableBrowserAutofill()
 disableContextMenu()
 

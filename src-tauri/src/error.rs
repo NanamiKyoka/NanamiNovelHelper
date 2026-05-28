@@ -35,12 +35,55 @@ pub enum AppError {
     PermissionDenied(String),
 }
 
+impl AppError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            AppError::ProjectNotFound(_) => "PRJ_NOT_FOUND",
+            AppError::FileNotFound(_) => "FIL_NOT_FOUND",
+            AppError::IoError(_) => "SYS_IO_ERROR",
+            AppError::JsonError(_) => "DAT_PARSE_ERROR",
+            AppError::Json5Error(_) => "DAT_PARSE_ERROR",
+            AppError::InvalidPath(_) => "PRJ_INVALID_PATH",
+            AppError::OperationFailed(_) => "UNKNOWN",
+            AppError::ProjectNotOpen => "PRJ_NOT_OPEN",
+            AppError::InvalidParam(_) => "ARG_INVALID",
+            AppError::PermissionDenied(_) => "SEC_PERMISSION_DENIED",
+        }
+    }
+
+    pub fn module(&self) -> &'static str {
+        match self {
+            AppError::ProjectNotFound(_) | AppError::ProjectNotOpen | AppError::InvalidPath(_) => {
+                "Project"
+            }
+            AppError::FileNotFound(_) => "File",
+            AppError::IoError(_) => "System",
+            AppError::JsonError(_) | AppError::Json5Error(_) => "Data",
+            AppError::OperationFailed(_) => "Service",
+            AppError::InvalidParam(_) => "Service",
+            AppError::PermissionDenied(_) => "Security",
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct AppErrorPayload {
+    code: &'static str,
+    message: String,
+    module: &'static str,
+}
+
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&self.to_string())
+        let payload = AppErrorPayload {
+            code: self.code(),
+            message: self.to_string(),
+            module: self.module(),
+        };
+        payload.serialize(serializer)
     }
 }
 

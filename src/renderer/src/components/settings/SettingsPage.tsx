@@ -11,7 +11,8 @@ import {
   DatabaseOutlined,
   CloudServerOutlined,
   SearchOutlined,
-  EyeOutlined
+  EyeOutlined,
+  CloudSyncOutlined
 } from '@ant-design/icons'
 import AppearanceSettings from './AppearanceSettings'
 import { EditorSettings } from './EditorSettings'
@@ -22,6 +23,7 @@ import { ApiSettings } from './ApiSettings'
 import { BackupSettings } from './BackupSettings'
 import { DataManagementSettings } from './DataManagementSettings'
 import GlobalLayoutSettings from './GlobalLayoutSettings'
+import { UpdateSettings } from './UpdateSettings'
 import styles from './SettingsPage.module.css'
 
 const { Sider, Content } = Layout
@@ -36,6 +38,7 @@ type SettingsKey =
   | 'file-display'
   | 'highlight'
   | 'backup'
+  | 'update'
 
 interface MenuItem {
   key: SettingsKey
@@ -81,6 +84,13 @@ const menuItems: MenuItem[] = [
     label: '数据管理',
     group: 'global',
     keywords: ['导入', '导出', '重置', '备份', 'import', 'export', 'reset']
+  },
+  {
+    key: 'update',
+    icon: <CloudSyncOutlined />,
+    label: '检查更新',
+    group: 'global',
+    keywords: ['更新', '版本', 'update', 'version', 'upgrade']
   },
   // 项目设置
   {
@@ -237,6 +247,16 @@ function SettingsPage(): JSX.Element {
             <h2>备份与恢复</h2>
             <p className={styles.description}>管理项目备份，设置自动备份策略。</p>
             <BackupSettings />
+          </div>
+        )
+      case 'update':
+        return (
+          <div className={styles.panel}>
+            <h2>检查更新</h2>
+            <p className={styles.description}>
+              检查并安装最新版本，保持应用始终为最新。
+            </p>
+            <UpdateSettings />
           </div>
         )
       default:

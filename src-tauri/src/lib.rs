@@ -7,14 +7,15 @@ mod utils;
 use commands::*;
 use services::{
     AiApiService, AiAssistantService, BackupService, DynamicSkillService, FileService,
-    FileWatcherService, GitService, GraphService, ImageService, ProjectService, SearchService,
-    SecureStorageService, SettingsService, TerminalService, VocabularyService,
+    FileWatcherService, GitService, GraphService, ImageService, LogService, ProjectService,
+    SearchService, SecureStorageService, SettingsService, TerminalService, VocabularyService,
 };
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -79,16 +80,20 @@ pub fn run() {
         .manage(DynamicSkillService::new())
         .manage(FileWatcherService::new())
         .manage(SecureStorageService::new())
+        .manage(LogService::new())
         .setup(|app| {
             let file_watcher = app.state::<FileWatcherService>();
             file_watcher.set_app(app.handle().clone());
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
+            let log_level = if cfg!(debug_assertions) {
+                log::LevelFilter::Debug
+            } else {
+                log::LevelFilter::Warn
+            };
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log_level)
+                    .build(),
+            )?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -261,7 +266,12 @@ pub fn run() {
             file_watcher_start,
             file_watcher_stop,
             file_watcher_is_watching,
-            file_watcher_get_watched_path
+            file_watcher_get_watched_path,
+            log_get_recent,
+            log_clear,
+            log_get_path,
+            updater_check,
+            updater_install
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -5,6 +5,7 @@ declare global {
     api: typeof tauriApi
     __TAURI_INTERNALS__: unknown
   }
+  const __APP_VERSION__: string
 }
 
 export function initTauriApi(): void {

@@ -8,9 +8,11 @@ import { useProjectStore } from '@stores/projectStore'
 import { useTerminalStore } from '@stores/terminalStore'
 import { initTauriApi } from '@services/tauri/init'
 import { disableBrowserAutofill, disableContextMenu } from '@utils/html'
+import { installGlobalErrorHandlers } from '@utils/globalErrorHandler'
 import '@renderer/styles/global.css'
 
 initTauriApi()
+installGlobalErrorHandlers()
 disableBrowserAutofill()
 disableContextMenu()
 

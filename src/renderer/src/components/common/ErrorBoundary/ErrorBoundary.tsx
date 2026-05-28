@@ -1,48 +1,56 @@
 /**
  * 错误边界组件
  *
- * 捕获子组件的 JavaScript 错误，防止整个应用崩溃
+ * 捕获子组件的 JavaScript 错误，防止整个应用崩溃。
+ * 在回退界面中显示错误码，便于用户反馈和排查。
  */
 
 import { Component, ErrorInfo, ReactNode } from 'react'
-import { Result, Button } from 'antd'
+import { Result, Button, Typography } from 'antd'
+import { parseIpcError, extractErrorCode } from '@utils/error'
+import { ErrorCode } from '@shared/errors'
 import styles from './ErrorBoundary.module.css'
+
+const { Text } = Typography
 
 interface ErrorBoundaryProps {
   children: ReactNode
-  /** 自定义错误回调 */
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
-  /** 自定义回退 UI */
+  onError?: (error: Error, errorInfo: ErrorInfo, code: ErrorCode) => void
   fallback?: ReactNode
-  /** 重置按钮文字 */
   resetButtonText?: string
 }
 
 interface ErrorBoundaryState {
   hasError: boolean
   error: Error | null
+  errorCode: ErrorCode
 }
 
-/**
- * 错误边界组件
- */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false, error: null, errorCode: ErrorCode.UNKNOWN }
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Pick<ErrorBoundaryState, 'hasError' | 'error'> {
     return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
-    this.props.onError?.(error, errorInfo)
+    const code = extractErrorCode(error)
+    this.setState({ errorCode: code })
+
+    const appError = parseIpcError(error)
+    console.error(
+      `[ErrorBoundary] [${appError.code}] ${error.message}`,
+      '\nComponent Stack:',
+      errorInfo.componentStack
+    )
+    this.props.onError?.(error, errorInfo, code)
   }
 
   handleReset = (): void => {
-    this.setState({ hasError: false, error: null })
+    this.setState({ hasError: false, error: null, errorCode: ErrorCode.UNKNOWN })
   }
 
   handleReload = (): void => {
@@ -50,7 +58,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   render(): ReactNode {
-    const { hasError, error } = this.state
+    const { hasError, error, errorCode } = this.state
     const { children, fallback, resetButtonText = '重试' } = this.props
 
     if (hasError) {
@@ -63,7 +71,20 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <Result
             status="error"
             title="页面出错了"
-            subTitle={error?.message || '抱歉，页面遇到了一些问题'}
+            subTitle={
+              <div>
+                <p style={{ marginBottom: 4 }}>{error?.message || '抱歉，页面遇到了一些问题'}</p>
+                {errorCode !== ErrorCode.UNKNOWN && (
+                  <Text
+                    type="secondary"
+                    style={{ fontSize: 12 }}
+                    code
+                  >
+                    {errorCode}
+                  </Text>
+                )}
+              </div>
+            }
             extra={[
               <Button key="reset" type="primary" onClick={this.handleReset}>
                 {resetButtonText}
@@ -81,10 +102,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 }
 
-/**
- * 功能模块错误边界
- * 用于包裹独立功能模块，防止一个模块出错影响其他模块
- */
 export function ModuleErrorBoundary({
   children,
   moduleName
@@ -94,8 +111,8 @@ export function ModuleErrorBoundary({
 }) {
   return (
     <ErrorBoundary
-      onError={(error, errorInfo) => {
-        console.error(`[${moduleName}] Error:`, error, errorInfo)
+      onError={(error, errorInfo, code) => {
+        console.error(`[${moduleName}][${code}] Error:`, error, errorInfo)
       }}
       resetButtonText="重新加载模块"
     >

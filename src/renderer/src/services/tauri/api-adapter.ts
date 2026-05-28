@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { platform } from '@tauri-apps/plugin-os'
+import { check as checkUpdater, type Update, type DownloadEvent } from '@tauri-apps/plugin-updater'
 
 function generateId(): string {
   return crypto.randomUUID()
@@ -762,12 +763,15 @@ export const tauriApi = {
   },
 
   updater: {
-    checkForUpdates: () => Promise.resolve(null),
-    downloadUpdate: () => Promise.resolve(),
-    quitAndInstall: () => {},
-    onUpdateAvailable: (_callback: (info: unknown) => void) => {},
-    onUpdateDownloaded: (_callback: () => void) => {},
-    removeUpdateListeners: () => {}
+    check: checkUpdater,
+    downloadAndInstall: (update: Update, onEvent?: (event: DownloadEvent) => void) =>
+      update.downloadAndInstall(onEvent)
+  },
+
+  log: {
+    getRecent: (count: number) => invoke('log_get_recent', { count }),
+    clear: () => invoke('log_clear'),
+    getPath: () => invoke('log_get_path')
   },
 
   platform: getPlatform()

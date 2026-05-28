@@ -1,6 +1,6 @@
 use crate::error::AppResult;
 use crate::models::*;
-use crate::services::{FileWatcherService, ProjectService};
+use crate::services::{FileWatcherService, LogService, ProjectService};
 use tauri::State;
 
 #[tauri::command]
@@ -9,9 +9,12 @@ pub fn create_project(
     path: String,
     project_service: State<ProjectService>,
     file_watcher_service: State<'_, FileWatcherService>,
+    log_service: State<'_, LogService>,
 ) -> AppResult<Project> {
     let project = project_service.create_project(name, path.clone())?;
     file_watcher_service.start(&path);
+    log_service.set_project(Some(&path));
+    log_service.info("Project", &format!("创建项目: {} ({})", project.name, path));
     Ok(project)
 }
 
@@ -20,9 +23,12 @@ pub fn open_project(
     path: String,
     project_service: State<ProjectService>,
     file_watcher_service: State<'_, FileWatcherService>,
+    log_service: State<'_, LogService>,
 ) -> AppResult<Project> {
     let project = project_service.open_project(path.clone())?;
     file_watcher_service.start(&path);
+    log_service.set_project(Some(&path));
+    log_service.info("Project", &format!("打开项目: {} ({})", project.name, path));
     Ok(project)
 }
 
@@ -30,7 +36,10 @@ pub fn open_project(
 pub fn close_project(
     project_service: State<ProjectService>,
     file_watcher_service: State<'_, FileWatcherService>,
+    log_service: State<'_, LogService>,
 ) {
+    log_service.info("Project", "关闭项目");
+    log_service.set_project(None);
     file_watcher_service.stop();
     project_service.close_project()
 }

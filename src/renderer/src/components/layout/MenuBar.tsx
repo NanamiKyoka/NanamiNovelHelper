@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { App } from 'antd'
 import { useProjectStore } from '@stores/projectStore'
 import { useUIStore } from '@stores/uiStore'
@@ -45,11 +45,11 @@ function MenuBar(): JSX.Element {
   }, [])
 
   const handleCheckUpdate = useCallback(async () => {
-    message.info('正在检查更新...')
+    setActiveMenu(null)
     try {
-      const result = await window.api?.updater?.checkForUpdates?.()
-      if (result) {
-        message.success('发现新版本，正在下载...')
+      const update = await window.api?.updater?.check()
+      if (update) {
+        message.info(`发现新版本 ${update.version}，请在设置 → 检查更新中下载安装`)
       } else {
         message.success('当前已是最新版本')
       }
