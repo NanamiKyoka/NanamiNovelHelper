@@ -65,3 +65,6 @@ temp/
 # Reference
 reference/
 AGENTS.md
+
+# Tauri updater signing keys
+.tauri/
