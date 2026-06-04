@@ -666,22 +666,24 @@ export const useEditorStore = create<EditorState>()(
           }
         },
 
-        updateContent: (content: string) => {
+        updateContent: (content: string, path?: string) => {
           const state = get()
-          const activeTab = state.getActiveTab()
+          const targetPath = path || state.getActiveTab()?.path
+          if (!targetPath) return
 
-          if (!activeTab) return
+          const tab = state.getTabByPath(targetPath)
+          if (!tab) return
 
           set(state => {
-            state.fileContents.set(activeTab.path, {
-              path: activeTab.path,
+            state.fileContents.set(targetPath, {
+              path: targetPath,
               content,
               loadedAt: Date.now()
             })
             return { fileContents: state.fileContents, _cacheVersion: state._cacheVersion + 1 }
           })
 
-          get().markDirty(activeTab.id, true)
+          get().markDirty(tab.id, true)
         },
 
         saveEditorState: (path: string, editorState: unknown) => {

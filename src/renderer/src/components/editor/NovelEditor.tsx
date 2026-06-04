@@ -168,14 +168,16 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
 
       const htmlContent = editor.getHTML()
       const textContent = editor.getText()
-      updateContent(htmlContent)
+      const filePath = currentFilePathRef.current
+      if (filePath) {
+        updateContent(htmlContent, filePath)
+      }
       onChange?.(htmlContent)
 
       // 防抖更新字数统计
       debouncedUpdateWordCount(textContent)
 
       // 实时保存编辑器状态（包括历史记录）到当前文件
-      const filePath = currentFilePathRef.current
       if (filePath) {
         saveEditorState(filePath, editor.view.state)
       }
@@ -245,7 +247,10 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
       setIsComposing(false)
       const htmlContent = editor.getHTML()
       const textContent = editor.getText()
-      updateContent(htmlContent)
+      const filePath = currentFilePathRef.current
+      if (filePath) {
+        updateContent(htmlContent, filePath)
+      }
       onChange?.(htmlContent)
       // 防抖更新字数统计
       debouncedUpdateWordCount(textContent)
@@ -271,6 +276,10 @@ export function NovelEditor({ onChange, onSave, readonly = false }: NovelEditorP
     const currentPath = currentFilePath
 
     if (!isFirstMount && prevPath && prevPath !== currentPath) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
       try {
         saveEditorState(prevPath, editor.view.state)
       } catch (e) {

@@ -118,9 +118,10 @@ export function MarkdownEditor({
             clearTimeout(contentUpdateTimeoutRef.current)
             contentUpdateTimeoutRef.current = null
             const ed = editorRef.current
-            if (ed) {
+            const filePath = currentFilePathRef.current
+            if (ed && filePath) {
               const c = plainText ? getPlainTextFromEditor(ed) : getMarkdownFromEditor(ed)
-              updateContent(c)
+              updateContent(c, filePath)
               onChange?.(c)
             }
           }
@@ -143,8 +144,11 @@ export function MarkdownEditor({
       }
       contentUpdateTimeoutRef.current = setTimeout(() => {
         const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
-        updateContent(content)
-        onChange?.(content)
+        const filePath = currentFilePathRef.current
+        if (filePath) {
+          updateContent(content, filePath)
+          onChange?.(content)
+        }
       }, CONTENT_DEBOUNCE_MS)
 
       debouncedUpdateWordCount(() => editor.getText())
@@ -168,9 +172,10 @@ export function MarkdownEditor({
             clearTimeout(contentUpdateTimeoutRef.current)
             contentUpdateTimeoutRef.current = null
             const ed = editorRef.current
-            if (ed) {
+            const filePath = currentFilePathRef.current
+            if (ed && filePath) {
               const c = plainText ? getPlainTextFromEditor(ed) : getMarkdownFromEditor(ed)
-              updateContent(c)
+              updateContent(c, filePath)
               onChange?.(c)
             }
           }
@@ -228,8 +233,11 @@ export function MarkdownEditor({
       }
       contentUpdateTimeoutRef.current = setTimeout(() => {
         const content = plainText ? getPlainTextFromEditor(editor) : getMarkdownFromEditor(editor)
-        updateContent(content)
-        onChange?.(content)
+        const filePath = currentFilePathRef.current
+        if (filePath) {
+          updateContent(content, filePath)
+          onChange?.(content)
+        }
       }, CONTENT_DEBOUNCE_MS)
       debouncedUpdateWordCount(() => editor.getText())
     }
@@ -260,6 +268,18 @@ export function MarkdownEditor({
     const currentPath = currentFilePath
 
     if (!isFirstMount && prevPath && prevPath !== currentPath) {
+      if (contentUpdateTimeoutRef.current) {
+        clearTimeout(contentUpdateTimeoutRef.current)
+        contentUpdateTimeoutRef.current = null
+      }
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        saveTimeoutRef.current = null
+      }
+      if (saveStateTimeoutRef.current) {
+        clearTimeout(saveStateTimeoutRef.current)
+        saveStateTimeoutRef.current = null
+      }
       saveEditorState(prevPath, editor.view.state)
     }
 
