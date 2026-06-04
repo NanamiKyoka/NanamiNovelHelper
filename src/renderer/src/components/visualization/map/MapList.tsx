@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 地图列表组件
  * 展示所有地图，支持创建、编辑、删除、导入导出、拖拽排序
  */
@@ -444,7 +444,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
           <div
             className={styles.contextMenuItem}
             onClick={() => {
-              onSelectMap(contextMenu.map!.id)
+              onSelectMap(contextMenu.map?.id ?? '')
               setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >
@@ -454,7 +454,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
           <div
             className={styles.contextMenuItem}
             onClick={() => {
-              onCreateAndEdit(contextMenu.map!.id)
+              onCreateAndEdit(contextMenu.map?.id ?? '')
               setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >
@@ -465,7 +465,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
           <div
             className={styles.contextMenuItem}
             onClick={() => {
-              handleExport(contextMenu.map!.id)
+              handleExport(contextMenu.map?.id ?? '')
               setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >
@@ -476,7 +476,7 @@ function MapList({ onSelectMap, onCreateAndEdit }: MapListProps): JSX.Element {
           <div
             className={`${styles.contextMenuItem} ${styles.contextMenuItemDanger}`}
             onClick={() => {
-              handleDelete(contextMenu.map!.id)
+              handleDelete(contextMenu.map?.id ?? '')
               setContextMenu(prev => ({ ...prev, visible: false }))
             }}
           >

@@ -455,7 +455,7 @@ function OrganizationGraphPreview({
       .filter(n => n.parentId)
       .map(node => ({
         id: `edge-${node.id}`,
-        source: node.parentId!,
+        source: node.parentId as string,
         target: node.id
       }))
 

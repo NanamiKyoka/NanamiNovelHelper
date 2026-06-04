@@ -1,7 +1,6 @@
 pub mod ai_api;
 pub mod ai_assistant;
 pub mod backup;
-pub mod dynamic_skill;
 pub mod file_service;
 pub mod file_watcher;
 pub mod git;
@@ -19,7 +18,6 @@ pub mod vocabulary;
 pub use ai_api::AiApiService;
 pub use ai_assistant::AiAssistantService;
 pub use backup::BackupService;
-pub use dynamic_skill::DynamicSkillService;
 pub use file_service::FileService;
 pub use file_watcher::FileWatcherService;
 pub use git::GitService;

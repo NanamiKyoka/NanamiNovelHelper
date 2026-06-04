@@ -87,7 +87,7 @@ impl ProjectService {
     }
 
     pub fn update_project_info(&self, info: serde_json::Value) -> AppResult<crate::models::Project> {
-        let mut current = self.current_project.lock().unwrap();
+        let mut current = self.current_project.lock().map_err(|e| AppError::OperationFailed(format!("获取项目状态锁失败: {}", e)))?;
         let project = current
             .as_mut()
             .ok_or(AppError::ProjectNotOpen)?;
@@ -152,7 +152,7 @@ impl ProjectService {
         let project_file = Self::get_project_file_path(&path);
         write_json_file(&project_file, &project)?;
 
-        let mut current = self.current_project.lock().unwrap();
+        let mut current = self.current_project.lock().map_err(|e| AppError::OperationFailed(format!("获取项目状态锁失败: {}", e)))?;
         *current = Some(project.clone());
 
         project_state::set_project_path(Some(path.clone()));
@@ -170,7 +170,7 @@ impl ProjectService {
 
         let project: crate::models::Project = read_json_file(&project_file)?;
 
-        let mut current = self.current_project.lock().unwrap();
+        let mut current = self.current_project.lock().map_err(|e| AppError::OperationFailed(format!("获取项目状态锁失败: {}", e)))?;
         *current = Some(project.clone());
 
         project_state::set_project_path(Some(path.clone()));
@@ -185,14 +185,14 @@ impl ProjectService {
     }
 
     pub fn close_project(&self) {
-        let mut current = self.current_project.lock().unwrap();
-        *current = None;
+        if let Ok(mut current) = self.current_project.lock() {
+            *current = None;
+        }
         project_state::set_project_path(None);
     }
 
     pub fn get_current_project(&self) -> Option<crate::models::Project> {
-        let current = self.current_project.lock().unwrap();
-        current.clone()
+        self.current_project.lock().ok().and_then(|current| current.clone())
     }
 
     #[allow(dead_code)]

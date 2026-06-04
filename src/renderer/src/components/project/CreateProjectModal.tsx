@@ -23,23 +23,23 @@ interface FormValues {
 
 const validatePath = (_: unknown, value: string) => {
   if (!value || value.trim() === '') {
-    return Promise.reject(new Error('请选择或输入项目保存位置'));
+    return Promise.reject(new Error('请选择或输入项目保存位置'))
   }
-  const invalidCharsRegex = /[<>"|?*]/;
+  const invalidCharsRegex = /[<>"|?*]/
   if (invalidCharsRegex.test(value)) {
-    return Promise.reject(new Error('路径包含非法字符（如 < > " | ? * 等）'));
+    return Promise.reject(new Error('路径包含非法字符（如 < > " | ? * 等）'))
   }
   for (let i = 0; i < value.length; i++) {
-    const code = value.charCodeAt(i);
+    const code = value.charCodeAt(i)
     if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
-      return Promise.reject(new Error('路径包含非法的控制字符'));
+      return Promise.reject(new Error('路径包含非法的控制字符'))
     }
   }
   if (value.length > 260) {
-    return Promise.reject(new Error('路径长度不能超过260个字符'));
+    return Promise.reject(new Error('路径长度不能超过260个字符'))
   }
-  return Promise.resolve();
-};
+  return Promise.resolve()
+}
 
 function CreateProjectModal({ open, onCancel, onSuccess }: CreateProjectModalProps): JSX.Element {
   const { message } = App.useApp()

@@ -205,7 +205,7 @@ impl TerminalService {
         });
 
         {
-            let mut instances = self.instances.lock().unwrap();
+            let mut instances = self.instances.lock().map_err(|e| AppError::OperationFailed(format!("获取终端实例锁失败: {}", e)))?;
             instances.insert(
                 id.clone(),
                 PtyInstance {
@@ -218,7 +218,7 @@ impl TerminalService {
         }
 
         {
-            let mut metas = self.metas.lock().unwrap();
+            let mut metas = self.metas.lock().map_err(|e| AppError::OperationFailed(format!("获取终端元数据锁失败: {}", e)))?;
             metas.insert(
                 id.clone(),
                 TerminalMeta {
@@ -240,16 +240,16 @@ impl TerminalService {
     }
 
     pub fn list(&self) -> AppResult<Vec<serde_json::Value>> {
-        let metas = self.metas.lock().unwrap();
-        let instances = self.instances.lock().unwrap();
+        let metas = self.metas.lock().map_err(|e| AppError::OperationFailed(format!("获取终端元数据锁失败: {}", e)))?;
+        let instances = self.instances.lock().map_err(|e| AppError::OperationFailed(format!("获取终端实例锁失败: {}", e)))?;
         let result: Vec<serde_json::Value> = metas
             .values()
             .map(|meta| {
                 let (exited, exit_code) = instances
                     .get(&meta.id)
                     .map(|inst| {
-                        let ex = *inst.exited.lock().unwrap();
-                        let ec = *inst.exit_code.lock().unwrap();
+                        let ex = inst.exited.lock().map(|g| *g).unwrap_or(true);
+                        let ec = inst.exit_code.lock().map(|g| *g).ok().flatten();
                         (ex, ec)
                     })
                     .unwrap_or((true, None));
@@ -267,17 +267,19 @@ impl TerminalService {
     }
 
     pub fn kill(&self, id: &str) -> AppResult<bool> {
-        let mut instances = self.instances.lock().unwrap();
+        let mut instances = self.instances.lock().map_err(|e| AppError::OperationFailed(format!("获取终端实例锁失败: {}", e)))?;
         if let Some(inst) = instances.remove(id) {
             let _ = inst.master;
             let _ = inst.writer;
-            let mut ex = inst.exited.lock().unwrap();
-            *ex = true;
-            let mut ec = inst.exit_code.lock().unwrap();
-            *ec = Some(0);
+            if let Ok(mut ex) = inst.exited.lock() {
+                *ex = true;
+            }
+            if let Ok(mut ec) = inst.exit_code.lock() {
+                *ec = Some(0);
+            }
             drop(instances);
 
-            let mut metas = self.metas.lock().unwrap();
+            let mut metas = self.metas.lock().map_err(|e| AppError::OperationFailed(format!("获取终端元数据锁失败: {}", e)))?;
             metas.remove(id);
             Ok(true)
         } else {
@@ -286,7 +288,7 @@ impl TerminalService {
     }
 
     pub fn resize(&self, id: &str, cols: u16, rows: u16) -> AppResult<()> {
-        let mut instances = self.instances.lock().unwrap();
+        let mut instances = self.instances.lock().map_err(|e| AppError::OperationFailed(format!("获取终端实例锁失败: {}", e)))?;
         if let Some(inst) = instances.get_mut(id) {
             inst.master
                 .resize(PtySize {
@@ -302,9 +304,9 @@ impl TerminalService {
     }
 
     pub fn write(&self, id: &str, data: &str) -> AppResult<()> {
-        let mut instances = self.instances.lock().unwrap();
+        let mut instances = self.instances.lock().map_err(|e| AppError::OperationFailed(format!("获取终端实例锁失败: {}", e)))?;
         if let Some(inst) = instances.get_mut(id) {
-            let exited = *inst.exited.lock().unwrap();
+            let exited = inst.exited.lock().map(|g| *g).unwrap_or(true);
             if exited {
                 return Ok(())
             }
@@ -329,7 +331,7 @@ impl TerminalService {
     }
 
     pub fn rename(&self, id: &str, name: &str) -> AppResult<()> {
-        let mut metas = self.metas.lock().unwrap();
+        let mut metas = self.metas.lock().map_err(|e| AppError::OperationFailed(format!("获取终端元数据锁失败: {}", e)))?;
         if let Some(meta) = metas.get_mut(id) {
             meta.name = name.to_string();
             Ok(())

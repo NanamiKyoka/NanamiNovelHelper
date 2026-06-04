@@ -23,7 +23,6 @@ export type VariableType =
   | 'multiselect' // 多选
   | 'number' // 数字
   | 'boolean' // 布尔值
-  | 'skill' // SKILL 输出
 
 /**
  * 变量定义
@@ -45,10 +44,6 @@ export interface VariableDefinition {
   placeholder?: string
   description?: string // 变量描述
   order: number // 排序
-
-  // skill 类型配置
-  skillId?: string // skill 类型：指定要调用的 SKILL
-  skillParams?: Record<string, unknown> // skill 类型：预设参数（可被其他变量覆盖）
 }
 
 /**
@@ -1063,142 +1058,4 @@ export interface SkillExecutionContext {
   variables?: Record<string, VariableValue>
 }
 
-// ============================================
-// 动态 SKILL 系统（类似 Claude Skills）
-// ============================================
 
-/**
- * 动态 SKILL 工具参数定义（JSON Schema 格式）
- */
-export interface DynamicSkillToolParameter {
-  /** 参数名 */
-  name: string
-  /** 参数类型 */
-  type: 'string' | 'number' | 'boolean' | 'array' | 'object'
-  /** 是否必需 */
-  required?: boolean
-  /** 默认值 */
-  default?: string | number | boolean | unknown[]
-  /** 描述 */
-  description?: string
-  /** 枚举值（用于 select 类型） */
-  enum?: string[]
-  /** 数组元素类型（type 为 array 时使用） */
-  items?: { type: string }
-}
-
-/**
- * 动态 SKILL 工具定义
- */
-export interface DynamicSkillTool {
-  /** 工具ID（脚本文件名，不含扩展名） */
-  id: string
-  /** 工具名称 */
-  name: string
-  /** 工具描述 */
-  description: string
-  /** 参数定义 */
-  parameters: DynamicSkillToolParameter[]
-  /** 执行超时（毫秒），默认 30000 */
-  timeout?: number
-  /** 是否需要用户确认（首次执行时） */
-  requiresConfirmation?: boolean
-}
-
-/**
- * 动态 SKILL 元数据（SKILL.md frontmatter）
- */
-export interface DynamicSkillMetadata {
-  /** SKILL 名称 */
-  name: string
-  /** SKILL 描述（用于 AI 判断何时使用） */
-  description: string
-  /** 版本号 */
-  version?: string
-  /** 作者 */
-  author?: string
-  /** 依赖 */
-  dependencies?: string[]
-  /** 标签 */
-  tags?: string[]
-  /** 是否需要用户确认才能执行 */
-  requiresConfirmation?: boolean
-  /** 执行超时（毫秒） */
-  timeout?: number
-}
-
-/**
- * 动态 SKILL 定义（完整）
- */
-export interface DynamicSkill {
-  /** SKILL ID（目录名） */
-  id: string
-  /** SKILL 目录路径（相对于项目根目录） */
-  path: string
-  /** 元数据 */
-  metadata: DynamicSkillMetadata
-  /** 工具列表 */
-  tools: DynamicSkillTool[]
-  /** 完整的 SKILL.md 内容（供 AI 参考） */
-  instructions: string
-  /** 是否在白名单中（已信任） */
-  isTrusted: boolean
-}
-
-/**
- * 动态 SKILL 执行请求
- */
-export interface DynamicSkillExecutionRequest {
-  /** SKILL ID */
-  skillId: string
-  /** 工具 ID */
-  toolId: string
-  /** 参数值 */
-  parameters: Record<string, unknown>
-  /** 执行上下文 */
-  context: SkillExecutionContext
-}
-
-/**
- * 动态 SKILL 执行结果（流式）
- */
-export interface DynamicSkillExecutionResult {
-  /** 执行ID */
-  executionId: string
-  /** 状态 */
-  status: 'pending' | 'running' | 'streaming' | 'completed' | 'error' | 'timeout'
-  /** 输出行（流式输出） */
-  outputLines: string[]
-  /** 最终结果（完成时） */
-  result?: unknown
-  /** 错误信息 */
-  error?: string
-  /** 退出码 */
-  exitCode?: number
-  /** 执行耗时（毫秒） */
-  duration?: number
-}
-
-/**
- * SKILL 白名单条目
- */
-export interface SkillWhitelistEntry {
-  /** SKILL ID */
-  skillId: string
-  /** SKILL 名称（记录添加时） */
-  skillName: string
-  /** 添加时间 */
-  addedAt: string
-  /** SKILL 路径 hash（用于检测变更） */
-  pathHash: string
-}
-
-/**
- * SKILL 白名单配置
- */
-export interface SkillWhitelistConfig {
-  /** 白名单列表 */
-  entries: SkillWhitelistEntry[]
-  /** 最后更新时间 */
-  updatedAt: string
-}

@@ -339,7 +339,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const now = new Date().toISOString()
     const newChunkType: CustomChunkType = {
       ...chunkTypeData,
-      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       createdAt: now,
       updatedAt: now
     }

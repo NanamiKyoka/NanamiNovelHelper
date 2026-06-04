@@ -3,7 +3,7 @@
  */
 
 export { default as AiAssistantPanel } from './AiAssistantPanel'
+export { default as AiDiffPanel } from './AiDiffPanel'
 export { default as TemplateEditor } from './TemplateEditor'
 export { default as WorkflowEditor } from './WorkflowEditor'
-export { default as DynamicSkillPanel } from './DynamicSkillPanel'
 export { default as WorkflowExecutor } from './WorkflowExecutor'

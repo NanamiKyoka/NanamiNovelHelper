@@ -724,32 +724,6 @@ export const tauriApi = {
       invoke<Array<Record<string, string>>>('ai_get_provider_list')
   },
 
-  dynamicSkill: {
-    getList: () => invoke('skill_list'),
-    get: (skillId: string) => invoke('skill_get', { id: skillId }),
-    reload: () => invoke('skill_reload'),
-    getTools: (skillId: string) => invoke('skill_get', { id: skillId }).then((s: Record<string, unknown> | null) => (s?.tools as unknown[]) ?? []),
-    execute: (skillId: string, toolId: string, parameters: Record<string, unknown>, context: Record<string, unknown>) =>
-      invoke('skill_execute', { skillId, toolId, parameters, context }),
-    cancel: (executionId: string) => invoke('skill_cancel', { executionId }),
-    getWhitelist: () => invoke('skill_get_whitelist'),
-    addToWhitelist: (skillId: string, skillName: string, skillPath: string) => invoke('skill_add_to_whitelist', { skillId, skillName, skillPath }),
-    removeFromWhitelist: (skillId: string) => invoke('skill_remove_from_whitelist', { skillId }),
-    isTrusted: (skillId: string, skillPath: string) => invoke('skill_is_trusted', { skillId, skillPath }),
-    create: (options: Record<string, unknown>) => invoke('skill_create', { skill: options }),
-    update: (skillId: string, options: Record<string, unknown>) => invoke('skill_update', { id: skillId, updates: options }),
-    delete: (skillId: string) => invoke('skill_delete', { id: skillId }),
-    checkPython: () => invoke('skill_check_python'),
-    onExecutionOutput: (callback: (data: Record<string, unknown>) => void) => {
-      let unlisten: UnlistenFn | null = null
-      listen<Record<string, unknown>>('skill:executionOutput', (event) => {
-        callback(event.payload)
-      }).then(fn => { unlisten = fn })
-      return () => { unlisten?.() }
-    },
-    removeExecutionOutputListener: () => {}
-  },
-
   shell: {
     openExternal: (url: string) => invoke('shell_open_external', { url })
   },

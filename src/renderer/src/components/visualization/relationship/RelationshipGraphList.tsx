@@ -251,13 +251,14 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
 
   const getContextMenuItems = useCallback((): MenuProps['items'] => {
     if (!contextMenu.graph) return []
+    const graph = contextMenu.graph
     return [
       {
         key: 'edit',
         icon: <EditOutlined />,
         label: '编辑',
         onClick: () => {
-          onSelectGraph(contextMenu.graph!.id)
+          onSelectGraph(graph.id)
           setContextMenu(prev => ({ ...prev, visible: false }))
         }
       },
@@ -265,7 +266,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
         key: 'export',
         icon: <ExportOutlined />,
         label: '导出',
-        onClick: () => handleExport(contextMenu.graph!)
+        onClick: () => handleExport(graph)
       },
       { type: 'divider' },
       {
@@ -273,7 +274,7 @@ function RelationshipGraphList({ onSelectGraph }: RelationshipGraphListProps): J
         icon: <DeleteOutlined />,
         label: '删除',
         danger: true,
-        onClick: () => handleDelete(contextMenu.graph!)
+        onClick: () => handleDelete(graph)
       }
     ]
   }, [contextMenu.graph, onSelectGraph, handleDelete, handleExport])

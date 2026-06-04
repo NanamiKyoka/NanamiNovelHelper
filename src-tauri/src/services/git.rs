@@ -226,11 +226,11 @@ impl GitService {
             &["rev-list", "--left-right", "@{upstream}...HEAD", "--count"],
         ).await {
             Ok(output) => {
-                let re = regex::Regex::new(r"^(\d+)\s+(\d+)$").unwrap();
+                let re = regex::Regex::new(r"^(\d+)\s+(\d+)$").expect("invalid ahead/behind regex");
                 if let Some(caps) = re.captures(output.trim()) {
                     (
-                        caps.get(2).unwrap().as_str().parse::<u32>().unwrap_or(0),
-                        caps.get(1).unwrap().as_str().parse::<u32>().unwrap_or(0),
+                        caps.get(2).map(|m| m.as_str()).unwrap_or("0").parse::<u32>().unwrap_or(0),
+                        caps.get(1).map(|m| m.as_str()).unwrap_or("0").parse::<u32>().unwrap_or(0),
                     )
                 } else {
                     (0, 0)
@@ -754,18 +754,18 @@ impl GitService {
         let mut branches = Vec::new();
 
         for line in output.split('\n') {
-            let re = regex::Regex::new(r"^([* ]) (.+?)\s+([a-f0-9]+) (.+)$").unwrap();
+            let re = regex::Regex::new(r"^([* ]) (.+?)\s+([a-f0-9]+) (.+)$").expect("invalid branch regex");
             if let Some(caps) = re.captures(line) {
-                let current = caps.get(1).unwrap().as_str() == "*";
+                let current = caps.get(1).map(|m| m.as_str()).unwrap_or(" ") == "*";
                 branches.push(serde_json::json!({
-                    "name": caps.get(2).unwrap().as_str().trim(),
+                    "name": caps.get(2).map(|m| m.as_str()).unwrap_or("").trim(),
                     "current": current,
                     "remote": false,
                     "lastCommit": {
-                        "hash": caps.get(3).unwrap().as_str(),
-                        "shortHash": caps.get(3).unwrap().as_str().get(0..7).unwrap_or(""),
-                        "message": caps.get(4).unwrap().as_str().trim(),
-                        "title": caps.get(4).unwrap().as_str().trim(),
+                        "hash": caps.get(3).map(|m| m.as_str()).unwrap_or(""),
+                        "shortHash": caps.get(3).map(|m| m.as_str()).unwrap_or("").get(0..7).unwrap_or(""),
+                        "message": caps.get(4).map(|m| m.as_str()).unwrap_or("").trim(),
+                        "title": caps.get(4).map(|m| m.as_str()).unwrap_or("").trim(),
                         "authorName": "",
                         "authorEmail": "",
                         "timestamp": 0,
@@ -779,17 +779,17 @@ impl GitService {
 
         let remote_output = Self::exec_git(repo_path, &["branch", "-r", "-v", "--no-abbrev"])?;
         for line in remote_output.split('\n') {
-            let re = regex::Regex::new(r"^ {2}(.+?)\s+([a-f0-9]+) (.+)$").unwrap();
+            let re = regex::Regex::new(r"^ {2}(.+?)\s+([a-f0-9]+) (.+)$").expect("invalid remote branch regex");
             if let Some(caps) = re.captures(line) {
                 branches.push(serde_json::json!({
-                    "name": caps.get(1).unwrap().as_str().trim(),
+                    "name": caps.get(1).map(|m| m.as_str()).unwrap_or("").trim(),
                     "current": false,
                     "remote": true,
                     "lastCommit": {
-                        "hash": caps.get(2).unwrap().as_str(),
-                        "shortHash": caps.get(2).unwrap().as_str().get(0..7).unwrap_or(""),
-                        "message": caps.get(3).unwrap().as_str().trim(),
-                        "title": caps.get(3).unwrap().as_str().trim(),
+                        "hash": caps.get(2).map(|m| m.as_str()).unwrap_or(""),
+                        "shortHash": caps.get(2).map(|m| m.as_str()).unwrap_or("").get(0..7).unwrap_or(""),
+                        "message": caps.get(3).map(|m| m.as_str()).unwrap_or("").trim(),
+                        "title": caps.get(3).map(|m| m.as_str()).unwrap_or("").trim(),
                         "authorName": "",
                         "authorEmail": "",
                         "timestamp": 0,

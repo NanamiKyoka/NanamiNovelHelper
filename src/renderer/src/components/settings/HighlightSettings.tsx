@@ -203,10 +203,11 @@ export function HighlightSettings(): JSX.Element {
 
   // 删除排除的扩展名
   const removeExcludeExt = (ext: string) => {
+    if (!config) return
     saveConfig({
       scope: {
-        ...config!.scope,
-        excludeExtensions: config!.scope.excludeExtensions.filter(e => e !== ext)
+        ...config.scope,
+        excludeExtensions: config.scope.excludeExtensions.filter(e => e !== ext)
       }
     })
   }
@@ -261,10 +262,11 @@ export function HighlightSettings(): JSX.Element {
 
   // 删除包含的目录
   const removeIncludeDir = (dir: string) => {
+    if (!config) return
     saveConfig({
       scope: {
-        ...config!.scope,
-        includeDirectories: config!.scope.includeDirectories.filter(d => d !== dir)
+        ...config.scope,
+        includeDirectories: config.scope.includeDirectories.filter(d => d !== dir)
       }
     })
   }

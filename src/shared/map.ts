@@ -701,7 +701,7 @@ export const DEFAULT_CONNECTION_LINE_WIDTH = 2
 // ============================================
 
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 }
 
 export function createDefaultHexEdges(chunkType: ChunkType): Chunk['edges'] {

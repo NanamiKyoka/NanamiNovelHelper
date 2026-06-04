@@ -24,109 +24,20 @@ import {
   FileTextOutlined,
   InsertRowBelowOutlined,
   EyeOutlined,
-  EyeInvisibleOutlined,
-  ToolOutlined
+  EyeInvisibleOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import { useVocabularyStore } from '@stores/vocabularyStore'
 import { useEditorStore } from '@stores/editorStore'
-import { useProjectStore } from '@stores/projectStore'
 import type {
   PromptTemplate,
   VariableDefinition,
   VariableValue,
   WorkflowStep,
   AiApiCallResult,
-  AiApiStreamChunk,
-  SkillDefinition,
-  SkillExecutionResult,
-  SkillExecutionContext
+  AiApiStreamChunk
 } from '@shared/ai-assistant'
 import styles from './WorkflowExecutor.module.css'
-
-/**
- * SKILL 变量输入组件
- */
-interface SkillVariableInputProps {
-  variable: VariableDefinition
-  value: string
-  onChange: (value: string, result?: unknown) => void
-  skills: SkillDefinition[]
-  onExecuteSkill: (
-    skillId: string,
-    params: Record<string, unknown>
-  ) => Promise<SkillExecutionResult>
-}
-
-function SkillVariableInput({
-  variable,
-  onChange,
-  skills,
-  onExecuteSkill
-}: SkillVariableInputProps): JSX.Element {
-  const [executing, setExecuting] = useState(false)
-  const [result, setResult] = useState<SkillExecutionResult | null>(null)
-
-  const skill = skills.find(s => s.id === variable.skillId)
-
-  const handleExecute = async () => {
-    if (!skill) return
-
-    setExecuting(true)
-    try {
-      const params = variable.skillParams || {}
-      const execResult = await onExecuteSkill(skill.id, params)
-      setResult(execResult)
-      if (execResult.success) {
-        // 将结果转换为字符串
-        const resultStr =
-          typeof execResult.data === 'string'
-            ? execResult.data
-            : JSON.stringify(execResult.data, null, 2)
-        onChange(resultStr, execResult)
-      }
-    } finally {
-      setExecuting(false)
-    }
-  }
-
-  if (!skill) {
-    return (
-      <div className={styles.skillError}>
-        <Text type="secondary">未找到指定的 SKILL: {variable.skillId}</Text>
-      </div>
-    )
-  }
-
-  return (
-    <div className={styles.skillVariableContainer}>
-      <div className={styles.skillHeader}>
-        <Space>
-          <ToolOutlined />
-          <Text strong>{skill.name}</Text>
-        </Space>
-        <Button type="primary" size="small" loading={executing} onClick={handleExecute}>
-          执行
-        </Button>
-      </div>
-      {skill.description && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {skill.description}
-        </Text>
-      )}
-      {result && (
-        <div className={styles.skillResult}>
-          <div className={styles.skillResultHeader}>
-            <Text type="secondary">执行结果:</Text>
-            {result.success ? <Tag color="success">成功</Tag> : <Tag color="error">失败</Tag>}
-          </div>
-          {result.message && <Text>{result.message}</Text>}
-          {result.error && <Text type="danger">{result.error}</Text>}
-        </div>
-      )}
-    </div>
-  )
-}
 
 const { TextArea } = Input
 const { Text, Title, Paragraph } = Typography
@@ -151,19 +62,16 @@ function WorkflowExecutor({
     workflows,
     templates,
     currentExecution,
-    skills,
     cancelExecution,
     callApiStream,
     onStreamChunk,
     removeStreamChunkListener,
-    resolveVariables,
-    executeSkill
+    resolveVariables
   } = useAiAssistantStore()
 
   const { entries: vocabularyEntries } = useVocabularyStore()
   const getActiveTab = useEditorStore(state => state.getActiveTab)
   const getCurrentContent = useEditorStore(state => state.getCurrentContent)
-  const currentProject = useProjectStore(state => state.currentProject)
 
   // 执行状态
   const [status, setStatus] = useState<ExecutionStatus>('input')
@@ -249,27 +157,6 @@ function WorkflowExecutor({
         entryData: entryData as Record<string, unknown> | undefined
       }
     }))
-  }
-
-  // 执行 SKILL 变量
-  const executeSkillForVariable = async (
-    skillId: string,
-    params: Record<string, unknown>
-  ): Promise<SkillExecutionResult> => {
-    const activeTab = getActiveTab()
-    const currentContent = getCurrentContent()
-    const context: SkillExecutionContext = {
-      projectPath: currentProject?.path || '',
-      currentChapter: activeTab
-        ? {
-            path: activeTab.path,
-            content: currentContent || ''
-          }
-        : undefined,
-      selectedText: undefined,
-      variables: variableValues
-    }
-    return executeSkill(skillId, params, context)
   }
 
   // 渲染变量输入
@@ -379,15 +266,8 @@ function WorkflowExecutor({
         )
 
       case 'skill':
-        // SKILL 变量类型：执行 SKILL 并使用结果
         return (
-          <SkillVariableInput
-            variable={variable}
-            value={currentValue as string}
-            onChange={(val, result) => handleVariableChange(variable.id, val, result)}
-            skills={skills}
-            onExecuteSkill={executeSkillForVariable}
-          />
+          <Select disabled placeholder="动态技能已移除" />
         )
 
       default:

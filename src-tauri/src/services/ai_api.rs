@@ -208,6 +208,20 @@ impl AiApiService {
         Some((config, api_key, base_url))
     }
 
+    fn find_first_available_provider(
+        storage: &SecureStorageService,
+    ) -> Option<(ProviderConfig, String, String)> {
+        for config in get_all_provider_configs() {
+            if config.id == "custom" {
+                continue
+            }
+            if let Some(resolved) = Self::resolve_provider_config(storage, config.id) {
+                return Some(resolved)
+            }
+        }
+        None
+    }
+
     pub async fn call(
         &self,
         prompt: &str,
@@ -219,18 +233,21 @@ impl AiApiService {
 
         let (config, api_key, base_url) = match Self::resolve_provider_config(storage, provider_id) {
             Some(resolved) => resolved,
-            None => {
-                return AiApiCallResult {
-                    success: false,
-                    content: None,
-                    error: Some(format!(
-                        "未配置 {} API Key，请在设置中配置",
-                        get_provider_config(provider_id)
-                            .map(|c| c.name)
-                            .unwrap_or(provider_id)
-                    )),
-                    tokens_used: None,
-                    duration: Some(start.elapsed().as_millis() as u64),
+            None => match Self::find_first_available_provider(storage) {
+                Some(resolved) => resolved,
+                None => {
+                    return AiApiCallResult {
+                        success: false,
+                        content: None,
+                        error: Some(format!(
+                            "未配置 {} API Key，请在设置中配置",
+                            get_provider_config(provider_id)
+                                .map(|c| c.name)
+                                .unwrap_or(provider_id)
+                        )),
+                        tokens_used: None,
+                        duration: Some(start.elapsed().as_millis() as u64),
+                    }
                 }
             }
         };
@@ -461,26 +478,29 @@ impl AiApiService {
 
         let (config, api_key, base_url) = match Self::resolve_provider_config(storage, provider_id) {
             Some(resolved) => resolved,
-            None => {
-                let error = format!(
-                    "未配置 {} API Key，请在设置中配置",
-                    get_provider_config(provider_id)
-                        .map(|c| c.name)
-                        .unwrap_or(provider_id)
-                );
-                let _ = app.emit(
-                    "aiAssistant:streamChunk",
-                    AiApiStreamChunk::Error {
-                        error: error.clone(),
-                    },
-                );
-                return AiApiCallResult {
-                    success: false,
-                    content: None,
-                    error: Some(error),
-                    tokens_used: None,
-                    duration: Some(start.elapsed().as_millis() as u64),
-                };
+            None => match Self::find_first_available_provider(storage) {
+                Some(resolved) => resolved,
+                None => {
+                    let error = format!(
+                        "未配置 {} API Key，请在设置中配置",
+                        get_provider_config(provider_id)
+                            .map(|c| c.name)
+                            .unwrap_or(provider_id)
+                    );
+                    let _ = app.emit(
+                        "aiAssistant:streamChunk",
+                        AiApiStreamChunk::Error {
+                            error: error.clone(),
+                        },
+                    );
+                    return AiApiCallResult {
+                        success: false,
+                        content: None,
+                        error: Some(error),
+                        tokens_used: None,
+                        duration: Some(start.elapsed().as_millis() as u64),
+                    };
+                }
             }
         };
 

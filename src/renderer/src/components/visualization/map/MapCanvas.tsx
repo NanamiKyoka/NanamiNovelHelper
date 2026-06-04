@@ -111,7 +111,7 @@ export function MapCanvas({ onSave }: MapCanvasProps) {
           autoDensity: true
         })
 
-        canvasRef.current!.appendChild(app.canvas)
+        canvasRef.current?.appendChild(app.canvas)
         appRef.current = app
         isInitializedRef.current = true
 

@@ -6,7 +6,7 @@ mod utils;
 
 use commands::*;
 use services::{
-    AiApiService, AiAssistantService, BackupService, DynamicSkillService, FileService,
+    AiApiService, AiAssistantService, BackupService, FileService,
     FileWatcherService, GitService, GraphService, ImageService, LogService, ProjectService,
     SearchService, SecureStorageService, SettingsService, TerminalService, VocabularyService,
 };
@@ -35,7 +35,7 @@ pub fn run() {
                     return tauri::http::Response::builder()
                         .status(403)
                         .body("Forbidden".as_bytes().to_vec())
-                        .unwrap();
+                        .expect("failed to build 403 response");
                 }
             }
 
@@ -57,12 +57,12 @@ pub fn run() {
                         .status(200)
                         .header("Content-Type", mime)
                         .body(data)
-                        .unwrap()
+                        .expect("failed to build 200 response")
                 }
                 Err(_) => tauri::http::Response::builder()
                     .status(404)
                     .body("Not Found".as_bytes().to_vec())
-                    .unwrap(),
+                    .expect("failed to build 404 response"),
             }
         })
         .manage(ProjectService::new())
@@ -77,7 +77,6 @@ pub fn run() {
         .manage(TerminalService::new())
         .manage(AiApiService::new())
         .manage(AiAssistantService::new())
-        .manage(DynamicSkillService::new())
         .manage(FileWatcherService::new())
         .manage(SecureStorageService::new())
         .manage(LogService::new())
@@ -226,21 +225,6 @@ pub fn run() {
             ai_save_execution,
             ai_list_executions,
             ai_delete_execution,
-            skill_list,
-            skill_get,
-            skill_create,
-            skill_update,
-            skill_delete,
-            skill_get_instructions,
-            skill_update_instructions,
-            skill_execute,
-            skill_cancel,
-            skill_check_python,
-            skill_reload,
-            skill_get_whitelist,
-            skill_add_to_whitelist,
-            skill_remove_from_whitelist,
-            skill_is_trusted,
             ai_call_api,
             ai_call_api_stream,
             ai_test_connection,

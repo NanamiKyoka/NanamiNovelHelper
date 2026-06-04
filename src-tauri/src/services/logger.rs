@@ -5,7 +5,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024; // 5MB
+const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
 const MAX_BACKUP_COUNT: u32 = 3;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,19 +33,26 @@ impl LogService {
     }
 
     pub fn set_project(&self, project_path: Option<&str>) {
-        let mut dir = self.log_dir.lock().unwrap();
-        *dir = project_path.map(|p| {
-            PathBuf::from(p)
-                .join(".novelhelper")
-                .join("logs")
-        });
-        if let Some(ref d) = *dir {
-            let _ = fs::create_dir_all(d);
+        match self.log_dir.lock() {
+            Ok(mut dir) => {
+                *dir = project_path.map(|p| {
+                    PathBuf::from(p)
+                        .join(".novelhelper")
+                        .join("logs")
+                });
+                if let Some(ref d) = *dir {
+                    let _ = fs::create_dir_all(d);
+                }
+            }
+            Err(e) => log::error!("获取日志目录锁失败: {}", e),
         }
     }
 
     fn log_file_path(&self) -> Option<PathBuf> {
-        self.log_dir.lock().unwrap().as_ref().map(|d| d.join("app.log"))
+        self.log_dir
+            .lock()
+            .ok()
+            .and_then(|dir| dir.as_ref().map(|d| d.join("app.log")))
     }
 
     fn rotate_if_needed(&self, file_path: &PathBuf) {
@@ -144,14 +151,12 @@ impl LogService {
         });
     }
 
-    /// 便捷方法：记录带错误码的错误（从 AppError）
     pub fn log_app_error(&self, module: &str, error: &crate::error::AppError) {
         let code = error.code();
         let message = error.to_string();
         self.error(module, &message, Some(code), None);
     }
 
-    /// 读取最近的日志条目（最多 n 条）
     pub fn get_recent_logs(&self, n: usize) -> Vec<LogEntry> {
         let file_path = match self.log_file_path() {
             Some(p) => p,
@@ -179,7 +184,6 @@ impl LogService {
         }
     }
 
-    /// 清除日志文件
     pub fn clear_logs(&self) -> bool {
         let file_path = match self.log_file_path() {
             Some(p) => p,
@@ -193,7 +197,6 @@ impl LogService {
         }
     }
 
-    /// 获取日志文件路径
     pub fn get_log_path(&self) -> Option<String> {
         self.log_file_path()
             .map(|p| p.to_string_lossy().to_string())

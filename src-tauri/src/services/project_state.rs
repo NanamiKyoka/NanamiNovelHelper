@@ -3,13 +3,18 @@ use std::sync::Mutex;
 static CURRENT_PROJECT_PATH: Mutex<Option<String>> = Mutex::new(None);
 
 pub fn set_project_path(path: Option<String>) {
-    let mut current = CURRENT_PROJECT_PATH.lock().unwrap();
-    *current = path;
+    match CURRENT_PROJECT_PATH.lock() {
+        Ok(mut current) => *current = path,
+        Err(e) => log::error!("获取项目路径锁失败: {}", e),
+    }
 }
 
 pub fn get_project_path() -> Option<String> {
-    let current = CURRENT_PROJECT_PATH.lock().unwrap();
-    current.clone()
+    CURRENT_PROJECT_PATH
+        .lock()
+        .map(|current| current.clone())
+        .ok()
+        .flatten()
 }
 
 pub fn get_data_dir(project_path: &str) -> std::path::PathBuf {

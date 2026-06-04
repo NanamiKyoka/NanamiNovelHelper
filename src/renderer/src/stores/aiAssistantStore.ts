@@ -12,9 +12,7 @@ import type {
   VariableValue,
   AiApiCallOptions,
   AiApiCallResult,
-  AiApiStreamChunk,
-  SkillExecutionContext,
-  DynamicSkillExecutionResult
+  AiApiStreamChunk
 } from '@shared/ai-assistant'
 
 interface AiAssistantState {
@@ -84,13 +82,6 @@ interface AiAssistantState {
 
   // 变量解析
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => string
-
-  // SKILL 执行
-  executeSkill: (
-    skillId: string,
-    parameters: Record<string, unknown>,
-    context: SkillExecutionContext
-  ) => Promise<DynamicSkillExecutionResult>
 
   // UI 操作
   setActiveTab: (tab: 'templates' | 'workflows' | 'history') => void
@@ -595,50 +586,6 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     )
 
     return content
-  },
-
-  executeSkill: async (skillId, parameters, context) => {
-    try {
-      const skill = await window.api.dynamicSkill.get(skillId)
-      if (!skill) {
-        return {
-          executionId: '',
-          status: 'error' as const,
-          outputLines: [],
-          error: `SKILL 不存在: ${skillId}`
-        }
-      }
-
-      const isTrusted = await window.api.dynamicSkill.isTrusted(skillId, skill.path)
-      if (!isTrusted) {
-        await window.api.dynamicSkill.addToWhitelist(skillId, skill.metadata.name, skill.path)
-      }
-
-      const tools = skill.tools || []
-      const tool = tools[0]
-      if (!tool) {
-        return {
-          executionId: '',
-          status: 'error' as const,
-          outputLines: [],
-          error: `SKILL 没有可执行的工具`
-        }
-      }
-
-      return await window.api.dynamicSkill.execute({
-        skillId,
-        toolId: tool.id,
-        parameters,
-        context
-      })
-    } catch (error) {
-      return {
-        executionId: '',
-        status: 'error' as const,
-        outputLines: [],
-        error: error instanceof Error ? error.message : 'SKILL 执行失败'
-      }
-    }
   },
 
   // UI 操作

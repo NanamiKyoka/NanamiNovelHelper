@@ -180,7 +180,7 @@ function SortableTimelineItem({
             <div
               className={styles.nodeChapter}
               style={{ cursor: 'pointer' }}
-              onClick={() => onChapterClick(node.chapter!.path, node.chapter!.title)}
+              onClick={() => onChapterClick(node.chapter?.path ?? '', node.chapter?.title ?? '')}
               title="点击跳转到章节"
             >
               <FileTextOutlined />

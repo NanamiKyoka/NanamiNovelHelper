@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { Dropdown, MenuProps, App, Modal } from 'antd'
+import { Dropdown, MenuProps, App, Modal, Button } from 'antd'
 import {
   CopyOutlined,
   ScissorOutlined,
@@ -33,10 +33,16 @@ import {
   ThunderboltOutlined,
   FileTextOutlined,
   FontSizeOutlined,
-  SettingOutlined
+  SettingOutlined,
+  BranchesOutlined
 } from '@ant-design/icons'
 import type { Editor } from '@tiptap/react'
 import type { EditorTab } from '@types/editor'
+import { useAiAssistantStore } from '@stores/aiAssistantStore'
+import type { AiApiStreamChunk } from '@shared/ai-assistant'
+import { useAiWriting } from './ai/useAiWriting'
+import { ContinueWritingPanel, type ContinueParams } from './ai/ContinueWritingPanel'
+import { MultiVersionPanel } from './ai/MultiVersionPanel'
 import styles from './EditorContextMenu.module.css'
 
 interface EditorContextMenuProps {
@@ -63,11 +69,26 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
   const [position, setPosition] = useState<ContextMenuPosition | null>(null)
   const [selectedText, setSelectedText] = useState<string>('')
   const containerRef = useRef<HTMLDivElement>(null)
-  const [_aiLoading, setAiLoading] = useState(false)
-  const [aiPreviewVisible, setAiPreviewVisible] = useState(false)
-  const [aiPreviewContent, setAiPreviewContent] = useState('')
-  const [aiCurrentAction, setAiCurrentAction] = useState('')
   const [imageLoading, setImageLoading] = useState(false)
+
+  const {
+    isStreaming,
+    streamingContent,
+    aiPreviewVisible,
+    aiCurrentAction,
+    startStream,
+    stopStream,
+    closePreview,
+    applyResult
+  } = useAiWriting()
+
+  const { callApiStream, onStreamChunk, removeStreamChunkListener } = useAiAssistantStore()
+
+  const [showContinuePanel, setShowContinuePanel] = useState(false)
+  const [showMultiVersionPanel, setShowMultiVersionPanel] = useState(false)
+  const [multiVersions, setMultiVersions] = useState<string[]>([])
+  const [isGeneratingVersions, setIsGeneratingVersions] = useState(false)
+  const [continueMode, setContinueMode] = useState<'continue' | 'multiVersion'>('continue')
 
   const isNovel = fileType === 'novel'
   const isMarkdown = fileType === 'markdown'
@@ -108,21 +129,78 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
     }
   }, [position, closeMenu])
 
-  const callAiApi = useCallback(
-    async (
-      action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize',
-      text: string
-    ): Promise<string | null> => {
+  // 收集上下文：前文 + 角色设定
+  const collectContext = useCallback(async (ed: Editor) => {
+    const cursorPos = ed.state.selection.from
+    const textBefore = ed.state.doc.textBetween(Math.max(0, cursorPos - 2000), cursorPos, '')
+    let characters = ''
+    try {
+      const types = await window.api.vocabulary.loadTypes()
+      const charType = types.find(
+        (t: Record<string, unknown>) => t.id === 'character' || (t.name as string)?.includes('角色')
+      )
+      if (charType) {
+        const entries = await window.api.vocabulary.loadEntries(charType.id as string)
+        characters = entries
+          .map((e: Record<string, unknown>) => `${e.name}：${e.description || ''}`)
+          .join('\n')
+      }
+    } catch (_e) {
+      /* ignore */
+    }
+    return { textBefore, characters }
+  }, [])
+
+  // 构建续写 prompt
+  const buildContinuePrompt = useCallback(
+    (params: ContinueParams, context: { textBefore: string; characters: string }) => {
+      const lengthMap: Record<string, string> = {
+        short: '短（100-200字）',
+        medium: '中（300-500字）',
+        long: '长（500-800字）'
+      }
+      const styleMap: Record<string, string> = {
+        original: '保持原风格',
+        vivid: '更生动',
+        concise: '更简洁',
+        suspense: '更悬疑',
+        warm: '更温馨'
+      }
+      const directionMap: Record<string, string> = {
+        natural: '顺其自然',
+        mainPlot: '推进主线',
+        conflict: '增加冲突',
+        environment: '环境描写',
+        dialogue: '对话展开'
+      }
+
+      const systemPrompt =
+        '你是一名专业的网络小说作家，擅长根据前文和角色设定自然地续写故事。请只输出续写内容，不要重复前文，不要添加任何解释。'
+      const userPrompt = `【前文】\n${context.textBefore}\n\n【角色设定】\n${context.characters || '（无）'}\n\n要求：\n- 续写长度：${lengthMap[params.length]}\n- 风格：${styleMap[params.style]}\n- 走向：${directionMap[params.direction]}${params.customPrompt ? `\n额外要求：${params.customPrompt}` : ''}\n\n请只输出续写内容，不要重复前文。`
+
+      return { systemPrompt, userPrompt }
+    },
+    []
+  )
+
+  // 简单 AI 操作（润色、改写、扩充、总结）
+  const handleSimpleAiAction = useCallback(
+    async (action: string, actionName: string) => {
+      if (!editor) return
+      const { from, to } = editor.state.selection
+      const hasSelection = from !== to
+      const text = hasSelection ? editor.state.doc.textBetween(from, to, '') : editor.getText()
+
+      if (!text.trim()) {
+        message.warning('请先选择要处理的文本，或确保文档有内容')
+        return
+      }
+
       const prompts: Record<string, { system: string; user: string }> = {
         polish: {
           system:
             '你是一名专业的中文写作编辑，擅长润色网文、小说。请对用户提供的文本进行润色：优化表达、修正语病、增强可读性，保持原意与风格。只输出润色后的内容，不要添加任何解释。',
           user: `请润色以下文本：\n\n${text}`
-        },
-        continue: {
-          system:
-            '你是一名专业的网络小说作家，擅长续写故事。请根据用户提供的文本，自然地续写后续内容，保持原有的风格和语气。只输出续写的内容，不要添加任何解释。',
-          user: `请续写以下文本：\n\n${text}`
         },
         rewrite: {
           system:
@@ -142,81 +220,84 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
       }
 
       const prompt = prompts[action]
-      if (!prompt) return null
+      if (!prompt) return
 
-      try {
-        const result = await window.api.aiAssistant.callApi(prompt.user, {
-          systemPrompt: prompt.system,
-          temperature: 0.7,
-          maxTokens: 2000
-        })
-        if (result.success && result.content) {
-          return result.content
-        } else {
-          message.error(result.error || 'AI 调用失败')
-          return null
-        }
-      } catch (error) {
-        message.error(error instanceof Error ? error.message : 'AI 调用失败')
-        return null
-      }
+      await startStream(actionName, prompt.user, {
+        systemPrompt: prompt.system,
+        temperature: 0.7,
+        maxTokens: 2000
+      })
     },
-    [message]
+    [editor, message, startStream]
   )
 
-  const handleAiAction = useCallback(
-    async (action: 'polish' | 'continue' | 'rewrite' | 'expand' | 'summarize') => {
+  // 续写参数提交
+  const handleContinueSubmit = useCallback(
+    async (params: ContinueParams) => {
       if (!editor) return
-
-      const actionNames: Record<string, string> = {
-        polish: '润色',
-        continue: '续写',
-        rewrite: '改写',
-        expand: '扩充',
-        summarize: '总结'
-      }
-
-      const { from, to } = editor.state.selection
-      const hasSelection = from !== to
-      const text = hasSelection ? editor.state.doc.textBetween(from, to, '') : editor.getText()
-
-      if (!text.trim()) {
-        message.warning('请先选择要处理的文本，或确保文档有内容')
-        return
-      }
-
-      closeMenu()
-      setAiLoading(true)
-      setAiCurrentAction(actionNames[action])
-
-      try {
-        const result = await callAiApi(action, text)
-        if (result) {
-          setAiPreviewContent(result)
-          setAiPreviewVisible(true)
-        }
-      } finally {
-        setAiLoading(false)
-      }
+      setShowContinuePanel(false)
+      const context = await collectContext(editor)
+      const { systemPrompt, userPrompt } = buildContinuePrompt(params, context)
+      await startStream('续写', userPrompt, {
+        systemPrompt,
+        temperature: 0.7,
+        maxTokens: 2000
+      })
     },
-    [editor, callAiApi, message, closeMenu]
+    [editor, collectContext, buildContinuePrompt, startStream]
   )
 
-  const applyAiResult = useCallback(
-    (replace: boolean) => {
-      if (!editor || !aiPreviewContent) return
-      const { from, to } = editor.state.selection
-      const hasSelection = from !== to
-      if (replace && hasSelection) {
-        editor.chain().focus().insertContentAt({ from, to }, aiPreviewContent).run()
-      } else {
-        editor.chain().focus().insertContent(aiPreviewContent).run()
+  // 多版本续写提交
+  const handleMultiVersionSubmit = useCallback(
+    async (params: ContinueParams) => {
+      if (!editor) return
+      setShowContinuePanel(false)
+      setShowMultiVersionPanel(true)
+      setMultiVersions([])
+      setIsGeneratingVersions(true)
+
+      const context = await collectContext(editor)
+      const { systemPrompt, userPrompt } = buildContinuePrompt(params, context)
+
+      const versions: string[] = []
+      for (let i = 0; i < 3; i++) {
+        let content = ''
+        const streamChunkHandler = (chunk: AiApiStreamChunk) => {
+          if (chunk.type === 'chunk' && chunk.content) {
+            content += chunk.content
+          }
+        }
+        const unlisten = onStreamChunk(streamChunkHandler)
+        try {
+          await callApiStream(userPrompt, {
+            systemPrompt,
+            temperature: 0.8,
+            maxTokens: 2000
+          })
+        } catch (_err) {
+          /* ignore single version failure */
+        } finally {
+          unlisten?.()
+          removeStreamChunkListener()
+        }
+        versions.push(content)
+        setMultiVersions([...versions])
       }
-      setAiPreviewVisible(false)
-      setAiPreviewContent('')
+      setIsGeneratingVersions(false)
+    },
+    [editor, collectContext, buildContinuePrompt, callApiStream, onStreamChunk, removeStreamChunkListener]
+  )
+
+  // 应用多版本选中结果
+  const handleApplyVersion = useCallback(
+    (index: number) => {
+      if (!editor || !multiVersions[index]) return
+      editor.chain().focus().insertContent(multiVersions[index]).run()
+      setShowMultiVersionPanel(false)
+      setMultiVersions([])
       message.success('已应用到编辑器')
     },
-    [editor, aiPreviewContent, message]
+    [editor, multiVersions, message]
   )
 
   const insertImage = useCallback(async () => {
@@ -693,31 +774,58 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
                 key: 'ai-polish',
                 label: '润色选中/全文',
                 icon: <EditOutlined />,
-                onClick: () => handleAiAction('polish')
+                onClick: () => {
+                  closeMenu()
+                  handleSimpleAiAction('polish', '润色')
+                }
               },
               {
                 key: 'ai-continue',
                 label: '续写',
                 icon: <ThunderboltOutlined />,
-                onClick: () => handleAiAction('continue')
+                onClick: () => {
+                  closeMenu()
+                  setContinueMode('continue')
+                  setShowContinuePanel(true)
+                }
               },
               {
                 key: 'ai-rewrite',
                 label: '改写',
                 icon: <FileTextOutlined />,
-                onClick: () => handleAiAction('rewrite')
+                onClick: () => {
+                  closeMenu()
+                  handleSimpleAiAction('rewrite', '改写')
+                }
               },
               {
                 key: 'ai-expand',
                 label: '扩充细节',
                 icon: <FileTextOutlined />,
-                onClick: () => handleAiAction('expand')
+                onClick: () => {
+                  closeMenu()
+                  handleSimpleAiAction('expand', '扩充')
+                }
               },
               {
                 key: 'ai-summarize',
                 label: '总结要点',
                 icon: <FileTextOutlined />,
-                onClick: () => handleAiAction('summarize')
+                onClick: () => {
+                  closeMenu()
+                  handleSimpleAiAction('summarize', '总结')
+                }
+              },
+              { type: 'divider' },
+              {
+                key: 'ai-multiVersion',
+                label: '多版本续写',
+                icon: <BranchesOutlined />,
+                onClick: () => {
+                  closeMenu()
+                  setContinueMode('multiVersion')
+                  setShowContinuePanel(true)
+                }
               }
             ]
           }
@@ -737,11 +845,39 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
     }
 
     return items
-  }, [editor, selectedText, execCommand, isRichText, isNovel, insertImage, handleAiAction])
+  }, [editor, selectedText, execCommand, isRichText, isNovel, insertImage, handleSimpleAiAction, closeMenu])
 
   if (!editor) {
     return <>{children}</>
   }
+
+  // AI 预览模态框 footer
+  const aiPreviewFooter = isStreaming
+    ? [
+        <Button key="stop" danger onClick={stopStream}>
+          停止生成
+        </Button>
+      ]
+    : [
+        <Button key="cancel" onClick={closePreview}>
+          取消
+        </Button>,
+        <Button
+          key="copy"
+          onClick={() => {
+            navigator.clipboard.writeText(streamingContent)
+            message.success('已复制到剪贴板')
+          }}
+        >
+          复制
+        </Button>,
+        <Button key="insert" type="default" onClick={() => applyResult(editor, false, streamingContent)}>
+          插入到当前位置
+        </Button>,
+        <Button key="replace" type="primary" onClick={() => applyResult(editor, true, streamingContent)}>
+          替换选中内容
+        </Button>
+      ]
 
   return (
     <div ref={containerRef} className={styles.container} onContextMenu={handleContextMenu}>
@@ -772,62 +908,44 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
       <Modal
         title={`AI ${aiCurrentAction}结果`}
         open={aiPreviewVisible}
-        onCancel={() => setAiPreviewVisible(false)}
+        onCancel={closePreview}
         width={800}
-        footer={[
-          <button
-            key="cancel"
-            className="ant-btn"
-            onClick={() => setAiPreviewVisible(false)}
-            type="button"
-          >
-            取消
-          </button>,
-          <button
-            key="copy"
-            className="ant-btn"
-            onClick={() => {
-              navigator.clipboard.writeText(aiPreviewContent)
-              message.success('已复制到剪贴板')
-            }}
-            type="button"
-          >
-            复制
-          </button>,
-          <button
-            key="replace"
-            className="ant-btn ant-btn-primary"
-            onClick={() => applyAiResult(true)}
-            type="button"
-          >
-            替换原文
-          </button>,
-          <button
-            key="insert"
-            className="ant-btn ant-btn-primary"
-            onClick={() => applyAiResult(false)}
-            type="button"
-          >
-            插入到光标
-          </button>
-        ]}
+        footer={aiPreviewFooter}
       >
-        <div
-          style={{
-            maxHeight: '60vh',
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-            padding: 16,
-            background: 'var(--bg-surface)',
-            borderRadius: 8,
-            border: '1px solid var(--border-primary)',
-            fontSize: 14,
-            lineHeight: 1.8
-          }}
-        >
-          {aiPreviewContent}
+        <div className={styles.aiPreviewContainer}>
+          <div className={styles.aiPreviewContent}>
+            <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
+              {streamingContent}
+            </pre>
+          </div>
         </div>
       </Modal>
+
+      {/* 续写参数面板 */}
+      <ContinueWritingPanel
+        open={showContinuePanel}
+        onSubmit={continueMode === 'continue' ? handleContinueSubmit : handleMultiVersionSubmit}
+        onCancel={() => setShowContinuePanel(false)}
+      />
+
+      {/* 多版本续写面板 */}
+      <MultiVersionPanel
+        open={showMultiVersionPanel}
+        versions={multiVersions}
+        isLoading={isGeneratingVersions}
+        onSelect={handleApplyVersion}
+        onRegenerate={() => {
+          setShowMultiVersionPanel(false)
+          setContinueMode('multiVersion')
+          setShowContinuePanel(true)
+        }}
+        onCancel={() => {
+          setShowMultiVersionPanel(false)
+          setMultiVersions([])
+        }}
+      />
+
+
     </div>
   )
 }
