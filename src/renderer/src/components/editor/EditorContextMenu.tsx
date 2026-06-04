@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { Dropdown, MenuProps, App, Modal, Button } from 'antd'
+import { Dropdown, MenuProps, App, Modal, Button, Input } from 'antd'
 import {
   CopyOutlined,
   ScissorOutlined,
@@ -89,6 +89,9 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
   const [multiVersions, setMultiVersions] = useState<string[]>([])
   const [isGeneratingVersions, setIsGeneratingVersions] = useState(false)
   const [continueMode, setContinueMode] = useState<'continue' | 'multiVersion'>('continue')
+  const [showAiEditModal, setShowAiEditModal] = useState(false)
+  const [aiEditInput, setAiEditInput] = useState('')
+  const [aiEditLoading, setAiEditLoading] = useState(false)
 
   const isNovel = fileType === 'novel'
   const isMarkdown = fileType === 'markdown'
@@ -230,6 +233,88 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
     },
     [editor, message, startStream]
   )
+
+  // AI 自定义修改选中内容
+  const handleAiEditSubmit = useCallback(async () => {
+    if (!editor || !aiEditInput.trim()) return
+    const text = getSelectedText()
+    if (!text.trim()) {
+      message.warning('请先选择要修改的文本')
+      return
+    }
+
+    setAiEditLoading(true)
+    let accumulated = ''
+    const streamChunkHandler = (chunk: AiApiStreamChunk) => {
+      if (chunk.type === 'chunk' && chunk.content) {
+        accumulated += chunk.content
+      }
+    }
+    const unlisten = onStreamChunk(streamChunkHandler)
+
+    const systemPrompt = `你是一名专业的中文写作编辑。用户会提供一段选中的文字和一个修改要求。
+你的任务是：根据要求修改这段文字，并严格返回以下JSON格式（不要添加markdown代码块，不要添加任何解释文字）：
+{"oldString":"用户提供的原文（或其中需要替换的精确片段）","newString":"修改后的文字"}
+
+oldString 必须是原文中精确存在的片段，必须包含足够的上下文以唯一确定位置（建议包含被修改内容前后各5-10个字）。`
+
+    const userPrompt = `【原文】\n${text}\n\n【修改要求】\n${aiEditInput.trim()}`
+
+    try {
+      await callApiStream(userPrompt, { systemPrompt, temperature: 0.5, maxTokens: 2000 })
+      const edit = (() => {
+        try {
+          const trimmed = accumulated.trim()
+          if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            const parsed = JSON.parse(trimmed)
+            if (
+              typeof parsed.oldString === 'string' &&
+              typeof parsed.newString === 'string' &&
+              parsed.oldString !== '' &&
+              parsed.oldString !== parsed.newString
+            ) {
+              return parsed as { oldString: string; newString: string }
+            }
+          }
+        } catch {
+          /* ignore parse error */
+        }
+        return null
+      })()
+
+      if (edit) {
+        const current = editor.getText()
+        const count = current.split(edit.oldString).length - 1
+        if (count === 1) {
+          const modified = current.replace(edit.oldString, edit.newString)
+          editor.commands.setContent(modified, false)
+          message.success('已应用修改')
+        } else if (count === 0) {
+          message.error('无法定位要修改的文本，AI 提供的上下文不够精确')
+        } else {
+          message.error(`找到 ${count} 处匹配的文本，请让 AI 提供更长的上下文`)
+        }
+      } else {
+        message.info('AI 未返回结构化修改，请尝试更明确的修改指令')
+      }
+    } catch (_err) {
+      message.error('AI 调用失败')
+    } finally {
+      unlisten?.()
+      removeStreamChunkListener()
+      setAiEditLoading(false)
+      setShowAiEditModal(false)
+      setAiEditInput('')
+    }
+  }, [
+    editor,
+    aiEditInput,
+    getSelectedText,
+    message,
+    callApiStream,
+    onStreamChunk,
+    removeStreamChunkListener
+  ])
 
   // 续写参数提交
   const handleContinueSubmit = useCallback(
@@ -771,6 +856,15 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
             icon: <RobotOutlined />,
             children: [
               {
+                key: 'ai-custom-edit',
+                label: 'AI 修改选中内容...',
+                icon: <RobotOutlined />,
+                onClick: () => {
+                  closeMenu()
+                  setShowAiEditModal(true)
+                }
+              },
+              {
                 key: 'ai-polish',
                 label: '润色选中/全文',
                 icon: <EditOutlined />,
@@ -945,7 +1039,43 @@ export function EditorContextMenu({ editor, children, fileType }: EditorContextM
         }}
       />
 
-
+      {/* AI 修改选中内容对话框 */}
+      <Modal
+        title="AI 修改"
+        open={showAiEditModal}
+        onCancel={() => {
+          setShowAiEditModal(false)
+          setAiEditInput('')
+        }}
+        onOk={handleAiEditSubmit}
+        confirmLoading={aiEditLoading}
+        okText="执行修改"
+      >
+        <div style={{ marginBottom: 8 }}>选中的内容：</div>
+        <div
+          style={{
+            padding: 8,
+            background: 'var(--ant-color-bg-layout)',
+            borderRadius: 4,
+            maxHeight: 120,
+            overflowY: 'auto',
+            fontSize: 13,
+            lineHeight: 1.6,
+            marginBottom: 16,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}
+        >
+          {selectedText || '（未选中文字）'}
+        </div>
+        <div style={{ marginBottom: 8 }}>修改要求：</div>
+        <Input.TextArea
+          value={aiEditInput}
+          onChange={e => setAiEditInput(e.target.value)}
+          placeholder="例如：改得更生动、加入更多心理描写、调整语气更悲伤..."
+          autoSize={{ minRows: 2, maxRows: 4 }}
+        />
+      </Modal>
     </div>
   )
 }

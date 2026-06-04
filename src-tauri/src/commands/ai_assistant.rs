@@ -104,3 +104,34 @@ pub fn ai_delete_execution(
 ) -> AppResult<bool> {
     ai_service.delete_execution(&id)
 }
+
+#[tauri::command]
+pub fn ai_list_sessions(
+    ai_service: State<'_, AiAssistantService>,
+) -> AppResult<Vec<serde_json::Value>> {
+    ai_service.list_sessions()
+}
+
+#[tauri::command]
+pub fn ai_get_session(
+    id: String,
+    ai_service: State<'_, AiAssistantService>,
+) -> AppResult<serde_json::Value> {
+    ai_service.get_session(&id)
+}
+
+#[tauri::command]
+pub fn ai_save_session(
+    session: serde_json::Value,
+    ai_service: State<'_, AiAssistantService>,
+) -> AppResult<serde_json::Value> {
+    ai_service.save_session(session)
+}
+
+#[tauri::command]
+pub fn ai_delete_session(
+    id: String,
+    ai_service: State<'_, AiAssistantService>,
+) -> AppResult<bool> {
+    ai_service.delete_session(&id)
+}

@@ -12,7 +12,12 @@ import type {
   VariableValue,
   AiApiCallOptions,
   AiApiCallResult,
-  AiApiStreamChunk
+  AiApiStreamChunk,
+  ChatSession,
+  ChatSessionSummary,
+  AnyAgentEvent,
+  AgentSession,
+  ToolCallRecord
 } from '@shared/ai-assistant'
 
 interface AiAssistantState {
@@ -37,6 +42,16 @@ interface AiAssistantState {
   isExecuting: boolean
   error: string | null
   activeTab: 'templates' | 'workflows' | 'history'
+
+  // 会话状态
+  sessions: ChatSessionSummary[]
+  currentSessionId: string | null
+
+  // Agent 状态
+  agentEvents: AnyAgentEvent[]
+  agentSessions: AgentSession[]
+  currentAgentSessionId: string | null
+  agentToolCalls: Map<string, ToolCallRecord[]>
 
   // 模板操作
   loadTemplates: () => Promise<void>
@@ -80,6 +95,22 @@ interface AiAssistantState {
   ) => Promise<{ success: boolean; error?: string }>
   getAvailableModels: (provider: string) => Promise<string[]>
 
+  // 会话操作
+  loadSessions: () => Promise<void>
+  saveSession: (session: ChatSession) => Promise<ChatSession | null>
+  deleteSession: (id: string) => Promise<void>
+  createSession: () => Promise<ChatSession>
+  switchSession: (id: string) => Promise<ChatSession | null>
+
+  // Agent 操作
+  runAgent: (userIntent: string, content: string) => Promise<void>
+  stopAgent: () => Promise<void>
+  onAgentEvent: (callback: (event: AnyAgentEvent) => void) => (() => void)
+  createAgentSession: () => Promise<AgentSession>
+  getAgentSession: (id: string) => Promise<AgentSession | null>
+  addAgentEvent: (event: AnyAgentEvent) => void
+  clearAgentEvents: () => void
+
   // 变量解析
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => string
 
@@ -112,6 +143,14 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   streamingContent: '',
   error: null,
   activeTab: 'templates',
+  sessions: [],
+  currentSessionId: null,
+
+  // Agent 状态
+  agentEvents: [],
+  agentSessions: [],
+  currentAgentSessionId: null,
+  agentToolCalls: new Map(),
 
   // 模板操作
   loadTemplates: async () => {
@@ -488,6 +527,74 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
     }
   },
 
+  // 会话操作
+  loadSessions: async () => {
+    try {
+      const sessions = await window.api.aiAssistant.listSessions()
+      const sorted = (sessions as ChatSessionSummary[]).sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )
+      set({ sessions: sorted })
+    } catch (error) {
+      console.error('Failed to load sessions:', error)
+    }
+  },
+
+  saveSession: async (session: ChatSession) => {
+    try {
+      const saved = await window.api.aiAssistant.saveSession(session as Record<string, unknown>)
+      await get().loadSessions()
+      return saved as ChatSession
+    } catch (error) {
+      console.error('Failed to save session:', error)
+      return null
+    }
+  },
+
+  deleteSession: async (id: string) => {
+    try {
+      await window.api.aiAssistant.deleteSession(id)
+      set(state => ({
+        sessions: state.sessions.filter(s => s.id !== id),
+        currentSessionId: state.currentSessionId === id ? null : state.currentSessionId
+      }))
+      await get().loadSessions()
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+      throw error
+    }
+  },
+
+  createSession: async () => {
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const session: ChatSession = {
+      id,
+      title: '新对话',
+      messages: [],
+      createdAt: now,
+      updatedAt: now
+    }
+    try {
+      const saved = await window.api.aiAssistant.saveSession(session as Record<string, unknown>)
+      await get().loadSessions()
+      return saved as ChatSession
+    } catch (error) {
+      console.error('Failed to create session:', error)
+      return session
+    }
+  },
+
+  switchSession: async (id: string) => {
+    try {
+      const session = await window.api.aiAssistant.getSession(id)
+      return session as ChatSession | null
+    } catch (error) {
+      console.error('Failed to switch session:', error)
+      return null
+    }
+  },
+
   // 变量解析
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => {
     let content = template.content || ''
@@ -594,6 +701,73 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   setCurrentWorkflow: workflow => set({ currentWorkflow: workflow }),
   clearError: () => set({ error: null }),
 
+  // Agent 操作
+  runAgent: async (userIntent: string, content: string) => {
+    const sessionId = get().currentAgentSessionId
+    if (!sessionId) {
+      console.error('No active agent session')
+      return
+    }
+    set({ isStreaming: true, streamingContent: '', agentEvents: [] })
+    try {
+      await window.api.aiAgent.runAgent(sessionId, userIntent, content)
+    } catch (error) {
+      console.error('Failed to run agent:', error)
+      set({ isStreaming: false })
+    }
+  },
+
+  stopAgent: async () => {
+    const sessionId = get().currentAgentSessionId
+    if (!sessionId) return
+    try {
+      await window.api.aiAgent.stopAgent(sessionId)
+    } catch (error) {
+      console.error('Failed to stop agent:', error)
+    }
+    set({ isStreaming: false })
+  },
+
+  onAgentEvent: (callback: (event: AnyAgentEvent) => void) => {
+    return window.api.aiAgent.onAgentEvent((event) => {
+      callback(event as AnyAgentEvent)
+    })
+  },
+
+  createAgentSession: async () => {
+    try {
+      const session = await window.api.aiAgent.createSession() as AgentSession
+      set(state => ({
+        agentSessions: [...state.agentSessions, session],
+        currentAgentSessionId: session.id
+      }))
+      return session
+    } catch (error) {
+      console.error('Failed to create agent session:', error)
+      throw error
+    }
+  },
+
+  getAgentSession: async (id: string) => {
+    try {
+      const session = await window.api.aiAgent.getSession(id) as AgentSession | null
+      return session
+    } catch (error) {
+      console.error('Failed to get agent session:', error)
+      return null
+    }
+  },
+
+  addAgentEvent: (event: AnyAgentEvent) => {
+    set(state => ({
+      agentEvents: [...state.agentEvents, event]
+    }))
+  },
+
+  clearAgentEvents: () => {
+    set({ agentEvents: [] })
+  },
+
   clearData: () => {
     set({
       templates: [],
@@ -611,7 +785,13 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       isStreaming: false,
       streamingContent: '',
       error: null,
-      activeTab: 'templates'
+      activeTab: 'templates',
+      sessions: [],
+      currentSessionId: null,
+      agentEvents: [],
+      agentSessions: [],
+      currentAgentSessionId: null,
+      agentToolCalls: new Map()
     })
   }
 }))

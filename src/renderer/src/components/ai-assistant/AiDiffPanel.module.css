@@ -30,44 +30,29 @@
 .diffContent {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
-  font-family: monospace;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.diffLine {
-  display: flex;
-  padding: 2px 16px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.diffLineAdd {
-  background-color: #e6ffec;
+.diffAdd {
+  background-color: #d4edda;
+  color: #155724;
+  text-decoration: underline;
+  text-decoration-color: #155724;
+  border-radius: 2px;
+  padding: 1px 2px;
 }
 
-.diffLineDelete {
-  background-color: #ffebe9;
-}
-
-.diffLineContext {
-  background-color: transparent;
-}
-
-.diffLinePrefix {
-  width: 20px;
-  flex-shrink: 0;
-  user-select: none;
-  color: var(--ant-color-text-secondary);
-}
-
-.diffLineAdd .diffLinePrefix {
-  color: #1a7f37;
-}
-
-.diffLineDelete .diffLinePrefix {
-  color: #cf222e;
+.diffDelete {
+  background-color: #f8d7da;
+  color: #721c24;
+  text-decoration: line-through;
+  text-decoration-color: #721c24;
+  border-radius: 2px;
+  padding: 1px 2px;
 }
 
 .diffFooter {

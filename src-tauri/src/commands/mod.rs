@@ -1,3 +1,4 @@
+pub mod ai_agent;
 pub mod ai_api;
 pub mod ai_assistant;
 pub mod backup;
@@ -16,6 +17,7 @@ pub mod terminal;
 pub mod updater;
 pub mod vocabulary;
 
+pub use ai_agent::*;
 pub use ai_api::*;
 pub use ai_assistant::*;
 pub use backup::*;

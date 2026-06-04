@@ -1,6 +1,8 @@
+pub mod ai_agent;
 pub mod ai_api;
 pub mod ai_assistant;
 pub mod backup;
+pub mod editor_state;
 pub mod file_service;
 pub mod file_watcher;
 pub mod git;
@@ -13,8 +15,11 @@ pub mod search;
 pub mod secure_storage;
 pub mod settings;
 pub mod terminal;
+pub mod tool_registry;
+pub mod tools;
 pub mod vocabulary;
 
+pub use ai_agent::AiAgentService;
 pub use ai_api::AiApiService;
 pub use ai_assistant::AiAssistantService;
 pub use backup::BackupService;
@@ -29,4 +34,5 @@ pub use search::SearchService;
 pub use secure_storage::SecureStorageService;
 pub use settings::SettingsService;
 pub use terminal::TerminalService;
+pub use tool_registry::ToolRegistry;
 pub use vocabulary::VocabularyService;

@@ -75,3 +75,13 @@
 .editorContainer::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+/* AI 编辑 diff 操作栏 */
+.aiEditActions {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-bg-container);
+  flex-shrink: 0;
+}

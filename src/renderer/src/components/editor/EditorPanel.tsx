@@ -4,7 +4,8 @@
  */
 
 import { useCallback } from 'react'
-import { Empty, App, Spin } from 'antd'
+import { Empty, App, Spin, Button, Space } from 'antd'
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { EditorTabs } from './EditorTabs'
 import { NovelEditor } from './NovelEditor'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -15,10 +16,13 @@ import styles from './EditorPanel.module.css'
 
 export function EditorPanel() {
   const { message } = App.useApp()
-  const { tabs, activeTabId, saveFileContent, isLoading, getCurrentContent, markDirty } =
-    useEditorStore()
+  const {
+    tabs, activeTabId, saveFileContent, isLoading, getCurrentContent, markDirty,
+    pendingAiEdits, acceptAiEdit, rejectAiEdit
+  } = useEditorStore()
 
   const activeTab = tabs.find(tab => tab.id === activeTabId)
+  const isAiEditDiff = activeTab?.type === 'diff' && pendingAiEdits.has(activeTab.path)
 
   const handleSave = useCallback(async () => {
     if (!activeTab) return
@@ -40,6 +44,23 @@ export function EditorPanel() {
       markDirty(activeTab.id, true)
     }
   }, [activeTab, markDirty])
+
+  const handleAcceptAiEdit = useCallback(async () => {
+    if (!activeTab) return
+    try {
+      await acceptAiEdit(activeTab.path)
+      message.success('已接受修改')
+      useGitStore.getState().refresh()
+    } catch (_e) {
+      message.error('接受修改失败')
+    }
+  }, [activeTab, acceptAiEdit, message])
+
+  const handleRejectAiEdit = useCallback(() => {
+    if (!activeTab) return
+    rejectAiEdit(activeTab.path)
+    message.info('已拒绝修改')
+  }, [activeTab, rejectAiEdit, message])
 
   if (tabs.length === 0) {
     return (
@@ -75,15 +96,36 @@ export function EditorPanel() {
         ) : (
           <div className={styles.editorWrapper}>
             {isDiff && activeTab?.diffData ? (
-              <DiffViewer
-                key={editorTypeKey}
-                diff={activeTab.diffData}
-                onClose={() => {
-                  if (activeTabId) {
-                    useEditorStore.getState().closeTab(activeTabId)
-                  }
-                }}
-              />
+              <>
+                {isAiEditDiff && (
+                  <div className={styles.aiEditActions}>
+                    <Space>
+                      <Button
+                        type="primary"
+                        icon={<CheckOutlined />}
+                        onClick={handleAcceptAiEdit}
+                      >
+                        接受修改
+                      </Button>
+                      <Button
+                        icon={<CloseOutlined />}
+                        onClick={handleRejectAiEdit}
+                      >
+                        拒绝修改
+                      </Button>
+                    </Space>
+                  </div>
+                )}
+                <DiffViewer
+                  key={editorTypeKey}
+                  diff={activeTab.diffData}
+                  onClose={() => {
+                    if (activeTabId) {
+                      useEditorStore.getState().closeTab(activeTabId)
+                    }
+                  }}
+                />
+              </>
             ) : isMarkdown || isText ? (
               <MarkdownEditor
                 key={editorTypeKey}

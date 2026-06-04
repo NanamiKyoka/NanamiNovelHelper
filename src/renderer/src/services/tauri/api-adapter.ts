@@ -695,6 +695,10 @@ export const tauriApi = {
     saveExecution: (execution: Record<string, unknown>) => invoke('ai_save_execution', { execution }),
     createExecution: (_workflowId: string, _workflowName: string) =>
       invoke('ai_save_execution', { execution: { workflowId: _workflowId, workflowName: _workflowName, status: 'running', stepOutputs: {}, startedAt: new Date().toISOString() } }),
+    listSessions: () => invoke('ai_list_sessions'),
+    getSession: (id: string) => invoke('ai_get_session', { id }),
+    saveSession: (session: Record<string, unknown>) => invoke('ai_save_session', { session }),
+    deleteSession: (id: string) => invoke('ai_delete_session', { id }),
     getExecution: async (id: string) => {
       const executions = await invoke<Record<string, unknown>[]>('ai_list_executions')
       return executions.find(e => e.id === id) || null
@@ -722,6 +726,35 @@ export const tauriApi = {
       invoke<string[]>('ai_get_available_models', { provider }),
     getProviderList: () =>
       invoke<Array<Record<string, string>>>('ai_get_provider_list')
+  },
+
+  aiAgent: {
+    runAgent: (sessionId: string, userIntent: string, content: string) =>
+      invoke('ai_agent_run', { sessionId, userIntent, content }),
+    stopAgent: (sessionId: string) => invoke('ai_agent_stop', { sessionId }),
+    createSession: () => invoke('ai_agent_create_session') as Promise<Record<string, unknown>>,
+    getSession: (sessionId: string) => invoke('ai_agent_get_session', { sessionId }) as Promise<Record<string, unknown> | null>,
+    listSessions: () => invoke('ai_agent_list_sessions') as Promise<Record<string, unknown>[]>,
+    onAgentEvent: (callback: (event: Record<string, unknown>) => void) => {
+      let unlisten: UnlistenFn | null = null
+      let cancelled = false
+      listen<Record<string, unknown>>('aiAgent:eventStream', (event) => {
+        if (!cancelled) {
+          callback(event.payload)
+        }
+      }).then(fn => {
+        if (cancelled) {
+          fn()
+        } else {
+          unlisten = fn
+        }
+      })
+      return () => {
+        cancelled = true
+        unlisten?.()
+      }
+    },
+    removeAgentEventListener: () => {}
   },
 
   shell: {

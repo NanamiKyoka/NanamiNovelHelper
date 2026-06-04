@@ -1032,6 +1032,157 @@ export interface AiApiCallResult {
   duration: number // 毫秒
 }
 
+// ============================================
+// Agent 事件系统
+// ============================================
+
+export type AgentEventType =
+  | 'text_delta'
+  | 'reasoning_delta'
+  | 'tool_input_started'
+  | 'tool_input_delta'
+  | 'tool_input_ended'
+  | 'tool_called'
+  | 'tool_progress'
+  | 'tool_result'
+  | 'tool_error'
+  | 'step_started'
+  | 'step_ended'
+  | 'step_failed'
+  | 'error'
+  | 'done'
+
+export interface AgentEvent {
+  type: AgentEventType
+  sessionId: string
+  timestamp: number
+}
+
+export interface TextDeltaEvent extends AgentEvent {
+  type: 'text_delta'
+  textId: string
+  delta: string
+}
+
+export interface ReasoningDeltaEvent extends AgentEvent {
+  type: 'reasoning_delta'
+  reasoningId: string
+  delta: string
+}
+
+export interface ToolInputStartedEvent extends AgentEvent {
+  type: 'tool_input_started'
+  callId: string
+  toolName: string
+}
+
+export interface ToolInputDeltaEvent extends AgentEvent {
+  type: 'tool_input_delta'
+  callId: string
+  delta: string
+}
+
+export interface ToolInputEndedEvent extends AgentEvent {
+  type: 'tool_input_ended'
+  callId: string
+  text: string
+}
+
+export interface ToolCalledEvent extends AgentEvent {
+  type: 'tool_called'
+  callId: string
+  toolName: string
+  parameters: Record<string, unknown>
+}
+
+export interface ToolProgressEvent extends AgentEvent {
+  type: 'tool_progress'
+  callId: string
+  toolName: string
+  message: string
+}
+
+export interface ToolResultEvent extends AgentEvent {
+  type: 'tool_result'
+  callId: string
+  toolName: string
+  result: unknown
+  success: boolean
+}
+
+export interface ToolErrorEvent extends AgentEvent {
+  type: 'tool_error'
+  callId: string
+  toolName: string
+  message: string
+}
+
+export interface StepStartedEvent extends AgentEvent {
+  type: 'step_started'
+  stepIndex: number
+}
+
+export interface StepEndedEvent extends AgentEvent {
+  type: 'step_ended'
+  stepIndex: number
+}
+
+export interface StepFailedEvent extends AgentEvent {
+  type: 'step_failed'
+  stepIndex: number
+  error: string
+}
+
+export interface AgentErrorEvent extends AgentEvent {
+  type: 'error'
+  error: string
+}
+
+export interface AgentDoneEvent extends AgentEvent {
+  type: 'done'
+  tokensUsed?: {
+    input: number
+    output: number
+  }
+}
+
+export type AnyAgentEvent =
+  | TextDeltaEvent
+  | ReasoningDeltaEvent
+  | ToolInputStartedEvent
+  | ToolInputDeltaEvent
+  | ToolInputEndedEvent
+  | ToolCalledEvent
+  | ToolProgressEvent
+  | ToolResultEvent
+  | ToolErrorEvent
+  | StepStartedEvent
+  | StepEndedEvent
+  | StepFailedEvent
+  | AgentErrorEvent
+  | AgentDoneEvent
+
+// ============================================
+// 工具定义
+// ============================================
+
+export interface ToolParameter {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object'
+  description: string
+  required?: boolean
+}
+
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: Record<string, unknown> // JSON Schema object
+}
+
+// ============================================
+// AI API 流式响应
+// ============================================
+
 export interface AiApiStreamChunk {
   type: 'chunk' | 'done' | 'error'
   content?: string
@@ -1041,6 +1192,69 @@ export interface AiApiStreamChunk {
     output: number
   }
   duration?: number
+}
+
+// ============================================
+// 聊天会话
+// ============================================
+
+/**
+ * 工具调用记录
+ */
+export interface ToolCallRecord {
+  id: string
+  callId: string
+  toolName: string
+  parameters: Record<string, unknown>
+  status: 'pending' | 'running' | 'success' | 'failed'
+  result?: unknown
+  error?: string
+  timestamp: number
+}
+
+/**
+ * 聊天消息
+ */
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system' | 'tool'
+  content: string
+  toolCalls?: ToolCallRecord[]
+  timestamp: number
+}
+
+/**
+ * Agent 会话（扩展自 ChatSession）
+ */
+export interface AgentSession {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  createdAt: string
+  updatedAt: string
+  status: 'idle' | 'running' | 'error'
+}
+
+/**
+ * 聊天会话
+ */
+export interface ChatSession {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 聊天会话摘要（用于列表展示）
+ */
+export interface ChatSessionSummary {
+  id: string
+  title: string
+  createdAt: string
+  updatedAt: string
+  messageCount: number
 }
 
 /**

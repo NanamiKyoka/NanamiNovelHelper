@@ -246,6 +246,11 @@ interface EditorState {
   getTabByPath: (path: string) => EditorTab | null
   isPreviewTab: (tabId: string) => boolean
   openDiff: (path: string, name: string, diffData: import('@shared/git').GitFileDiff) => void
+
+  pendingAiEdits: Map<string, { path: string; modified: string }>
+  addPendingAiEdit: (path: string, modified: string) => void
+  acceptAiEdit: (path: string) => Promise<void>
+  rejectAiEdit: (path: string) => void
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -322,6 +327,7 @@ export const useEditorStore = create<EditorState>()(
         insertContentRequest: null,
         externalRefreshRequest: null,
         lastRefreshTime: 0,
+        pendingAiEdits: new Map(),
 
         openPreview: async (
           path: string,
@@ -770,6 +776,54 @@ export const useEditorStore = create<EditorState>()(
             tabs: [...state.tabs, newTab],
             activeTabId: newTab.id
           }))
+        },
+
+        addPendingAiEdit: (path: string, modified: string) => {
+          set(state => {
+            const next = new Map(state.pendingAiEdits)
+            next.set(path, { path, modified })
+            return { pendingAiEdits: next }
+          })
+        },
+
+        acceptAiEdit: async (path: string) => {
+          const state = get()
+          const edit = state.pendingAiEdits.get(path)
+          if (!edit) return
+
+          try {
+            await get().saveFileContent(path, edit.modified)
+            // 更新文件内容缓存
+            get().loadFileContent(path)
+            // 关闭 diff 标签页
+            const diffTabId = `diff:${path}`
+            get().closeTab(diffTabId)
+            // 如果原文件已打开，刷新其内容
+            const fileTab = state.tabs.find(t => t.path === path && t.type !== 'diff')
+            if (fileTab) {
+              set({ activeTabId: fileTab.id })
+            }
+          } catch (e) {
+            console.error('接受 AI 编辑失败:', e)
+            throw e
+          }
+
+          set(state => {
+            const next = new Map(state.pendingAiEdits)
+            next.delete(path)
+            return { pendingAiEdits: next }
+          })
+        },
+
+        rejectAiEdit: (path: string) => {
+          const diffTabId = `diff:${path}`
+          get().closeTab(diffTabId)
+
+          set(state => {
+            const next = new Map(state.pendingAiEdits)
+            next.delete(path)
+            return { pendingAiEdits: next }
+          })
         },
 
         requestGoToPosition: (filePath: string, matchText: string, matchIndex: number) => {

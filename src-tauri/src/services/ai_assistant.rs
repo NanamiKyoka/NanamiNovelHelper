@@ -31,10 +31,15 @@ impl AiAssistantService {
         Self::get_ai_dir(project_path).join("executions")
     }
 
+    fn get_sessions_dir(project_path: &str) -> PathBuf {
+        Self::get_ai_dir(project_path).join("sessions")
+    }
+
     fn ensure_dirs(project_path: &str) -> AppResult<()> {
         ensure_dir(&Self::get_templates_dir(project_path))?;
         ensure_dir(&Self::get_workflows_dir(project_path))?;
         ensure_dir(&Self::get_executions_dir(project_path))?;
+        ensure_dir(&Self::get_sessions_dir(project_path))?;
         Ok(())
     }
 
@@ -224,6 +229,57 @@ impl AiAssistantService {
     pub fn delete_execution(&self, id: &str) -> AppResult<bool> {
         let project_path = Self::get_project_path()?;
         let path = Self::get_executions_dir(&project_path).join(format!("{}.json5", id));
+        if !path.exists() {
+            return Ok(false);
+        }
+        fs::remove_file(&path)?;
+        Ok(true)
+    }
+
+    pub fn list_sessions(&self) -> AppResult<Vec<serde_json::Value>> {
+        let project_path = Self::get_project_path()?;
+        let sessions_dir = Self::get_sessions_dir(&project_path);
+        Self::read_json5_list(&sessions_dir)
+    }
+
+    pub fn get_session(&self, id: &str) -> AppResult<serde_json::Value> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_sessions_dir(&project_path).join(format!("{}.json5", id));
+        if !path.exists() {
+            return Err(AppError::FileNotFound(id.to_string()));
+        }
+        read_json5_file(&path)
+    }
+
+    pub fn save_session(&self, session: serde_json::Value) -> AppResult<serde_json::Value> {
+        let project_path = Self::get_project_path()?;
+        Self::ensure_dirs(&project_path)?;
+        let sessions_dir = Self::get_sessions_dir(&project_path);
+
+        let id = session
+            .get("id")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| generate_id());
+
+        let now = generate_timestamp();
+        let mut session = session;
+        if let Some(obj) = session.as_object_mut() {
+            obj.insert("id".to_string(), serde_json::Value::String(id.clone()));
+            obj.insert("updatedAt".to_string(), serde_json::Value::String(now.clone()));
+            if !obj.contains_key("createdAt") {
+                obj.insert("createdAt".to_string(), serde_json::Value::String(now));
+            }
+        }
+
+        let path = sessions_dir.join(format!("{}.json5", id));
+        write_json5_file(&path, &session)?;
+        Ok(session)
+    }
+
+    pub fn delete_session(&self, id: &str) -> AppResult<bool> {
+        let project_path = Self::get_project_path()?;
+        let path = Self::get_sessions_dir(&project_path).join(format!("{}.json5", id));
         if !path.exists() {
             return Ok(false);
         }

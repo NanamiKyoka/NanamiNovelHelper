@@ -16,6 +16,7 @@ pub async fn ai_call_api(
         system_prompt: None,
         temperature: None,
         max_tokens: None,
+        tools: None,
     });
     let result = ai_api_service.call(&prompt, &opts, &secure_storage).await;
     Ok(serde_json::to_value(result)?)
@@ -35,6 +36,7 @@ pub async fn ai_call_api_stream(
         system_prompt: None,
         temperature: None,
         max_tokens: None,
+        tools: None,
     });
     let result = ai_api_service
         .call_stream(&prompt, &opts, &secure_storage, &app)

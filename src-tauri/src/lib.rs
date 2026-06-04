@@ -6,9 +6,10 @@ mod utils;
 
 use commands::*;
 use services::{
-    AiApiService, AiAssistantService, BackupService, FileService,
+    AiAgentService, AiApiService, AiAssistantService, BackupService, FileService,
     FileWatcherService, GitService, GraphService, ImageService, LogService, ProjectService,
-    SearchService, SecureStorageService, SettingsService, TerminalService, VocabularyService,
+    SearchService, SecureStorageService, SettingsService, TerminalService, ToolRegistry,
+    VocabularyService,
 };
 use tauri::Manager;
 
@@ -83,6 +84,12 @@ pub fn run() {
         .setup(|app| {
             let file_watcher = app.state::<FileWatcherService>();
             file_watcher.set_app(app.handle().clone());
+
+            let tool_registry = std::sync::Arc::new(ToolRegistry::new());
+            let ai_agent = AiAgentService::new(tool_registry.clone());
+            app.manage(tool_registry);
+            app.manage(ai_agent);
+
             let log_level = if cfg!(debug_assertions) {
                 log::LevelFilter::Debug
             } else {
@@ -225,11 +232,20 @@ pub fn run() {
             ai_save_execution,
             ai_list_executions,
             ai_delete_execution,
+            ai_list_sessions,
+            ai_get_session,
+            ai_save_session,
+            ai_delete_session,
             ai_call_api,
             ai_call_api_stream,
             ai_test_connection,
             ai_get_available_models,
             ai_get_provider_list,
+            ai_agent_run,
+            ai_agent_stop,
+            ai_agent_get_session,
+            ai_agent_list_sessions,
+            ai_agent_create_session,
             secure_is_encryption_available,
             secure_get_api_key,
             secure_set_api_key,

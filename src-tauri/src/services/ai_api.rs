@@ -118,6 +118,14 @@ static PROVIDER_CONFIGS: [ProviderConfig; 6] = [
     },
 ];
 
+#[derive(Default)]
+struct PartialToolCall {
+    id: Option<String>,
+    tool_type: Option<String>,
+    function_name: Option<String>,
+    function_arguments: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiApiCallOptions {
     pub provider: Option<String>,
@@ -125,6 +133,7 @@ pub struct AiApiCallOptions {
     pub system_prompt: Option<String>,
     pub temperature: Option<f64>,
     pub max_tokens: Option<u32>,
+    pub tools: Option<Vec<serde_json::Value>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -138,7 +147,13 @@ pub struct AiApiCallResult {
     pub tokens_used: Option<TokensUsed>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Vec<serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub finish_reason: Option<String>,
 }
+
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokensUsed {
@@ -247,6 +262,8 @@ impl AiApiService {
                         )),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     }
                 }
             }
@@ -297,12 +314,16 @@ impl AiApiService {
             "content": wrap_user_content(prompt)
         }));
 
-        let body = serde_json::json!({
+        let mut body = serde_json::json!({
             "model": model,
             "messages": messages,
             "temperature": options.temperature.unwrap_or(DEFAULT_TEMPERATURE),
             "max_tokens": options.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = serde_json::json!(tools);
+        }
 
         let url = format!("{}/chat/completions", base_url);
 
@@ -331,18 +352,29 @@ impl AiApiService {
                         error: Some(format!("HTTP {}: {}", status, error_msg)),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     };
                 }
 
                 let data: Value = response.json().await.unwrap_or(Value::Null);
-                let content = data
-                    .get("choices")
-                    .and_then(|c| c.get(0))
-                    .and_then(|c| c.get("message"))
+                let choice = data.get("choices").and_then(|c| c.get(0));
+                let message = choice.and_then(|c| c.get("message"));
+
+                let content = message
                     .and_then(|m| m.get("content"))
                     .and_then(|c| c.as_str())
-                    .unwrap_or("")
-                    .to_string();
+                    .map(|s| s.to_string());
+
+                let tool_calls: Option<Vec<Value>> = message
+                    .and_then(|m| m.get("tool_calls"))
+                    .and_then(|t| t.as_array())
+                    .cloned();
+
+                let finish_reason = choice
+                    .and_then(|c| c.get("finish_reason"))
+                    .and_then(|f| f.as_str())
+                    .map(|s| s.to_string());
 
                 let input_tokens = data
                     .get("usage")
@@ -357,13 +389,15 @@ impl AiApiService {
 
                 AiApiCallResult {
                     success: true,
-                    content: Some(content),
+                    content,
                     error: None,
                     tokens_used: Some(TokensUsed {
                         input: input_tokens,
                         output: output_tokens,
                     }),
                     duration: Some(start.elapsed().as_millis() as u64),
+                    tool_calls,
+                    finish_reason,
                 }
             }
             Err(e) => AiApiCallResult {
@@ -372,6 +406,8 @@ impl AiApiService {
                 error: Some(e.to_string()),
                 tokens_used: None,
                 duration: Some(start.elapsed().as_millis() as u64),
+                tool_calls: None,
+                finish_reason: None,
             },
         }
     }
@@ -422,6 +458,8 @@ impl AiApiService {
                         error: Some(format!("HTTP {}: {}", status, error_msg)),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     };
                 }
 
@@ -454,6 +492,8 @@ impl AiApiService {
                         output: output_tokens,
                     }),
                     duration: Some(start.elapsed().as_millis() as u64),
+                    tool_calls: None,
+                    finish_reason: None,
                 }
             }
             Err(e) => AiApiCallResult {
@@ -462,6 +502,8 @@ impl AiApiService {
                 error: Some(e.to_string()),
                 tokens_used: None,
                 duration: Some(start.elapsed().as_millis() as u64),
+                tool_calls: None,
+                finish_reason: None,
             },
         }
     }
@@ -499,6 +541,8 @@ impl AiApiService {
                         error: Some(error),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     };
                 }
             }
@@ -552,13 +596,17 @@ impl AiApiService {
             "content": wrap_user_content(prompt)
         }));
 
-        let body = serde_json::json!({
+        let mut body = serde_json::json!({
             "model": model,
             "messages": messages,
             "temperature": options.temperature.unwrap_or(DEFAULT_TEMPERATURE),
             "max_tokens": options.max_tokens.unwrap_or(DEFAULT_MAX_TOKENS),
             "stream": true
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = serde_json::json!(tools);
+        }
 
         let url = format!("{}/chat/completions", base_url);
 
@@ -593,12 +641,15 @@ impl AiApiService {
                         error: Some(format!("HTTP {}: {}", status, error_msg)),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     };
                 }
 
                 let mut full_content = String::new();
                 let mut input_tokens = 0u32;
                 let mut output_tokens = 0u32;
+                let mut partial_tool_calls: Vec<PartialToolCall> = Vec::new();
 
                 let mut stream = response.bytes_stream();
                 let mut buffer = String::new();
@@ -621,10 +672,12 @@ impl AiApiService {
                                 }
 
                                 if let Ok(parsed) = serde_json::from_str::<Value>(data) {
-                                    if let Some(content) = parsed
+                                    let delta = parsed
                                         .get("choices")
                                         .and_then(|c| c.get(0))
-                                        .and_then(|c| c.get("delta"))
+                                        .and_then(|c| c.get("delta"));
+
+                                    if let Some(content) = delta
                                         .and_then(|d| d.get("content"))
                                         .and_then(|c| c.as_str())
                                     {
@@ -636,6 +689,41 @@ impl AiApiService {
                                             },
                                         );
                                     }
+
+                                    if let Some(tool_calls_delta) = delta
+                                        .and_then(|d| d.get("tool_calls"))
+                                        .and_then(|t| t.as_array())
+                                    {
+                                        for tc in tool_calls_delta {
+                                            if let Some(index) = tc.get("index").and_then(|i| i.as_u64()) {
+                                                let idx = index as usize;
+                                                while partial_tool_calls.len() <= idx {
+                                                    partial_tool_calls.push(PartialToolCall {
+                                                        id: None,
+                                                        tool_type: None,
+                                                        function_name: None,
+                                                        function_arguments: String::new(),
+                                                    });
+                                                }
+                                                let partial = &mut partial_tool_calls[idx];
+                                                if let Some(id) = tc.get("id").and_then(|i| i.as_str()) {
+                                                    partial.id = Some(id.to_string());
+                                                }
+                                                if let Some(t) = tc.get("type").and_then(|t| t.as_str()) {
+                                                    partial.tool_type = Some(t.to_string());
+                                                }
+                                                if let Some(func) = tc.get("function").and_then(|f| f.as_object()) {
+                                                    if let Some(name) = func.get("name").and_then(|n| n.as_str()) {
+                                                        partial.function_name = Some(name.to_string());
+                                                    }
+                                                    if let Some(args) = func.get("arguments").and_then(|a| a.as_str()) {
+                                                        partial.function_arguments.push_str(args);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     if let Some(usage) = parsed.get("usage") {
                                         input_tokens =
                                             usage.get("prompt_tokens").and_then(|t| t.as_u64()).unwrap_or(0) as u32;
@@ -659,6 +747,26 @@ impl AiApiService {
                     }
                 }
 
+                let tool_calls = if partial_tool_calls.is_empty() {
+                    None
+                } else {
+                    Some(
+                        partial_tool_calls
+                            .into_iter()
+                            .filter_map(|p| {
+                                Some(serde_json::json!({
+                                    "id": p.id?,
+                                    "type": p.tool_type.unwrap_or_else(|| "function".to_string()),
+                                    "function": {
+                                        "name": p.function_name?,
+                                        "arguments": p.function_arguments
+                                    }
+                                }))
+                            })
+                            .collect(),
+                    )
+                };
+
                 let duration = start.elapsed().as_millis() as u64;
                 let _ = app.emit(
                     "aiAssistant:streamChunk",
@@ -673,13 +781,19 @@ impl AiApiService {
 
                 AiApiCallResult {
                     success: true,
-                    content: Some(full_content),
+                    content: if full_content.is_empty() { None } else { Some(full_content) },
                     error: None,
                     tokens_used: Some(TokensUsed {
                         input: input_tokens,
                         output: output_tokens,
                     }),
                     duration: Some(duration),
+                    tool_calls: tool_calls.clone(),
+                    finish_reason: if tool_calls.is_some() {
+                        Some("tool_calls".to_string())
+                    } else {
+                        None
+                    },
                 }
             }
             Err(e) => {
@@ -695,6 +809,8 @@ impl AiApiService {
                     error: Some(e.to_string()),
                     tokens_used: None,
                     duration: Some(start.elapsed().as_millis() as u64),
+                    tool_calls: None,
+                    finish_reason: None,
                 }
             }
         }
@@ -756,6 +872,8 @@ impl AiApiService {
                         error: Some(format!("HTTP {}: {}", status, error_msg)),
                         tokens_used: None,
                         duration: Some(start.elapsed().as_millis() as u64),
+                        tool_calls: None,
+                        finish_reason: None,
                     };
                 }
 
@@ -859,6 +977,8 @@ impl AiApiService {
                         output: output_tokens,
                     }),
                     duration: Some(duration),
+                    tool_calls: None,
+                    finish_reason: None,
                 }
             }
             Err(e) => {
@@ -874,6 +994,8 @@ impl AiApiService {
                     error: Some(e.to_string()),
                     tokens_used: None,
                     duration: Some(start.elapsed().as_millis() as u64),
+                    tool_calls: None,
+                    finish_reason: None,
                 }
             }
         }
@@ -893,6 +1015,8 @@ impl AiApiService {
                     error: Some(format!("未知的 AI 提供商: {}", provider)),
                     tokens_used: None,
                     duration: None,
+                    tool_calls: None,
+                    finish_reason: None,
                 }
             }
         };
@@ -903,6 +1027,7 @@ impl AiApiService {
             system_prompt: None,
             temperature: None,
             max_tokens: Some(10),
+            tools: None,
         };
         self.call("Hello", &options, storage).await
     }
@@ -933,6 +1058,33 @@ impl AiApiService {
             })
             .collect()
     }
+
+    pub(crate) fn get_provider_details(
+        &self,
+        provider: Option<String>,
+        storage: &SecureStorageService,
+    ) -> Option<ProviderDetails> {
+        let provider_id = provider.as_deref().unwrap_or("openai");
+        let (config, api_key, base_url) =
+            Self::resolve_provider_config(storage, provider_id)
+                .or_else(|| Self::find_first_available_provider(storage))?;
+
+        let model = config.default_model.to_string();
+
+        Some(ProviderDetails {
+            api_key,
+            base_url,
+            model,
+            api_format: config.api_format,
+        })
+    }
+}
+
+pub(crate) struct ProviderDetails {
+    pub api_key: String,
+    pub base_url: String,
+    pub model: String,
+    pub api_format: ApiFormat,
 }
 
 impl Default for AiApiService {
