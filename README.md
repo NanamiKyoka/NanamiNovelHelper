@@ -12,7 +12,7 @@
   <a href="#贡献规范">贡献规范</a>
 </p>
 
----
+***
 
 ## 项目概述
 
@@ -28,13 +28,12 @@ NanamiNovelHelper 是一款基于 Tauri v2 构建的跨平台桌面应用，专�
 ### 使用须知
 
 > 🍵 这软件主要是为了方便我自己而捣鼓出来的，所以……
-> 
+>
 > - 功能可能会有各种奇怪的 bug
 > - Issue 看到了可能会修，~~也可能懒得修~~
 > - 如果你也觉得好用，那真是太好了；如果遇到问题……欸嘿
-> 
 
----
+***
 
 ## 核心功能
 
@@ -98,10 +97,10 @@ graph TB
 ### 🤖 AI 辅助
 
 - 支持多种 AI 提供商（OpenAI、Anthropic、DeepSeek 等）
-- 自定义提示词模板
-- 工作流编排
-- 流式响应支持
-- API 密钥安全存储（使用系统密钥环）
+- 会话管理
+- 快捷操作：润色、续写、逻辑检查、生成摘要、角色分析
+- AI 文件工具：自动读取项目文件、搜索小说内容
+- AI 编辑 Diff 对比：修改建议以 Diff 形式展示，支持接受或拒绝
 
 ### 🖥️ 终端集成
 
@@ -118,51 +117,51 @@ graph TB
 - 自定义快捷键
 - 主题与外观设置
 
----
+***
 
 ## 技术栈
 
 ### 前端
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| React | 18.3 | UI 框架 |
-| TypeScript | 5.7 | 类型安全 |
-| Ant Design | 5.22 | UI 组件库 |
-| Zustand | 5.0 | 状态管理 |
-| TipTap | 2.10 | 富文本编辑器 |
-| CodeMirror | 6 | 代码编辑器 |
-| PixiJS | 8.17 | 地图渲染引擎 |
-| @antv/g6 | 5.0 | 图可视化 |
-| xterm.js | 6.0 | 终端模拟器 |
-| @dnd-kit | - | 拖拽功能 |
-| react-router-dom | 7.1 | 路由管理 |
+| 技术               | 版本   | 用途     |
+| :--------------- | :--- | :----- |
+| React            | 18.3 | UI 框架  |
+| TypeScript       | 5.7  | 类型安全   |
+| Ant Design       | 5.22 | UI 组件库 |
+| Zustand          | 5.0  | 状态管理   |
+| TipTap           | 2.10 | 富文本编辑器 |
+| CodeMirror       | 6    | 代码编辑器  |
+| PixiJS           | 8.17 | 地图渲染引擎 |
+| @antv/g6         | 5.0  | 图可视化   |
+| xterm.js         | 6.0  | 终端模拟器  |
+| @dnd-kit         | -    | 拖拽功能   |
+| react-router-dom | 7.1  | 路由管理   |
 
 ### 后端 (Rust)
 
-| Crate | 版本 | 用途 |
-|-------|------|------|
-| tauri | 2 | 应用框架 |
-| tokio | 1 | 异步运行时 |
-| serde | 1.0 | 序列化 |
-| reqwest | 0.12 | HTTP 客户端 |
-| image | 0.25 | 图像处理 |
-| keyring | 3 | 安全存储 |
-| notify | 7 | 文件监视 |
-| portable-pty | 0.8 | 伪终端 |
-| json5 | 0.4 | JSON5 解析 |
+| Crate        | 版本   | 用途       |
+| :----------- | :--- | :------- |
+| tauri        | 2    | 应用框架     |
+| tokio        | 1    | 异步运行时    |
+| serde        | 1.0  | 序列化      |
+| reqwest      | 0.12 | HTTP 客户端 |
+| image        | 0.25 | 图像处理     |
+| keyring      | 3    | 安全存储     |
+| notify       | 7    | 文件监视     |
+| portable-pty | 0.8  | 伪终端      |
+| json5        | 0.4  | JSON5 解析 |
 
 ### 构建工具
 
-| 工具 | 用途 |
-|------|------|
-| Vite 6 | 前端构建 |
-| ESLint 9 | 代码检查 |
-| Prettier | 代码格式化 |
-| Vitest | 单元测试 |
-| Cargo | Rust 构建 |
+| 工具       | 用途      |
+| :------- | :------ |
+| Vite 6   | 前端构建    |
+| ESLint 9 | 代码检查    |
+| Prettier | 代码格式化   |
+| Vitest   | 单元测试    |
+| Cargo    | Rust 构建 |
 
----
+***
 
 ## 安装指南
 
@@ -177,27 +176,22 @@ graph TB
 1. **安装 Node.js**
 
    推荐使用 [nvm](https://github.com/nvm-sh/nvm) 或 [fnm](https://github.com/Schniz/fnm) 管理 Node.js 版本：
-
    ```bash
    # 使用 fnm
    fnm install 20
    fnm use 20
-   
+
    # 或使用 nvm
    nvm install 20
    nvm use 20
    ```
-
 2. **安装 Rust**
 
    访问 [rustup.rs](https://rustup.rs/) 或运行：
-
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
-
 3. **安装 pnpm（推荐）**
-
    ```bash
    npm install -g pnpm
    ```
@@ -213,7 +207,7 @@ cd NanamiNovelHelper
 npm install
 ```
 
----
+***
 
 ## 开发指南
 
@@ -280,7 +274,7 @@ npm run typecheck && npm run lint && npm run test
 npm run test -- -u
 ```
 
----
+***
 
 ## 项目结构
 
@@ -316,19 +310,19 @@ NanamiNovelHelper/
 
 ### 路径别名
 
-| 别名 | 路径 |
-|------|------|
-| `@renderer/*` | `src/renderer/src/*` |
+| 别名              | 路径                              |
+| :-------------- | :------------------------------ |
+| `@renderer/*`   | `src/renderer/src/*`            |
 | `@components/*` | `src/renderer/src/components/*` |
-| `@stores/*` | `src/renderer/src/stores/*` |
-| `@services/*` | `src/renderer/src/services/*` |
-| `@hooks/*` | `src/renderer/src/hooks/*` |
-| `@utils/*` | `src/renderer/src/utils/*` |
-| `@types/*` | `src/renderer/src/types/*` |
-| `@constants/*` | `src/renderer/src/constants/*` |
-| `@shared/*` | `src/shared/*` |
+| `@stores/*`     | `src/renderer/src/stores/*`     |
+| `@services/*`   | `src/renderer/src/services/*`   |
+| `@hooks/*`      | `src/renderer/src/hooks/*`      |
+| `@utils/*`      | `src/renderer/src/utils/*`      |
+| `@types/*`      | `src/renderer/src/types/*`      |
+| `@constants/*`  | `src/renderer/src/constants/*`  |
+| `@shared/*`     | `src/shared/*`                  |
 
----
+***
 
 ## 使用说明
 
@@ -369,11 +363,9 @@ NanamiNovelHelper/
 ### AI 辅助
 
 1. 在设置中配置 AI API 密钥
-2. 创建提示词模板
-3. 编排工作流
-4. 在编辑器中使用 AI 功能
+2. 在编辑器中使用 AI 功能
 
----
+***
 
 ## API 文档
 
@@ -436,7 +428,7 @@ await window.api.skill.execute(skillId: string, params: any)
 await window.api.skill.list()
 ```
 
----
+***
 
 ## 配置说明
 
@@ -459,15 +451,15 @@ await window.api.skill.list()
 
 支持自定义快捷键绑定，默认快捷键：
 
-| 功能 | 快捷键 |
-|------|--------|
+| 功能   | 快捷键            |
+| :--- | :------------- |
 | 新建项目 | `Ctrl+Shift+N` |
 | 打开项目 | `Ctrl+Shift+O` |
-| 保存文件 | `Ctrl+S` |
-| 搜索替换 | `Ctrl+H` |
+| 保存文件 | `Ctrl+S`       |
+| 搜索替换 | `Ctrl+H`       |
 | 全局搜索 | `Ctrl+Shift+F` |
 
----
+***
 
 ## 贡献规范
 
@@ -488,6 +480,7 @@ await window.api.skill.list()
 ```
 
 类型：
+
 - `feat`: 新功能
 - `fix`: Bug 修复
 - `docs`: 文档更新
@@ -496,6 +489,7 @@ await window.api.skill.list()
 - `chore`: 构建/工具变更
 
 示例：
+
 ```
 feat(editor): 新增词汇悬浮提示功能
 
@@ -513,20 +507,20 @@ feat(editor): 新增词汇悬浮提示功能
 - 100 字符行宽
 - LF 换行
 
----
+***
 
 ## 许可证
 
 本项目采用 [MPL-2.0](https://www.mozilla.org/en-US/MPL/2.0/) 许可证。
 
----
+***
 
 ## 联系方式
 
-- **项目主页**: [https://github.com/NanamiKyoka/NanamiNovelHelper](https://github.com/NanamiKyoka/NanamiNovelHelper)
+- **项目主页**: <https://github.com/NanamiKyoka/NanamiNovelHelper>
 - **问题反馈**: [GitHub Issues](https://github.com/NanamiKyoka/NanamiNovelHelper/issues)
 
----
+***
 
 ## 致谢
 
@@ -538,3 +532,4 @@ feat(editor): 新增词汇悬浮提示功能
 - [TipTap](https://tiptap.dev/) - 富文本编辑器
 - [PixiJS](https://pixijs.com/) - 2D 渲染引擎
 - [G6](https://g6.antv.antgroup.com/) - 图可视化
+
