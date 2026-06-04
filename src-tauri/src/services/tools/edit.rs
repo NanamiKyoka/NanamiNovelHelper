@@ -1,5 +1,6 @@
 use crate::services::editor_state;
 use crate::services::tool_registry::{Tool, ToolResult};
+use crate::services::tools::novel_utils;
 use crate::services::tools::resolve_project_file;
 use serde_json::json;
 use std::future::Future;
@@ -114,23 +115,48 @@ impl Tool for EditTool {
                 }
             };
 
-            if !content.contains(old_string) {
-                return ToolResult {
-                    success: false,
-                    result: None,
-                    error: Some("未找到指定的旧文本".to_string()),
+            let new_content = if file_path.ends_with(".novel") {
+                match novel_utils::edit_novel_html(&content, old_string, new_string) {
+                    Some(c) => c,
+                    None => {
+                        return ToolResult {
+                            success: false,
+                            result: None,
+                            error: Some("未找到指定的旧文本".to_string()),
+                        }
+                    }
                 }
-            }
+            } else {
+                if !content.contains(old_string) {
+                    return ToolResult {
+                        success: false,
+                        result: None,
+                        error: Some("未找到指定的旧文本".to_string()),
+                    }
+                }
+                content.replacen(old_string, new_string, 1)
+            };
 
-            let new_content = content.replacen(old_string, new_string, 1);
+            let (original_out, modified_out, full_modified) = if file_path.ends_with(".novel") {
+                let block_idx = novel_utils::find_first_diff_block(&content, &new_content)
+                    .unwrap_or(0);
+                let original_ctx = novel_utils::extract_block_context(&content, block_idx, 2);
+                let modified_ctx = novel_utils::extract_block_context(&new_content, block_idx, 2);
+                (original_ctx, modified_ctx, new_content)
+            } else {
+                let c = content.clone();
+                let n = new_content.clone();
+                (c.clone(), n.clone(), n)
+            };
 
             ToolResult {
                 success: true,
                 result: Some(json!({
                     "path": file_path,
                     "replaced": true,
-                    "original": content,
-                    "modified": new_content
+                    "original": original_out,
+                    "modified": modified_out,
+                    "full_modified": full_modified
                 })),
                 error: None,
             }

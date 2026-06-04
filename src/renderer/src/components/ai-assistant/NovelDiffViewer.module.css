@@ -1,0 +1,48 @@
+.container {
+  padding: 16px;
+  background: var(--ant-color-bg-container);
+  border-radius: 8px;
+  flex: 1;
+  overflow: auto;
+}
+
+.header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--ant-color-text);
+}
+
+.content {
+  line-height: 1.8;
+}
+
+.paragraph {
+  margin: 0.75em 0;
+}
+
+.blockRemoved {
+  background: rgba(255, 0, 0, 0.08);
+  border-left: 3px solid #ff4d4f;
+  padding: 4px 8px;
+  margin: 4px 0;
+}
+
+.blockAdded {
+  background: rgba(0, 255, 0, 0.08);
+  border-left: 3px solid #52c41a;
+  padding: 4px 8px;
+  margin: 4px 0;
+}
+
+.diffDel {
+  background: rgba(255, 0, 0, 0.15);
+  text-decoration: line-through;
+  color: #cf1322;
+}
+
+.diffAdd {
+  background: rgba(0, 255, 0, 0.15);
+  text-decoration: underline;
+  color: #389e0d;
+}

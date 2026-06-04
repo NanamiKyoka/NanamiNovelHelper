@@ -1,5 +1,6 @@
 use crate::services::project_state;
 use crate::services::tool_registry::{Tool, ToolResult};
+use crate::services::tools::novel_utils;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::future::Future;
@@ -47,7 +48,7 @@ impl Tool for SearchFilesTool {
                     success: false,
                     result: None,
                     error: Some("缺少 keyword 参数".to_string()),
-                }
+                };
             }
 
             let project_path = match project_state::get_project_path() {
@@ -69,7 +70,7 @@ impl Tool for SearchFilesTool {
                     success: false,
                     result: None,
                     error: Some(format!("搜索失败: {}", e)),
-                }
+                };
             }
 
             ToolResult {
@@ -89,6 +90,30 @@ struct SearchMatch {
     file: String,
     line: usize,
     line_text: String,
+}
+
+fn extract_context(text: &str, keyword: &str, max_chars: usize) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    if chars.len() <= max_chars {
+        return text.to_string();
+    }
+
+    if let Some(byte_pos) = text.find(keyword) {
+        let char_pos = text[..byte_pos].chars().count();
+        let keyword_chars = keyword.chars().count();
+        let start = char_pos.saturating_sub(max_chars / 2);
+        let end = (char_pos + keyword_chars + max_chars / 2).min(chars.len());
+        let mut result: String = chars[start..end].iter().collect();
+        if start > 0 {
+            result.insert_str(0, "...");
+        }
+        if end < chars.len() {
+            result.push_str("...");
+        }
+        result
+    } else {
+        chars.into_iter().take(max_chars).collect::<String>() + "..."
+    }
 }
 
 fn search_in_novel_files(
@@ -113,12 +138,15 @@ fn search_in_novel_files(
                 .to_string_lossy()
                 .to_string();
             let content = std::fs::read_to_string(&path).unwrap_or_default();
-            for (line_num, line) in content.lines().enumerate() {
-                if line.contains(keyword) {
+            let blocks = novel_utils::split_html_blocks(&content);
+            for (idx, block) in blocks.iter().enumerate() {
+                let text = novel_utils::strip_html_tags(block);
+                if text.contains(keyword) {
+                    let context = extract_context(&text, keyword, 200);
                     results.push(SearchMatch {
                         file: relative.clone(),
-                        line: line_num + 1,
-                        line_text: line.to_string(),
+                        line: idx + 1,
+                        line_text: context,
                     });
                 }
             }

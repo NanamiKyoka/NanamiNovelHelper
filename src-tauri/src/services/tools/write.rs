@@ -1,4 +1,5 @@
 use crate::services::tool_registry::{Tool, ToolResult};
+use crate::services::tools::novel_utils;
 use crate::services::tools::resolve_project_file;
 use serde_json::json;
 use std::future::Future;
@@ -75,7 +76,13 @@ impl Tool for WriteTool {
                 }
             }
 
-            match std::fs::write(&full_path, content) {
+            let output_content = if path.ends_with(".novel") && !content.contains('<') {
+                novel_utils::plain_text_to_html(content)
+            } else {
+                content.to_string()
+            };
+
+            match std::fs::write(&full_path, output_content) {
                 Ok(_) => ToolResult {
                     success: true,
                     result: Some(json!({

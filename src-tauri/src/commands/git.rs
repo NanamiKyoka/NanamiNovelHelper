@@ -106,6 +106,16 @@ pub fn git_get_diff(
 }
 
 #[tauri::command]
+pub fn git_show_file(
+    repo_path: String,
+    filepath: String,
+    revision: Option<String>,
+    git_service: State<'_, GitService>,
+) -> AppResult<serde_json::Value> {
+    git_service.show_file(&repo_path, &filepath, revision.as_deref().unwrap_or("HEAD"))
+}
+
+#[tauri::command]
 pub fn git_get_commit_file_diff(
     repo_path: String,
     commit_hash: String,

@@ -10,6 +10,7 @@ import { EditorTabs } from './EditorTabs'
 import { NovelEditor } from './NovelEditor'
 import { MarkdownEditor } from './MarkdownEditor'
 import DiffViewer from '@components/git/DiffViewer'
+import NovelDiffViewer from '@components/ai-assistant/NovelDiffViewer'
 import { useEditorStore } from '@stores/editorStore'
 import { useGitStore } from '@stores/gitStore'
 import styles from './EditorPanel.module.css'
@@ -95,7 +96,7 @@ export function EditorPanel() {
           </div>
         ) : (
           <div className={styles.editorWrapper}>
-            {isDiff && activeTab?.diffData ? (
+            {isDiff ? (
               <>
                 {isAiEditDiff && (
                   <div className={styles.aiEditActions}>
@@ -116,15 +117,25 @@ export function EditorPanel() {
                     </Space>
                   </div>
                 )}
-                <DiffViewer
-                  key={editorTypeKey}
-                  diff={activeTab.diffData}
-                  onClose={() => {
-                    if (activeTabId) {
-                      useEditorStore.getState().closeTab(activeTabId)
-                    }
-                  }}
-                />
+                {activeTab?.diffData && (
+                  <DiffViewer
+                    key={editorTypeKey}
+                    diff={activeTab.diffData}
+                    onClose={() => {
+                      if (activeTabId) {
+                        useEditorStore.getState().closeTab(activeTabId)
+                      }
+                    }}
+                  />
+                )}
+                {activeTab?.novelDiffData && (
+                  <NovelDiffViewer
+                    key={editorTypeKey}
+                    originalHtml={activeTab.novelDiffData.originalHtml}
+                    modifiedHtml={activeTab.novelDiffData.modifiedHtml}
+                    fileName={activeTab.name.replace(' (Diff)', '')}
+                  />
+                )}
               </>
             ) : isMarkdown || isText ? (
               <MarkdownEditor

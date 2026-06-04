@@ -572,6 +572,27 @@ impl GitService {
         }))
     }
 
+    pub fn show_file(
+        &self,
+        repo_path: &str,
+        filepath: &str,
+        revision: &str,
+    ) -> AppResult<serde_json::Value> {
+        let ref_path = format!("{}:{}", revision, filepath);
+        let output = Self::exec_git(repo_path, &["show", &ref_path]);
+
+        match output {
+            Ok(content) => Ok(serde_json::json!({
+                "success": true,
+                "data": content
+            })),
+            Err(e) => Ok(serde_json::json!({
+                "success": false,
+                "error": format!("获取文件内容失败: {}", e)
+            })),
+        }
+    }
+
     pub fn get_commit_file_diff(
         &self,
         repo_path: &str,

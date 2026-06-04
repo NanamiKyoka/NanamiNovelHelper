@@ -46,6 +46,7 @@ interface AiAssistantState {
   // 会话状态
   sessions: ChatSessionSummary[]
   currentSessionId: string | null
+  sessionsLoaded: boolean
 
   // Agent 状态
   agentEvents: AnyAgentEvent[]
@@ -145,6 +146,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   activeTab: 'templates',
   sessions: [],
   currentSessionId: null,
+  sessionsLoaded: false,
 
   // Agent 状态
   agentEvents: [],
@@ -534,9 +536,10 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       const sorted = (sessions as ChatSessionSummary[]).sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       )
-      set({ sessions: sorted })
+      set({ sessions: sorted, sessionsLoaded: true })
     } catch (error) {
       console.error('Failed to load sessions:', error)
+      set({ sessionsLoaded: true })
     }
   },
 

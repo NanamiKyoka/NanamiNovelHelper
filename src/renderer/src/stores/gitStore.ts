@@ -587,12 +587,30 @@ export const useGitStore = create<GitState>((set, get) => {
       }
     },
 
-    selectFile: (file: GitFileChange | null) => {
+    selectFile: async (file: GitFileChange | null) => {
       set({ selectedFile: file })
-      if (file) {
-        get().getDiff(file.path, file.staged)
-      } else {
+      if (!file) {
         set({ currentDiff: null })
+        return
+      }
+
+      if (file.path.endsWith('.novel')) {
+        try {
+          const projectPath = useProjectStore.getState().currentProjectPath
+          if (!projectPath) return
+
+          const workingContent = await window.api.file.read(file.path)
+          const headResult = await window.api.git.showFile(projectPath, file.path, 'HEAD')
+          const headContent = headResult.success ? (headResult.data as string) : ''
+
+          const fileName = file.path.split('/').pop() || file.path
+          useEditorStore.getState().openNovelDiff(file.path, fileName, headContent, workingContent)
+        } catch (e) {
+          console.error('打开 novel diff 失败:', e)
+          get().getDiff(file.path, file.staged)
+        }
+      } else {
+        get().getDiff(file.path, file.staged)
       }
     },
 

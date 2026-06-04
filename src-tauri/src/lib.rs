@@ -192,6 +192,7 @@ pub fn run() {
             git_reset,
             git_restore,
             git_get_diff,
+            git_show_file,
             git_get_commit_file_diff,
             git_get_commit_files,
             git_get_branches,

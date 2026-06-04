@@ -604,6 +604,8 @@ export const tauriApi = {
       invoke('git_reset', { repoPath, commit: options.commit, mode: options.mode }),
     diff: (repoPath: string, filepath: string, staged?: boolean) =>
       invoke('git_get_diff', { repoPath, filepath, staged }),
+    showFile: (repoPath: string, filepath: string, revision?: string) =>
+      invoke('git_show_file', { repoPath, filepath, revision }),
     branchList: (repoPath: string) => invoke('git_get_branches', { repoPath }),
     branchCreate: (repoPath: string, name: string, startPoint?: string) =>
       invoke('git_create_branch', { repoPath, name, startPoint }),

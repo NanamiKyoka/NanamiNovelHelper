@@ -246,6 +246,7 @@ interface EditorState {
   getTabByPath: (path: string) => EditorTab | null
   isPreviewTab: (tabId: string) => boolean
   openDiff: (path: string, name: string, diffData: import('@shared/git').GitFileDiff) => void
+  openNovelDiff: (path: string, name: string, originalHtml: string, modifiedHtml: string) => void
 
   pendingAiEdits: Map<string, { path: string; modified: string }>
   addPendingAiEdit: (path: string, modified: string) => void
@@ -770,6 +771,31 @@ export const useEditorStore = create<EditorState>()(
             isDirty: false,
             lastActiveAt: Date.now(),
             diffData
+          }
+
+          set(state => ({
+            tabs: [...state.tabs, newTab],
+            activeTabId: newTab.id
+          }))
+        },
+
+        openNovelDiff: (path: string, name: string, originalHtml: string, modifiedHtml: string) => {
+          const state = get()
+          const diffTabId = `diff:${path}`
+          const existingTab = state.tabs.find(tab => tab.id === diffTabId)
+          if (existingTab) {
+            set({ activeTabId: existingTab.id })
+            return
+          }
+
+          const newTab: EditorTab = {
+            id: diffTabId,
+            path,
+            name: `${name} (Diff)`,
+            type: 'diff',
+            isDirty: false,
+            lastActiveAt: Date.now(),
+            novelDiffData: { originalHtml, modifiedHtml }
           }
 
           set(state => ({

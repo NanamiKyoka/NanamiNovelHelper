@@ -45,11 +45,11 @@ interface ThinkingStep {
 }
 
 const QUICK_ACTIONS = [
-  { key: 'polish', label: '润色', icon: <HighlightOutlined />, prompt: '请对以下文章进行润色，保持原意的同时让文字更加流畅优美：\n\n{content}' },
-  { key: 'continue', label: '续写', icon: <EditOutlined />, prompt: '请根据以下文章内容续写后续情节，保持原有风格和人物设定：\n\n{content}' },
-  { key: 'logic', label: '检查逻辑', icon: <CheckOutlined />, prompt: '请检查以下文章的逻辑一致性，指出可能的漏洞或矛盾，并给出修改建议：\n\n{content}' },
-  { key: 'summary', label: '生成摘要', icon: <FileTextOutlined />, prompt: '请为以下文章生成一段简洁的摘要：\n\n{content}' },
-  { key: 'character', label: '角色分析', icon: <UserOutlined />, prompt: '请分析以下文章中的主要角色，包括性格特点、动机和发展弧线：\n\n{content}' }
+  { key: 'polish', label: '润色', icon: <HighlightOutlined />, prompt: '请对以下文章进行润色，保持原意的同时让文字更加流畅优美：' },
+  { key: 'continue', label: '续写', icon: <EditOutlined />, prompt: '请根据以下文章内容续写后续情节，保持原有风格和人物设定：' },
+  { key: 'logic', label: '检查逻辑', icon: <CheckOutlined />, prompt: '请检查以下文章的逻辑一致性，指出可能的漏洞或矛盾，并给出修改建议：' },
+  { key: 'summary', label: '生成摘要', icon: <FileTextOutlined />, prompt: '请为以下文章生成一段简洁的摘要：' },
+  { key: 'character', label: '角色分析', icon: <UserOutlined />, prompt: '请分析以下文章中的主要角色，包括性格特点、动机和发展弧线：' }
 ]
 
 const FILE_TOOLS = `\n\n【项目文件说明】
@@ -64,6 +64,7 @@ function AiAssistantPanel(): JSX.Element {
   const {
     callApiStream,
     sessions,
+    sessionsLoaded,
     loadSessions,
     saveSession,
     deleteSession,
@@ -78,9 +79,9 @@ function AiAssistantPanel(): JSX.Element {
   } = useAiAssistantStore()
   const getCurrentContent = useEditorStore(state => state.getCurrentContent)
   const requestInsertContent = useEditorStore(state => state.requestInsertContent)
-  const activeTabId = useEditorStore(state => state.activeTabId)
-  const tabs = useEditorStore(state => state.tabs)
-  const currentProject = useProjectStore(state => state.currentProject)
+  const _activeTabId = useEditorStore(state => state.activeTabId)
+  const _tabs = useEditorStore(state => state.tabs)
+  const _currentProject = useProjectStore(state => state.currentProject)
 
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -130,6 +131,20 @@ function AiAssistantPanel(): JSX.Element {
     }
   }, [createSession, createAgentSession])
 
+  const handleSwitchSession = useCallback(async (id: string) => {
+    const session = await switchSession(id)
+    if (session) {
+      setCurrentSessionId(session.id)
+      setMessages((session as ChatSession).messages.map((m: { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number }) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp || Date.now()
+      })))
+      setThinkingSteps(new Map())
+    }
+  }, [switchSession])
+
   useEffect(() => {
     return () => {
       unsubscribeRef.current?.()
@@ -148,10 +163,15 @@ function AiAssistantPanel(): JSX.Element {
   }, [loadSessions])
 
   useEffect(() => {
+    if (!sessionsLoaded) return
     if (sessions.length === 0 && !currentSessionId) {
       handleNewSession()
+    } else if (sessions.length > 0 && !currentSessionId) {
+      // 有历史会话但当前未选中，自动切换到最新的
+      const latest = sessions[0]
+      handleSwitchSession(latest.id)
     }
-  }, [sessions, currentSessionId, handleNewSession])
+  }, [sessionsLoaded, sessions, currentSessionId, handleNewSession, handleSwitchSession])
 
   useEffect(() => {
     if (currentSessionId && messages.length > 0) {
@@ -168,20 +188,6 @@ function AiAssistantPanel(): JSX.Element {
     }
   }, [messages, currentSessionId, currentSessionTitle, saveSession, sessions])
 
-  const handleSwitchSession = useCallback(async (id: string) => {
-    const session = await switchSession(id)
-    if (session) {
-      setCurrentSessionId(session.id)
-      setMessages((session as ChatSession).messages.map((m: { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number }) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp || Date.now()
-      })))
-      setThinkingSteps(new Map())
-    }
-  }, [switchSession])
-
   const handleDeleteSession = useCallback(async (id: string) => {
     Modal.confirm({
       title: '确认删除',
@@ -196,14 +202,6 @@ function AiAssistantPanel(): JSX.Element {
       }
     })
   }, [deleteSession, currentSessionId])
-
-  const getContextContent = useCallback(() => {
-    const content = getCurrentContent()
-    const activeTab = tabs.find(t => t.id === activeTabId)
-    const fileName = activeTab?.name || '未命名文档'
-    const projectPath = currentProject?.path || ''
-    return { content, fileName, projectPath }
-  }, [getCurrentContent, activeTabId, tabs, currentProject])
 
   const buildSystemPrompt = useCallback(() => {
     let systemPrompt = '你是一名专业的网络小说创作助手。'
@@ -369,8 +367,12 @@ oldString 必须是原文中精确存在的片段（包含HTML标签）。当用
     const activeTab = editorStore.tabs.find(t => t.id === editorStore.activeTabId)
     const filePath = activeTab?.path || '未命名'
     const fileName = activeTab?.name || '未命名'
-    const diffData = textToGitDiff(filePath, current, content)
-    editorStore.openDiff(filePath, fileName, diffData)
+    if (filePath.endsWith('.novel')) {
+      editorStore.openNovelDiff(filePath, fileName, current, content)
+    } else {
+      const diffData = textToGitDiff(filePath, current, content)
+      editorStore.openDiff(filePath, fileName, diffData)
+    }
     editorStore.addPendingAiEdit(filePath, content)
   }, [])
 
@@ -465,12 +467,17 @@ AI：${firstAssistantContent.slice(0, 100)}`
           const editedPath = resultObj.path as string
           const original = resultObj.original as string
           const modified = resultObj.modified as string
+          const fullModified = (resultObj.full_modified as string) || modified
           if (editedPath && modified !== undefined) {
-            const diffData = textToGitDiff(editedPath, original, modified)
             const editorStore = useEditorStore.getState()
             const fileName = editedPath.split('/').pop() || editedPath
-            editorStore.openDiff(editedPath, fileName, diffData)
-            editorStore.addPendingAiEdit(editedPath, modified)
+            if (editedPath.endsWith('.novel')) {
+              editorStore.openNovelDiff(editedPath, fileName, original, modified)
+            } else {
+              const diffData = textToGitDiff(editedPath, original, modified)
+              editorStore.openDiff(editedPath, fileName, diffData)
+            }
+            editorStore.addPendingAiEdit(editedPath, fullModified)
           }
         }
       } else if (type === 'tool_error') {
@@ -506,8 +513,12 @@ AI：${firstAssistantContent.slice(0, 100)}`
               const activeTab = editorStore.tabs.find(t => t.id === editorStore.activeTabId)
               const filePath = activeTab?.path || '未命名'
               const fileName = activeTab?.name || '未命名'
-              const diffData = textToGitDiff(filePath, current, modified)
-              editorStore.openDiff(filePath, fileName, diffData)
+              if (filePath.endsWith('.novel')) {
+                editorStore.openNovelDiff(filePath, fileName, current, modified)
+              } else {
+                const diffData = textToGitDiff(filePath, current, modified)
+                editorStore.openDiff(filePath, fileName, diffData)
+              }
               editorStore.addPendingAiEdit(filePath, modified)
               setMessages(prev => [...prev, {
                 id: assistantMsgId,
@@ -912,6 +923,16 @@ AI：${firstAssistantContent.slice(0, 100)}`
         }])
       }
 
+      // 智能标题：如果是第一条 assistant 消息，生成标题
+      const currentMsgsForTitle = messagesRef.current
+      const userMsgForTitle = currentMsgsForTitle.find(m => m.role === 'user')
+      const assistantCountForTitle = currentMsgsForTitle.filter(m => m.role === 'assistant').length
+      if (userMsgForTitle && assistantCountForTitle === 1) {
+        setTimeout(() => {
+          generateTitleRef.current(userMsgForTitle.content, finalAccumulated)
+        }, 100)
+      }
+
       if (currentThinkingRef.current.length > 0) {
         setThinkingSteps(prev => {
           const next = new Map(prev)
@@ -944,12 +965,10 @@ AI：${firstAssistantContent.slice(0, 100)}`
   }, [inputValue, processConversation])
 
   const handleQuickAction = useCallback(
-    (promptTemplate: string) => {
-      const { content } = getContextContent()
-      const prompt = promptTemplate.replace('{content}', content || '（当前文档为空）')
-      processConversation(prompt)
+    (prompt: string) => {
+      setInputValue(prompt)
     },
-    [getContextContent, processConversation]
+    []
   )
 
   const handleClear = useCallback(() => {

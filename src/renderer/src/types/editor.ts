@@ -20,6 +20,11 @@ export interface EditorTab {
   lastActiveAt: number
   /** Diff 数据（仅 type='diff' 时存在） */
   diffData?: import('@shared/git').GitFileDiff
+  /** Novel diff 数据（仅 .novel 文件的 diff 对比） */
+  novelDiffData?: {
+    originalHtml: string
+    modifiedHtml: string
+  }
 }
 
 /**
