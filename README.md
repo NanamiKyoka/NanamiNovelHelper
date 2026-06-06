@@ -416,20 +416,6 @@ await window.api.vocabulary.saveTypes(types: VocabularyType[])
 await window.api.vocabulary.saveEntries(entries: VocabularyEntry[])
 ```
 
-### 动态技能
-
-支持通过 Python 脚本扩展功能：
-
-```typescript
-// 执行技能
-await window.api.skill.execute(skillId: string, params: any)
-
-// 获取技能列表
-await window.api.skill.list()
-```
-
-***
-
 ## 配置说明
 
 ### 编辑器配置
