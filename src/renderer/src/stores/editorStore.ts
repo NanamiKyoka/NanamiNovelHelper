@@ -196,6 +196,7 @@ interface EditorState {
   isSaving: boolean
   isLoading: boolean
   lastSavedAt: number | null
+  lastReportedWordCount: Map<string, number>
 
   openPreview: (path: string, name: string, type?: EditorTab['type']) => Promise<void>
   openFile: (path: string, name: string, type?: EditorTab['type']) => Promise<void>
@@ -723,6 +724,20 @@ export const useEditorStore = create<EditorState>()(
 
         updateWordCount: (content: string) => {
           const wordCount = calculateWordCount(content)
+          const state = get()
+          const activeTab = state.getActiveTab()
+
+          // 更新写作目标统计（仅在项目打开时）
+          if (activeTab && useProjectStore.getState().currentProject) {
+            const oldTotal = state.lastReportedWordCount.get(activeTab.id) || 0
+            const newTotal = wordCount.total
+            const delta = newTotal - oldTotal
+            if (delta > 0) {
+              useWritingGoalStore.getState().updateTodayWords(delta)
+            }
+            state.lastReportedWordCount.set(activeTab.id, newTotal)
+          }
+
           set({ wordCount })
         },
 

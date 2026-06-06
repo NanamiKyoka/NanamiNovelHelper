@@ -25,6 +25,7 @@ interface UIState {
   outlineVisible: boolean // 大纲视图可见性
   charCountVisible: boolean // 字符统计可见性
   searchReplaceVisible: boolean // 查找替换面板可见性
+  writingGoalPanelVisible: boolean // 写作目标面板可见性
 
   openCreateProjectModal: () => void
   closeCreateProjectModal: () => void
@@ -72,5 +73,7 @@ export const useUIStore = create<UIState>(set => ({
   toggleCharCount: () => set(state => ({ charCountVisible: !state.charCountVisible })),
   setCharCountVisible: (visible: boolean) => set({ charCountVisible: visible }),
   toggleSearchReplace: () => set(state => ({ searchReplaceVisible: !state.searchReplaceVisible })),
-  setSearchReplaceVisible: (visible: boolean) => set({ searchReplaceVisible: visible })
+  setSearchReplaceVisible: (visible: boolean) => set({ searchReplaceVisible: visible }),
+  toggleWritingGoalPanel: () => set(state => ({ writingGoalPanelVisible: !state.writingGoalPanelVisible })),
+  setWritingGoalPanelVisible: (visible: boolean) => set({ writingGoalPanelVisible: visible })
 }))

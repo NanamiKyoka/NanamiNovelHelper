@@ -12,7 +12,8 @@ import {
   CloudServerOutlined,
   SearchOutlined,
   EyeOutlined,
-  CloudSyncOutlined
+  CloudSyncOutlined,
+  FireOutlined
 } from '@ant-design/icons'
 import AppearanceSettings from './AppearanceSettings'
 import { EditorSettings } from './EditorSettings'
@@ -39,6 +40,7 @@ type SettingsKey =
   | 'highlight'
   | 'backup'
   | 'update'
+  | 'writing-goal'
 
 interface MenuItem {
   key: SettingsKey
@@ -91,6 +93,13 @@ const menuItems: MenuItem[] = [
     label: '检查更新',
     group: 'global',
     keywords: ['更新', '版本', 'update', 'version', 'upgrade']
+  },
+  {
+    key: 'writing-goal',
+    icon: <FireOutlined />,
+    label: '写作目标',
+    group: 'global',
+    keywords: ['写作', '目标', '字数', 'heatmap', 'goal', 'word count']
   },
   // 项目设置
   {
@@ -257,6 +266,14 @@ function SettingsPage(): JSX.Element {
               检查并安装最新版本，保持应用始终为最新。
             </p>
             <UpdateSettings />
+          </div>
+        )
+      case 'writing-goal':
+        return (
+          <div className={styles.panel}>
+            <h2>写作目标</h2>
+            <p className={styles.description}>设置每日写作目标，追踪写作进度。</p>
+            <WritingGoalSettings />
           </div>
         )
       default:

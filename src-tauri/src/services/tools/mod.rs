@@ -3,6 +3,7 @@ pub mod list_files;
 pub mod novel_utils;
 pub mod read_file;
 pub mod search_files;
+pub mod skill;
 pub mod write;
 
 use crate::error::{AppError, AppResult};

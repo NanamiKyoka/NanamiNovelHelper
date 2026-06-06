@@ -19,6 +19,8 @@ export * from './file'
 export * from './terminal'
 export * from './search'
 export * from './image'
+export * from './writing-goal'
+export * from './ai-skill'
 
 // 共享常量
 export * from './constants'

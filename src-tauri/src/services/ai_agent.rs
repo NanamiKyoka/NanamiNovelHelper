@@ -1,5 +1,7 @@
 use crate::error::{AppError, AppResult};
 use crate::services::ai_api::{AiApiService, ApiFormat, TokensUsed};
+use crate::services::ai_skill::AiSkillService;
+use crate::services::project_state;
 use crate::services::secure_storage::SecureStorageService;
 use crate::services::tool_registry::{ToolCall, ToolRegistry};
 use crate::utils::{generate_id, generate_timestamp};
@@ -147,7 +149,34 @@ impl AiAgentService {
             },
         )?;
 
-        let system_prompt = build_system_prompt(&user_intent, &content);
+        let skill_section = if let Some(_project_path) = project_state::get_project_path() {
+            let skill_service = AiSkillService::new();
+            match skill_service.discover_skills() {
+                Ok(skills) => {
+                    let enabled: Vec<_> = skills.into_iter().filter(|s| s.enabled).collect();
+                    if !enabled.is_empty() {
+                        let mut section = String::from(
+                            "\n\n【可用 Skill】\n你可以通过调用 `skill` 工具加载以下专业能力：\n"
+                        );
+                        for skill in enabled {
+                            section.push_str(&format!("- {}: {}\n", skill.name, skill.description));
+                        }
+                        section
+                    } else {
+                        String::new()
+                    }
+                }
+                Err(_) => String::new(),
+            }
+        } else {
+            String::new()
+        };
+
+        let system_prompt = if skill_section.is_empty() {
+            build_system_prompt(&user_intent, &content)
+        } else {
+            format!("{}{}", build_system_prompt(&user_intent, &content), skill_section)
+        };
         let api_service = AiApiService::new();
         let storage = SecureStorageService::new();
 

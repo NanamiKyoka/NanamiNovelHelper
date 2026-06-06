@@ -6,6 +6,7 @@
  */
 
 import { DEFAULT_COLORS, THEME_COLOR_OPTIONS } from './constants/colors'
+import { WritingGoalConfig } from './writing-goal'
 
 // ============ 主题相关 ============
 
@@ -107,6 +108,7 @@ export interface SidebarBadgeVisibility {
   organization: boolean
   map: boolean
   aiAssistant: boolean
+  writingGoal: boolean
 }
 
 export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
@@ -117,7 +119,8 @@ export const DEFAULT_SIDEBAR_BADGE_VISIBILITY: SidebarBadgeVisibility = {
   sequenceChart: true,
   organization: true,
   map: true,
-  aiAssistant: true
+  aiAssistant: true,
+  writingGoal: true
 }
 
 export const DEFAULT_SIDEBAR_BADGE_ORDER = [
@@ -128,7 +131,8 @@ export const DEFAULT_SIDEBAR_BADGE_ORDER = [
   'sequenceChart',
   'organization',
   'map',
-  'aiAssistant'
+  'aiAssistant',
+  'writingGoal'
 ]
 
 // ============ 全局布局设置 ============
@@ -244,6 +248,7 @@ export interface ProjectSettings {
   expandedFolders: string[] | null
   hiddenItems: string[]
   customChunkTypes: CustomChunkType[]
+  writingGoal?: WritingGoalConfig
 }
 
 export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {

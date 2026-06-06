@@ -6,10 +6,10 @@ mod utils;
 
 use commands::*;
 use services::{
-    AiAgentService, AiApiService, AiAssistantService, BackupService, FileService,
+    AiAgentService, AiApiService, AiAssistantService, AiSkillService, BackupService, FileService,
     FileWatcherService, GitService, GraphService, ImageService, LogService, ProjectService,
     SearchService, SecureStorageService, SettingsService, TerminalService, ToolRegistry,
-    VocabularyService,
+    VocabularyService, WritingGoalService,
 };
 use tauri::Manager;
 
@@ -81,6 +81,8 @@ pub fn run() {
         .manage(FileWatcherService::new())
         .manage(SecureStorageService::new())
         .manage(LogService::new())
+        .manage(WritingGoalService::new())
+        .manage(AiSkillService::new())
         .setup(|app| {
             let file_watcher = app.state::<FileWatcherService>();
             file_watcher.set_app(app.handle().clone());
@@ -272,7 +274,17 @@ pub fn run() {
             log_clear,
             log_get_path,
             updater_check,
-            updater_install
+            updater_install,
+            get_writing_stats,
+            update_daily_stats,
+            get_project_total_words,
+            writing_goal_get_daily_stats,
+            ai_discover_skills,
+            ai_load_skill_content,
+            ai_match_skills,
+            ai_save_skill,
+            ai_delete_skill,
+            ai_ensure_builtin_skills
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

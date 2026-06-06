@@ -54,6 +54,7 @@ export type SidebarBadgeType =
   | 'organization'
   | 'aiAssistant'
   | 'map'
+  | 'writingGoal'
 
 export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = [
   'vocabulary',
@@ -63,7 +64,8 @@ export const DEFAULT_SIDEBAR_BADGE_ORDER: SidebarBadgeType[] = [
   'sequenceChart',
   'organization',
   'aiAssistant',
-  'map'
+  'map',
+  'writingGoal'
 ]
 
 export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<
@@ -77,5 +79,6 @@ export const SIDEBAR_BADGE_DISPLAY_CONFIG: Record<
   sequenceChart: { label: '事序图', icon: 'TableOutlined' },
   organization: { label: '组织架构', icon: 'ClusterOutlined' },
   aiAssistant: { label: 'AI写作助手', icon: 'RobotOutlined' },
-  map: { label: '地图', icon: 'EnvironmentOutlined' }
+  map: { label: '地图', icon: 'EnvironmentOutlined' },
+  writingGoal: { label: '写作目标', icon: 'FireOutlined' }
 }

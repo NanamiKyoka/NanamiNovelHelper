@@ -1,6 +1,7 @@
 pub mod ai_agent;
 pub mod ai_api;
 pub mod ai_assistant;
+pub mod ai_skill;
 pub mod backup;
 pub mod file_service;
 pub mod file_watcher;
@@ -16,10 +17,12 @@ pub mod system;
 pub mod terminal;
 pub mod updater;
 pub mod vocabulary;
+pub mod writing_goal;
 
 pub use ai_agent::*;
 pub use ai_api::*;
 pub use ai_assistant::*;
+pub use ai_skill::*;
 pub use backup::*;
 pub use file_service::*;
 pub use file_watcher::*;
@@ -35,3 +38,4 @@ pub use system::*;
 pub use terminal::*;
 pub use updater::*;
 pub use vocabulary::*;
+pub use writing_goal::*;

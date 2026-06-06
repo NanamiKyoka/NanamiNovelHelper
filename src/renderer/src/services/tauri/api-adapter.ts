@@ -3,6 +3,8 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { open, save } from '@tauri-apps/plugin-dialog'
 import { platform } from '@tauri-apps/plugin-os'
 import { check as checkUpdater, type Update, type DownloadEvent } from '@tauri-apps/plugin-updater'
+import type { WritingStatsData, DailyWritingStats } from '@shared/writing-goal'
+import type { AiSkill, AiSkillMatchResult } from '@shared/ai-skill'
 
 function generateId(): string {
   return crypto.randomUUID()
@@ -211,6 +213,14 @@ export const tauriApi = {
       setHiddenItems: (hiddenItems: string[]) =>
         invoke('settings_update_project', { settings: { hiddenItems } })
     }
+  },
+
+  writingGoal: {
+    getStats: (): Promise<WritingStatsData> => invoke('get_writing_stats'),
+    updateDailyStats: (date: string, delta: number): Promise<WritingStatsData> =>
+      invoke('update_daily_stats', { date, delta }),
+    getProjectTotalWords: (): Promise<number> => invoke('get_project_total_words'),
+    getDailyStats: (): Promise<DailyWritingStats[]> => invoke('writing_goal_get_daily_stats')
   },
 
   backup: {
@@ -730,6 +740,18 @@ export const tauriApi = {
       invoke<Array<Record<string, string>>>('ai_get_provider_list')
   },
 
+  aiSkill: {
+    discoverSkills: (): Promise<AiSkill[]> => invoke('ai_discover_skills'),
+    loadSkillContent: (location: string): Promise<AiSkill> =>
+      invoke('ai_load_skill_content', { location }),
+    matchSkills: (userIntent: string, skills: AiSkill[]): Promise<AiSkillMatchResult[]> =>
+      invoke('ai_match_skills', { userIntent, skills }),
+    saveSkill: (name: string, description: string, tags: string[], content: string): Promise<AiSkill> =>
+      invoke('ai_save_skill', { name, description, tags, content }),
+    deleteSkill: (name: string): Promise<void> => invoke('ai_delete_skill', { name }),
+    ensureBuiltins: (): Promise<void> => invoke('ai_ensure_builtin_skills')
+  },
+
   aiAgent: {
     runAgent: (sessionId: string, userIntent: string, content: string) =>
       invoke('ai_agent_run', { sessionId, userIntent, content }),
@@ -757,6 +779,17 @@ export const tauriApi = {
       }
     },
     removeAgentEventListener: () => {}
+  },
+
+  aiSkill: {
+    discoverSkills: () => invoke<Array<Record<string, unknown>>>('ai_discover_skills'),
+    loadSkillContent: (location: string) => invoke<Record<string, unknown>>('ai_load_skill_content', { location }),
+    matchSkills: (userIntent: string, skills: Array<Record<string, unknown>>) =>
+      invoke<Array<Record<string, unknown>>>('ai_match_skills', { userIntent, skills }),
+    saveSkill: (name: string, description: string, tags: string[], content: string) =>
+      invoke<Record<string, unknown>>('ai_save_skill', { name, description, tags, content }),
+    deleteSkill: (name: string) => invoke('ai_delete_skill', { name }),
+    ensureBuiltins: () => invoke('ai_ensure_builtin_skills')
   },
 
   shell: {

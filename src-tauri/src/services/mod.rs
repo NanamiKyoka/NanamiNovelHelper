@@ -1,6 +1,7 @@
 pub mod ai_agent;
 pub mod ai_api;
 pub mod ai_assistant;
+pub mod ai_skill;
 pub mod backup;
 pub mod editor_state;
 pub mod file_service;
@@ -18,10 +19,12 @@ pub mod terminal;
 pub mod tool_registry;
 pub mod tools;
 pub mod vocabulary;
+pub mod writing_goal;
 
 pub use ai_agent::AiAgentService;
 pub use ai_api::AiApiService;
 pub use ai_assistant::AiAssistantService;
+pub use ai_skill::AiSkillService;
 pub use backup::BackupService;
 pub use file_service::FileService;
 pub use file_watcher::FileWatcherService;
@@ -36,3 +39,4 @@ pub use settings::SettingsService;
 pub use terminal::TerminalService;
 pub use tool_registry::ToolRegistry;
 pub use vocabulary::VocabularyService;
+pub use writing_goal::WritingGoalService;

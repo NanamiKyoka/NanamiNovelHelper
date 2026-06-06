@@ -13,6 +13,7 @@ import { SequenceChartPanel } from '@components/visualization/sequence-chart'
 import { OrganizationPanel } from '@components/visualization/organization'
 import { AiAssistantPanel } from '@components/ai-assistant'
 import { MapPanel } from '@components/visualization/map'
+import WritingGoalPanel from '@components/writing-goal/WritingGoalPanel'
 import { useSettingsStore } from '@stores/settingsStore'
 import styles from './Sidebar.module.css'
 
@@ -105,6 +106,8 @@ function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarPro
         return <AiAssistantPanel />
       case 'map':
         return <MapPanel />
+      case 'writingGoal':
+        return <WritingGoalPanel />
       default:
         return <div className={styles.panelContent}>未知面板</div>
     }

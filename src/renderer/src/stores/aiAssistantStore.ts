@@ -41,7 +41,7 @@ interface AiAssistantState {
   isLoading: boolean
   isExecuting: boolean
   error: string | null
-  activeTab: 'templates' | 'workflows' | 'history'
+  activeTab: 'chat' | 'skills'
 
   // 会话状态
   sessions: ChatSessionSummary[]
@@ -116,7 +116,7 @@ interface AiAssistantState {
   resolveVariables: (template: PromptTemplate, variables: Record<string, VariableValue>) => string
 
   // UI 操作
-  setActiveTab: (tab: 'templates' | 'workflows' | 'history') => void
+  setActiveTab: (tab: 'chat' | 'skills') => void
   setCurrentTemplate: (template: PromptTemplate | null) => void
   setCurrentWorkflow: (workflow: PromptWorkflow | null) => void
   clearError: () => void
@@ -143,7 +143,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
   isStreaming: false,
   streamingContent: '',
   error: null,
-  activeTab: 'templates',
+  activeTab: 'chat',
   sessions: [],
   currentSessionId: null,
   sessionsLoaded: false,
@@ -788,7 +788,7 @@ export const useAiAssistantStore = create<AiAssistantState>((set, get) => ({
       isStreaming: false,
       streamingContent: '',
       error: null,
-      activeTab: 'templates',
+      activeTab: 'chat',
       sessions: [],
       currentSessionId: null,
       agentEvents: [],

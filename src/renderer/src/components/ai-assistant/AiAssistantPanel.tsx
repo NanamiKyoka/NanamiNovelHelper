@@ -19,7 +19,8 @@ import {
   PlusOutlined,
   DeleteOutlined,
   RollbackOutlined,
-  RedoOutlined
+  RedoOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons'
 import { useAiAssistantStore } from '@stores/aiAssistantStore'
 import { useEditorStore } from '@stores/editorStore'
@@ -28,6 +29,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { AiApiStreamChunk, ChatSession, AnyAgentEvent, ToolCallRecord } from '@shared/ai-assistant'
 import { ToolCallCard } from './ToolCallCard'
+import AiSkillPanel from './AiSkillPanel'
 import { textToGitDiff } from '@utils/diff'
 import styles from './AiAssistantPanel.module.css'
 
@@ -75,7 +77,9 @@ function AiAssistantPanel(): JSX.Element {
     onAgentEvent,
     createAgentSession,
     agentEvents: _agentEvents,
-    addAgentEvent: _addAgentEvent
+    addAgentEvent: _addAgentEvent,
+    activeTab,
+    setActiveTab
   } = useAiAssistantStore()
   const getCurrentContent = useEditorStore(state => state.getCurrentContent)
   const requestInsertContent = useEditorStore(state => state.requestInsertContent)
@@ -1021,54 +1025,77 @@ AI：${firstAssistantContent.slice(0, 100)}`
   return (
     <div className={styles.chatContainer}>
       <div className={styles.header}>
-            <Space>
-              <MessageOutlined />
-              <span className={styles.headerTitle}>AI 写作助手</span>
-            </Space>
-            <Space>
-              <Dropdown
-                menu={{
-                  items: sessions.map(s => ({
-                    key: s.id,
-                    label: (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-                        <span>{s.title}</span>
-                        <Button
-                          type="text"
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteSession(s.id)
-                          }}
-                        />
-                      </div>
-                    ),
-                    onClick: () => handleSwitchSession(s.id)
-                  })),
-                  selectedKeys: currentSessionId ? [currentSessionId] : []
-                }}
-                placement="bottomRight"
-              >
-                <Button size="small">
-                  {currentSessionTitle || '选择会话'} <DownOutlined />
-                </Button>
-              </Dropdown>
-              <Tooltip title="新建会话">
-                <Button size="small" icon={<PlusOutlined />} onClick={handleNewSession} />
-              </Tooltip>
-              <Tooltip title="清空对话">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<ClearOutlined />}
-                  onClick={handleClear}
-                />
-              </Tooltip>
-            </Space>
-          </div>
+        <Space>
+          <MessageOutlined />
+          <span className={styles.headerTitle}>AI 写作助手</span>
+        </Space>
+        {activeTab === 'chat' && (
+          <Space>
+            <Dropdown
+              menu={{
+                items: sessions.map(s => ({
+                  key: s.id,
+                  label: (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                      <span>{s.title}</span>
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteSession(s.id)
+                        }}
+                      />
+                    </div>
+                  ),
+                  onClick: () => handleSwitchSession(s.id)
+                })),
+                selectedKeys: currentSessionId ? [currentSessionId] : []
+              }}
+              placement="bottomRight"
+            >
+              <Button size="small">
+                {currentSessionTitle || '选择会话'} <DownOutlined />
+              </Button>
+            </Dropdown>
+            <Tooltip title="新建会话">
+              <Button size="small" icon={<PlusOutlined />} onClick={handleNewSession} />
+            </Tooltip>
+            <Tooltip title="清空对话">
+              <Button
+                type="text"
+                size="small"
+                icon={<ClearOutlined />}
+                onClick={handleClear}
+              />
+            </Tooltip>
+          </Space>
+        )}
+      </div>
 
+      <div className={styles.tabBar}>
+        <Button
+          type={activeTab === 'chat' ? 'primary' : 'text'}
+          size="small"
+          icon={<MessageOutlined />}
+          onClick={() => setActiveTab('chat')}
+        >
+          对话
+        </Button>
+        <Button
+          type={activeTab === 'skills' ? 'primary' : 'text'}
+          size="small"
+          icon={<AppstoreOutlined />}
+          onClick={() => setActiveTab('skills')}
+        >
+          Skills
+        </Button>
+      </div>
+
+      {activeTab === 'chat' && (
+        <>
           <div className={styles.messagesArea}>
             {messages.length === 0 && !isStreaming && (
               <div style={{ textAlign: 'center', color: 'var(--ant-color-text-secondary)', marginTop: 24 }}>
@@ -1159,7 +1186,6 @@ AI：${firstAssistantContent.slice(0, 100)}`
                     dangerouslySetInnerHTML={{ __html: renderMarkdown(streamingContent) }}
                   />
                   <span className={styles.streamingCursor} />
-                  {/* 工具调用卡片 */}
                   {currentToolCalls.size > 0 && (
                     <div className={styles.toolCallList}>
                       {Array.from(currentToolCalls.values()).map(toolCall => (
@@ -1206,6 +1232,10 @@ AI：${firstAssistantContent.slice(0, 100)}`
               </Button>
             </div>
           </div>
+        </>
+      )}
+
+      {activeTab === 'skills' && <AiSkillPanel />}
     </div>
   )
 }

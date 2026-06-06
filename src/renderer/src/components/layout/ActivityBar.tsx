@@ -12,7 +12,8 @@ import {
   TableOutlined,
   TeamOutlined,
   RobotOutlined,
-  EnvironmentOutlined
+  EnvironmentOutlined,
+  FireOutlined
 } from '@ant-design/icons'
 import { useSettingsStore } from '@stores/settingsStore'
 import type { SidebarBadgeType } from '@types/badge'
@@ -45,7 +46,8 @@ const SIDEBAR_BADGE_CONFIG: Record<
   sequenceChart: { icon: TableOutlined, tooltip: '事序图' },
   organization: { icon: TeamOutlined, tooltip: '组织架构' },
   aiAssistant: { icon: RobotOutlined, tooltip: 'AI写作助手' },
-  map: { icon: EnvironmentOutlined, tooltip: '地图' }
+  map: { icon: EnvironmentOutlined, tooltip: '地图' },
+  writingGoal: { icon: FireOutlined, tooltip: '写作目标' }
 }
 
 function ActivityBar({

@@ -226,3 +226,11 @@
   word-break: break-word;
   margin: 0;
 }
+
+.tabBar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--ant-color-split, #f0f0f0);
+  background: var(--ant-color-bg-container, #fff);
+}

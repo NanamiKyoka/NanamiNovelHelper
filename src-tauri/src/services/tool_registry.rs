@@ -70,6 +70,7 @@ impl ToolRegistry {
         ));
         let _ = self.register(Arc::new(crate::services::tools::edit::EditTool::new()));
         let _ = self.register(Arc::new(crate::services::tools::write::WriteTool::new()));
+        let _ = self.register(Arc::new(crate::services::tools::skill::SkillTool::new()));
     }
 
     pub fn register(&self, tool: Arc<dyn Tool>) -> AppResult<()> {

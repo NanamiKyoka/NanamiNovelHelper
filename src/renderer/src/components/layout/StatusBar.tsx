@@ -1,4 +1,6 @@
 import { useEditorStore } from '@stores/editorStore'
+import { useWritingGoalStore } from '@stores/writingGoalStore'
+import { useUIStore } from '@stores/uiStore'
 import styles from './StatusBar.module.css'
 
 /**
@@ -23,11 +25,20 @@ function StatusBar(): JSX.Element {
   const statusBarConfig = useEditorStore(state => state.statusBarConfig)
   const isSaving = useEditorStore(state => state.isSaving)
 
+  // 写作目标
+  const todayWords = useWritingGoalStore(state => state.todayWords)
+  const dailyGoal = useWritingGoalStore(state => state.dailyGoal)
+  const setWritingGoalPanelVisible = useUIStore(state => state.setWritingGoalPanelVisible)
+
   // 获取当前活动标签
   const activeTab = tabs.find(tab => tab.id === activeTabId)
 
   // 格式化数字
   const formatNumber = (num: number): string => num.toLocaleString('zh-CN')
+
+  const openHeatmap = () => {
+    setWritingGoalPanelVisible(true)
+  }
 
   return (
     <div className={styles.statusBar}>
@@ -82,6 +93,15 @@ function StatusBar(): JSX.Element {
         {statusBarConfig.showEncoding && (
           <>
             <span className={styles.item}>UTF-8</span>
+            <span className={styles.separator}>|</span>
+          </>
+        )}
+        {/* 写作目标 */}
+        {dailyGoal > 0 && (
+          <>
+            <span className={styles.item} onClick={openHeatmap}>
+              今日 {formatNumber(todayWords)} / {formatNumber(dailyGoal)}
+            </span>
             <span className={styles.separator}>|</span>
           </>
         )}
