@@ -1,5 +1,5 @@
 /**
- * 写作热力图组件（竖向排布，今日居中）
+ * 写作热力图组件（竖向排布，今日居底）
  */
 
 import { Tooltip } from 'antd'
@@ -34,19 +34,15 @@ export function WritingHeatmap({ stats }: WritingHeatmapProps) {
   const statsMap = new Map(stats.map(s => [s.date, s.wordCount]))
   const today = new Date()
 
-  // 从今日往前约半年，对齐到周一
+  // 从今日往前约一年，对齐到周一
   const start = new Date(today)
-  start.setDate(start.getDate() - 183)
+  start.setDate(start.getDate() - 364)
   const startDow = start.getDay()
   const startOffset = startDow === 0 ? 6 : startDow - 1
   start.setDate(start.getDate() - startOffset)
 
-  // 从今日往后约半年，对齐到周日
+  // 到今日为止
   const end = new Date(today)
-  end.setDate(end.getDate() + 183)
-  const endDow = end.getDay()
-  const endOffset = endDow === 0 ? 0 : 7 - endDow
-  end.setDate(end.getDate() + endOffset)
 
   // 生成所有天数
   const days: { date: string; wordCount: number; month: number }[] = []
