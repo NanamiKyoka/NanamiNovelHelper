@@ -2,49 +2,64 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
-.weeks {
-  display: flex;
-  gap: 2px;
+.weekdayHeader {
+  display: grid;
+  grid-template-columns: 42px repeat(7, 1fr);
+  gap: 4px;
 }
 
-.weekLabels {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-right: 4px;
+.monthPlaceholder {
+  /* 月份标签列占位 */
 }
 
-.weekLabel {
-  height: 12px;
-  line-height: 12px;
+.weekdayLabel {
+  text-align: center;
   font-size: 10px;
   color: var(--ant-color-text-secondary);
-  text-align: right;
-  padding-right: 4px;
+  line-height: 14px;
 }
 
-.weekLabelEmpty {
-  height: 12px;
-}
-
-.days {
+.weeksContainer {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: 42px repeat(7, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+
+.monthLabel {
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+  text-align: right;
+  padding-right: 8px;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .day {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  aspect-ratio: 1;
+  border-radius: 3px;
   cursor: pointer;
-  transition: transform 0.15s;
+  transition: transform 0.15s ease;
+  min-height: 10px;
 }
 
 .day:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+.today {
+  box-shadow: 0 0 0 1.5px var(--ant-color-primary);
 }
 
 .level0 {
@@ -67,24 +82,11 @@
   background-color: #216e39;
 }
 
-.monthLabels {
-  display: flex;
-  gap: 2px;
-  margin-left: 20px;
-}
-
-.monthLabel {
-  font-size: 10px;
-  color: var(--ant-color-text-secondary);
-  line-height: 12px;
-  height: 12px;
-}
-
 .legend {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .legendLabel {

@@ -1,5 +1,5 @@
 /**
- * 写作热力图组件
+ * 写作热力图组件（竖向排布，今日居中）
  */
 
 import { Tooltip } from 'antd'
@@ -23,105 +23,95 @@ function formatDate(dateStr: string): string {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
-const WEEKDAY_LABELS = ['', '一', '', '三', '', '五', '']
+function isToday(dateStr: string): boolean {
+  return dateStr === new Date().toISOString().slice(0, 10)
+}
+
+const MONTH_NAMES = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+const WEEKDAY_NAMES = ['一', '二', '三', '四', '五', '六', '日']
 
 export function WritingHeatmap({ stats }: WritingHeatmapProps) {
-  const today = new Date()
-  const days: { date: string; wordCount: number }[] = []
   const statsMap = new Map(stats.map(s => [s.date, s.wordCount]))
+  const today = new Date()
 
-  // 生成过去 365 天的数据
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const dateStr = d.toISOString().slice(0, 10)
-    days.push({
-      date: dateStr,
-      wordCount: statsMap.get(dateStr) || 0
-    })
+  // 从今日往前约半年，对齐到周一
+  const start = new Date(today)
+  start.setDate(start.getDate() - 183)
+  const startDow = start.getDay()
+  const startOffset = startDow === 0 ? 6 : startDow - 1
+  start.setDate(start.getDate() - startOffset)
+
+  // 从今日往后约半年，对齐到周日
+  const end = new Date(today)
+  end.setDate(end.getDate() + 183)
+  const endDow = end.getDay()
+  const endOffset = endDow === 0 ? 0 : 7 - endDow
+  end.setDate(end.getDate() + endOffset)
+
+  // 生成所有天数
+  const days: { date: string; wordCount: number; month: number }[] = []
+  const cur = new Date(start)
+  while (cur <= end) {
+    const ds = cur.toISOString().slice(0, 10)
+    days.push({ date: ds, wordCount: statsMap.get(ds) || 0, month: cur.getMonth() })
+    cur.setDate(cur.getDate() + 1)
   }
 
-  // 按周分组
-  const weeks: { date: string; wordCount: number }[][] = []
-  let currentWeek: { date: string; wordCount: number }[] = []
-
-  // 补齐第一周前面的空白天数
-  const firstDay = new Date(days[0].date)
-  const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
-  for (let i = 0; i < firstDayOfWeek; i++) {
-    currentWeek.push({ date: '', wordCount: 0 })
-  }
-
-  for (const day of days) {
-    currentWeek.push(day)
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek)
-      currentWeek = []
-    }
-  }
-  if (currentWeek.length > 0) {
-    while (currentWeek.length < 7) {
-      currentWeek.push({ date: '', wordCount: 0 })
-    }
-    weeks.push(currentWeek)
-  }
-
-  // 月份标签
-  const monthPositions: { label: string; offset: number }[] = []
-  let currentMonth = -1
-  for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
-    const week = weeks[weekIndex]
-    for (const day of week) {
-      if (day.date) {
-        const month = new Date(day.date).getMonth()
-        if (month !== currentMonth) {
-          currentMonth = month
-          const labels = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
-          monthPositions.push({ label: labels[month], offset: weekIndex * 14 })
-        }
-        break
-      }
-    }
+  // 按周分组（每行一周）
+  const weeks: typeof days[] = []
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7))
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.monthLabels} style={{ marginLeft: 20 }}>
-        {monthPositions.map((m, i) => (
-          <div
-            key={i}
-            className={styles.monthLabel}
-            style={{ marginLeft: i === 0 ? 0 : Math.max(0, m.offset - (monthPositions[i - 1]?.offset || 0) - 28) }}
-          >
-            {m.label}
-          </div>
+      {/* 星期标题 */}
+      <div className={styles.weekdayHeader}>
+        <div className={styles.monthPlaceholder} />
+        {WEEKDAY_NAMES.map(d => (
+          <div key={d} className={styles.weekdayLabel}>{d}</div>
         ))}
       </div>
-      <div className={styles.weeks}>
-        <div className={styles.weekLabels}>
-          {WEEKDAY_LABELS.map((label, i) => (
-            <div key={i} className={label ? styles.weekLabel : styles.weekLabelEmpty}>
-              {label}
+
+      <div className={styles.weeksContainer}>
+        {weeks.map((week, wi) => {
+          const firstValid = week.find(d => d.date)
+          const month = firstValid ? new Date(firstValid.date).getMonth() : -1
+          const prevWeek = weeks[wi - 1]
+          const prevFirst = prevWeek?.find(d => d.date)
+          const prevMonth = prevFirst ? new Date(prevFirst.date).getMonth() : -1
+          const showMonth = month !== -1 && month !== prevMonth
+
+          return (
+            <div key={wi} className={styles.weekRow}>
+              <div className={styles.monthLabel}>
+                {showMonth ? MONTH_NAMES[month] : ''}
+              </div>
+              {week.map((day, di) => {
+                const todayClass = day.date && isToday(day.date) ? styles.today : ''
+                if (!day.date) {
+                  return (
+                    <div
+                      key={di}
+                      className={styles.day}
+                      style={{ visibility: 'hidden' }}
+                    />
+                  )
+                }
+                return (
+                  <Tooltip
+                    key={di}
+                    title={`${formatDate(day.date)}: ${day.wordCount.toLocaleString('zh-CN')} 字`}
+                  >
+                    <div className={`${styles.day} ${getLevelClass(day.wordCount)} ${todayClass}`} />
+                  </Tooltip>
+                )
+              })}
             </div>
-          ))}
-        </div>
-        {weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className={styles.days}>
-            {week.map((day, dayIndex) =>
-              day.date ? (
-                <Tooltip
-                  key={dayIndex}
-                  title={`${formatDate(day.date)}: ${day.wordCount.toLocaleString('zh-CN')} 字`}
-                >
-                  <div className={`${styles.day} ${getLevelClass(day.wordCount)}`} />
-                </Tooltip>
-              ) : (
-                <div key={dayIndex} className={styles.day} style={{ visibility: 'hidden' }} />
-              )
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
+
       <div className={styles.legend}>
         <span className={styles.legendLabel}>少</span>
         <div className={`${styles.legendBox} ${styles.level0}`} />
