@@ -67,4 +67,4 @@ reference/
 AGENTS.md
 
 # Tauri updater signing keys
-.tauri/
+.tauri/---DESIGN.md---

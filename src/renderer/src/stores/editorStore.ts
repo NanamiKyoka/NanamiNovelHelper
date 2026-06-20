@@ -16,6 +16,8 @@ import {
 } from '../types/editor'
 import { LRUCache } from '../utils/lruCache'
 import { computeHash } from '../utils/hash'
+import { useProjectStore } from './projectStore'
+import { useWritingGoalStore } from './writingGoalStore'
 
 const FILE_CACHE_MAX = 20
 const FILE_CACHE_MAX_AGE = 30 * 60 * 1000
@@ -331,6 +333,7 @@ export const useEditorStore = create<EditorState>()(
         lastRefreshTime: 0,
         pendingAiEdits: new Map(),
 
+        lastReportedWordCount: new Map(),
         openPreview: async (
           path: string,
           name: string,
