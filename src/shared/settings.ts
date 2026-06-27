@@ -58,7 +58,6 @@ export interface BadgeVisibility {
   sequenceChart: boolean
   organization: boolean
   map: boolean
-  terminal: boolean
 }
 
 export type BadgeType =
@@ -70,7 +69,6 @@ export type BadgeType =
   | 'sequenceChart'
   | 'organization'
   | 'map'
-  | 'terminal'
 
 export const DEFAULT_BADGE_ORDER: BadgeType[] = [
   'vocabulary',
@@ -81,7 +79,6 @@ export const DEFAULT_BADGE_ORDER: BadgeType[] = [
   'sequenceChart',
   'organization',
   'map',
-  'terminal'
 ]
 
 export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
@@ -93,7 +90,6 @@ export const DEFAULT_BADGE_VISIBILITY: BadgeVisibility = {
   sequenceChart: true,
   organization: true,
   map: true,
-  terminal: true
 }
 
 // ============ 侧边栏徽章可见性 ============

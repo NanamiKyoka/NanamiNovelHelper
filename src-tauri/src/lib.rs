@@ -8,7 +8,7 @@ use commands::*;
 use services::{
     AiAgentService, AiApiService, AiAssistantService, AiSkillService, BackupService, FileService,
     FileWatcherService, GitService, GraphService, ImageService, LogService, ProjectService,
-    SearchService, SecureStorageService, SettingsService, TerminalService, ToolRegistry,
+    SearchService, SecureStorageService, SettingsService, ToolRegistry,
     VocabularyService, WritingGoalService,
 };
 use tauri::Manager;
@@ -75,7 +75,6 @@ pub fn run() {
         .manage(ImageService::new())
         .manage(BackupService::new())
         .manage(GitService::new())
-        .manage(TerminalService::new())
         .manage(AiApiService::new())
         .manage(AiAssistantService::new())
         .manage(FileWatcherService::new())
@@ -208,20 +207,6 @@ pub fn run() {
             git_set_config,
             git_set_mode,
             git_get_mode,
-            terminal_get_shells,
-            terminal_create,
-            terminal_list,
-            terminal_kill,
-            terminal_resize,
-            terminal_write,
-            terminal_rename,
-            terminal_window_create,
-            terminal_window_is_open,
-            terminal_window_close,
-            terminal_window_show,
-            terminal_window_minimize,
-            terminal_window_maximize,
-            terminal_window_is_maximized,
             ai_list_templates,
             ai_get_template,
             ai_create_template,

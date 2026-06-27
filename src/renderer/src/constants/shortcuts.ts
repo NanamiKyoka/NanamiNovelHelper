@@ -272,13 +272,6 @@ export const DEFAULT_SHORTCUTS: Array<{
     defaultKey: 'Ctrl+Shift+T',
     category: SHORTCUT_CATEGORIES.TOOLS
   },
-  {
-    id: 'tools.terminal',
-    name: '终端面板',
-    description: '打开/关闭终端面板',
-    defaultKey: 'Ctrl+`',
-    category: SHORTCUT_CATEGORIES.TOOLS
-  },
 
   // 帮助
   {

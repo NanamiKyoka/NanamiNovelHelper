@@ -24,7 +24,6 @@ export type LoadingModule =
   | 'settings' // 设置
   | 'git' // Git
   | 'ai' // AI 助手
-  | 'terminal' // 终端
   | string // 支持自定义模块
 
 /** 加载任务 */

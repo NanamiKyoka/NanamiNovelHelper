@@ -83,13 +83,6 @@ export enum ErrorCode {
   GIT_EXEC_FAILED = 'GIT_EXEC_FAILED',
   GIT_NO_COMMITS = 'GIT_NO_COMMITS',
 
-  // === 终端 TER ===
-  TER_CREATE_FAILED = 'TER_CREATE_FAILED',
-  TER_NOT_FOUND = 'TER_NOT_FOUND',
-  TER_WRITE_FAILED = 'TER_WRITE_FAILED',
-  TER_RESIZE_FAILED = 'TER_RESIZE_FAILED',
-  TER_SHELL_NOT_FOUND = 'TER_SHELL_NOT_FOUND',
-  TER_WINDOW_CREATE_FAILED = 'TER_WINDOW_CREATE_FAILED',
 
   // === AI 服务 AI_ ===
   AI_CALL_FAILED = 'AI_CALL_FAILED',
@@ -167,7 +160,6 @@ export type ErrorCategory =
   | 'vocabulary'
   | 'graph'
   | 'git'
-  | 'terminal'
   | 'ai'
   | 'settings'
   | 'security'
@@ -541,43 +533,6 @@ export const ERROR_CODE_META: Record<ErrorCode, ErrorCodeMeta> = {
     recoverable: true
   },
 
-  // 终端
-  [ErrorCode.TER_CREATE_FAILED]: {
-    category: 'terminal',
-    severity: 'error',
-    defaultMessage: '创建终端失败',
-    recoverable: true
-  },
-  [ErrorCode.TER_NOT_FOUND]: {
-    category: 'terminal',
-    severity: 'warning',
-    defaultMessage: '终端实例未找到',
-    recoverable: true
-  },
-  [ErrorCode.TER_WRITE_FAILED]: {
-    category: 'terminal',
-    severity: 'error',
-    defaultMessage: '写入终端失败',
-    recoverable: true
-  },
-  [ErrorCode.TER_RESIZE_FAILED]: {
-    category: 'terminal',
-    severity: 'error',
-    defaultMessage: '调整终端大小失败',
-    recoverable: true
-  },
-  [ErrorCode.TER_SHELL_NOT_FOUND]: {
-    category: 'terminal',
-    severity: 'warning',
-    defaultMessage: '未找到可用 Shell',
-    recoverable: true
-  },
-  [ErrorCode.TER_WINDOW_CREATE_FAILED]: {
-    category: 'terminal',
-    severity: 'error',
-    defaultMessage: '创建终端窗口失败',
-    recoverable: true
-  },
 
   // AI
   [ErrorCode.AI_CALL_FAILED]: {
@@ -839,7 +794,6 @@ export const CATEGORY_SUGGESTIONS: Record<ErrorCategory, string> = {
   vocabulary: '请检查词汇数据完整性',
   graph: '请重新创建可视化数据',
   git: '请在终端中手动执行 Git 操作检查状态',
-  terminal: '请尝试重新打开终端',
   ai: '请检查 API 配置、Key 和网络连接',
   settings: '请检查配置文件',
   security: '请检查系统权限设置',

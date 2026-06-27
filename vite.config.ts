@@ -40,7 +40,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'src/renderer/index.html'),
-        terminal: resolve(__dirname, 'src/renderer/terminal.html')
       },
       output: {
         manualChunks(id) {

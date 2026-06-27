@@ -130,7 +130,6 @@ export const ICON_MAP = {
   calendar: CalendarOutlined,
   relationship: ApartmentOutlined,
   sequenceChart: TableOutlined,
-  terminal: CodeOutlined,
   sensitive: WarningOutlined,
 
   // 状态
@@ -205,7 +204,6 @@ export const MODULE_ICONS = {
   sequenceChart: TableOutlined,
   organization: TeamOutlined,
   map: EnvironmentOutlined,
-  terminal: CodeOutlined,
   settings: SettingOutlined
 } as const
 

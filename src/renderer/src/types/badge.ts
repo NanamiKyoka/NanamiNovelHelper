@@ -11,7 +11,6 @@ export type BadgeType =
   | 'sequenceChart'
   | 'organization'
   | 'map'
-  | 'terminal'
 
 export interface BadgeConfig {
   id: BadgeType
@@ -29,7 +28,6 @@ export const DEFAULT_BADGE_ORDER: BadgeType[] = [
   'sequenceChart',
   'organization',
   'map',
-  'terminal'
 ]
 
 export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: string }> = {
@@ -41,7 +39,6 @@ export const BADGE_DISPLAY_CONFIG: Record<BadgeType, { label: string; icon: stri
   sequenceChart: { label: '事序图', icon: 'TableOutlined' },
   organization: { label: '组织架构', icon: 'ClusterOutlined' },
   map: { label: '地图设计', icon: 'EnvironmentOutlined' },
-  terminal: { label: '终端', icon: 'CodeOutlined' }
 }
 
 /** 左侧边栏徽章类型（仅包含有全屏功能的） */

@@ -527,76 +527,7 @@ export const tauriApi = {
     getFullPath: (imagePath: string) => invoke('get_image_full_path', { imagePath })
   },
 
-  terminal: {
-    create: (options?: Record<string, unknown>) =>
-      invoke('terminal_create', { name: options?.name, cwd: options?.cwd, shellPath: options?.shellPath }),
-    write: (id: string, data: string) => invoke('terminal_write', { id, data }),
-    resize: (id: string, cols: number, rows: number) => invoke('terminal_resize', { id, cols, rows }),
-    destroy: (id: string) => invoke('terminal_kill', { id }),
-    rename: (id: string, name: string) => invoke('terminal_rename', { id, name }),
-    list: () => invoke('terminal_list'),
-    getShells: () => invoke('terminal_get_shells'),
-    setCwd: (id: string, cwd: string) =>
-      invoke('terminal_destroy', { id }).then(() => invoke('terminal_create', { options: { cwd } })),
-    onData: (id: string, callback: (data: string) => void) => {
-      let unlisten: UnlistenFn | null = null
-      listen<Record<string, unknown>>('terminal:data', (event) => {
-        if (event.payload.id === id && typeof event.payload.data === 'string') {
-          callback(event.payload.data as string)
-        }
-      }).then(fn => { unlisten = fn })
-      return () => { unlisten?.() }
-    },
-    onDataAsync: async (id: string, callback: (data: string) => void) => {
-      const unlisten = await listen<Record<string, unknown>>('terminal:data', (event) => {
-        if (event.payload.id === id && typeof event.payload.data === 'string') {
-          callback(event.payload.data as string)
-        }
-      })
-      return unlisten
-    },
-    onExit: (id: string, callback: (exitCode: number) => void) => {
-      let unlisten: UnlistenFn | null = null
-      listen<Record<string, unknown>>('terminal:exit', (event) => {
-        if (event.payload.id === id) {
-          callback((event.payload.exitCode as number) ?? 0)
-        }
-      }).then(fn => { unlisten = fn })
-      return () => { unlisten?.() }
-    },
-    onExitAsync: async (id: string, callback: (exitCode: number) => void) => {
-      const unlisten = await listen<Record<string, unknown>>('terminal:exit', (event) => {
-        if (event.payload.id === id) {
-          callback((event.payload.exitCode as number) ?? 0)
-        }
-      })
-      return unlisten
-    },
-    removeDataListener: (_id: string) => {},
-    removeExitListener: (_id: string) => {}
-  },
 
-  terminalWindow: {
-    create: () => invoke('terminal_window_create'),
-    isOpen: () => invoke('terminal_window_is_open'),
-    close: () => invoke('terminal_window_close'),
-    show: () => invoke('terminal_window_show'),
-    minimize: () => invoke('terminal_window_minimize'),
-    maximize: () => invoke('terminal_window_maximize'),
-    isMaximized: () => invoke('terminal_window_is_maximized'),
-    onOpened: (callback: () => void) => {
-      let unlisten: UnlistenFn | null = null
-      listen('terminal-window:opened', () => { callback() }).then(fn => { unlisten = fn })
-      return () => { unlisten?.() }
-    },
-    onClosed: (callback: () => void) => {
-      let unlisten: UnlistenFn | null = null
-      listen('terminal-window:closed', () => { callback() }).then(fn => { unlisten = fn })
-      return () => { unlisten?.() }
-    },
-    removeOpenedListener: () => {},
-    removeClosedListener: () => {}
-  },
 
   git: {
     isRepo: (repoPath: string) => invoke('git_is_repo', { repoPath }),

@@ -14,7 +14,6 @@ import {
   TableOutlined,
   TeamOutlined,
   EnvironmentOutlined,
-  CodeOutlined,
   InfoCircleOutlined,
   EyeOutlined
 } from '@ant-design/icons'
@@ -81,13 +80,6 @@ const BADGE_CONFIG = [
     icon: EnvironmentOutlined,
     hasSidebarEntry: true
   },
-  {
-    key: 'terminal' as keyof BadgeVisibility,
-    name: '终端',
-    description: '集成终端命令行工具',
-    icon: CodeOutlined,
-    hasSidebarEntry: false
-  }
 ]
 
 function GlobalLayoutSettings(): JSX.Element {

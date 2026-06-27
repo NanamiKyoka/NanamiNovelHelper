@@ -9,7 +9,6 @@ import {
   TableOutlined,
   TeamOutlined,
   EnvironmentOutlined,
-  CodeOutlined
 } from '@ant-design/icons'
 import ActivityBar from '@components/layout/ActivityBar'
 import Sidebar from '@components/layout/Sidebar'
@@ -28,7 +27,6 @@ import { useTimelineStore } from '@stores/timelineStore'
 import { useSequenceChartStore } from '@stores/sequenceChartStore'
 import { useOrganizationStore } from '@stores/organizationStore'
 import { useMapStore } from '@stores/mapStore'
-import { useTerminalStore } from '@stores/terminalStore'
 import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
 import { useLoadingStore } from '@stores/loadingStore'
@@ -56,9 +54,6 @@ const OrganizationPanel = lazy(
   () => import('@components/visualization/organization/OrganizationPanel')
 )
 const MapPanel = lazy(() => import('@components/visualization/map/MapPanel'))
-const TerminalPanel = lazy(() =>
-  import('@components/terminal/TerminalPanel').then(m => ({ default: m.TerminalPanel }))
-)
 
 const BADGE_COUNT_THRESHOLD = 0
 
@@ -73,7 +68,6 @@ type RightPanelKey =
   | 'sequenceChart'
   | 'organization'
   | 'map'
-  | 'terminal'
   | null
 
 function App(): JSX.Element {
@@ -102,7 +96,6 @@ function App(): JSX.Element {
   const chartsCount = useSequenceChartStore(state => state.charts.length)
   const organizationsCount = useOrganizationStore(state => state.graphs.length)
   const mapsCount = useMapStore(state => state.maps.length)
-  const terminalsCount = useTerminalStore(state => state.terminals.length)
 
   const selectedText = useUIStore(state => state.selectedText)
   const createProjectModalOpen = useUIStore(state => state.createProjectModalOpen)
@@ -135,14 +128,6 @@ function App(): JSX.Element {
     }
   }, [projectLoading, startLoading, endLoading])
 
-  // 预加载终端模块（项目打开后空闲时触发，避免首次点击卡顿）
-  useEffect(() => {
-    if (!currentProject) return
-    const handle = requestIdleCallback(() => {
-      import('@components/terminal/TerminalPanel')
-    })
-    return () => cancelIdleCallback(handle)
-  }, [currentProject])
 
   // 文件变化监听（外部修改文件时刷新编辑器）
   useEffect(() => {
@@ -260,13 +245,6 @@ function App(): JSX.Element {
         description: '时间线面板',
         category: '工具'
       },
-      {
-        id: 'tools.terminal',
-        key: 'Ctrl+`',
-        action: () => toggleRightPanel('terminal'),
-        description: '终端面板',
-        category: '工具'
-      }
     ],
     [toggleRightPanel]
   )
@@ -486,23 +464,6 @@ function App(): JSX.Element {
           </Tooltip>
         )
       },
-      {
-        id: 'terminal' as const,
-        visible: badgeVisibility.terminal,
-        content: (
-          <Tooltip title="终端" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'terminal' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('terminal')}
-            >
-              <CodeOutlined />
-              {terminalsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{terminalsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      }
     ]
 
     return items.filter(item => item.visible)
@@ -514,7 +475,6 @@ function App(): JSX.Element {
     chartsCount,
     organizationsCount,
     mapsCount,
-    terminalsCount,
     rightPanelKey,
     toggleRightPanel,
     badgeVisibility
@@ -614,9 +574,7 @@ function App(): JSX.Element {
                         ? '组织架构'
                         : rightPanelKey === 'map'
                           ? '地图设计'
-                          : rightPanelKey === 'terminal'
-                            ? '终端'
-                            : '面板'
+                          : '面板'
           }面板`}
         >
           <div
@@ -647,9 +605,7 @@ function App(): JSX.Element {
                           ? '组织架构'
                           : rightPanelKey === 'map'
                             ? '地图设计'
-                            : rightPanelKey === 'terminal'
-                              ? '终端'
-                              : '面板'}
+                            : '面板'}
             </span>
             <Button type="text" size="small" onClick={closeRightPanel} aria-label="关闭面板">
               关闭
@@ -677,7 +633,6 @@ function App(): JSX.Element {
                 {rightPanelKey === 'sequenceChart' && <SequenceChartPanel />}
                 {rightPanelKey === 'organization' && <OrganizationPanel />}
                 {rightPanelKey === 'map' && <MapPanel />}
-                {rightPanelKey === 'terminal' && <TerminalPanel onClose={closeRightPanel} />}
               </Suspense>
             </ErrorBoundary>
           </div>

@@ -54,7 +54,6 @@ describe('ErrorCode', () => {
     const modules = [
       ErrorCode.VOC_LOAD_FAILED,
       ErrorCode.GRP_LOAD_FAILED,
-      ErrorCode.TER_CREATE_FAILED,
       ErrorCode.SET_LOAD_FAILED,
       ErrorCode.IMG_PROCESS_FAILED,
       ErrorCode.SRC_EXECUTE_FAILED,

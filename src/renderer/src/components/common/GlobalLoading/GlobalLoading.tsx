@@ -21,7 +21,6 @@ const MODULE_NAMES: Record<string, string> = {
   settings: '设置',
   git: 'Git',
   ai: 'AI 助手',
-  terminal: '终端'
 }
 
 const ALL_MODULES = [
@@ -38,7 +37,6 @@ const ALL_MODULES = [
   'settings',
   'git',
   'ai',
-  'terminal'
 ] as const
 
 interface GlobalLoadingProps {
