@@ -166,22 +166,12 @@ export const tauriApi = {
       updateLayout: (layout: Record<string, unknown>) =>
         invoke('settings_update_global', { settings: { layout } })
           .then((s: Record<string, unknown>) => (s as Record<string, unknown>).layout as Record<string, unknown>),
-      getBadgeVisibility: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeVisibility as Record<string, unknown>),
-      updateBadgeVisibility: (badgeVisibility: Record<string, unknown>) =>
-        invoke('settings_update_global', { settings: { layout: { badgeVisibility } } })
-          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeVisibility as Record<string, unknown>),
-      getBadgeOrder: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeOrder as string[]),
-      updateBadgeOrder: (badgeOrder: string[]) =>
-        invoke('settings_update_global', { settings: { layout: { badgeOrder } } })
-          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.badgeOrder as string[]),
-      getSidebarBadgeVisibility: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeVisibility as Record<string, unknown>),
-      updateSidebarBadgeVisibility: (sidebarBadgeVisibility: Record<string, unknown>) =>
-        invoke('settings_update_global', { settings: { layout: { sidebarBadgeVisibility } } })
-          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeVisibility as Record<string, unknown>),
-      getSidebarBadgeOrder: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeOrder as string[]),
-      updateSidebarBadgeOrder: (sidebarBadgeOrder: string[]) =>
-        invoke('settings_update_global', { settings: { layout: { sidebarBadgeOrder } } })
-          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.sidebarBadgeOrder as string[]),
+      getViewConfig: () => invoke('settings_get_global').then(
+        (s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.viewConfig as { primary: string[]; secondary: string[] } | undefined
+      ),
+      updateViewConfig: (viewConfig: { primary: string[]; secondary: string[] }) =>
+        invoke('settings_update_global', { settings: { layout: { viewConfig } } })
+          .then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.viewConfig as { primary: string[]; secondary: string[] }),
       getShowHiddenFiles: () => invoke('settings_get_global').then((s: Record<string, unknown>) => ((s as Record<string, unknown>).layout as Record<string, unknown>)?.showHiddenFiles as boolean),
       setShowHiddenFiles: (showHiddenFiles: boolean) =>
         invoke('settings_update_global', { settings: { layout: { showHiddenFiles } } })

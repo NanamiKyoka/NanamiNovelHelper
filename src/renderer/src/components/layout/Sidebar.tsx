@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
-import { Layout, Button, Typography } from 'antd'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { Layout, Typography } from 'antd'
 import FileTree from '@components/file-tree/FileTree'
 import { SearchPanel } from '@components/search'
 import { VisualizationPanel } from '@components/visualization'
@@ -42,19 +41,7 @@ const PANEL_TITLES: Record<string, string> = {
   map: '地图'
 }
 
-// 全屏功能面板列表（这些面板需要返回按钮）
-const FULLSCREEN_PANELS = [
-  'vocabulary',
-  'sensitive',
-  'relationship',
-  'timeline',
-  'sequenceChart',
-  'organization',
-  'aiAssistant',
-  'map'
-]
-
-function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarProps): JSX.Element {
+function Sidebar({ collapsed, activePanel }: SidebarProps): JSX.Element {
   const sidebarWidth = useSettingsStore(state => state.globalSettings.sidebarWidth)
   const setSidebarWidth = useSettingsStore(state => state.setSidebarWidth)
 
@@ -113,14 +100,6 @@ function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarPro
     }
   }
 
-  // 返回主面板（文件树）
-  const handleBackToFiles = useCallback(() => {
-    // 通过触发 ActivityBar 的点击来切换回文件面板
-    // 这里需要一种方式通知 ActivityBar 切换面板
-    // 暂时使用自定义事件
-    window.dispatchEvent(new CustomEvent('sidebar-back-to-files'))
-  }, [])
-
   // 设置页面在 MainContent 中全屏显示，不需要 Sidebar
   if (activePanel === 'settings') {
     return null
@@ -130,8 +109,6 @@ function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarPro
     return <div className={styles.collapsed} />
   }
 
-  // 判断是否显示返回按钮
-  const showBackButton = FULLSCREEN_PANELS.includes(activePanel)
   const panelTitle = PANEL_TITLES[activePanel] || '面板'
 
   return (
@@ -143,25 +120,12 @@ function Sidebar({ collapsed, activePanel, onCollapse: _onCollapse }: SidebarPro
       trigger={null}
       aria-label="侧边栏"
     >
-      {showBackButton && (
-        <div className={styles.panelHeader}>
-          <Button
-            type="text"
-            icon={<ArrowLeftOutlined />}
-            onClick={handleBackToFiles}
-            className={styles.backButton}
-            aria-label="返回文件面板"
-          />
-          <Text strong className={styles.panelTitle}>
-            {panelTitle}
-          </Text>
-        </div>
-      )}
-      <div
-        className={`${styles.content} ${showBackButton ? styles.withHeader : ''}`}
-        role="region"
-        aria-label={`${panelTitle}面板`}
-      >
+      <div className={styles.panelHeader}>
+        <Text strong className={styles.panelTitle}>
+          {panelTitle}
+        </Text>
+      </div>
+      <div className={styles.content}>
         {renderContent()}
       </div>
       <div

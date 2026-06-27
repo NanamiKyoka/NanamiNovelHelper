@@ -811,15 +811,10 @@ body.light .ant-notification-notice {
     --font-size-base: 13px;
   }
 
-  /* 右侧面板覆盖整个宽度 */
-  .rightSidebar {
+  /* 辅助侧边栏覆盖整个宽度 */
+  .secondarySidebar {
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  /* 隐藏部分徽章按钮 */
-  .badgeContainer {
-    flex-wrap: wrap;
   }
 }
 
@@ -839,8 +834,8 @@ body.light .ant-notification-notice {
     box-shadow: var(--shadow-lg) !important;
   }
 
-  /* 右侧面板覆盖整个宽度 */
-  .rightSidebar {
+  /* 辅助侧边栏覆盖整个宽度 */
+  .secondarySidebar {
     width: 100% !important;
     max-width: 100% !important;
     left: 0 !important;
@@ -913,10 +908,7 @@ body.light .ant-notification-notice {
   /* 隐藏非必要元素 */
   .activityBar,
   .statusBar,
-  .titleBar,
-  .badgeContainer,
-  .rightSidebar {
-    display: none !important;
+  .titleBar {
   }
 
   /* 调整主内容区域 */

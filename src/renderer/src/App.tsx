@@ -1,85 +1,30 @@
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
-import { Layout, theme, Button, Tooltip, Spin, App as AntApp } from 'antd'
-import {
-  TagOutlined,
-  WarningOutlined,
-  UserAddOutlined,
-  ApartmentOutlined,
-  ClockCircleOutlined,
-  TableOutlined,
-  TeamOutlined,
-  EnvironmentOutlined,
-} from '@ant-design/icons'
+import { useState, useEffect, useMemo } from 'react'
+import { Layout, theme, App as AntApp } from 'antd'
 import ActivityBar from '@components/layout/ActivityBar'
 import Sidebar from '@components/layout/Sidebar'
 import MainContent from '@components/layout/MainContent'
 import StatusBar from '@components/layout/StatusBar'
 import TitleBar from '@components/layout/TitleBar'
-import { DraggableBadgeContainer } from '@components/layout'
+import { SecondarySidebar } from '@components/layout'
 import { WelcomePage, CreateProjectModal, OpenProjectModal } from '@components/project'
-import { RandomNamePanel } from '@components/random-name'
 import { ErrorBoundary, GlobalLoading, AboutModal } from '@components/common'
 import { useProjectActions, useShortcuts } from '@hooks'
-import { useVocabularyStore } from '@stores/vocabularyStore'
-import { useSensitiveStore } from '@stores/sensitiveStore'
-import { useRelationshipStore } from '@stores/relationshipStore'
-import { useTimelineStore } from '@stores/timelineStore'
-import { useSequenceChartStore } from '@stores/sequenceChartStore'
-import { useOrganizationStore } from '@stores/organizationStore'
-import { useMapStore } from '@stores/mapStore'
-import { useSettingsStore } from '@stores/settingsStore'
 import { useUIStore } from '@stores/uiStore'
 import { useLoadingStore } from '@stores/loadingStore'
 import { useEditorStore } from '@stores/editorStore'
 import { useGitStore } from '@stores/gitStore'
 import { useFileTreeStore } from '@stores/fileTreeStore'
-import { DEFAULT_BADGE_VISIBILITY } from '@shared/settings'
+import { useViewStore } from '@stores/viewStore'
+import { VIEW_DEFINITIONS } from '@constants/views'
 import type { ShortcutConfig } from '@hooks/useShortcuts'
 import styles from './App.module.css'
 
-const VocabularyPanel = lazy(() =>
-  import('@components/vocabulary/VocabularyPanel').then(m => ({ default: m.VocabularyPanel }))
-)
-const SensitiveWordPanel = lazy(() =>
-  import('@components/vocabulary/SensitiveWordPanel').then(m => ({ default: m.SensitiveWordPanel }))
-)
-const RelationshipPanel = lazy(
-  () => import('@components/visualization/relationship/RelationshipPanel')
-)
-const TimelinePanel = lazy(() => import('@components/visualization/timeline/TimelinePanel'))
-const SequenceChartPanel = lazy(
-  () => import('@components/visualization/sequence-chart/SequenceChartPanel')
-)
-const OrganizationPanel = lazy(
-  () => import('@components/visualization/organization/OrganizationPanel')
-)
-const MapPanel = lazy(() => import('@components/visualization/map/MapPanel'))
-
-const BADGE_COUNT_THRESHOLD = 0
-
 const { Content } = Layout
-
-// 右侧面板类型
-type RightPanelKey =
-  | 'vocabulary'
-  | 'sensitive'
-  | 'relationship'
-  | 'timeline'
-  | 'sequenceChart'
-  | 'organization'
-  | 'map'
-  | null
 
 function App(): JSX.Element {
   const { message } = AntApp.useApp()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activePanel, setActivePanel] = useState<string>('files')
-  const [rightPanelKey, setRightPanelKey] = useState<RightPanelKey>(null)
-  const [isResizingRightSidebar, setIsResizingRightSidebar] = useState(false)
-  const [resizingRightSidebarWidth, setResizingRightSidebarWidth] = useState(0)
-
-  const rightSidebarWidth = useSettingsStore(state => state.globalSettings.rightSidebarWidth)
-  const setRightSidebarWidth = useSettingsStore(state => state.setRightSidebarWidth)
 
   const {
     token: { colorBgContainer }
@@ -88,17 +33,8 @@ function App(): JSX.Element {
   // 项目状态（使用 useProjectActions 统一管理）
   const { currentProject, error, isLoading: projectLoading, clearError } = useProjectActions()
 
-  // 词汇和敏感词数量（只订阅数量，避免订阅整个数组导致不必要的重渲染）
-  const entriesCount = useVocabularyStore(state => state.entries.length)
-  const wordsCount = useSensitiveStore(state => state.words.length)
-  const graphsCount = useRelationshipStore(state => state.graphs.length)
-  const timelinesCount = useTimelineStore(state => state.timelines.length)
-  const chartsCount = useSequenceChartStore(state => state.charts.length)
-  const organizationsCount = useOrganizationStore(state => state.graphs.length)
-  const mapsCount = useMapStore(state => state.maps.length)
-
-  const selectedText = useUIStore(state => state.selectedText)
   const createProjectModalOpen = useUIStore(state => state.createProjectModalOpen)
+
   const openProjectModalOpen = useUIStore(state => state.openProjectModalOpen)
   const closeCreateProjectModal = useUIStore(state => state.closeCreateProjectModal)
   const closeOpenProjectModal = useUIStore(state => state.closeOpenProjectModal)
@@ -107,9 +43,7 @@ function App(): JSX.Element {
   const startLoading = useLoadingStore(s => s.startLoading)
   const endLoading = useLoadingStore(s => s.endLoading)
 
-  // 徽章可见性设置
-  const globalSettings = useSettingsStore(state => state.globalSettings)
-  const badgeVisibility = globalSettings.layout?.badgeVisibility || DEFAULT_BADGE_VISIBILITY
+  // 错误提示
 
   // 错误提示
   useEffect(() => {
@@ -187,11 +121,6 @@ function App(): JSX.Element {
     }
   }, [currentProject])
 
-  // 切换右侧面板
-  const toggleRightPanel = useCallback((key: Exclude<RightPanelKey, null>) => {
-    setRightPanelKey(prev => (prev === key ? null : key))
-  }, [])
-
   // 全局快捷键
   const shortcuts: ShortcutConfig[] = useMemo(
     () => [
@@ -200,7 +129,6 @@ function App(): JSX.Element {
         id: 'file.save',
         key: 'Ctrl+S',
         action: () => {
-          // 触发保存当前文件
           window.dispatchEvent(new CustomEvent('shortcut:save'))
         },
         description: '保存当前文件',
@@ -223,30 +151,15 @@ function App(): JSX.Element {
         description: '切换侧边栏',
         category: '视图'
       },
-      // 工具面板切换
       {
-        id: 'tools.vocabulary',
-        key: 'Ctrl+Shift+V',
-        action: () => toggleRightPanel('vocabulary'),
-        description: '词汇面板',
-        category: '工具'
-      },
-      {
-        id: 'tools.relationship',
-        key: 'Ctrl+Shift+R',
-        action: () => toggleRightPanel('relationship'),
-        description: '关系图面板',
-        category: '工具'
-      },
-      {
-        id: 'tools.timeline',
-        key: 'Ctrl+Shift+T',
-        action: () => toggleRightPanel('timeline'),
-        description: '时间线面板',
-        category: '工具'
+        id: 'view.secondarySidebar',
+        key: 'Ctrl+Shift+B',
+        action: () => useViewStore.getState().toggleSecondary(),
+        description: '切换辅助侧边栏',
+        category: '视图'
       },
     ],
-    [toggleRightPanel]
+    []
   )
 
   useShortcuts(shortcuts, [])
@@ -281,204 +194,22 @@ function App(): JSX.Element {
     }
   }
 
-  // 关闭右侧面板
-  const closeRightPanel = useCallback(() => {
-    setRightPanelKey(null)
+  // 视图系统初始化
+  useEffect(() => {
+    const { registerViews, loadConfig } = useViewStore.getState()
+    registerViews(VIEW_DEFINITIONS)
+    loadConfig()
   }, [])
 
-  const RIGHT_SIDEBAR_MIN_WIDTH = 300
-  const RIGHT_SIDEBAR_MAX_WIDTH = 800
-  const BADGE_CONTAINER_WIDTH = 64
-
-  const currentRightSidebarWidth = isResizingRightSidebar
-    ? resizingRightSidebarWidth
-    : rightSidebarWidth
-
-  const resizingWidthRef = useRef(rightSidebarWidth)
-
-  const handleRightSidebarResize = useCallback(
-    (e: MouseEvent) => {
-      const newWidth = window.innerWidth - e.clientX - BADGE_CONTAINER_WIDTH
-      const clampedWidth = Math.max(RIGHT_SIDEBAR_MIN_WIDTH, Math.min(RIGHT_SIDEBAR_MAX_WIDTH, newWidth))
-      resizingWidthRef.current = clampedWidth
-      setResizingRightSidebarWidth(clampedWidth)
-    },
-    []
-  )
-
-  const handleRightSidebarResizeEnd = useCallback(() => {
-    document.removeEventListener('mousemove', handleRightSidebarResize)
-    document.removeEventListener('mouseup', handleRightSidebarResizeEnd)
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-    setIsResizingRightSidebar(false)
-    setRightSidebarWidth(resizingWidthRef.current)
-  }, [handleRightSidebarResize, setRightSidebarWidth])
-
-  const handleRightSidebarResizeStart = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      resizingWidthRef.current = rightSidebarWidth
-      setIsResizingRightSidebar(true)
-      setResizingRightSidebarWidth(rightSidebarWidth)
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-      document.addEventListener('mousemove', handleRightSidebarResize)
-      document.addEventListener('mouseup', handleRightSidebarResizeEnd)
-    },
-    [rightSidebarWidth, handleRightSidebarResize, handleRightSidebarResizeEnd]
-  )
-
-  // 徽章配置
-  const badgeItems = useMemo(() => {
-    const items = [
-      {
-        id: 'vocabulary' as const,
-        visible: badgeVisibility.vocabulary,
-        content: (
-          <Tooltip title="词汇查询" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'vocabulary' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('vocabulary')}
-            >
-              <TagOutlined />
-              {entriesCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{entriesCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'sensitive' as const,
-        visible: badgeVisibility.sensitive,
-        content: (
-          <Tooltip title="敏感词" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'sensitive' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('sensitive')}
-            >
-              <WarningOutlined />
-              {wordsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{wordsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'randomName' as const,
-        visible: badgeVisibility.randomName,
-        content: (
-          <RandomNamePanel>
-            <Tooltip title="随机起名" placement="left">
-              <div className={styles.triggerBtn}>
-                <UserAddOutlined />
-              </div>
-            </Tooltip>
-          </RandomNamePanel>
-        )
-      },
-      {
-        id: 'relationship' as const,
-        visible: badgeVisibility.relationship,
-        content: (
-          <Tooltip title="关系图" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'relationship' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('relationship')}
-            >
-              <ApartmentOutlined />
-              {graphsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{graphsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'timeline' as const,
-        visible: badgeVisibility.timeline,
-        content: (
-          <Tooltip title="时间线" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'timeline' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('timeline')}
-            >
-              <ClockCircleOutlined />
-              {timelinesCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{timelinesCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'sequenceChart' as const,
-        visible: badgeVisibility.sequenceChart,
-        content: (
-          <Tooltip title="事序图" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'sequenceChart' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('sequenceChart')}
-            >
-              <TableOutlined />
-              {chartsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{chartsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'organization' as const,
-        visible: badgeVisibility.organization,
-        content: (
-          <Tooltip title="组织架构" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'organization' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('organization')}
-            >
-              <TeamOutlined />
-              {organizationsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{organizationsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-      {
-        id: 'map' as const,
-        visible: badgeVisibility.map,
-        content: (
-          <Tooltip title="地图设计" placement="left">
-            <div
-              className={`${styles.triggerBtn} ${rightPanelKey === 'map' ? styles.active : ''}`}
-              onClick={() => toggleRightPanel('map')}
-            >
-              <EnvironmentOutlined />
-              {mapsCount > BADGE_COUNT_THRESHOLD && (
-                <span className={styles.badge}>{mapsCount}</span>
-              )}
-            </div>
-          </Tooltip>
-        )
-      },
-    ]
-
-    return items.filter(item => item.visible)
-  }, [
-    entriesCount,
-    wordsCount,
-    graphsCount,
-    timelinesCount,
-    chartsCount,
-    organizationsCount,
-    mapsCount,
-    rightPanelKey,
-    toggleRightPanel,
-    badgeVisibility
-  ])
+  // 连接 ActivityBar 点击到视图切换
+  useEffect(() => {
+    const unsub = useViewStore.subscribe(state => {
+      if (state.activePrimaryId && state.activePrimaryId !== activePanel) {
+        setActivePanel(state.activePrimaryId)
+      }
+    })
+    return unsub
+  }, [activePanel])
 
   // 如果没有打开项目，显示欢迎页面
   if (!currentProject) {
@@ -515,10 +246,8 @@ function App(): JSX.Element {
 
   return (
     <div className={styles.app} role="application" aria-label="Nanami Novel Helper">
-      {/* 自定义标题栏 - 仅在 Windows/Linux 显示 */}
       {window.api?.platform !== 'macos' && <TitleBar />}
 
-      {/* 主布局区域 */}
       <div className={styles.mainLayout}>
         <nav aria-label="主导航">
           <ActivityBar
@@ -539,112 +268,23 @@ function App(): JSX.Element {
           </aside>
           <Content
             className={styles.mainContent}
-            style={{ background: colorBgContainer, marginRight: rightPanelKey ? currentRightSidebarWidth + 20 : 60 }}
+            style={{ background: colorBgContainer }}
             role="main"
           >
             <ErrorBoundary moduleName="MainContent">
               <MainContent activePanel={activePanel} />
             </ErrorBoundary>
           </Content>
+
+          {/* 辅助侧边栏（Secondary Sidebar） */}
+          <SecondarySidebar />
         </div>
       </div>
 
-      {/* 右侧浮动触发按钮 - 可拖拽排序 */}
-      <nav aria-label="工具面板导航">
-        <DraggableBadgeContainer badges={badgeItems} />
-      </nav>
-
-      {/* 右侧面板 */}
-      {rightPanelKey && (
-        <aside
-          className={styles.rightSidebar}
-          style={{ width: currentRightSidebarWidth }}
-          aria-label={`${
-            rightPanelKey === 'vocabulary'
-              ? '词汇查询'
-              : rightPanelKey === 'sensitive'
-                ? '敏感词管理'
-                : rightPanelKey === 'relationship'
-                  ? '关系图'
-                  : rightPanelKey === 'timeline'
-                    ? '时间线'
-                    : rightPanelKey === 'sequenceChart'
-                      ? '事序图'
-                      : rightPanelKey === 'organization'
-                        ? '组织架构'
-                        : rightPanelKey === 'map'
-                          ? '地图设计'
-                          : '面板'
-          }面板`}
-        >
-          <div
-            className={styles.rightSidebarResizeHandle}
-            onMouseDown={handleRightSidebarResizeStart}
-            role="separator"
-            aria-label="调整右侧面板宽度"
-            tabIndex={0}
-          />
-          {isResizingRightSidebar && (
-            <div className={styles.rightSidebarWidthIndicator}>
-              {Math.round(resizingRightSidebarWidth)}px
-            </div>
-          )}
-          <div className={styles.rightSidebarHeader}>
-            <span id={`right-panel-title-${rightPanelKey}`}>
-              {rightPanelKey === 'vocabulary'
-                ? '词汇查询'
-                : rightPanelKey === 'sensitive'
-                  ? '敏感词管理'
-                  : rightPanelKey === 'relationship'
-                    ? '关系图'
-                    : rightPanelKey === 'timeline'
-                      ? '时间线'
-                      : rightPanelKey === 'sequenceChart'
-                        ? '事序图'
-                        : rightPanelKey === 'organization'
-                          ? '组织架构'
-                          : rightPanelKey === 'map'
-                            ? '地图设计'
-                            : '面板'}
-            </span>
-            <Button type="text" size="small" onClick={closeRightPanel} aria-label="关闭面板">
-              关闭
-            </Button>
-          </div>
-          <div
-            className={styles.rightSidebarBody}
-            role="region"
-            aria-labelledby={`right-panel-title-${rightPanelKey}`}
-          >
-            <ErrorBoundary moduleName={rightPanelKey}>
-              <Suspense
-                fallback={
-                  <div className={styles.panelLoading}>
-                    <Spin />
-                  </div>
-                }
-              >
-                {rightPanelKey === 'vocabulary' && (
-                  <VocabularyPanel readOnly={false} externalSearchText={selectedText} />
-                )}
-                {rightPanelKey === 'sensitive' && <SensitiveWordPanel readOnly={false} />}
-                {rightPanelKey === 'relationship' && <RelationshipPanel />}
-                {rightPanelKey === 'timeline' && <TimelinePanel />}
-                {rightPanelKey === 'sequenceChart' && <SequenceChartPanel />}
-                {rightPanelKey === 'organization' && <OrganizationPanel />}
-                {rightPanelKey === 'map' && <MapPanel />}
-              </Suspense>
-            </ErrorBoundary>
-          </div>
-        </aside>
-      )}
-
       <StatusBar />
 
-      {/* 全局加载指示器 */}
       <GlobalLoading />
 
-      {/* 全局模态框 */}
       <CreateProjectModal
         open={createProjectModalOpen}
         onCancel={closeCreateProjectModal}

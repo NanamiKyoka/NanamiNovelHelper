@@ -2,6 +2,5 @@
 export * from './project'
 export * from './theme'
 export * from './editor'
-export * from './badge'
 export * from './relationship'
 export * from './timeline'

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   MinusOutlined,
   FullscreenOutlined,
   FullscreenExitOutlined,
-  CloseOutlined
+  CloseOutlined,
+  DoubleRightOutlined
 } from '@ant-design/icons'
+import { useViewStore } from '@stores/viewStore'
 import MenuBar from './MenuBar'
 import styles from './TitleBar.module.css'
 
@@ -38,39 +40,31 @@ function TitleBar(): JSX.Element {
   const handleClose = () => {
     window.api?.window?.close?.()
   }
+  const toggleSecondary = useViewStore(s => s.toggleSecondary)
 
   return (
     <div className={styles.titleBar}>
-      {/* 左侧：菜单栏 */}
       <MenuBar />
-
-      {/* 中间：拖拽区域 */}
       <div className={styles.dragRegion} style={{ flex: 1 }} />
-
-      {/* 右侧：窗口控制按钮 */}
-      <div className={styles.windowControls}>
+      <div className={styles.titleActions}>
         <button
-          className={`${styles.controlButton} ${styles.minimize}`}
-          onClick={handleMinimize}
-          title="最小化"
-          aria-label="最小化窗口"
+          className={styles.toggleBtn}
+          onClick={() => toggleSecondary()}
+          title="切换辅助侧边栏"
+          aria-label="切换辅助侧边栏"
+          type="button"
         >
+          <DoubleRightOutlined />
+        </button>
+      </div>
+      <div className={styles.windowControls}>
+        <button className={`${styles.controlButton} ${styles.minimize}`} onClick={handleMinimize} title="最小化" aria-label="最小化窗口">
           <MinusOutlined />
         </button>
-        <button
-          className={`${styles.controlButton} ${styles.maximize}`}
-          onClick={handleMaximize}
-          title={isMaximized ? '还原' : '最大化'}
-          aria-label={isMaximized ? '还原窗口' : '最大化窗口'}
-        >
+        <button className={`${styles.controlButton} ${styles.maximize}`} onClick={handleMaximize} title={isMaximized ? '还原' : '最大化'} aria-label={isMaximized ? '还原窗口' : '最大化窗口'}>
           {isMaximized ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
         </button>
-        <button
-          className={`${styles.controlButton} ${styles.close}`}
-          onClick={handleClose}
-          title="关闭"
-          aria-label="关闭窗口"
-        >
+        <button className={`${styles.controlButton} ${styles.close}`} onClick={handleClose} title="关闭" aria-label="关闭窗口">
           <CloseOutlined />
         </button>
       </div>

@@ -1,24 +1,9 @@
-import { useEffect, useMemo } from 'react'
-import { Tooltip } from 'antd'
-import {
-  FileOutlined,
-  SearchOutlined,
-  BranchesOutlined,
-  SettingOutlined,
-  TagOutlined,
-  WarningOutlined,
-  ApartmentOutlined,
-  ClockCircleOutlined,
-  TableOutlined,
-  TeamOutlined,
-  RobotOutlined,
-  EnvironmentOutlined,
-  FireOutlined
-} from '@ant-design/icons'
-import { useSettingsStore } from '@stores/settingsStore'
-import type { SidebarBadgeType } from '@types/badge'
-import { DEFAULT_SIDEBAR_BADGE_ORDER } from '@types/badge'
-import { DEFAULT_SIDEBAR_BADGE_VISIBILITY, type SidebarBadgeVisibility } from '@shared/settings'
+import { useEffect, useLayoutEffect, useMemo, useCallback, useRef, useState } from 'react'
+import { Tooltip, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
+import { SettingOutlined } from '@ant-design/icons'
+import { useViewStore } from '@stores/viewStore'
+import type { ViewDefinition } from '@types/view'
 import styles from './ActivityBar.module.css'
 
 interface ActivityBarProps {
@@ -27,51 +12,29 @@ interface ActivityBarProps {
   onPanelClick: (panelId: string) => void
 }
 
-const MAIN_BUTTONS = [
-  { id: 'files', icon: FileOutlined, tooltip: '文件' },
-  { id: 'search', icon: SearchOutlined, tooltip: '搜索' },
-  { id: 'git', icon: BranchesOutlined, tooltip: 'Git' }
-]
-
 const SETTINGS_BUTTON = { id: 'settings', icon: SettingOutlined, tooltip: '设置' }
-
-const SIDEBAR_BADGE_CONFIG: Record<
-  SidebarBadgeType,
-  { icon: React.ComponentType; tooltip: string }
-> = {
-  vocabulary: { icon: TagOutlined, tooltip: '词汇查询' },
-  sensitive: { icon: WarningOutlined, tooltip: '敏感词' },
-  relationship: { icon: ApartmentOutlined, tooltip: '关系图' },
-  timeline: { icon: ClockCircleOutlined, tooltip: '时间线' },
-  sequenceChart: { icon: TableOutlined, tooltip: '事序图' },
-  organization: { icon: TeamOutlined, tooltip: '组织架构' },
-  aiAssistant: { icon: RobotOutlined, tooltip: 'AI写作助手' },
-  map: { icon: EnvironmentOutlined, tooltip: '地图' },
-  writingGoal: { icon: FireOutlined, tooltip: '写作目标' }
-}
 
 function ActivityBar({
   activePanel,
   sidebarCollapsed,
   onPanelClick
 }: ActivityBarProps): JSX.Element {
-  const globalSettings = useSettingsStore(state => state.globalSettings)
+  const viewDefs = useViewStore(state => state.viewDefs)
+  const viewConfig = useViewStore(state => state.viewConfig)
+  const activePrimaryId = useViewStore(state => state.activePrimaryId)
+  const setActivePrimary = useViewStore(state => state.setActivePrimary)
+  const setActiveSecondary = useViewStore(state => state.setActiveSecondary)
+  const moveView = useViewStore(state => state.moveView)
 
-  const visibility: SidebarBadgeVisibility = useMemo(() => {
-    return globalSettings.layout?.sidebarBadgeVisibility || DEFAULT_SIDEBAR_BADGE_VISIBILITY
-  }, [globalSettings.layout?.sidebarBadgeVisibility])
+  const viewButtonsRef = useRef<HTMLDivElement>(null)
+  const [showAllViews, setShowAllViews] = useState(false)
+  const [needsOverflow, setNeedsOverflow] = useState(false)
 
-  const order: SidebarBadgeType[] = useMemo(() => {
-    const savedOrder = globalSettings.layout?.sidebarBadgeOrder
-    if (savedOrder && Array.isArray(savedOrder) && savedOrder.length > 0) {
-      const validOrder = savedOrder.filter((b): b is SidebarBadgeType =>
-        DEFAULT_SIDEBAR_BADGE_ORDER.includes(b as SidebarBadgeType)
-      )
-      const missingBadges = DEFAULT_SIDEBAR_BADGE_ORDER.filter(b => !validOrder.includes(b))
-      return [...validOrder, ...missingBadges]
-    }
-    return [...DEFAULT_SIDEBAR_BADGE_ORDER]
-  }, [globalSettings.layout?.sidebarBadgeOrder])
+  const views = useMemo(() => {
+    return viewConfig.primary
+      .map(id => viewDefs[id])
+      .filter((d): d is ViewDefinition => d != null)
+  }, [viewDefs, viewConfig])
 
   useEffect(() => {
     const handleBackToFiles = () => {
@@ -83,62 +46,93 @@ function ActivityBar({
     }
   }, [onPanelClick])
 
-  const visibleBadges = useMemo(() => {
-    return order.filter(id => visibility[id])
-  }, [order, visibility])
+  const handleViewClick = useCallback((viewId: string) => {
+    if (viewConfig.primary.includes(viewId)) {
+      onPanelClick(viewId)
+      setActivePrimary(viewId)
+    } else if (viewConfig.secondary.includes(viewId)) {
+      setActiveSecondary(viewId)
+    }
+  }, [onPanelClick, viewConfig, setActivePrimary, setActiveSecondary])
+
+  const isActive = useCallback((viewId: string) => {
+    if (sidebarCollapsed) return false
+    return activePrimaryId === viewId
+  }, [sidebarCollapsed, activePrimaryId])
+  // Right-click context menu for ActivityBar icons
+  // All visible views are in primary, so only offer "move to secondary"
+  const handleContextMenu = useCallback((viewId: string): MenuProps['items'] => [
+    {
+      key: 'move-to-secondary',
+      label: '移动到辅助侧边栏',
+      onClick: () => moveView(viewId, 'secondary')
+    }
+  ], [moveView])
+  useLayoutEffect(() => {
+    const el = viewButtonsRef.current
+    if (!el) return
+
+    const checkOverflow = () => {
+      const prevOverflow = el.style.overflow
+      el.style.overflow = 'hidden'
+      setNeedsOverflow(el.scrollHeight > el.clientHeight)
+      el.style.overflow = prevOverflow
+    }
+
+    checkOverflow()
+    const ro = new ResizeObserver(checkOverflow)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [views.length])
+
+
+  const renderViewButton = (view: ViewDefinition) => {
+    const IconComponent = view.icon
+    const active = isActive(view.id)
+
+    return (
+      <Dropdown key={view.id} menu={{ items: handleContextMenu(view.id) }} trigger={['contextMenu']}>
+        <div>
+          <Tooltip title={view.label} placement="right">
+            <div
+              className={`${styles.button} ${active ? styles.active : ''}`}
+              onClick={() => handleViewClick(view.id)}
+              role="button"
+              aria-label={view.label}
+              aria-pressed={active}
+              tabIndex={0}
+            >
+              <IconComponent className={styles.icon} />
+            </div>
+          </Tooltip>
+        </div>
+      </Dropdown>
+    )
+  }
 
   return (
     <div className={styles.container}>
-      <div className={styles.mainButtons} role="navigation" aria-label="主导航">
-        {MAIN_BUTTONS.map(button => {
-          const IconComponent = button.icon
-          const isActive = !sidebarCollapsed && activePanel === button.id
-
-          return (
-            <Tooltip key={button.id} title={button.tooltip} placement="right">
-              <div
-                className={`${styles.button} ${isActive ? styles.active : ''}`}
-                onClick={() => onPanelClick(button.id)}
-                role="button"
-                aria-label={button.tooltip}
-                aria-pressed={isActive}
-                tabIndex={0}
-              >
-                <IconComponent className={styles.icon} />
-              </div>
-            </Tooltip>
-          )
-        })}
+      <div
+        ref={viewButtonsRef}
+        className={styles.viewButtons}
+        style={showAllViews ? { overflow: 'visible' } : undefined}
+        role="navigation"
+        aria-label="视图面板"
+      >
+        {views.map(renderViewButton)}
       </div>
-
-      {visibleBadges.length > 0 && <div className={styles.divider} />}
-
-      <div className={styles.sidebarBadgeButtons} role="navigation" aria-label="功能面板">
-        {visibleBadges.map(badgeId => {
-          const config = SIDEBAR_BADGE_CONFIG[badgeId]
-          if (!config) return null
-
-          const IconComponent = config.icon
-          const isActive = !sidebarCollapsed && activePanel === badgeId
-
-          return (
-            <Tooltip key={badgeId} title={config.tooltip} placement="right">
-              <div
-                className={`${styles.button} ${isActive ? styles.active : ''}`}
-                onClick={() => onPanelClick(badgeId)}
-                role="button"
-                aria-label={config.tooltip}
-                aria-pressed={isActive}
-                tabIndex={0}
-              >
-                <IconComponent className={styles.icon} />
-              </div>
-            </Tooltip>
-          )
-        })}
-      </div>
-
-      <div className={styles.settingsButton}>
+      {needsOverflow && (
+        <div
+          className={styles.moreButton}
+          onClick={() => setShowAllViews(v => !v)}
+          role="button"
+          aria-label={showAllViews ? '收起' : '更多'}
+          tabIndex={0}
+        >
+          {showAllViews ? '\u25B2' : '\u2026'}
+        </div>
+      )}
+      <div className={styles.settingsSection}>
         <div className={styles.divider} />
         <Tooltip title={SETTINGS_BUTTON.tooltip} placement="right">
           <div

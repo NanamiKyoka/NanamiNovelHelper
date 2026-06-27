@@ -48,3 +48,29 @@
 .close:hover svg {
   color: #fff;
 }
+
+.titleActions {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.toggleBtn {
+  width: 36px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.toggleBtn:hover {
+  color: var(--text-primary);
+  background-color: var(--hover-bg);
+}

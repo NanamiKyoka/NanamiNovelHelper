@@ -30,6 +30,7 @@ import {
   EditOutlined,
   ThunderboltOutlined,
   FileTextOutlined,
+  UserAddOutlined,
   BranchesOutlined
 } from '@ant-design/icons'
 import type { Editor } from '@tiptap/react'
@@ -39,6 +40,7 @@ import type { AiApiStreamChunk } from '@shared/ai-assistant'
 import { useAiWriting } from './ai/useAiWriting'
 import { ContinueWritingPanel, type ContinueParams } from './ai/ContinueWritingPanel'
 import { MultiVersionPanel } from './ai/MultiVersionPanel'
+import { RandomNamePanel } from '@components/random-name'
 import styles from './EditorToolbar.module.css'
 
 interface EditorToolbarProps {
@@ -890,6 +892,11 @@ export function EditorToolbar({
             />
           </Tooltip>
         )}
+        <RandomNamePanel onNameSelect={(name) => editor?.chain().focus().insertContent(name).run()}>
+          <Tooltip title="随机起名">
+            <Button type="text" size="small" icon={<UserAddOutlined />} />
+          </Tooltip>
+        </RandomNamePanel>
       </div>
 
       {/* AI 辅助功能 */}
